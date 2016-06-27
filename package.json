@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "jsdom": "^9.3.0"
+  }
+}
