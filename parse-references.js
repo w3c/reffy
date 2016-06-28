@@ -22,7 +22,16 @@ var extractionRules = {
             normative: "#normative-references > dl",
             informative: "#informative-references > dl"
         }
-    }
+    },
+    anolis: {
+        generator: "Anolis",
+        sectionId: {
+            normative: "anolis-references"
+        },
+        listSelector: {
+            normative: "#anolis-references > dl"
+        }
+    },
 };
 
 function extract(url, cb) {
@@ -68,13 +77,11 @@ function extractSimpleReferences(doc, rules, cb) {
         return cb(new Error("No extraction rules specified"));
     }
     if (!rules.sectionId ||
-        !rules.sectionId.normative ||
-        !rules.sectionId.informative) {
+        !rules.sectionId.normative) {
         return cb(new Error("Extraction rules for references section are incorrect"));
     }
     if (!rules.listSelector ||
-        !rules.listSelector.normative ||
-        !rules.listSelector.informative) {
+        !rules.listSelector.normative) {
         return cb(new Error("Extraction rules for the list of references are incorrect"));
     }
     var generator = rules.generator || "an unknown generator";
@@ -85,6 +92,9 @@ function extractSimpleReferences(doc, rules, cb) {
         if (error) return;
         var refHeading = doc.getElementById(rules.sectionId[referenceType]);
         if (!refHeading) {
+            if (referenceType === 'informative') {
+                return;
+            }
             error = new Error("Spec " + url + " is generated with " + generator + " but does not have a '" + rules.sectionId[referenceType]  + "' id");
             return;
         }
