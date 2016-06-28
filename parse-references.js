@@ -39,7 +39,9 @@ function extract(url, cb) {
         url: url,
         features: {
             FetchExternalResources: ['script'],
-            ProcessExternalResources: ['script']
+            ProcessExternalResources: ['script'],
+            // only load respec, to avoid jsdom bugs
+            SkipExternalResources: /^((?!respec).)*$/
         },
         done: function(err, window) {
             if (err) return cb(err);
@@ -55,24 +57,69 @@ function extract(url, cb) {
                 window.respecConfig.postProcess.push(function() {
                     extractSimpleReferences(window.document, extractionRules.respec, cb);
                 });
+            } else if (window.document.getElementById('anolis-references')) {
+                extractSimpleReferences(window.document, extractionRules.anolis, cb);
             } else {
-                cb(new Error("Unrecognized generator of spec for " + url));
+                extractGenericReferences(window.document, cb);
             }
         }
     });
 }
 
-function extractSimpleReferences(doc, rules, cb) {
-    var extractReferencesFromList = function(referenceList) {
-        return [].map.call(referenceList.querySelectorAll("dt"), function(dt) {
-            var ref = {};
-            ref.name = dt.textContent.replace(/[\[\] \n]/g, '');
-            var desc = dt.nextSibling;
-            ref.url = desc.querySelector("a[href]").href;
-            return ref;
-        });
-    };
+function nextTag(node, name) {
+    var nextSibling = node.nextSibling;
+    while(nextSibling && nextSibling.tagName !== name.toUpperCase()) {
+        nextSibling = nextSibling.nextSibling;
+    }
+    return nextSibling;
+}
 
+function extractReferencesFromList(referenceList) {
+    return [].map.call(referenceList.querySelectorAll("dt"), function(dt) {
+        var ref = {};
+        ref.name = dt.textContent.replace(/[\[\] \n]/g, '');
+        var desc = nextTag(dt, "dd");
+        ref.url = desc.querySelector("a[href]") ? desc.querySelector("a[href]").href : "";
+        return ref;
+    });
+};
+
+function extractGenericReferences(doc, cb) {
+    var anchors = doc.querySelectorAll("h1, h2, h3");
+    var referenceHeadings = [].filter.call(anchors, a => a.textContent.match(/references/i));
+    if (!referenceHeadings.length) {
+        return cb(new Error("Could not detect a heading called \"references\" in document"));
+    }
+    if (referenceHeadings.length === 1) {
+        var list = nextTag(referenceHeadings[0], "dl");
+        if (!list) {
+            return cb(new Error("Could not find a reference list formatted with a dl"));
+        }
+        return cb(null, {normative: extractReferencesFromList(list)});
+    } else {
+        var normative = referenceHeadings.filter(h => h.textContent.match(/normative/i))[0];
+        var references = {};
+        if (normative) {
+            var nList = nextTag(normative, "dl");
+            if (nList) {
+                references.normative = extractReferencesFromList(nList);
+            }
+        }
+        var informative = referenceHeadings.filter(h => h.textContent.match(/informative/i))[0];
+        if (informative) {
+            var iList = nextTag(informative, "dl");
+            if (iList) {
+                references.informative = extractReferencesFromList(iList);
+            }
+        }
+        if (!informative && !normative) {
+            return cb(new Error("Could not detect references in document"));
+        }
+        cb(null, references);
+    }
+}
+
+function extractSimpleReferences(doc, rules, cb) {
     if (!rules) {
         return cb(new Error("No extraction rules specified"));
     }
