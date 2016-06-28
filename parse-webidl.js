@@ -56,7 +56,7 @@ function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, localNames, externa
             break;
         case "serializer":
         case "stringifier":
-        case "constant":
+        case "const":
             break;
         default:
             console.error("Unhandled IDL type: " + def.type);
