@@ -22,6 +22,7 @@ function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, localNames, externa
         switch(def.type) {
         case "interface":
         case "dictionary":
+        case "callback interface":
             parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, localNames, externalDependencies);
             break;
         case "enum":
@@ -33,6 +34,7 @@ function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, localNames, externa
             break;
         case "attribute":
         case "field":
+        case "iterable":
             parseType(def.idlType, idlNames, localNames, externalDependencies);
             break;
         case "implements":
@@ -47,8 +49,14 @@ function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, localNames, externa
             localNames[def.name] = def;
             def.arguments.forEach(a => parseType(a.idlType,  idlNames, localNames, externalDependencies));
             break;
-        case "serializer":
+        case "setlike":
         case "maplike":
+            console.log(def);
+            def.members.forEach(a => parseType(a.idlType, idlNames, localNames, externalDependencies));
+            break;
+        case "serializer":
+        case "stringifier":
+        case "constant":
             break;
         default:
             console.error("Unhandled IDL type: " + def.type);
@@ -72,7 +80,7 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, lo
                 idlNames[ea.rhs.value] = ea;
                 addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
              })
-        } else if (def.type !== "dictionary") {
+        } else if (def.type === "interface") {
             if (!def.extAttrs.filter(ea => ea.name === "NoInterfaceObject").length) {
                 addToJSContext(def.extAttrs, jsNames, def.name, "functions");
             }
