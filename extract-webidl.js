@@ -1,19 +1,31 @@
 var jsdom = require('jsdom');
 
 function extract(url, cb) {
-    jsdom.env(url, [],
-              function(err, window) {
-                  if (err) return cb(err);
-                  var generator = window.document.querySelector("meta[name='generator']");
-                  if (generator && generator.content.match(/bikeshed/i)) {
-                      return extractBikeshedIdl(window.document, cb);
-                  }
-                  if (window.document.getElementById('respecDocument')) {
-                      return extractRespecIdl(window.document, cb);
-                  }
-                  return cb(new Error("Unrecognized generator of spec for " + url));
-              }
-             );
+    jsdom.env({
+        url: url,
+        features: {
+            FetchExternalResources: ['script'],
+            ProcessExternalResources: ['script']
+        },
+        done: function(err, window) {
+            if (err) return cb(err);
+            var generator = window.document.querySelector("meta[name='generator']");
+            if (generator && generator.content.match(/bikeshed/i)) {
+                extractBikeshedIdl(window.document, cb);
+            } else if (window.document.getElementById('respecDocument')) {
+                extractRespecIdl(window.document, cb);
+            } else if (window.respecConfig) {
+                if (!window.respecConfig.postProcess) {
+                    window.respecConfig.postProcess = [];
+                }
+                window.respecConfig.postProcess.push(function() {
+                    extractRespecIdl(window.document, cb);
+                });
+            } else {
+                cb(new Error("Unrecognized generator of spec for " + url));
+            }
+        }
+    });
 }
 
 function extractBikeshedIdl(doc, cb) {
