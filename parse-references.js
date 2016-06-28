@@ -7,7 +7,29 @@ function extract(url, cb) {
                   if (err) return cb(err);
                   var generator = window.document.querySelector("meta[name='generator']");
                   if (generator && generator.content.match(/bikeshed/i)) {
-                      extractBikeshedReferences(window.document, cb);
+                      extractSimpleReferences(window.document, {
+                          generator: "Bikeshed",
+                          sectionId: {
+                              normative: "normative",
+                              informative: "informative"
+                          },
+                          listSelector: {
+                              normative: "#normative + dl",
+                              informative: "#informative + dl"
+                          }
+                      }, cb);
+                  } else if (window.document.body.id === "respecDocument") {
+                      extractSimpleReferences(window.document, {
+                          generator: "ReSpec",
+                          sectionId: {
+                              normative: "normative-references",
+                              informative: "informative-references"
+                          },
+                          listSelector: {
+                              normative: "#normative-references > dl",
+                              informative: "#informative-references > dl"
+                          }
+                      }, cb);
                   } else {
                       cb(new Error("Unrecognized generator of spec for " + url));
                   }
@@ -15,7 +37,7 @@ function extract(url, cb) {
              );
 }
 
-function extractBikeshedReferences(doc, cb) {
+function extractSimpleReferences(doc, rules, cb) {
     var extractReferencesFromList = function(referenceList) {
         return [].map.call(referenceList.querySelectorAll("dt"), function(dt) {
             var ref = {};
@@ -26,17 +48,34 @@ function extractBikeshedReferences(doc, cb) {
         });
     };
 
+    if (!rules) {
+        return cb(new Error("No extraction rules specified"));
+    }
+    if (!rules.sectionId ||
+        !rules.sectionId.normative ||
+        !rules.sectionId.informative) {
+        return cb(new Error("Extraction rules for references section are incorrect"));
+    }
+    if (!rules.listSelector ||
+        !rules.listSelector.normative ||
+        !rules.listSelector.informative) {
+        return cb(new Error("Extraction rules for the list of references are incorrect"));
+    }
+    var generator = rules.generator || "an unknown generator";
+
     var error = null;
     var references = {};
     ['normative', 'informative'].forEach(function(referenceType) {
         if (error) return;
-        var refHeading = doc.getElementById(referenceType);
+        var refHeading = doc.getElementById(rules.sectionId[referenceType]);
         if (!refHeading) {
-            error = new Error("Spec " + url + " is generated with bikeshed but does not have a '" + referenceType  + "' id");
+            error = new Error("Spec " + url + " is generated with " + generator + " but does not have a '" + rules.sectionId[referenceType]  + "' id");
+            return;
         }
-        var referenceList = doc.querySelector("#" + referenceType + " + dl");
+        var referenceList = doc.querySelector(rules.listSelector[referenceType]);
         if (!referenceList) {
-            error = new Error("Spec " + url + " is generated with bikeshed but does not have a definition list following the heading with id '" + referenceType + "'");
+            error = new Error("Spec " + url + " is generated with " + generator + " but does not have a definition list following the heading with id '" + rules.id[referenceType] + "'");
+            return;
         }
         references[referenceType] = extractReferencesFromList(referenceList);
     });
