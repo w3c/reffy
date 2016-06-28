@@ -1,33 +1,28 @@
 var jsdom = require('jsdom');
 
-var url = process.argv[2];
-if (!url) {
-    console.error("Required URL parameter missing");
-    process.exit(2);
+
+function extract(url, cb) {
+    jsdom.env(url, [],
+              function(err, window) {
+                  if (err) return cb(err);
+                  var generator = window.document.querySelector("meta[name='generator']");
+                  if (generator && generator.content.match(/bikeshed/i)) {
+                      extractBikeshedReferences(window.document, cb);
+                  } else {
+                      cb(new Error("Unrecognized generator of spec for " + url));
+                  }
+              }
+             );
 }
 
-jsdom.env(url, [],
-          function(err, window) {
-              var generator = window.document.querySelector("meta[name='generator']");
-              if (generator && generator.content.match(/bikeshed/i)) {
-                  extractBikeshedReferences(window.document);
-              } else {
-                  console.error("Unrecognized generator of spec for " + url);
-                  process.exit(64);
-              }
-          }
-);
-
-function extractBikeshedReferences(doc) {
+function extractBikeshedReferences(doc, cb) {
     var refHeading = doc.getElementById('normative');
     if (!refHeading) {
-        console.error("Spec " + url + " is generated with bikeshed but does not have a 'normative' id");
-        process.exit(64);
+        cb(new Error("Spec " + url + " is generated with bikeshed but does not have a 'normative' id"));
     }
     var referenceList = doc.querySelector("#normative + dl");
     if (!referenceList) {
-        console.error("Spec " + url + " is generated with bikeshed but does not have a definition list following the heading with id 'normative'");
-        process.exit(64);
+        cb(new Error("Spec " + url + " is generated with bikeshed but does not have a definition list following the heading with id 'normative'"));
     }
     var references = [];
     [].forEach.call(referenceList.querySelectorAll("dt"), function(dt) {
@@ -37,5 +32,22 @@ function extractBikeshedReferences(doc) {
         ref.url = desc.querySelector("a[href]").href;
         references.push(ref);
     });
-    console.log(JSON.stringify(references));
+    cb(null, references);
+}
+
+module.exports.extract = extract;
+
+if (require.main === module) {
+    var url = process.argv[2];
+    if (!url) {
+        console.error("Required URL parameter missing");
+        process.exit(2);
+    }
+    extract(url, function(err, references) {
+        if (err) {
+            console.error(err);
+            process.exit(64);
+        }
+        console.log(JSON.stringify(references));
+    });
 }
