@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "jsdom": "^9.3.0"
+    "jsdom": "^9.3.0",
+    "webidl2": "^2.0.11"
   }
 }
