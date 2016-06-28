@@ -34,7 +34,6 @@ function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, localNames, externa
             break;
         case "attribute":
         case "field":
-        case "iterable":
             parseType(def.idlType, idlNames, localNames, externalDependencies);
             break;
         case "implements":
@@ -49,10 +48,14 @@ function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, localNames, externa
             localNames[def.name] = def;
             def.arguments.forEach(a => parseType(a.idlType,  idlNames, localNames, externalDependencies));
             break;
+        case "iterable":
         case "setlike":
         case "maplike":
-            console.log(def);
-            def.members.forEach(a => parseType(a.idlType, idlNames, localNames, externalDependencies));
+            var type = def.idlType;
+            if (!Array.isArray(type)) {
+                type = [def.idlType];
+            }
+            type.forEach(a => parseType(a.idlType, idlNames, localNames, externalDependencies));
             break;
         case "serializer":
         case "stringifier":
