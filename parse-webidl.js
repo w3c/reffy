@@ -70,7 +70,10 @@ function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, localNames, externa
 
 function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, localNames, externalDependencies) {
     if (def.partial) {
-        idlExtendedNames[def.name] = def;
+        if (!idlExtendedNames[def.name]) {
+            idlExtendedNames[def.name] = [];
+        }
+        idlExtendedNames[def.name].push(def);
         addDependency(def.name, idlNames, externalDependencies);
     } else {
         if (def.inheritance) {
