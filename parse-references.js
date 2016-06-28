@@ -1,40 +1,56 @@
 var jsdom = require('jsdom');
 
+var extractionRules = {
+    bikeshed: {
+        generator: "Bikeshed",
+        sectionId: {
+            normative: "normative",
+            informative: "informative"
+        },
+        listSelector: {
+            normative: "#normative + dl",
+            informative: "#informative + dl"
+        }
+    },
+    respec: {
+        generator: "ReSpec",
+        sectionId: {
+            normative: "normative-references",
+            informative: "informative-references"
+        },
+        listSelector: {
+            normative: "#normative-references > dl",
+            informative: "#informative-references > dl"
+        }
+    }
+};
 
 function extract(url, cb) {
-    jsdom.env(url, [],
-              function(err, window) {
-                  if (err) return cb(err);
-                  var generator = window.document.querySelector("meta[name='generator']");
-                  if (generator && generator.content.match(/bikeshed/i)) {
-                      extractSimpleReferences(window.document, {
-                          generator: "Bikeshed",
-                          sectionId: {
-                              normative: "normative",
-                              informative: "informative"
-                          },
-                          listSelector: {
-                              normative: "#normative + dl",
-                              informative: "#informative + dl"
-                          }
-                      }, cb);
-                  } else if (window.document.body.id === "respecDocument") {
-                      extractSimpleReferences(window.document, {
-                          generator: "ReSpec",
-                          sectionId: {
-                              normative: "normative-references",
-                              informative: "informative-references"
-                          },
-                          listSelector: {
-                              normative: "#normative-references > dl",
-                              informative: "#informative-references > dl"
-                          }
-                      }, cb);
-                  } else {
-                      cb(new Error("Unrecognized generator of spec for " + url));
-                  }
-              }
-             );
+    jsdom.env({
+        url: url,
+        features: {
+            FetchExternalResources: ['script'],
+            ProcessExternalResources: ['script']
+        },
+        done: function(err, window) {
+            if (err) return cb(err);
+            var generator = window.document.querySelector("meta[name='generator']");
+            if (generator && generator.content.match(/bikeshed/i)) {
+                extractSimpleReferences(window.document, extractionRules.bikeshed, cb);
+            } else if (window.document.body.id === "respecDocument") {
+                extractSimpleReferences(window.document, extractionRules.respec, cb);
+            } else if (window.respecConfig) {
+                if (!window.respecConfig.postProcess) {
+                    window.respecConfig.postProcess = [];
+                }
+                window.respecConfig.postProcess.push(function() {
+                    extractSimpleReferences(window.document, extractionRules.respec, cb);
+                });
+            } else {
+                cb(new Error("Unrecognized generator of spec for " + url));
+            }
+        }
+    });
 }
 
 function extractSimpleReferences(doc, rules, cb) {
