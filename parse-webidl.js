@@ -63,7 +63,7 @@ function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, localNames, externa
         case "const":
             break;
         default:
-            console.error("Unhandled IDL type: " + def.type);
+            console.error("Unhandled IDL type: " + def.type + " in " +JSON.stringify(def));
         }
     };
 }
@@ -80,13 +80,13 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, lo
         if (def.extAttrs.filter(ea => ea.name === "Constructor").length) {
             addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
             def.extAttrs.filter(ea => ea.name === "Constructor").forEach(function(constructor) {
-                constructor.arguments.forEach(parseIdlAstTree(jsNames, idlNames, idlExtendedNames, localNames, externalDependencies));
+                constructor.arguments.forEach(a => parseType(a.idlType, idlNames, localNames, externalDependencies));
             });
         } else if (def.extAttrs.filter(ea => ea.name === "NamedConstructor").length) {
             def.extAttrs.filter(ea => ea.name === "NamedConstructor").forEach(function(constructor) {
                 idlNames[constructor.rhs.value] = constructor;
                 addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
-                constructor.arguments.forEach(parseIdlAstTree(jsNames, idlNames, idlExtendedNames, localNames, externalDependencies));
+                constructor.arguments.forEach(a => parseType(a.idlType, idlNames, localNames, externalDependencies));
             });
         } else if (def.type === "interface") {
             if (!def.extAttrs.filter(ea => ea.name === "NoInterfaceObject").length) {
