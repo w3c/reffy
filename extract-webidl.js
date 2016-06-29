@@ -15,7 +15,8 @@ var getDocumentAndGenerator = require('./util').getDocumentAndGenerator;
 function extract(url) {
     return loadSpecification(url)
         .then(getDocumentAndGenerator)
-        .then(function (doc, generator) {
+        .then(function (data) {
+            var doc = data.doc, generator = data.generator;
             if (generator === 'bikeshed') {
                 return extractBikeshedIdl(doc);
             }

@@ -49,7 +49,7 @@ function getDocumentAndGenerator(window) {
         var doc = window.document;
         var generator = window.document.querySelector("meta[name='generator']");
         if (generator && generator.content.match(/bikeshed/i)) {
-            resolve(doc, 'bikeshed');
+            resolve({doc, generator:'bikeshed'});
         } else if (doc.body.id === "respecDocument") {
             resolve(doc, 'respec');
         } else if (window.respecConfig) {
@@ -57,12 +57,12 @@ function getDocumentAndGenerator(window) {
                 window.respecConfig.postProcess = [];
             }
             window.respecConfig.postProcess.push(function() {
-                resolve(doc, 'respec');
+                resolve({doc, generator: 'respec'});
             });
         } else if (doc.getElementById('anolis-references')) {
-            resolve(doc, 'anolis');
+            resolve({doc, generator: 'anolis'});
         } else {
-            resolve(doc);
+            resolve({doc});
         }
     });
 }
