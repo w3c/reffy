@@ -73,6 +73,15 @@ function extractRespecIdl(doc) {
         for (var i = 0 ; i < idlNodes.length; i++) {
             idl += "\n" + idlNodes[i].textContent;
         }
+
+        // Try another pattern if the IDL content extract
+        // is still empty
+        if (idl === "") {
+            idlNodes = doc.querySelectorAll("pre > code.idl-code");
+            for (var i = 0 ; i < idlNodes.length; i++) {
+                idl += "\n" + idlNodes[i].textContent;
+            }
+        }
         resolve(idl);
     });
 }
