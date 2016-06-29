@@ -74,14 +74,16 @@ function nextTag(node, name) {
     return nextSibling;
 }
 
-function parseReferences(referenceList) {
+function parseReferences(referenceList, options) {
     var defaultRef = [], informativeRef = [];
+    options = options || {};
     [].forEach.call(referenceList.querySelectorAll("dt"), function(dt) {
         var ref = {};
         ref.name = dt.textContent.replace(/[\[\] \n]/g, '');
         var desc = nextTag(dt, "dd");
         ref.url = desc.querySelector("a[href]") ? desc.querySelector("a[href]").href : "";
-        if (desc.textContent.match(/non-normative/i)) {
+        if (options.filterInformative &&
+            desc.textContent.match(/non-normative/i)) {
             return informativeRef.push(ref);
         }
         defaultRef.push(ref);
@@ -100,7 +102,7 @@ function extractReferencesWithoutRules(doc, cb) {
         if (!list) {
             return cb(new Error("Could not find a reference list formatted with a dl"));
         }
-        var refs = parseReferences(list);
+        var refs = parseReferences(list, { filterInformative: true });
         return cb(null, {normative: refs[0], informative: refs[1]});
     } else {
         var normative = referenceHeadings.filter(h => h.textContent.match(/normative/i))[0];
@@ -156,7 +158,9 @@ function extractReferences(doc, rules, cb) {
             error = new Error("Spec " + url + " is generated with " + generator + " but does not have a definition list following the heading with id '" + rules.id[referenceType] + "'");
             return;
         }
-        var refs = parseReferences(referenceList);
+        var refs = parseReferences(referenceList, {
+            filterInformative: (referenceType === 'normative')
+        });
         references[referenceType] = refs[0];
         if (referenceType === "normative") {
             references.informative = refs[1];
