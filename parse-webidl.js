@@ -3,7 +3,7 @@ var WebIDL2 = require("webidl2");
 function parse(idl, cb) {
     var idlTree;
     var jsNames = {constructors: {}, functions: {}, objects:{}};
-    var idlNames = {};
+    var idlNames = {_dependencies: {}};
     var idlExtendedNames = {};
     var localNames= {};
     var externalDependencies = [];
@@ -17,7 +17,7 @@ function parse(idl, cb) {
     cb(null, {jsNames, idlNames, idlExtendedNames, localNames, externalDependencies});
 }
 
-function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, localNames, externalDependencies) {
+function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, localNames, externalDependencies, contextName) {
     return function (def) {
         switch(def.type) {
         case "interface":
@@ -30,16 +30,20 @@ function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, localNames, externa
             break;
         case "operation":
             if (def.stringifier) return;
-            parseType(def.idlType, idlNames, localNames, externalDependencies);
-            def.arguments.forEach(a => parseType(a.idlType,  idlNames, localNames, externalDependencies));
+            parseType(def.idlType, idlNames, localNames, externalDependencies, contextName);
+            def.arguments.forEach(a => parseType(a.idlType,  idlNames, localNames, externalDependencies, contextName));
             break;
         case "attribute":
         case "field":
-            parseType(def.idlType, idlNames, localNames, externalDependencies);
+            parseType(def.idlType, idlNames, localNames, externalDependencies, contextName);
             break;
         case "implements":
             parseType(def.target, idlNames, localNames, externalDependencies);
             parseType(def.implements, idlNames, localNames, externalDependencies);
+            if (!idlNames._dependencies[def.target]) {
+                idlNames._dependencies[def.target] = [];
+            }
+            addDependency(def.implements, {}, idlNames._dependencies[def.target]);
             break;
         case "typedef":
             parseType(def.idlType, idlNames, localNames, externalDependencies);
@@ -56,7 +60,7 @@ function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, localNames, externa
             if (!Array.isArray(type)) {
                 type = [def.idlType];
             }
-            type.forEach(a => parseType(a.idlType, idlNames, localNames, externalDependencies));
+            type.forEach(a => parseType(a.idlType, idlNames, localNames, externalDependencies, contextName));
             break;
         case "serializer":
         case "stringifier":
@@ -69,6 +73,9 @@ function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, localNames, externa
 }
 
 function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, localNames, externalDependencies) {
+    if (!idlNames._dependencies[def.name]) {
+        idlNames._dependencies[def.name] = [];
+    }
     if (def.partial) {
         if (!idlExtendedNames[def.name]) {
             idlExtendedNames[def.name] = [];
@@ -78,6 +85,7 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, lo
     } else {
         if (def.inheritance) {
             addDependency(def.inheritance, idlNames, externalDependencies);
+            addDependency(def.inheritance, {}, idlNames._dependencies[def.name]);
         }
         idlNames[def.name] = def;
         if (def.extAttrs.filter(ea => ea.name === "Constructor").length) {
@@ -97,7 +105,7 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, lo
             }
         }
     }
-    def.members.forEach(parseIdlAstTree(jsNames, idlNames, idlExtendedNames, localNames, externalDependencies));
+    def.members.forEach(parseIdlAstTree(jsNames, idlNames, idlExtendedNames, localNames, externalDependencies, def.name));
 }
 
 function addToJSContext(eas, jsNames, name, type) {
@@ -114,7 +122,7 @@ function addToJSContext(eas, jsNames, name, type) {
     contexts.forEach(c => { if (!jsNames[type][c]) jsNames[type][c] = []; jsNames[type][c].push(name)});
 }
 
-function parseType(idltype, idlNames, localNames, externalDependencies) {
+function parseType(idltype, idlNames, localNames, externalDependencies, contextName) {
     if (idltype.union) {
         idltype.idlType.forEach(t => parseType(t, idlNames, localNames, externalDependencies));
         return;
@@ -128,6 +136,9 @@ function parseType(idltype, idlNames, localNames, externalDependencies) {
                           "ArrayBufferView", "BufferSource", "DOMTimeStamp", "Function", "VoidFunction"];
     if (wellKnownTypes.indexOf(idltype.idlType) === -1) {
         addDependency(idltype.idlType, idlNames, externalDependencies);
+        if (contextName) {
+            addDependency(idltype.idlType, {}, idlNames._dependencies[contextName]);
+        }
     }
 }
 
