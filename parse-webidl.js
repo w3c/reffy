@@ -143,13 +143,17 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, lo
         if (def.extAttrs.filter(ea => ea.name === "Constructor").length) {
             addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
             def.extAttrs.filter(ea => ea.name === "Constructor").forEach(function(constructor) {
-                constructor.arguments.forEach(a => parseType(a.idlType, idlNames, localNames, externalDependencies));
+                if (constructor.arguments) {
+                    constructor.arguments.forEach(a => parseType(a.idlType, idlNames, localNames, externalDependencies));
+                }
             });
         } else if (def.extAttrs.filter(ea => ea.name === "NamedConstructor").length) {
             def.extAttrs.filter(ea => ea.name === "NamedConstructor").forEach(function(constructor) {
                 idlNames[constructor.rhs.value] = constructor;
                 addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
-                constructor.arguments.forEach(a => parseType(a.idlType, idlNames, localNames, externalDependencies));
+                if (constructor.arguments) {
+                    constructor.arguments.forEach(a => parseType(a.idlType, idlNames, localNames, externalDependencies));
+                }
             });
         } else if (def.type === "interface") {
             if (!def.extAttrs.filter(ea => ea.name === "NoInterfaceObject").length) {
@@ -279,7 +283,7 @@ if (require.main === module) {
             console.log(JSON.stringify(data, null, 2));
         })
         .catch(function (err) {
-            console.error(err);
+            console.error(err.stack);
             process.exit(64);
         });
 }
