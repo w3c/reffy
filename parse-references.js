@@ -22,7 +22,16 @@ var extractionRules = {
             normative: "#normative-references > dl",
             informative: "#informative-references > dl"
         }
-    }
+    },
+    anolis: {
+        generator: "Anolis",
+        sectionId: {
+            normative: "anolis-references"
+        },
+        listSelector: {
+            normative: "#anolis-references > dl"
+        }
+    },
 };
 
 function extract(url, cb) {
@@ -30,51 +39,102 @@ function extract(url, cb) {
         url: url,
         features: {
             FetchExternalResources: ['script'],
-            ProcessExternalResources: ['script']
+            ProcessExternalResources: ['script'],
+            // only load respec, to avoid jsdom bugs
+            SkipExternalResources: /^((?!respec).)*$/
         },
         done: function(err, window) {
             if (err) return cb(err);
             var generator = window.document.querySelector("meta[name='generator']");
             if (generator && generator.content.match(/bikeshed/i)) {
-                extractSimpleReferences(window.document, extractionRules.bikeshed, cb);
+                extractReferences(window.document, extractionRules.bikeshed, cb);
             } else if (window.document.body.id === "respecDocument") {
-                extractSimpleReferences(window.document, extractionRules.respec, cb);
+                extractReferences(window.document, extractionRules.respec, cb);
             } else if (window.respecConfig) {
                 if (!window.respecConfig.postProcess) {
                     window.respecConfig.postProcess = [];
                 }
                 window.respecConfig.postProcess.push(function() {
-                    extractSimpleReferences(window.document, extractionRules.respec, cb);
+                    extractReferences(window.document, extractionRules.respec, cb);
                 });
+            } else if (window.document.getElementById('anolis-references')) {
+                extractReferences(window.document, extractionRules.anolis, cb);
             } else {
-                cb(new Error("Unrecognized generator of spec for " + url));
+                extractReferences(window.document, null, cb);
             }
         }
     });
 }
 
-function extractSimpleReferences(doc, rules, cb) {
-    var extractReferencesFromList = function(referenceList) {
-        return [].map.call(referenceList.querySelectorAll("dt"), function(dt) {
-            var ref = {};
-            ref.name = dt.textContent.replace(/[\[\] \n]/g, '');
-            var desc = dt.nextSibling;
-            ref.url = desc.querySelector("a[href]").href;
-            return ref;
-        });
-    };
+function nextTag(node, name) {
+    var nextSibling = node.nextSibling;
+    while(nextSibling && nextSibling.tagName !== name.toUpperCase()) {
+        nextSibling = nextSibling.nextSibling;
+    }
+    return nextSibling;
+}
 
+function parseReferences(referenceList) {
+    var defaultRef = [], informativeRef = [];
+    [].forEach.call(referenceList.querySelectorAll("dt"), function(dt) {
+        var ref = {};
+        ref.name = dt.textContent.replace(/[\[\] \n]/g, '');
+        var desc = nextTag(dt, "dd");
+        ref.url = desc.querySelector("a[href]") ? desc.querySelector("a[href]").href : "";
+        if (desc.textContent.match(/non-normative/i)) {
+            return informativeRef.push(ref);
+        }
+        defaultRef.push(ref);
+    });
+    return [defaultRef, informativeRef];
+};
+
+function extractReferencesWithoutRules(doc, cb) {
+    var anchors = doc.querySelectorAll("h1, h2, h3");
+    var referenceHeadings = [].filter.call(anchors, a => a.textContent.match(/references/i));
+    if (!referenceHeadings.length) {
+        return cb(new Error("Could not detect a heading called \"references\" in document"));
+    }
+    if (referenceHeadings.length === 1) {
+        var list = nextTag(referenceHeadings[0], "dl");
+        if (!list) {
+            return cb(new Error("Could not find a reference list formatted with a dl"));
+        }
+        var refs = parseReferences(list);
+        return cb(null, {normative: refs[0], informative: refs[1]});
+    } else {
+        var normative = referenceHeadings.filter(h => h.textContent.match(/normative/i))[0];
+        var references = {};
+        if (normative) {
+            var nList = nextTag(normative, "dl");
+            if (nList) {
+                references.normative = parseReferences(nList)[0];
+            }
+        }
+        var informative = referenceHeadings.filter(h => h.textContent.match(/informative/i))[0];
+        if (informative) {
+            var iList = nextTag(informative, "dl");
+            if (iList) {
+                references.informative = parseReferences(iList)[0];
+            }
+        }
+        if (!informative && !normative) {
+            return cb(new Error("Could not detect references in document"));
+        }
+        cb(null, references);
+    }
+}
+
+function extractReferences(doc, rules, cb) {
     if (!rules) {
-        return cb(new Error("No extraction rules specified"));
+        return extractReferencesWithoutRules(doc, cb);
     }
     if (!rules.sectionId ||
-        !rules.sectionId.normative ||
-        !rules.sectionId.informative) {
+        !rules.sectionId.normative) {
         return cb(new Error("Extraction rules for references section are incorrect"));
     }
     if (!rules.listSelector ||
-        !rules.listSelector.normative ||
-        !rules.listSelector.informative) {
+        !rules.listSelector.normative) {
         return cb(new Error("Extraction rules for the list of references are incorrect"));
     }
     var generator = rules.generator || "an unknown generator";
@@ -85,6 +145,9 @@ function extractSimpleReferences(doc, rules, cb) {
         if (error) return;
         var refHeading = doc.getElementById(rules.sectionId[referenceType]);
         if (!refHeading) {
+            if (referenceType === 'informative') {
+                return;
+            }
             error = new Error("Spec " + url + " is generated with " + generator + " but does not have a '" + rules.sectionId[referenceType]  + "' id");
             return;
         }
@@ -93,7 +156,11 @@ function extractSimpleReferences(doc, rules, cb) {
             error = new Error("Spec " + url + " is generated with " + generator + " but does not have a definition list following the heading with id '" + rules.id[referenceType] + "'");
             return;
         }
-        references[referenceType] = extractReferencesFromList(referenceList);
+        var refs = parseReferences(referenceList);
+        references[referenceType] = refs[0];
+        if (referenceType === "normative") {
+            references.informative = refs[1];
+        }
     });
 
     if (error) {
