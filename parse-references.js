@@ -32,7 +32,8 @@ function extract(url) {
  * @return {Promise} The promise to get a document and relevant extraction rules
  *   (or null if no rules seem to apply).
  */
-function getExtractionRules(doc, generator) {
+function getExtractionRules(data) {
+    var doc = data.doc, generator = data.generator;
     var extractionRules = {
         bikeshed: {
             generator: "Bikeshed",
@@ -69,7 +70,7 @@ function getExtractionRules(doc, generator) {
 
     return new Promise(function (resolve, reject) {
         var rules = (generator ? extractionRules[generator] : null);
-        resolve(doc, rules);
+        resolve({doc, rules});
     });
 }
 
@@ -181,7 +182,8 @@ function extractReferencesWithoutRules(doc) {
  * @param {Object} rules Extraction rules to use
  * @return {Promise} The promise to get a list of references.
  */
-function extractReferences(doc, rules) {
+function extractReferences(data) {
+    var doc = data.doc, rules = data.rules;
     if (!rules) {
         return extractReferencesWithoutRules(doc);
     }

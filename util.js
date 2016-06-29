@@ -50,7 +50,7 @@ function getDocumentAndGenerator(window) {
         var generator = window.document.querySelector("meta[name='generator']");
         var timeout = null;
         if (generator && generator.content.match(/bikeshed/i)) {
-            resolve(doc, 'bikeshed');
+            resolve({doc, generator:'bikeshed'});
         } else if (doc.body.id === "respecDocument") {
             resolve(doc, 'respec');
         } else if (window.respecConfig &&
@@ -62,15 +62,15 @@ function getDocumentAndGenerator(window) {
                 if (timeout) {
                     clearTimeout(timeout);
                 }
-                resolve(doc, 'respec');
+                resolve({doc, generator: 'respec'});
             });
             timeout = setTimeout(function () {
               reject(new Error('Specification apparently uses ReSpec but document generation timed out'));
             }, 30000);
         } else if (doc.getElementById('anolis-references')) {
-            resolve(doc, 'anolis');
+            resolve({doc, generator: 'anolis'});
         } else {
-            resolve(doc);
+            resolve({doc});
         }
     });
 }
