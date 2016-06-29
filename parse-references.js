@@ -1,4 +1,3 @@
-var jsdom = require('jsdom');
 var loadSpecification = require('./util').loadSpecification;
 var getDocumentAndGenerator = require('./util').getDocumentAndGenerator;
 
