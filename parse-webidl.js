@@ -100,7 +100,7 @@ function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, localNames, externa
             if (!Array.isArray(type)) {
                 type = [def.idlType];
             }
-            type.forEach(a => parseType(a.idlType, idlNames, localNames, externalDependencies, contextName));
+            type.forEach(a => parseType(a, idlNames, localNames, externalDependencies, contextName));
             break;
         case "serializer":
         case "stringifier":
@@ -198,6 +198,14 @@ function addToJSContext(eas, jsNames, name, type) {
  * @return {void} The function updates externalDependencies
  */
 function parseType(idltype, idlNames, localNames, externalDependencies, contextName) {
+    // For some reasons, webidl2 sometimes returns the name of the IDL type
+    // instead of an IDL construct for array constructs. For example:
+    //  Constructor(DOMString[] urls) interface toto;
+    // ... will create an array IDL node that directly point to "DOMString" and
+    // not to a node that describes the "DOMString" type.
+    if (isString(idltype)) {
+        idltype = { idlType: 'DOMString' };
+    }
     if (idltype.union) {
         idltype.idlType.forEach(t => parseType(t, idlNames, localNames, externalDependencies));
         return;
@@ -215,6 +223,19 @@ function parseType(idltype, idlNames, localNames, externalDependencies, contextN
             addDependency(idltype.idlType, {}, idlNames._dependencies[contextName]);
         }
     }
+}
+
+
+/**
+ * Returns true if given object is a String
+ *
+ * @function
+ * @private
+ * @param {any} obj The object to test
+ * @return {bool} true is object is a String, false otherwise
+ */
+function isString(obj) {
+    return Object.prototype.toString.call(obj) === '[object String]';
 }
 
 
