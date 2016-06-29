@@ -48,17 +48,25 @@ function getDocumentAndGenerator(window) {
     return new Promise(function (resolve, reject) {
         var doc = window.document;
         var generator = window.document.querySelector("meta[name='generator']");
+        var timeout = null;
         if (generator && generator.content.match(/bikeshed/i)) {
             resolve(doc, 'bikeshed');
         } else if (doc.body.id === "respecDocument") {
             resolve(doc, 'respec');
-        } else if (window.respecConfig) {
+        } else if (window.respecConfig &&
+            window.document.head.querySelector("script[src*='respec']")) {
             if (!window.respecConfig.postProcess) {
                 window.respecConfig.postProcess = [];
             }
             window.respecConfig.postProcess.push(function() {
+                if (timeout) {
+                    clearTimeout(timeout);
+                }
                 resolve(doc, 'respec');
             });
+            timeout = setTimeout(function () {
+              reject(new Error('Specification apparently uses ReSpec but document generation timed out'));
+            }, 30000);
         } else if (doc.getElementById('anolis-references')) {
             resolve(doc, 'anolis');
         } else {
