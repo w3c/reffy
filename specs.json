@@ -1,4 +1,7 @@
-["http://www.w3.org/TR/2016/REC-webstorage-20160419/",
+[
+    "https://www.w3.org/TR/html51/single-page.html",
+    "http://www.w3.org/TR/2015/REC-2dcontext-20151119/",
+  "http://www.w3.org/TR/2016/REC-webstorage-20160419/",
 "http://www.w3.org/TR/2015/REC-notifications-20151022/",
 "http://www.w3.org/TR/2015/REC-webmessaging-20150519/",
 "http://www.w3.org/TR/2015/REC-pointerevents-20150224/",
