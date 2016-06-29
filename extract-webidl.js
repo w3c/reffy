@@ -22,7 +22,8 @@ function extract(url, cb) {
                     extractRespecIdl(window.document, cb);
                 });
             } else {
-                cb(new Error("Unrecognized generator of spec for " + url));
+                // The respec convention is the one used by other specs in general
+                extractRespecIdl(window.document, cb);
             }
         }
     });
