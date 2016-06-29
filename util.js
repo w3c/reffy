@@ -52,7 +52,7 @@ function getDocumentAndGenerator(window) {
         if (generator && generator.content.match(/bikeshed/i)) {
             resolve({doc, generator:'bikeshed'});
         } else if (doc.body.id === "respecDocument") {
-            resolve(doc, 'respec');
+            resolve({doc, generator:'respec'});
         } else if (window.respecConfig &&
             window.document.head.querySelector("script[src*='respec']")) {
             if (!window.respecConfig.postProcess) {
