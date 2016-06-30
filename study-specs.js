@@ -24,8 +24,8 @@ function processResults(results) {
     write('==============================================');
     results
         .filter(r => ((Object.keys(r.idl).length === 0) ||
-            !r.idl.idlNames ||
-            ((Object.keys(r.idl.idlNames).length === 1) && (Object.keys(r.idl.idlExtendedNames).length === 0))))
+            (!r.idl.idlNames && !r.idl.message) ||
+            (r.idl.idlNames && (Object.keys(r.idl.idlNames).length === 1) && (Object.keys(r.idl.idlExtendedNames).length === 0))))
         .forEach(r => {
             count += 1;
             write(r.url)
@@ -33,8 +33,26 @@ function processResults(results) {
     write();
     write('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
     write();
-    write('NB: specifications that invalid IDL are included in that list!');
     write();
+
+
+    count = 0;
+    write('List of specifications with invalid IDL content')
+    write('===============================================');
+    results
+        .filter(r => (!r.idl.idlNames && r.idl.message))
+        .forEach(r => {
+            count += 1;
+            write(r.url)
+        });
+    write();
+    write('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
+    write();
+    write('NB: this may be due to WebIDL having evolved in the meantime');
+    write();
+    write();
+
+
 
     count = 0;
     write('List of IDL names not defined in the specifications crawled');
