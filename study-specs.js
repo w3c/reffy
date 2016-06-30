@@ -3,69 +3,72 @@ var array_unique = (n, i, a) => a.indexOf(n) === i;
 
 function processResults(results) {
     var count = 0;
-    var write = console.log.bind(console);
+    var w = console.log.bind(console);
 
-    write('Specifications crawled');
-    write('======================');
+    w('# Reffy crawl report');
+    w();
+
+    w('## Specifications crawled');
+    w();
     count = results.length;
-    write('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' crawled');
-    write();
-    write();
+    w('- ' + count + ' specification' + ((count > 1) ? 's' : '') + ' crawled');
+    w();
+    w();
 
     count = 0;
-    write('List of specifications without normative dependencies');
-    write('=====================================================');
+    w('## List of specifications without normative dependencies');
+    w();
     results
         .filter(r => (!r.refs.normative || (r.refs.normative.length === 0)))
         .forEach(r => {
             count += 1;
-            write(r.url)
+            w('- [' + r.title + '](' + (r.latest || r.url) + ')');
         });
-    write();
-    write('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
-    write();
-    write('NB: it may be normal!');
-    write();
-    write();
+    w();
+    w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
+    w();
+    w('**NB:** it may be normal!');
+    w();
+    w();
 
     count = 0;
-    write('List of specifications without IDL definitions')
-    write('==============================================');
+    w('## List of specifications without IDL definitions');
+    w();
     results
         .filter(r => ((Object.keys(r.idl).length === 0) ||
             (!r.idl.idlNames && !r.idl.message) ||
             (r.idl.idlNames && (Object.keys(r.idl.idlNames).length === 1) && (Object.keys(r.idl.idlExtendedNames).length === 0))))
         .forEach(r => {
             count += 1;
-            write(r.url)
+            w('- [' + r.title + '](' + (r.latest || r.url) + ')');
         });
-    write();
-    write('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
-    write();
-    write();
+    w();
+    w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
+    w();
+    w();
 
 
     count = 0;
-    write('List of specifications with invalid IDL content')
-    write('===============================================');
+    w('## List of specifications with invalid IDL content');
+    w();
     results
         .filter(r => (!r.idl.idlNames && r.idl.message))
         .forEach(r => {
             count += 1;
-            write(r.url)
+            w('- [' + r.title + '](' + (r.latest || r.url) + ')');
         });
-    write();
-    write('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
-    write();
-    write('NB: this may be due to WebIDL having evolved in the meantime');
-    write();
-    write();
+    w();
+    w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
+    w();
+    w('**NB:** this may be due to WebIDL having evolved in the meantime');
+    w();
+    w();
 
 
 
     count = 0;
-    write('List of IDL names not defined in the specifications crawled');
-    write('===========================================================');
+    w('## List of IDL names not defined in the specifications crawled');
+    w();
     var idlNames = results
         .map(r => r.idl && r.idl.idlNames ? Object.keys(r.idl.idlNames).filter(n => n !== "_dependencies") : [], [])
         .reduce(array_concat)
@@ -75,24 +78,25 @@ function processResults(results) {
         .filter(array_unique);
     var diff = idlDeps.filter(n => idlNames.indexOf(n) === -1);
     count = diff.length;
-    diff.forEach(idlName => write(idlName));
-    write();
-    write('=> ' + count + ' IDL name' + ((count > 1) ? 's' : '') + ' found');
-    write();
-    write('NB: some of them are likely type errors in specs');
-    write('(e.g. "int" does not exist, "Array" cannot be used on its own, etc.)');
-    write();
-    write();
+    diff.forEach(idlName => w('- ' + idlName));
+    w();
+    w('=> ' + count + ' IDL name' + ((count > 1) ? 's' : '') + ' found');
+    w();
+    w('NB: some of them are likely type errors in specs');
+    w('(e.g. "int" does not exist, "Array" cannot be used on its own, etc.)');
+    w();
+    w();
 
     count = 0;
-    write('List of IDL names defined in more than one spec');
-    write('===============================================');
+    w('## List of IDL names defined in more than one spec');
+    w();
     var dup = idlNames.filter((n, i, a) => a.indexOf(n) !== i);
     count = dup.length;
-    dup.forEach(idlName => write(idlName));
-    write();
-    write('=> ' + count + ' IDL name' + ((count > 1) ? 's' : '') + ' found');
+    dup.forEach(idlName => w('- ' + idlName));
+    w();
+    w('=> ' + count + ' IDL name' + ((count > 1) ? 's' : '') + ' found');
 }
+
 
 /**************************************************
 Code run if the code is run as a stand-alone module
