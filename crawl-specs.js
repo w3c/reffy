@@ -42,9 +42,10 @@ function crawlList(speclist) {
             dom => Promise.all([
                 url,
                 refParser.extract(dom).catch(err => err),
-                webidlExtractor.extract(dom).then(idl => webidlParser.parse(idl)).catch(err => err)
+                webidlExtractor.extract(dom).then(idl => webidlParser.parse(idl)).catch(err => err),
+                dom
                     ]))
-            .then(res => { return { url: res[0], refs: res[1], idl: res[2]};});
+            .then(res => { res[3].close(); return { url: res[0], refs: res[1], idl: res[2]};});
     }
 
     return Promise.all(speclist.map(getRefAndIdl));
