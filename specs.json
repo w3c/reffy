@@ -79,5 +79,6 @@
  "https://mediasession.spec.whatwg.org/",
  "https://encoding.spec.whatwg.org/",
  "https://fetch.spec.whatwg.org/",
- "https://streams.spec.whatwg.org/"
+    "https://streams.spec.whatwg.org/",
+    "https://www.khronos.org/registry/webgl/specs/latest/1.0/"
 ]
