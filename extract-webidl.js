@@ -61,6 +61,9 @@ function extractBikeshedIdl(doc) {
  * Extract the IDL definitions from a ReSpec spec, and in practice from
  * most other specs as well.
  *
+ * The function tries a few patterns from the most common to the least used
+ * one and stops as soon at one pattern matches.
+ *
  * @function
  * @private
  * @param {Document} doc
@@ -68,20 +71,18 @@ function extractBikeshedIdl(doc) {
  */
 function extractRespecIdl(doc) {
     return new Promise(function (resolve, reject) {
-        var idlNodes = doc.querySelectorAll("pre.idl");
         var idl = "";
-        for (var i = 0 ; i < idlNodes.length; i++) {
-            idl += "\n" + idlNodes[i].textContent;
-        }
+        ["pre.idl", "pre > code.idl-code", "div.idl-code > pre"]
+            .find(sel => {
+                var idlNodes = doc.querySelectorAll(sel);
+                for (var i = 0 ; i < idlNodes.length; i++) {
+                    idl += "\n" + idlNodes[i].textContent;
+                }
+                if (idl) {
+                    return true;
+                }
+            });
 
-        // Try another pattern if the IDL content extract
-        // is still empty
-        if (idl === "") {
-            idlNodes = doc.querySelectorAll("pre > code.idl-code");
-            for (var i = 0 ; i < idlNodes.length; i++) {
-                idl += "\n" + idlNodes[i].textContent;
-            }
-        }
         resolve(idl);
     });
 }

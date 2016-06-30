@@ -16,8 +16,22 @@ function loadSpecification(url) {
             features: {
                 FetchExternalResources: ['script'],
                 ProcessExternalResources: ['script'],
-                // only load respec, to avoid jsdom bugs
-                SkipExternalResources: /^((?!respec).)*$/
+                SkipExternalResources: false
+            },
+            resourceLoader: function (resource, callback) {
+                // Restrict resource loading to ReSpec and script resources
+                // that sit next to the spec under test, excluding scripts
+                // of WebIDL as well as the WHATWG annotate_spec script that
+                // jsdom does not seem to like
+                if (/\/respec\//i.test(resource.url.path) ||
+                    (resource.url.href.startsWith(resource.baseUrl) &&
+                        !(/annotate_spec/i.test(resource.url.pathname)) &&
+                        !(/^\/webidl\//i.test(resource.url.pathname)))) {
+                    return resource.defaultFetch(callback);
+                }
+                else {
+                    return callback(null, '');
+                }
             },
             done: function(err, window) {
                 if (err) {
@@ -25,6 +39,7 @@ function loadSpecification(url) {
                 }
                 return resolve(window);
             }
+            /*,virtualConsole: jsdom.createVirtualConsole().sendTo(console)*/
         });
     });
 }
