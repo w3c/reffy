@@ -29,7 +29,7 @@ function getLatest(shortname) {
     if (shortname.match(/^http/)) {
         return shortname;
     }
-    var bogusEditorDraft = ["webmessaging", "eventsource", "webstorage"];
+    var bogusEditorDraft = ["webmessaging", "eventsource", "webstorage", "progress-events"];
     var unparseableEditorDraft = ["image-capture", "requestidlecallback", "performance-timeline-2"];
     if (bogusEditorDraft.indexOf(shortname) !== -1
         || unparseableEditorDraft.indexOf(shortname) !== -1) {
