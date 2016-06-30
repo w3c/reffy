@@ -1,7 +1,9 @@
 var refParser = require('./parse-references');
 var webidlExtractor = require('./extract-webidl');
+var loadSpecification = require('./util').loadSpecification;
 var webidlParser = require('./parse-webidl');
 var fetch = require('node-fetch');
+var fs = require('fs');
 
 function getShortname(url) {
     if (!url.match(/www.w3.org\/TR\//)) {
@@ -35,14 +37,42 @@ function latestSpec(list) {
 
 function crawlList(speclist) {
     function getRefAndIdl(url) {
-        return Promise.all([
-            url,
-            refParser.extract(url).catch(err => err),
-            webidlExtractor.extract(url).then(idl => webidlParser.parse(idl)).catch(err => err)
-                ]).then(res => { return { url: res[0], refs: res[1], idl: res[2]};});
+        return loadSpecification(url).then(
+            dom => Promise.all([
+                url,
+                refParser.extract(dom).catch(err => err),
+                webidlExtractor.extract(dom).then(idl => webidlParser.parse(idl)).catch(err => err)
+                    ]))
+            .then(res => { return { url: res[0], refs: res[1], idl: res[2]};});
     }
 
     return Promise.all(speclist.map(getRefAndIdl));
+}
+
+function saveResults(data, path) {
+    return new Promise((resolve, reject) => {
+        fs.readFile(path, function(err, content) {
+            if (err) return reject(err);
+            var existingdata = [];
+            try {
+                existingdata = JSON.parse(content);
+            } catch (e) {}
+            var newdata = existingdata.concat(data);
+            fs.writeFile(path, JSON.stringify(newdata, null, 2),
+                         err => { if (err) return reject(err); resolve();});
+        });
+    });
+}
+
+function processChunk(list, remain, resultsPath) {
+    return latestSpec(list)
+        .then(crawlList)
+        .then(data => saveResults(data, resultsPath))
+        .then(() => {
+            if (remain.length) {
+                return processChunk(remain.splice(0,10), remain, resultsPath);
+            }
+        });
 }
 
 /**************************************************
@@ -56,7 +86,8 @@ Code run if the code is run as a stand-alone module
 **************************************************/
 if (require.main === module) {
     var speclistPath = process.argv[2];
-    if (!speclistPath) {
+    var resultsPath = process.argv[3];
+    if (!speclistPath || !resultsPath) {
         console.error("Required filename parameter missing");
         process.exit(2);
     }
@@ -67,10 +98,17 @@ if (require.main === module) {
         console.error("Impossible to read " + speclistPath + ": " + e);
         process.exit(3);
     }
-    latestSpec(speclist)
-        .then(crawlList)
+    try {
+        fs.writeFileSync(resultsPath, "");
+    } catch (e) {
+        console.error("Impossible to write to " + resultsPath + ": " + e);
+        process.exit(3);
+    }
+    // splitting list to avoid memory exhaustion
+    var sublist = speclist.splice(0, 10);
+    processChunk(sublist, speclist, resultsPath)
         .then(function (data) {
-            console.log(JSON.stringify(data, null, 2));
+            console.log("Finished");
         })
         .catch(function (err) {
             console.error(err);
