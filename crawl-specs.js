@@ -28,7 +28,8 @@ function getLatest(shortname) {
         .then(r =>  r.json())
         .then(s => fetch(s._links["latest-version"].href + authParam))
         .then(r =>  r.json())
-        .then(s => s["editor-draft"] ? s["editor-draft"] : s.uri);
+        .then(s => s["editor-draft"] ? s["editor-draft"] : s.uri)
+        .catch(e =>  "http://www.w3.org/TR/" + shortname);
 }
 
 function latestSpec(list) {
