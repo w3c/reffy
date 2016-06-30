@@ -1,5 +1,5 @@
 [
-    "https://www.w3.org/TR/html51/single-page.html",
+    "https://w3c.github.io/html/single-page.html",
     "http://www.w3.org/TR/2015/REC-2dcontext-20151119/",
   "http://www.w3.org/TR/2016/REC-webstorage-20160419/",
 "http://www.w3.org/TR/2015/REC-notifications-20151022/",
@@ -67,7 +67,9 @@
 "http://www.w3.org/TR/2014/WD-streams-api-20141023/",
 "http://www.w3.org/TR/2014/WD-discovery-api-20140220/",
  "http://www.w3.org/TR/2014/WD-XMLHttpRequest-20140130/",
- "http://www.w3.org/TR/2015/WD-uievents-key-20151215/",
+    "http://www.w3.org/TR/2015/WD-uievents-key-20151215/",
+    "http://www.w3.org/TR/2016/WD-uievents-20160623/",
+    "http://www.w3.org/TR/2016/WD-cssom-view-1-20160317/",
  "https://dom.spec.whatwg.org/",
  "https://fullscreen.spec.whatwg.org/",
  "https://mediasession.spec.whatwg.org/",
