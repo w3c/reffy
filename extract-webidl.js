@@ -72,7 +72,7 @@ function extractBikeshedIdl(doc) {
 function extractRespecIdl(doc) {
     return new Promise(function (resolve, reject) {
         var idl = "";
-        ["pre.idl", "pre > code.idl-code", "div.idl-code > pre"]
+        ["pre.idl", "pre > code.idl-code", "div.idl-code > pre", "pre.widl"]
             .find(sel => {
                 var idlNodes = doc.querySelectorAll(sel);
                 for (var i = 0 ; i < idlNodes.length; i++) {
