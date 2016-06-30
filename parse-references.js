@@ -1,4 +1,4 @@
-var loadSpecification = require('./util').loadSpecification;
+var urlOrDom = require('./util').urlOrDom;
 var getDocumentAndGenerator = require('./util').getDocumentAndGenerator;
 
 
@@ -13,7 +13,7 @@ var getDocumentAndGenerator = require('./util').getDocumentAndGenerator;
  *   references
  */
 function extract(url) {
-    return loadSpecification(url)
+    return urlOrDom(url)
         .then(getDocumentAndGenerator)
         .then(getExtractionRules)
         .then(extractReferences);

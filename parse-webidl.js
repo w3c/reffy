@@ -87,7 +87,7 @@ function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, localNames, externa
             break;
         case "typedef":
             parseType(def.idlType, idlNames, localNames, externalDependencies);
-            localNames[def.name] = def;
+            idlNames[def.name] = def;
             break;
         case "callback":
             localNames[def.name] = def;

@@ -1,4 +1,4 @@
-var loadSpecification = require('./util').loadSpecification;
+var urlOrDom = require('./util').urlOrDom;
 var getDocumentAndGenerator = require('./util').getDocumentAndGenerator;
 
 
@@ -13,7 +13,7 @@ var getDocumentAndGenerator = require('./util').getDocumentAndGenerator;
  *   an empty string if the spec does not contain any IDL.
  */
 function extract(url) {
-    return loadSpecification(url)
+    return urlOrDom(url)
         .then(getDocumentAndGenerator)
         .then(function (data) {
             var doc = data.doc, generator = data.generator;
