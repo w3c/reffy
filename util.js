@@ -30,7 +30,7 @@ function loadSpecification(url) {
 }
 
 function urlOrDom(input) {
-    if (typeof url === "string") {
+    if (typeof input === "string") {
         return loadSpecification(input);
     } else {
         return new Promise((res, rej) =>  res(input));
