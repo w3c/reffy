@@ -65,7 +65,7 @@
 "http://www.w3.org/TR/2014/WD-url-1-20141209/",
 "http://www.w3.org/TR/2014/WD-streams-api-20141023/",
 "http://www.w3.org/TR/2014/WD-discovery-api-20140220/",
- "http://www.w3.org/TR/2014/WD-XMLHttpRequest-20140130/",
+ "https://xhr.spec.whatwg.org/",
     "http://www.w3.org/TR/2015/WD-uievents-key-20151215/",
     "http://www.w3.org/TR/2016/WD-uievents-20160623/",
     "http://www.w3.org/TR/2016/WD-cssom-view-1-20160317/",
