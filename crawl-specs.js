@@ -24,6 +24,9 @@ function getLatest(shortname) {
     if (shortname.match(/^http/)) {
         return shortname;
     }
+    if (["webmessaging"].indexOf(shortname) !== -1) {
+        return "http://www.w3.org/TR/" + shortname;
+    }
     return fetch('https://api.w3.org/specifications/' + shortname + '' + authParam)
         .then(r =>  r.json())
         .then(s => fetch(s._links["latest-version"].href + authParam))
