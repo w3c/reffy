@@ -20,6 +20,13 @@ function extract(url) {
             if (generator === 'bikeshed') {
                 return extractBikeshedIdl(doc);
             }
+            else if (doc.title.startsWith('Web IDL')) {
+                // IDL content in the Web IDL are... examples,
+                // not real definitions
+                return new Promise(resolve => {
+                    resolve('');
+                });
+            }
             else {
                 // Most non-ReSpec specs still follow the ReSpec conventions
                 // for IDL definitions
@@ -41,7 +48,7 @@ function extract(url) {
  * @return {Promise} The promise to get a dump of the IDL definitions
  */
 function extractBikeshedIdl(doc) {
-    return new Promise(function (resolve, reject) {
+    return new Promise(resolve => {
         var idlHeading = doc.getElementById('idl-index');
         if (idlHeading) {
             var nextSibling = idlHeading.nextSibling;
@@ -70,9 +77,9 @@ function extractBikeshedIdl(doc) {
  * @return {Promise} The promise to get a dump of the IDL definitions
  */
 function extractRespecIdl(doc) {
-    return new Promise(function (resolve, reject) {
+    return new Promise(resolve => {
         var idl = "";
-        ["pre.idl", "pre > code.idl-code", "div.idl-code > pre"]
+        ["pre.idl", "pre > code.idl-code", "div.idl-code > pre", "pre.widl"]
             .find(sel => {
                 var idlNodes = doc.querySelectorAll(sel);
                 for (var i = 0 ; i < idlNodes.length; i++) {
@@ -104,10 +111,10 @@ if (require.main === module) {
         process.exit(2);
     }
     extract(url)
-        .then(function (idl) {
+        .then(idl => {
             console.log(idl);
         })
-        .catch(function (err) {
+        .catch(err => {
             console.error(err);
             process.exit(64);
         });

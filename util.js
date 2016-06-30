@@ -23,9 +23,22 @@ function loadSpecification(url) {
                 // that sit next to the spec under test, excluding scripts
                 // of WebIDL as well as the WHATWG annotate_spec script that
                 // jsdom does not seem to like
-                if (/\/respec\//i.test(resource.url.path) ||
-                    (resource.url.href.startsWith(resource.baseUrl) &&
+                // Explicitly whitelist the "autolink" script of the shadow DOM
+                // spec which is needed to initialize respecConfig
+                var baseUrl = resource.baseUrl;
+                if (!baseUrl.endsWith('/')) {
+                    baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
+                }
+                if (/\/respec\//i.test(resource.url.path)) {
+                    return resource.defaultFetch(callback);
+                }
+                else if ((resource.url.pathname === '/webcomponents/assets/scripts/autolink.js') ||
+                    (resource.url.href.startsWith(baseUrl) &&
                         !(/annotate_spec/i.test(resource.url.pathname)) &&
+                        !(/link-fixup/i.test(resource.url.pathname)) &&
+                        !(/bug-assist/i.test(resource.url.pathname)) &&
+                        !(/dfn/i.test(resource.url.pathname)) &&
+                        !(/section-links/i.test(resource.url.pathname)) &&
                         !(/^\/webidl\//i.test(resource.url.pathname)))) {
                     return resource.defaultFetch(callback);
                 }
