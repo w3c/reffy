@@ -66,13 +66,13 @@ function saveResults(data, path) {
     });
 }
 
-function processChunk(list, remain, resultsPath) {
+function processChunk(list, remain, resultsPath, chunkSize) {
     return latestSpec(list)
         .then(crawlList)
         .then(data => saveResults(data, resultsPath))
         .then(() => {
             if (remain.length) {
-                return processChunk(remain.splice(0,10), remain, resultsPath);
+                return processChunk(remain.splice(0, chunkSize), remain, resultsPath,  chunkSize);
             }
         });
 }
@@ -107,8 +107,9 @@ if (require.main === module) {
         process.exit(3);
     }
     // splitting list to avoid memory exhaustion
-    var sublist = speclist.splice(0, 10);
-    processChunk(sublist, speclist, resultsPath)
+    var chunkSize = 80;
+    var sublist = speclist.splice(0, chunkSize);
+    processChunk(sublist, speclist, resultsPath, chunkSize)
         .then(function (data) {
             console.log("Finished");
         })
