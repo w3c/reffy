@@ -5,6 +5,11 @@ var webidlParser = require('./parse-webidl');
 var fetch = require('node-fetch');
 var fs = require('fs');
 
+function titleExtractor(window) {
+    return window.document.querySelector("title").textContent;
+}
+
+
 function getShortname(url) {
     if (!url.match(/www.w3.org\/TR\//)) {
         return url;
@@ -24,7 +29,10 @@ function getLatest(shortname) {
     if (shortname.match(/^http/)) {
         return shortname;
     }
-    if (["webmessaging", "eventsource", "webstorage"].indexOf(shortname) !== -1) {
+    var bogusEditorDraft = ["webmessaging", "eventsource", "webstorage", "progress-events"];
+    var unparseableEditorDraft = ["image-capture", "requestidlecallback", "performance-timeline-2"];
+    if (bogusEditorDraft.indexOf(shortname) !== -1
+        || unparseableEditorDraft.indexOf(shortname) !== -1) {
         return "http://www.w3.org/TR/" + shortname;
     }
     return fetch('https://api.w3.org/specifications/' + shortname + '' + authParam)
@@ -44,11 +52,12 @@ function crawlList(speclist) {
         return loadSpecification(url).then(
             dom => Promise.all([
                 url,
+                titleExtractor(dom),
                 refParser.extract(dom).catch(err => err),
                 webidlExtractor.extract(dom).then(idl => webidlParser.parse(idl)).catch(err => err),
                 dom
                     ]))
-            .then(res => { res[3].close(); return { url: res[0], refs: res[1], idl: res[2]};});
+            .then(res => { res[4].close(); return { url: res[0], title: res[1], refs: res[2], idl: res[3]};});
     }
 
     return Promise.all(speclist.map(getRefAndIdl));

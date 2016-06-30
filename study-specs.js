@@ -42,7 +42,6 @@ function processResults(results) {
     var idlNames = results
         .map(r => r.idl && r.idl.idlNames ? Object.keys(r.idl.idlNames).filter(n => n !== "_dependencies") : [], [])
         .reduce(array_concat)
-        .filter(array_unique);
     var idlDeps = results
         .map(r => r.idl && r.idl.externalDependencies ? r.idl.externalDependencies : [], [])
         .reduce(array_concat)
@@ -55,6 +54,17 @@ function processResults(results) {
     write();
     write('NB: some of them are likely type errors in specs');
     write('(e.g. "int" does not exist, "Array" cannot be used on its own, etc.)');
+    write();
+    write();
+
+    count = 0;
+    write('List of IDL names defined in more than one spec');
+    write('===============================================');
+    var dup = idlNames.filter((n, i, a) => a.indexOf(n) !== i);
+    count = dup.length;
+    dup.forEach(idlName => write(idlName));
+    write();
+    write('=> ' + count + ' IDL name' + ((count > 1) ? 's' : '') + ' found');
 }
 
 /**************************************************

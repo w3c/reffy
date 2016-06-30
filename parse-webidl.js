@@ -283,7 +283,7 @@ if (require.main === module) {
             console.log(JSON.stringify(data, null, 2));
         })
         .catch(function (err) {
-            console.error(err.stack);
+            console.error(err, err.stack);
             process.exit(64);
         });
 }
