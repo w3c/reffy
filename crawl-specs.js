@@ -24,7 +24,7 @@ function getLatest(shortname) {
     if (shortname.match(/^http/)) {
         return shortname;
     }
-    if (["webmessaging"].indexOf(shortname) !== -1) {
+    if (["webmessaging", "eventsource", "webstorage"].indexOf(shortname) !== -1) {
         return "http://www.w3.org/TR/" + shortname;
     }
     return fetch('https://api.w3.org/specifications/' + shortname + '' + authParam)
