@@ -4,10 +4,14 @@ var array_unique = (n, i, a) => a.indexOf(n) === i;
 function processResults(results) {
     results.filter(r => !r.refs.normative || r.refs.normative.length === 0).forEach(r => console.error(r.url + " has no normative dependency"));
     results.filter(r => Object.keys(r.idl).length === 0 || !r.idl.idlNames || (Object.keys(r.idl.idlNames).length === 1 && Object.keys(r.idl.idlExtendedNames).length === 0)).forEach(r => console.error(r.url + " has no IDL"));
-    var idlNames = results.map(r =>  r.idl && r.idl.idlNames ? Object.keys(r.idl.idlNames).filter(n => n !== "_dependencies") : [], []).reduce(array_concat).filter(array_unique);
+    var idlNames = results.map(r =>  r.idl && r.idl.idlNames ? Object.keys(r.idl.idlNames).filter(n => n !== "_dependencies") : [], []).reduce(array_concat);
     var idlDeps = results.map(r =>  r.idl && r.idl.externalDependencies ? r.idl.externalDependencies : [], []).reduce(array_concat).filter(array_unique);
     var diff = idlDeps.filter(n => idlNames.indexOf(n) === -1);
+    console.log("IDL Names that are not defined in any known spec:");
     console.log(diff);
+    var dup = idlNames.filter((n, i, a) => a.indexOf(n) !== i);
+    console.log("IDL Names that are not defined in more than one spec:");
+    console.log(dup);
 }
 
 /**************************************************
