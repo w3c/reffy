@@ -29,6 +29,13 @@ function loadSpecification(url) {
     });
 }
 
+function urlOrDom(input) {
+    if (typeof url === "string") {
+        return loadSpecification(input);
+    } else {
+        return new Promise((res, rej) =>  res(input));
+    }
+}
 
 /**
  * Given a "window" object loaded with jsdom, retrieve the document along
@@ -76,4 +83,5 @@ function getDocumentAndGenerator(window) {
 }
 
 module.exports.loadSpecification = loadSpecification;
+module.exports.urlOrDom = urlOrDom;
 module.exports.getDocumentAndGenerator = getDocumentAndGenerator;
