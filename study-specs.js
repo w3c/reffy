@@ -4,6 +4,15 @@ var array_unique = (n, i, a) => a.indexOf(n) === i;
 function processResults(results) {
     var count = 0;
     var write = console.log.bind(console);
+
+    write('Specifications crawled');
+    write('======================');
+    count = results.length;
+    write('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' crawled');
+    write();
+    write();
+
+    count = 0;
     write('List of specifications without normative dependencies');
     write('=====================================================');
     results
