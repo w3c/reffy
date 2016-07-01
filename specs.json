@@ -80,5 +80,18 @@
     "https://w3c.github.io/webcomponents/spec/custom/",
     "https://w3c.github.io/editing/input-events.html",
     "https://w3c.github.io/editing/contentEditable.html",
-    "https://www.w3.org/TR/DOM-Parsing/"
+    "https://www.w3.org/TR/DOM-Parsing/",
+    "https://www.w3.org/TR/UISecurity/",
+    "https://w3c.github.io/accelerometer/",
+    "https://w3c.github.io/gyroscope/",
+    "https://www.w3.org/TR/worklets-1/",
+    "http://www.w3.org/TR/css-paint-api-1/",
+    "http://www.w3.org/TR/css-properties-values-api-1/",
+    "http://www.w3.org/TR/css-typed-om-1/",
+    "https://www.w3.org/TR/webauthn/",
+    "https://www.w3.org/TR/preload/",
+    "https://www.w3.org/TR/credential-management-1/",
+    "https://www.w3.org/TR/payment-request/",
+    "https://www.w3.org/TR/payment-method-basic-card/",
+    "https://console.spec.whatwg.org/"
 ]
