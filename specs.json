@@ -92,5 +92,6 @@
     "https://www.w3.org/TR/preload/",
     "https://www.w3.org/TR/credential-management-1/",
     "https://www.w3.org/TR/payment-request/",
-    "https://www.w3.org/TR/payment-method-basic-card/"
+    "https://www.w3.org/TR/payment-method-basic-card/",
+    "https://console.spec.whatwg.org/"
 ]
