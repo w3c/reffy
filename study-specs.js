@@ -15,6 +15,9 @@ function processReport(results) {
         });
     });
 
+    // TODO: we may end up with different variants of the WebIDL spec
+    var WebIDLSpec = results.find(spec => (spec.shortname === 'WebIDL-1'));
+
     return results
         .sort((a, b) => {
             var A = a.title.toUpperCase();
@@ -33,6 +36,12 @@ function processReport(results) {
             var report = {
                 hasNormativeRefs: (spec.refs.normative &&
                     (spec.refs.normative.length > 0)),
+                referencesWebIDL: (spec.refs.normative &&
+                    spec.refs.normative.find(ref =>
+                        ref.name.match(/^WebIDL/i) ||
+                            (ref.url === WebIDLSpec.url) ||
+                            (ref.url === WebIDLSpec.latest))
+                ),
                 hasIdl: !((Object.keys(spec.idl).length === 0) ||
                     (!spec.idl.idlNames && !spec.idl.message) ||
                     (spec.idl.idlNames &&
@@ -64,6 +73,7 @@ function processReport(results) {
             report.ok = report.hasNormativeRefs &&
                 report.hasIdl &&
                 !report.hasInvalidIdl &&
+                report.referencesWebIDL &&
                 (!report.unknownIdlNames || (report.unknownIdlNames.length === 0)) &&
                 (!report.missingReferences || (report.missingReferences.length === 0));
             var res = {
@@ -127,17 +137,20 @@ function generateReportPerSpec(results) {
             if (report.hasInvalidIdl) {
                 w('- Invalid WebIDL content found');
             }
+            if (!report.referencesWebIDL) {
+                w('- Spec uses WebIDL but does not reference it normatively');
+            }
             if (report.unknownIdlNames &&
                 (report.unknownIdlNames.length > 0)) {
                 w('- Unknown WebIDL names used: ' +
-                    report.unknownIdlNames.join(', '));
+                    report.unknownIdlNames.map(name => '`' + name + '`').join(', '));
             }
             if (report.missingReferences &&
                 (report.missingReferences.length > 0)) {
                 w('- Missing references for WebIDL names: ');
                 report.missingReferences.map(i => {
                     w(' * `' + i.name + '` defined in ' +
-                        i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(', '));
+                        i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' or '));
                 });
             }
             w();
