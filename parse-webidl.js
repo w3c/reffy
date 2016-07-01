@@ -144,7 +144,7 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, lo
             addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
             def.extAttrs.filter(ea => ea.name === "Constructor").forEach(function(constructor) {
                 if (constructor.arguments) {
-                    constructor.arguments.forEach(a => parseType(a.idlType, idlNames, localNames, externalDependencies));
+                    constructor.arguments.forEach(a => parseType(a.idlType, idlNames, localNames, externalDependencies, def.name));
                 }
             });
         } else if (def.extAttrs.filter(ea => ea.name === "NamedConstructor").length) {
@@ -152,7 +152,7 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, lo
                 idlNames[constructor.rhs.value] = constructor;
                 addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
                 if (constructor.arguments) {
-                    constructor.arguments.forEach(a => parseType(a.idlType, idlNames, localNames, externalDependencies));
+                    constructor.arguments.forEach(a => parseType(a.idlType, idlNames, localNames, externalDependencies, def.name));
                 }
             });
         } else if (def.type === "interface") {
@@ -211,11 +211,11 @@ function parseType(idltype, idlNames, localNames, externalDependencies, contextN
         idltype = { idlType: 'DOMString' };
     }
     if (idltype.union) {
-        idltype.idlType.forEach(t => parseType(t, idlNames, localNames, externalDependencies));
+        idltype.idlType.forEach(t => parseType(t, idlNames, localNames, externalDependencies, contextName));
         return;
     }
     if (idltype.sequence || idltype.array || idltype.generic) {
-        parseType(idltype.idlType, idlNames, localNames, externalDependencies);
+        parseType(idltype.idlType, idlNames, localNames, externalDependencies, contextName);
         return;
     }
     var wellKnownTypes = ["void", "any", "boolean", "byte", "octet", "short", "unsigned short", "long", "unsigned long", "long long", "unsigned long long", "float", "unrestricted float", "double", "unrestricted double", "DOMString", "ByteString", "USVString", "object",
