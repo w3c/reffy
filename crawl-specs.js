@@ -56,8 +56,8 @@ function getSpecFromW3CApi(spec) {
     if (!shortname) {
         return spec;
     }
-    var bogusEditorDraft = ['webmessaging', 'eventsource', 'webstorage', 'progress-events'];
-    var unparseableEditorDraft = ['image-capture', 'requestidlecallback', 'performance-timeline-2', 'beacon'];
+    var bogusEditorDraft = ['webmessaging', 'eventsource', 'webstorage', 'progress-events', 'payment-method-basic-card', 'payment-request'];
+    var unparseableEditorDraft = ['image-capture', 'requestidlecallback', 'performance-timeline-2', 'beacon', 'preload'];
     if ((bogusEditorDraft.indexOf(shortname) !== -1)
         || (unparseableEditorDraft.indexOf(shortname) !== -1)) {
         spec.latest = 'http://www.w3.org/TR/' + shortname;
