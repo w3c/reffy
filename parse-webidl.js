@@ -140,19 +140,21 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, lo
             addDependency(def.inheritance, {}, idlNames._dependencies[def.name]);
         }
         idlNames[def.name] = def;
-        if (def.extAttrs.filter(ea => ea.name === "Exposed").length) {
-            var exposedEa = def.extAttrs.filter(ea => ea.name === "Exposed")[0];
-            var contexts;
-            if (exposedEa.rhs.type === "identifier") {
-                contexts = [exposedEa.rhs.value];
-            } else {
-                contexts = exposedEa.rhs.value;
+        var extendedAttributesHasReferences = ea => ["Exposed", "Global", "PrimaryGlobal"].indexOf(ea.name) !== -1;
+        def.extAttrs.filter(extendedAttributesHasReferences).forEach(ea => {
+            var contexts = [];
+            if (ea.rhs) {
+                if (ea.rhs.type === "identifier") {
+                    contexts = [ea.rhs.value];
+                } else {
+                    contexts = ea.rhs.value;
+                }
             }
             contexts.forEach(c=> {
                 addDependency(c, idlNames, externalDependencies);
                 addDependency(c, {}, idlNames._dependencies[def.name], def.name);
             });
-        }
+        });
         if (def.extAttrs.filter(ea => ea.name === "Constructor").length) {
             addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
             def.extAttrs.filter(ea => ea.name === "Constructor").forEach(function(constructor) {
