@@ -31,14 +31,14 @@ function processReport(results) {
             var idlDeps = (spec.idl && spec.idl.externalDependencies) ?
                 spec.idl.externalDependencies : [];
             var report = {
-                noNormativeRefs: (!spec.refs.normative ||
-                    (spec.refs.normative.length === 0)),
-                noIdl: ((Object.keys(spec.idl).length === 0) ||
+                hasNormativeRefs: (spec.refs.normative &&
+                    (spec.refs.normative.length > 0)),
+                hasIdl: !((Object.keys(spec.idl).length === 0) ||
                     (!spec.idl.idlNames && !spec.idl.message) ||
                     (spec.idl.idlNames &&
                         (Object.keys(spec.idl.idlNames).length === 1) &&
                         (Object.keys(spec.idl.idlExtendedNames).length === 0))),
-                invalidIdl: !!(!spec.idl.idlNames && spec.idl.message),
+                hasInvalidIdl: !!(!spec.idl.idlNames && spec.idl.message),
                 unknownIdlNames: idlDeps
                     .filter(name => knownIdlNames.indexOf(name) === -1)
                     .sort(),
@@ -61,9 +61,9 @@ function processReport(results) {
                     })
                     .filter(i => !!i)
             };
-            report.ok = !report.noNormativeRefs &&
-                !report.noIdl &&
-                !report.invalidIdl &&
+            report.ok = report.hasNormativeRefs &&
+                report.hasIdl &&
+                !report.hasInvalidIdl &&
                 (!report.unknownIdlNames || (report.unknownIdlNames.length === 0)) &&
                 (!report.missingReferences || (report.missingReferences.length === 0));
             var res = {
@@ -118,23 +118,27 @@ function generateReportPerSpec(results) {
 
             var report = spec.report;
             w('Potential issue(s):');
-            if (report.noNormativeRefs) {
+            if (!report.hasNormativeRefs) {
                 w('- No normative references found');
             }
-            if (report.noIdl) {
-                w('- No IDL definitions found');
+            if (!report.hasIdl) {
+                w('- No WebIDL definitions found');
             }
-            if (report.invalidIdl) {
-                w('- Invalid IDL content found');
+            if (report.hasInvalidIdl) {
+                w('- Invalid WebIDL content found');
             }
             if (report.unknownIdlNames &&
                 (report.unknownIdlNames.length > 0)) {
-                w('- Unknown IDL names used: ' +
+                w('- Unknown WebIDL names used: ' +
                     report.unknownIdlNames.join(', '));
             }
             if (report.missingReferences &&
                 (report.missingReferences.length > 0)) {
-                w('- Missing references for IDL names: ' + report.missingReferences.map(i => i.name).join(', '));
+                w('- Missing references for WebIDL names: ');
+                report.missingReferences.map(i => {
+                    w(' * `' + i.name + '` defined in ' +
+                        i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(', '));
+                });
             }
             w();
             w();
@@ -175,7 +179,7 @@ function generateReport(results) {
     w();
 
     count = 0;
-    w('## List of specifications without IDL definitions');
+    w('## List of specifications without WebIDL definitions');
     w();
     results
         .filter(r => ((Object.keys(r.idl).length === 0) ||
@@ -192,7 +196,7 @@ function generateReport(results) {
 
 
     count = 0;
-    w('## List of specifications with invalid IDL content');
+    w('## List of specifications with invalid WebIDL content');
     w();
     results
         .filter(r => (!r.idl.idlNames && r.idl.message))
@@ -210,7 +214,7 @@ function generateReport(results) {
 
 
     count = 0;
-    w('## List of IDL names not defined in the specifications crawled');
+    w('## List of WebIDL names not defined in the specifications crawled');
     w();
     var idlNames = results
         .map(r => r.idl && r.idl.idlNames ? Object.keys(r.idl.idlNames).filter(n => n !== "_dependencies") : [], [])
@@ -221,9 +225,9 @@ function generateReport(results) {
         .filter(array_unique);
     var diff = idlDeps.filter(n => idlNames.indexOf(n) === -1);
     count = diff.length;
-    diff.forEach(idlName => w('- ' + idlName));
+    diff.forEach(idlName => w('- `' + idlName + '`'));
     w();
-    w('=> ' + count + ' IDL name' + ((count > 1) ? 's' : '') + ' found');
+    w('=> ' + count + ' WebIDL name' + ((count > 1) ? 's' : '') + ' found');
     w();
     w('NB: some of them are likely type errors in specs');
     w('(e.g. "int" does not exist, "Array" cannot be used on its own, etc.)');
@@ -231,13 +235,13 @@ function generateReport(results) {
     w();
 
     count = 0;
-    w('## List of IDL names defined in more than one spec');
+    w('## List of WebIDL names defined in more than one spec');
     w();
     var dup = idlNames.filter((n, i, a) => a.indexOf(n) !== i);
     count = dup.length;
-    dup.forEach(idlName => w('- ' + idlName));
+    dup.forEach(idlName => w('- `' + idlName + '`'));
     w();
-    w('=> ' + count + ' IDL name' + ((count > 1) ? 's' : '') + ' found');
+    w('=> ' + count + ' WebIDL name' + ((count > 1) ? 's' : '') + ' found');
 }
 
 
