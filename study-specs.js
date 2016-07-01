@@ -148,7 +148,7 @@ function generateReportPerSpec(results) {
             if (report.hasInvalidIdl) {
                 w('- Invalid WebIDL content found');
             }
-            if (!report.referencesWebIDL) {
+            if (report.hasIdl && !report.referencesWebIDL) {
                 w('- Spec uses WebIDL but does not reference it normatively');
             }
             if (report.unknownIdlNames &&
@@ -198,7 +198,7 @@ function generateReport(results) {
     w();
 
     count = 0;
-    w('## List of specifications without normative dependencies');
+    w('## Specifications without normative dependencies');
     w();
     results
         .filter(spec => !spec.report.hasNormativeRefs)
@@ -214,7 +214,7 @@ function generateReport(results) {
     w();
 
     count = 0;
-    w('## List of specifications without WebIDL definitions');
+    w('## Specifications without WebIDL definitions');
     w();
     results
         .filter(spec => !spec.report.hasIdl)
@@ -242,6 +242,21 @@ function generateReport(results) {
     w('**NB:** this may be due to WebIDL having evolved in the meantime');
     w();
     w();
+
+    count = 0;
+    w('## Specifications that use WebIDL but do not reference the WebIDL spec');
+    w();
+    results.forEach(spec => {
+        if (spec.report.hasIdl && !spec.report.referencesWebIDL) {
+            count += 1;
+            w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')');
+        }
+    });
+    w();
+    w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
+    w();
+    w();
+
 
     count = 0;
     w('## List of WebIDL names not defined in the specifications crawled');
