@@ -23,7 +23,6 @@
 "http://www.w3.org/TR/2014/CR-html-media-capture-20140909/",
 "http://www.w3.org/TR/2013/CR-pointerlock-20131217/",
 "http://www.w3.org/TR/2012/CR-websockets-20120920/",
-"http://www.w3.org/TR/2011/WD-geolocation-API-v2-20111201/",
 "http://www.w3.org/TR/2011/WD-orientation-event-20111201/",
 "http://www.w3.org/TR/2016/WD-page-visibility-2-20160623/",
 "http://www.w3.org/TR/2016/WD-mediastream-recording-20160620/",
@@ -72,5 +71,14 @@
  "https://encoding.spec.whatwg.org/",
  "https://fetch.spec.whatwg.org/",
     "https://streams.spec.whatwg.org/",
-    "https://www.khronos.org/registry/webgl/specs/latest/1.0/"
+    "https://www.khronos.org/registry/webgl/specs/latest/1.0/",
+    "https://drafts.csswg.org/css-font-loading/",
+    "https://w3c.github.io/web-animations/",
+    "http://www.w3.org/TR/pointerevents2/",
+    "http://www.w3.org/TR/beacon/",
+    "https://storage.spec.whatwg.org/",
+    "https://w3c.github.io/webcomponents/spec/custom/",
+    "https://w3c.github.io/editing/input-events.html",
+    "https://w3c.github.io/editing/contentEditable.html",
+    "https://www.w3.org/TR/DOM-Parsing/"
 ]
