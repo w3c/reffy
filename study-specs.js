@@ -109,9 +109,10 @@ function generateReportPerSpec(results) {
             w('### ' + spec.title);
             w();
             w('Crawl info:');
-            w('- URL: ' + (spec.latest ?
-                '[Latest draft](' + spec.latest + ')' :
-                '[Initial URL](' + spec.url + ')'));
+            w('- URL: [' + (spec.latest ?
+                ((spec.latest.indexOf('www.w3.org/TR/') !== -1) ? 'Latest published version' : 'Editor\'s Draft') :
+                ((spec.url.indexOf('spec.whatwg.org') !== -1) ? 'Living Standard' : 'Initial URL'))
+                + '](' + (spec.latest || spec.url) + ')');
             w('- Shortname: ' + (spec.shortname || 'no shortname'));
             w();
 
