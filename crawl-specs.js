@@ -2,7 +2,7 @@ var refParser = require('./parse-references');
 var webidlExtractor = require('./extract-webidl');
 var loadSpecification = require('./util').loadSpecification;
 var webidlParser = require('./parse-webidl');
-var fetch = require('node-fetch');
+var fetch = require('./util').fetch;
 var fs = require('fs');
 
 /**
