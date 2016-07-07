@@ -4,6 +4,7 @@ const jsdom = require('jsdom');
 const filenamify = require('filenamify-url');
 const baseFetch = require('node-fetch');
 const Response = require('node-fetch').Response;
+const rimraf = require('rimraf');
 var config = null;
 try {
     config = require('./config.json');
@@ -11,6 +12,15 @@ try {
 catch (e) {
     config = {};
 };
+
+
+// The list of URLs that are being fetched and that should soon
+// be available from the cache, together with the Promise to have
+// fetched them
+const pendingFetches = {};
+
+// Reset the cache folder only once
+var cacheFolderReset = false;
 
 
 /**
@@ -29,6 +39,64 @@ catch (e) {
 function fetch(url) {
     const cacheFilename = 'cache/' + filenamify(url);
     const cacheHeadersFilename = cacheFilename + '.headers';
+
+    function resetCacheFolderIfNeeded() {
+        if (cacheFolderReset) {
+            return Promise.resolve();
+        }
+        cacheFolderReset = true;
+
+        if (config.preserveCache) {
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve, reject) =>
+            rimraf('cache/*', err => (err ? reject(err) : resolve()))
+        );
+    }
+
+    function checkCacheFolder() {
+        return new Promise((resolve, reject) => {
+            fs.stat('cache', (err, stat) => {
+                if (err && (err.code === 'ENOENT')) {
+                    fs.mkdir('cache', err => {
+                        if (err && err.code === 'EEXIST') {
+                            // Someone created the folder in the meantime
+                            resolve();
+                        }
+                        else if (err) {
+                            reject(err);
+                        }
+                        else {
+                            resolve();
+                        }
+                    });
+                }
+                else if (err) {
+                    reject(err);
+                }
+                else if (stat.isDirectory()) {
+                    resolve();
+                }
+                else {
+                    reject(new Error('Looking for a "cache" folder but found a "cache" file instead'));
+                }
+            });
+        }).then(() => {
+            if (!config.preserveCache) {
+
+            }
+        });
+    }
+
+    function checkPendingFetch() {
+        if (pendingFetches[url]) {
+            return pendingFetches[url];
+        }
+        else {
+            return Promise.resolve();
+        }
+    }
 
     function readFromCache() {
         return new Promise((resolve, reject) => {
@@ -68,25 +136,15 @@ function fetch(url) {
                     cacheHeadersFilename,
                     JSON.stringify(headers, null, 2),
                     'utf8',
-                    err => {
-                        if (err) {
-                            return reject(err);
-                        }
-                        resolve();
-                    }
-                );
+                    err => (err ? reject(err) : resolve()));
             });
         }
 
         function saveBody() {
             return response.text()
                 .then(data => new Promise((resolve, reject) => {
-                    fs.writeFile(cacheFilename, data, 'utf8', err => {
-                        if (err) {
-                            return reject(err);
-                        }
-                        resolve();
-                    });
+                    fs.writeFile(cacheFilename, data, 'utf8',
+                        err => (err ? reject(err) : resolve()));
                 }));
         }
 
@@ -94,22 +152,36 @@ function fetch(url) {
             .then(saveBody);
     }
 
-    return new Promise((resolve, reject) => {
-        fs.access(cacheFilename, fs.R_OK, err => {
-            if (err) {
-                baseFetch(url)
-                    .then(saveToCache)
-                    .then(readFromCache)
-                    .then(response => resolve(response))
-                    .catch(err => reject(err));
-            }
-            else {
-                readFromCache()
-                    .then(response => resolve(response))
-                    .catch(err => reject(err));
-            }
+    return resetCacheFolderIfNeeded()
+        .then(checkCacheFolder())
+        .then(checkPendingFetch)
+        .then(() => {
+            pendingFetches[url] = new Promise((resolve, reject) => {
+                fs.access(cacheFilename, fs.R_OK, err => {
+                    if (err) {
+                        console.log('Fetch from network: ' + url);
+                        baseFetch(url)
+                            .then(saveToCache)
+                            .then(readFromCache)
+                            .then(response => {
+                                delete pendingFetches[url];
+                                resolve(response)
+                            })
+                            .catch(err => reject(err));
+                    }
+                    else {
+                        console.log('Fetch from cache: ' + url);
+                        readFromCache()
+                            .then(response => {
+                                delete pendingFetches[url];
+                                resolve(response)
+                            })
+                            .catch(err => reject(err));
+                    }
+                });
+            });
+            return pendingFetches[url];
         });
-    });
 }
 
 
@@ -169,12 +241,7 @@ function loadSpecification(url) {
                         callback(null, '');
                     }
                 },
-                done: function(err, window) {
-                    if (err) {
-                        return reject(err);
-                    }
-                    return resolve(window);
-                }
+                done: (err, window) => (err ? reject(err) : resolve(window))
                 /*,virtualConsole: jsdom.createVirtualConsole().sendTo(console)*/
             });
         });

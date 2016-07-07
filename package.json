@@ -3,6 +3,7 @@
     "filenamify-url": "^1.0.0",
     "jsdom": "^9.3.0",
     "node-fetch": "^1.5.3",
+    "rimraf": "^2.5.3",
     "webidl2": "^2.0.11"
   }
 }

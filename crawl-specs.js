@@ -9,7 +9,13 @@ var fs = require('fs');
  * Extracts the title of the loaded document
  */
 function titleExtractor(window) {
-    return window.document.querySelector("title").textContent.trim();
+    var title = window.document.querySelector("title");
+    if (title) {
+        return title.textContent.trim();
+    }
+    else {
+        return '[No title found for ' + window.location.href + ']';
+    }
 }
 
 
