@@ -213,7 +213,7 @@ if (require.main === module) {
         process.exit(3);
     }
     // splitting list to avoid memory exhaustion
-    var chunkSize = 80;
+    var chunkSize = 10;
     var sublist = speclist.splice(0, chunkSize);
     processChunk(sublist, speclist, resultsPath, chunkSize)
         .then(function (data) {

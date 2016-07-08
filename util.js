@@ -27,8 +27,6 @@ var cacheFolderReset = false;
  * Wrapper around the baseFetch function that returns the response from the
  * local cache if one is found.
  *
- * TODO: check JSDOM's config.file
- * TODO: Use last-modified date to send conditional HTTP requests
  * TODO: use encoding specified in content-type header for file operations?
  *
  * @function
@@ -41,20 +39,16 @@ var cacheFolderReset = false;
 function fetch(url, options) {
     const cacheFilename = 'cache/' + filenamify(url);
     const cacheHeadersFilename = cacheFilename + '.headers';
+    options = options || {};
 
-    function resetCacheFolderIfNeeded() {
-        if (cacheFolderReset) {
-            return Promise.resolve();
-        }
+    if (!cacheFolderReset) {
         cacheFolderReset = true;
-
-        if (config.preserveCache) {
-            return Promise.resolve();
+        if (config.resetCache) {
+            // NB: using "sync" versions to avoid having to deal with
+            // parallel requests that could start using the contents of
+            // the cache before it has been fully reset.
+            rimraf.sync('cache/*');
         }
-
-        return new Promise((resolve, reject) =>
-            rimraf('cache/*', err => (err ? reject(err) : resolve()))
-        );
     }
 
     function checkCacheFolder() {
@@ -100,6 +94,22 @@ function fetch(url, options) {
         }
     }
 
+    function readHeadersFromCache() {
+        return new Promise((resolve, reject) => {
+            fs.readFile(cacheHeadersFilename, 'utf8', function (err, data) {
+                var headers = null;
+                if (!err) {
+                    try {
+                        headers = JSON.parse(data);
+                    }
+                    catch (e) {
+                    }
+                }
+                resolve(headers);
+            });
+        });
+    }
+
     function readFromCache() {
         return new Promise((resolve, reject) => {
             fs.readFile(cacheHeadersFilename, 'utf8', function (err, data) {
@@ -129,7 +139,7 @@ function fetch(url, options) {
         }));
     }
 
-    function saveToCache(response) {
+    function saveToCacheIfNeeded(response) {
         function saveHeaders() {
             return new Promise((resolve, reject) => {
                 const headers = {};
@@ -150,38 +160,51 @@ function fetch(url, options) {
                 }));
         }
 
-        return saveHeaders()
-            .then(saveBody);
+        if (response.status === 304) {
+            // Response is the one we have in cache
+            return;
+        }
+        else {
+            return saveHeaders().then(saveBody);
+        }
     }
 
-    return resetCacheFolderIfNeeded()
-        .then(checkCacheFolder())
+    function conditionalFetch(prevHeaders) {
+        if (prevHeaders && config.avoidNetworkRequests) {
+            console.log('Fetch (from cache): ' + url);
+            return readFromCache();
+        }
+
+        options.headers = options.headers || {};
+        if (prevHeaders && prevHeaders['last-modified']) {
+            options.headers['If-Modified-Since'] = prevHeaders['last-modified'];
+        }
+        if (prevHeaders && prevHeaders.etag) {
+            options.headers['If-None-Match'] = prevHeaders.etag;
+        }
+
+        if (options.headers['If-Modified-Since'] ||
+            options.headers['If-None-Match']) {
+            console.log('Fetch (conditional request): ' + url);
+        }
+        else {
+            console.log('Fetch: ' + url);
+        }
+        return baseFetch(url, options)
+            .then(saveToCacheIfNeeded)
+            .then(readFromCache);
+    }
+
+    return checkCacheFolder()
         .then(checkPendingFetch)
         .then(() => {
-            pendingFetches[url] = new Promise((resolve, reject) => {
-                fs.access(cacheFilename, fs.R_OK, err => {
-                    if (err) {
-                        console.log('Fetch from network: ' + url);
-                        baseFetch(url, options)
-                            .then(saveToCache)
-                            .then(readFromCache)
-                            .then(response => {
-                                delete pendingFetches[url];
-                                resolve(response)
-                            })
-                            .catch(err => reject(err));
-                    }
-                    else {
-                        console.log('Fetch from cache: ' + url);
-                        readFromCache()
-                            .then(response => {
-                                delete pendingFetches[url];
-                                resolve(response)
-                            })
-                            .catch(err => reject(err));
-                    }
+            pendingFetches[url] = readHeadersFromCache()
+                .then(conditionalFetch)
+                .then(response => {
+                    delete pendingFetches[url];
+                    return response;
                 });
-            });
+
             return pendingFetches[url];
         });
 }
