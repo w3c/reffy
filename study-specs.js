@@ -69,7 +69,9 @@ function processReport(results) {
                         if (spec.refs && spec.refs.normative) {
                             ref = refs.find(s =>
                                 !!spec.refs.normative.find(r =>
-                                    (r.url === s.latest) || (r.url === s.url)
+                                    s.versions.includes(r.url) ||
+                                    s.versions.includes(r.url.replace(/^http:/, 'https:')) ||
+                                    s.versions.includes(r.url.replace(/^https:/, 'http:'))
                                 )
                             );
                         }

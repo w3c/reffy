@@ -63,14 +63,38 @@ function getSpecFromW3CApi(spec) {
             Authorization: 'W3C-API apikey="' + config.w3cApiKey + '"'
         }
     };
+
+    // Note the mapping between some of the specs (e.g. HTML5.1 and HTML5)
+    // is hardcoded below. In an ideal world, it would be easy to get that
+    // info from the W3C API.
+    spec.versions = [];
+    function addKnownVersions() {
+        if (!spec.versions.includes(spec.url)) {
+            spec.versions.push(spec.url);
+        }
+        if (spec.latest && !spec.versions.includes(spec.latest)) {
+            spec.versions.push(spec.latest);
+        }
+        if (shortname === 'html51') {
+            spec.versions.push('https://www.w3.org/TR/html5/');
+            spec.versions.push('https://html.spec.whatwg.org/');
+            spec.versions.push('https://html.spec.whatwg.org/multipage/');
+        }
+        if (spec.url === 'https://dom.spec.whatwg.org/') {
+            spec.versions.push('https://www.w3.org/TR/dom/');
+        }
+    }
+
     if (!shortname) {
+        addKnownVersions();
         return spec;
     }
     var bogusEditorDraft = ['webmessaging', 'eventsource', 'webstorage', 'progress-events', 'payment-method-basic-card', 'payment-request'];
     var unparseableEditorDraft = ['image-capture', 'requestidlecallback', 'performance-timeline-2', 'beacon', 'preload'];
     if ((bogusEditorDraft.indexOf(shortname) !== -1)
         || (unparseableEditorDraft.indexOf(shortname) !== -1)) {
-        spec.latest = 'http://www.w3.org/TR/' + shortname;
+        spec.latest = 'https://www.w3.org/TR/' + shortname;
+        addKnownVersions();
         return spec;
     }
     return fetch('https://api.w3.org/specifications/' + shortname, options)
@@ -79,10 +103,17 @@ function getSpecFromW3CApi(spec) {
         .then(r => r.json())
         .then(s => {
             spec.latest = (s['editor-draft'] ? s['editor-draft'] : s.uri);
+            if (!spec.versions.includes(s.uri)) {
+                spec.versions.push(s.uri);
+            }
             return spec;
         })
         .catch(e => {
-            spec.latest = 'http://www.w3.org/TR/' + shortname;
+            spec.latest = 'https://www.w3.org/TR/' + shortname;
+            return spec;
+        })
+        .then(spec => {
+            addKnownVersions();
             return spec;
         });
 }
