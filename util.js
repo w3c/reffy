@@ -19,6 +19,11 @@ catch (e) {
 // fetched them
 const pendingFetches = {};
 
+// The list of URLs that have been fetched (and that exist in the cache)
+// during this crawl. Used as a basic "max-age" mechanism to avoid sending
+// multiple requests to the same URL per crawl
+const fetchedUrls = [];
+
 // Reset the cache folder only once
 var cacheFolderReset = false;
 
@@ -170,7 +175,7 @@ function fetch(url, options) {
     }
 
     function conditionalFetch(prevHeaders) {
-        if (prevHeaders && config.avoidNetworkRequests) {
+        if ((prevHeaders && config.avoidNetworkRequests) || fetchedUrls[url]) {
             console.log('Fetch (from cache): ' + url);
             return readFromCache();
         }
@@ -202,6 +207,7 @@ function fetch(url, options) {
                 .then(conditionalFetch)
                 .then(response => {
                     delete pendingFetches[url];
+                    fetchedUrls[url] = true;
                     return response;
                 });
 
