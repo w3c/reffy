@@ -1,5 +1,5 @@
 const fs = require('fs');
-const Readable = require('stream').Readable;
+const URL = require('url');
 const jsdom = require('jsdom');
 const filenamify = require('filenamify-url');
 const baseFetch = require('node-fetch');
@@ -238,7 +238,6 @@ function loadSpecification(url) {
                     SkipExternalResources: false
                 },
                 resourceLoader: function (resource, callback) {
-                    // TODO: use "fetch"
                     // Restrict resource loading to ReSpec and script resources
                     // that sit next to the spec under test, excluding scripts
                     // of WebIDL as well as the WHATWG annotate_spec script that
@@ -272,7 +271,33 @@ function loadSpecification(url) {
                         callback(null, '');
                     }
                 },
-                done: (err, window) => (err ? reject(err) : resolve(window))
+                done: (err, window) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    const doc = window.document;
+                    const links = doc.querySelectorAll('body > .head a[href]');
+                    for (let i = 0 ; i < links.length; i++) {
+                        let link = links[i];
+                        let text = (link.textContent || '').toLowerCase();
+                        if (text.includes('single page') ||
+                            text.includes('single file') ||
+                            text.includes('one-page')) {
+                            let singlePage = URL.resolve(doc.baseURI, link.getAttribute('href'));
+                            if (singlePage === url) {
+                                // We're already looking at the single page version
+                                resolve(window);
+                            }
+                            else {
+                                loadSpecification(singlePage)
+                                    .then(window => resolve(window))
+                                    .catch(err => reject(err));
+                            }
+                            return;
+                        }
+                    }
+                    resolve(window);
+                }
                 /*,virtualConsole: jsdom.createVirtualConsole().sendTo(console)*/
             });
         });
