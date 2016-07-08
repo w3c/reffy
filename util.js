@@ -34,9 +34,11 @@ var cacheFolderReset = false;
  * @function
  * @private
  * @param {String} url The URL to retrieve
+ * @param {Object} options Fetch options, include specific HTTP headers to
+ *   send along with the request.
  * @return {Promise<Response>} The promise to get an HTTP response
  */
-function fetch(url) {
+function fetch(url, options) {
     const cacheFilename = 'cache/' + filenamify(url);
     const cacheHeadersFilename = cacheFilename + '.headers';
 
@@ -160,7 +162,7 @@ function fetch(url) {
                 fs.access(cacheFilename, fs.R_OK, err => {
                     if (err) {
                         console.log('Fetch from network: ' + url);
-                        baseFetch(url)
+                        baseFetch(url, options)
                             .then(saveToCache)
                             .then(readFromCache)
                             .then(response => {

@@ -58,7 +58,11 @@ function getShortname(url) {
 function getSpecFromW3CApi(spec) {
     var shortname = spec.shortname;
     var config = require('./config.json');
-    var authParam = '?apikey=' + config.w3cApiKey;
+    var options = {
+        headers: {
+            Authorization: 'W3C-API apikey="' + config.w3cApiKey + '"'
+        }
+    };
     if (!shortname) {
         return spec;
     }
@@ -69,9 +73,9 @@ function getSpecFromW3CApi(spec) {
         spec.latest = 'http://www.w3.org/TR/' + shortname;
         return spec;
     }
-    return fetch('https://api.w3.org/specifications/' + shortname + authParam)
+    return fetch('https://api.w3.org/specifications/' + shortname, options)
         .then(r =>  r.json())
-        .then(s => fetch(s._links['latest-version'].href + authParam))
+        .then(s => fetch(s._links['latest-version'].href, options))
         .then(r => r.json())
         .then(s => {
             spec.latest = (s['editor-draft'] ? s['editor-draft'] : s.uri);
