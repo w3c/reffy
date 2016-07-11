@@ -1,6 +1,6 @@
 # Reffy
 
-Reffy is your **W3C spec dependencies exploration companion**. It features a short set of tools to study term definitions and references found in W3C specifications.
+Reffy is your **W3C spec dependencies exploration companion**. It features a short set of tools to study spec references as well as WebIDL term definitions and references found in W3C specifications.
 
 ## How to use
 
@@ -42,7 +42,7 @@ Some notes:
 
 ### WebIDL terms explorer
 
-See the related [WebIDLPedia](https://dontcallmedom.github.io/webidlpedia) project and its [repo](https://github.com/dontcallmedom/webidlpedia).
+See the related **[WebIDLPedia](https://dontcallmedom.github.io/webidlpedia)** project and its [repo](https://github.com/dontcallmedom/webidlpedia).
 
 ### Other tools
 
@@ -65,9 +65,17 @@ node parse-webidl.js https://fetch.spec.whatwg.org/
 
 ## Technical notes
 
-**Reffy is at an early stage of development and is not stable**. It should be able to parse most of the W3C/WHATWG specifications (both published versions and Editor's Drafts) that define WebIDL terms. The tool may work with other types of specs, but has not been tested with any of it.
+**Reffy is at an early stage of development and is not stable**. It may crash from time to time and does not report errors/warnings in any meaningful way for the time being.
 
-There are a few exceptions to the rule, though. Notably, the crawler fails to parse Editor's Drafts of some specs that use [ReSpec](https://github.com/w3c/respec) because ReSpec uses `DOMParser` to normalize paddings in some cases and this does not yet work well with [jsdom](https://github.com/tmpvar/jsdom) which the crawler uses to load and render the specification.
+Reffy should be able to parse most of the W3C/WHATWG specifications that define WebIDL terms (both published versions and Editor's Drafts). The tool may work with other types of specs, but has not been tested with any of them.
+
+There are a few exceptions to the rule, though. Notably, the crawler fails to parse Editor's Drafts of some specs that use [ReSpec](https://github.com/w3c/respec), usually because ReSpec uses `DOMParser` to normalize paddings in some cases and this process does not yet run well in [jsdom](https://github.com/tmpvar/jsdom).
+
+### List of specs to crawl
+
+The recommended list appears in `specs.json`. It was built out of the [JavaScript APIs](http://www.w3.org/TR/#tr_Javascript_APIs) *TR* bucket, manually completed to create a more comprehensive list.
+
+It should be possible to crawl other specs, but note Reffy has not yet been tested with specs that do not define any WebIDL term, and would need to be adjusted to return "interesting" information. Feel free to try out other specs and report any issue!
 
 ### Crawling a spec
 
@@ -76,10 +84,11 @@ Given the URL of a spec, the crawler basically goes through the following steps:
 1. If the URL looks like `http(s)://www.w3.org/TR/[something]`, the crawler extracts the shortname of the specification, and sends a couple of requests to the W3C API to retrieve the URL of the Editor's Draft, or the URL of the latest published version if the URL of the Editor's Draft could not be found. This new URL replaces the given one.
 2. Fetch the URL. Note Reffy uses a network cache on the local filesystem, and sends conditional HTTP requests if the URL is already in that cache
 3. Render the response with jsdom, which should create a `Window` object. Note rendering with jsdom may trigger additional fetches (e.g. to retrieve scripts), which also go through the network cache.
-4. If needed, wait until the document is properly generated. This is typically needed for specs written with ReSpec that are generated on-the-fly.
-5. Run internal tools on the generated document to build the relevant information.
+4. If the document contains a "head" section that includes a link whose label looks like "single page", go back to step 2 and load the target of that link instead. This makes the crawler load the single page version of multi-page specifications such as HTML5.
+5. If needed, wait until the document is properly generated. This is typically needed for specs written with ReSpec that are generated on-the-fly.
+6. Run internal tools on the generated document to build the relevant information.
 
-The crawler processes 10 specification at a time. It may crash from time to time, e.g. because of network errors. Beware: errors are not properly reported yet.
+The crawler processes 10 specifications at a time. It may crash from time to time, e.g. because of network errors. Beware: errors are not properly reported yet.
 
 ### Config parameters
 
@@ -90,9 +99,19 @@ Optional parameters:
 * `avoidNetworkRequests`: set this flag to `true` to tell the crawler to use the cache entry for a URL directly, instead of sending a conditional HTTP request to check whether the entry is still valid. This parameter is typically useful when developing Reffy's code to work offline.
 * `resetCache`: set this flag to `true` to tell the crawler to reset the contents of the local cache when it starts.
 
+### Hardcoded rules
+
+Some rules or exceptions to the rule are hardcoded. In particular:
+
+* The URL of some of the Editor's Drafts returned by the W3C API can be invalid, or a document that when loaded redirects to another. The list is hardcoded in the `getSpecFromW3CApi`method in `crawl-specs.js`. The crawler loads the latest published version for these specs.
+* Some specs cannot be loaded with jsdom for the time being, typically those that use ReSpec and that have content that make ReSpec use `DOMParser`. This should hopefully be fixed soon. The list is hardcoded in the `getSpecFromW3CApi`method in `crawl-specs.js`.
+* Some specs load external scripts that may not run properly in jsdom. Such scripts are ignored. See details in `loadSpecification` function in `util.js`.
+* The heuristics used to find the "single page" link are defined in the `loadSpecification` function in `util.js`. They may need to be extended to support other cases.
+* For each spec, the crawler reports a list of URLs which may be considered as equivalent for the purpose of referencing. This list typically includes the initial shortname URL for W3C specs, the dated URL of the latest published version of the spec, and the URL of the Editor's Draft. For a couple of specs, it also includes links to previous or alternate "versions" of the spec. For instance, the versions of the HTML5.1 spec include the HTML5 W3C Recommendation and the WHATWG HTML Living Standard. The study tool uses that information when it checks the list of references to find missing ones. Ideally, the W3C API would return up-to-date information such as "supercedes" to clarify the relationship between versions of the same spec. The mapping is hardcoded in `addKnownVersions` in `util.js`.
+
 ## Contributing
 
-Main authors so far are [François Daoust](https://github.com/tidoust/) and [Dominique Hazaël-Massieux](https://github.com/dontcallmedom/).
+Authors so far are [François Daoust](https://github.com/tidoust/) and [Dominique Hazaël-Massieux](https://github.com/dontcallmedom/).
 
 Additional ideas, bugs and/or code contributions are most welcome. Create [issues on GitHub](https://github.com/tidoust/issues) as needed!
 
