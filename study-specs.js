@@ -284,7 +284,7 @@ function generateReport(results) {
     w();
     w('=> ' + count + ' WebIDL name' + ((count > 1) ? 's' : '') + ' found');
     w();
-    w('NB: some of them are likely type errors in specs');
+    w('**NB:** some of them are likely type errors in specs');
     w('(e.g. "int" does not exist, "Array" cannot be used on its own, etc.)');
     w();
     w();
