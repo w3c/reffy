@@ -83,10 +83,6 @@ function fetch(url, options) {
                     reject(new Error('Looking for a "cache" folder but found a "cache" file instead'));
                 }
             });
-        }).then(() => {
-            if (!config.preserveCache) {
-
-            }
         });
     }
 
