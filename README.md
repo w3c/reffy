@@ -71,7 +71,7 @@ node parse-webidl.js https://fetch.spec.whatwg.org/
 
 Reffy should be able to parse most of the W3C/WHATWG specifications that define WebIDL terms (both published versions and Editor's Drafts). The tool may work with other types of specs, but has not been tested with any of them.
 
-There are a few exceptions to the rule, though. Notably, the crawler fails to parse Editor's Drafts of some specs that use [ReSpec](https://github.com/w3c/respec), usually because ReSpec uses `DOMParser` to normalize paddings in some cases and this process does not yet run well in [jsdom](https://github.com/tmpvar/jsdom).
+There are a few exceptions to the rule, though. Notably, the crawler fails to parse Editor's Drafts of some specs that use [ReSpec](https://github.com/w3c/respec)'s markdown format, probably because jsdom lacks support for some feature required by ReSpec in that case.
 
 ### List of specs to crawl
 
@@ -106,7 +106,7 @@ Optional parameters:
 Some rules or exceptions to the rule are hardcoded. In particular:
 
 * The URL of some of the Editor's Drafts returned by the W3C API can be invalid, or a document that when loaded redirects to another. The list is hardcoded in the `getSpecFromW3CApi`method in `crawl-specs.js`. The crawler loads the latest published version for these specs.
-* Some specs cannot be loaded with jsdom for the time being, typically those that use ReSpec and that have content that make ReSpec use `DOMParser`. This should hopefully be fixed soon. The list is hardcoded in the `getSpecFromW3CApi`method in `crawl-specs.js`.
+* Some specs cannot be loaded with jsdom for the time being, typically some specs that use ReSpec's markdown format. This should hopefully be fixed soon. The list is hardcoded in the `getSpecFromW3CApi`method in `crawl-specs.js`.
 * Some specs load external scripts that may not run properly in jsdom. Such scripts are ignored. See details in `loadSpecification` function in `util.js`.
 * The heuristics used to find the "single page" link are defined in the `loadSpecification` function in `util.js`. They may need to be extended to support other cases.
 * For each spec, the crawler reports a list of URLs which may be considered as equivalent for the purpose of referencing. This list typically includes the initial shortname URL for W3C specs, the dated URL of the latest published version of the spec, and the URL of the Editor's Draft. For a couple of specs, it also includes links to previous or alternate "versions" of the spec. For instance, the versions of the HTML5.1 spec include the HTML5 W3C Recommendation and the WHATWG HTML Living Standard. The study tool uses that information when it checks the list of references to find missing ones. Ideally, the W3C API would return up-to-date information such as "supercedes" to clarify the relationship between versions of the same spec. The mapping is hardcoded in `addKnownVersions` in `util.js`.
