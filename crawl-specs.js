@@ -95,7 +95,7 @@ function getSpecFromW3CApi(spec) {
         addKnownVersions();
         return spec;
     }
-    var bogusEditorDraft = ['webmessaging', 'eventsource', 'webstorage', 'progress-events', 'payment-method-basic-card', 'payment-request'];
+    var bogusEditorDraft = ['webmessaging', 'eventsource', 'webstorage', 'progress-events', 'payment-method-basic-card', 'payment-request', 'uievents'];
     var unparseableEditorDraft = ['requestidlecallback', 'beacon'];
     if ((bogusEditorDraft.indexOf(shortname) !== -1)
         || (unparseableEditorDraft.indexOf(shortname) !== -1)) {
