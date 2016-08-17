@@ -18,16 +18,15 @@ function parse(idl) {
         var jsNames = {constructors: {}, functions: {}, objects:{}};
         var idlNames = {_dependencies: {}};
         var idlExtendedNames = {};
-        var localNames= {};
         var externalDependencies = [];
         try {
             idlTree = WebIDL2.parse(idl);
         } catch (e) {
             return reject(e);
         }
-        idlTree.forEach(parseIdlAstTree(jsNames, idlNames, idlExtendedNames, localNames, externalDependencies));
-        externalDependencies = externalDependencies.filter(n => !idlNames[n] && !localNames[n]);
-        resolve({jsNames, idlNames, idlExtendedNames, localNames, externalDependencies});
+        idlTree.forEach(parseIdlAstTree(jsNames, idlNames, idlExtendedNames, externalDependencies));
+        externalDependencies = externalDependencies.filter(n => !idlNames[n]);
+        resolve({jsNames, idlNames, idlExtendedNames, externalDependencies});
     });
 }
 
@@ -49,7 +48,6 @@ function parse(idl) {
  *   IDL content defines.
  * @param {Object} idlExtendedNames The set of interfaces that the
  *   IDL content extends, typically through "partial" definitions
- * @param {Object} localNames
  * @param {Array(String)} externalDependencies The set of IDL names that the IDL
  *   content makes use of and that it does not define
  * @param {String} contextName The current interface context, used to compute
@@ -57,41 +55,41 @@ function parse(idl) {
  * @return A function that can be applied to all nodes of an IDL AST tree and
  *   that fills up the above sets.
  */
-function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, localNames, externalDependencies, contextName) {
+function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, externalDependencies, contextName) {
     return function (def) {
         switch(def.type) {
         case "interface":
         case "dictionary":
         case "callback interface":
-            parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, localNames, externalDependencies);
+            parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, externalDependencies);
             break;
         case "enum":
             idlNames[def.name] = def;
             break;
         case "operation":
             if (def.stringifier) return;
-            parseType(def.idlType, idlNames, localNames, externalDependencies, contextName);
-            def.arguments.forEach(a => parseType(a.idlType,  idlNames, localNames, externalDependencies, contextName));
+            parseType(def.idlType, idlNames, externalDependencies, contextName);
+            def.arguments.forEach(a => parseType(a.idlType,  idlNames, externalDependencies, contextName));
             break;
         case "attribute":
         case "field":
-            parseType(def.idlType, idlNames, localNames, externalDependencies, contextName);
+            parseType(def.idlType, idlNames, externalDependencies, contextName);
             break;
         case "implements":
-            parseType(def.target, idlNames, localNames, externalDependencies);
-            parseType(def.implements, idlNames, localNames, externalDependencies);
+            parseType(def.target, idlNames, externalDependencies);
+            parseType(def.implements, idlNames, externalDependencies);
             if (!idlNames._dependencies[def.target]) {
                 idlNames._dependencies[def.target] = [];
             }
             addDependency(def.implements, {}, idlNames._dependencies[def.target]);
             break;
         case "typedef":
-            parseType(def.idlType, idlNames, localNames, externalDependencies);
+            parseType(def.idlType, idlNames, externalDependencies);
             idlNames[def.name] = def;
             break;
         case "callback":
-            localNames[def.name] = def;
-            def.arguments.forEach(a => parseType(a.idlType,  idlNames, localNames, externalDependencies));
+            idlNames[def.name] = def;
+            def.arguments.forEach(a => parseType(a.idlType,  idlNames, externalDependencies));
             break;
         case "iterable":
         case "setlike":
@@ -100,7 +98,7 @@ function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, localNames, externa
             if (!Array.isArray(type)) {
                 type = [def.idlType];
             }
-            type.forEach(a => parseType(a, idlNames, localNames, externalDependencies, contextName));
+            type.forEach(a => parseType(a, idlNames, externalDependencies, contextName));
             break;
         case "serializer":
         case "stringifier":
@@ -124,7 +122,7 @@ function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, localNames, externa
  * @return {void} The function updates the contents of its parameters and does
  *   not return anything
  */
-function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, localNames, externalDependencies) {
+function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, externalDependencies) {
     if (!idlNames._dependencies[def.name]) {
         idlNames._dependencies[def.name] = [];
     }
@@ -159,7 +157,7 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, lo
             addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
             def.extAttrs.filter(ea => ea.name === "Constructor").forEach(function(constructor) {
                 if (constructor.arguments) {
-                    constructor.arguments.forEach(a => parseType(a.idlType, idlNames, localNames, externalDependencies, def.name));
+                    constructor.arguments.forEach(a => parseType(a.idlType, idlNames, externalDependencies, def.name));
                 }
             });
         } else if (def.extAttrs.filter(ea => ea.name === "NamedConstructor").length) {
@@ -167,7 +165,7 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, lo
                 idlNames[constructor.rhs.value] = constructor;
                 addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
                 if (constructor.arguments) {
-                    constructor.arguments.forEach(a => parseType(a.idlType, idlNames, localNames, externalDependencies, def.name));
+                    constructor.arguments.forEach(a => parseType(a.idlType, idlNames, externalDependencies, def.name));
                 }
             });
         } else if (def.type === "interface") {
@@ -176,7 +174,7 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, lo
             }
         }
     }
-    def.members.forEach(parseIdlAstTree(jsNames, idlNames, idlExtendedNames, localNames, externalDependencies, def.name));
+    def.members.forEach(parseIdlAstTree(jsNames, idlNames, idlExtendedNames, externalDependencies, def.name));
 }
 
 
@@ -216,7 +214,7 @@ function addToJSContext(eas, jsNames, name, type) {
  * @see parseIdlAstTree for other parameters
  * @return {void} The function updates externalDependencies
  */
-function parseType(idltype, idlNames, localNames, externalDependencies, contextName) {
+function parseType(idltype, idlNames, externalDependencies, contextName) {
     // For some reasons, webidl2 sometimes returns the name of the IDL type
     // instead of an IDL construct for array constructs. For example:
     //  Constructor(DOMString[] urls) interface toto;
@@ -226,11 +224,11 @@ function parseType(idltype, idlNames, localNames, externalDependencies, contextN
         idltype = { idlType: 'DOMString' };
     }
     if (idltype.union) {
-        idltype.idlType.forEach(t => parseType(t, idlNames, localNames, externalDependencies, contextName));
+        idltype.idlType.forEach(t => parseType(t, idlNames, externalDependencies, contextName));
         return;
     }
     if (idltype.sequence || idltype.array || idltype.generic) {
-        parseType(idltype.idlType, idlNames, localNames, externalDependencies, contextName);
+        parseType(idltype.idlType, idlNames, externalDependencies, contextName);
         return;
     }
     var wellKnownTypes = ["void", "any", "boolean", "byte", "octet", "short", "unsigned short", "long", "unsigned long", "long long", "unsigned long long", "float", "unrestricted float", "double", "unrestricted double", "DOMString", "ByteString", "USVString", "object",
