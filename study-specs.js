@@ -92,6 +92,7 @@ function processReport(results) {
             var res = {
                 title: spec.title,
                 shortname: spec.shortname,
+                date: spec.date,
                 url: spec.url,
                 latest: spec.latest,
                 report
@@ -137,6 +138,7 @@ function generateReportPerSpec(results) {
                 ((spec.url.indexOf('spec.whatwg.org') !== -1) ? 'Living Standard' : 'Initial URL'))
                 + '](' + (spec.latest || spec.url) + ')');
             w('- Shortname: ' + (spec.shortname || 'no shortname'));
+            w('- Date: ' + (spec.date || 'unknown'));
             w();
 
             var report = spec.report;

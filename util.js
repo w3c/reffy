@@ -226,6 +226,7 @@ function loadSpecification(url) {
         response.text().then(html => {
             jsdom.env({
                 headers: response.headers._headers,
+                lastModified: new Date(response.headers._headers['last-modified']),
                 html: html,
                 url: response.url,
                 features: {

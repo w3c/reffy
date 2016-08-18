@@ -152,7 +152,7 @@ function createInitialSpecDescriptions(list) {
  */
 function crawlList(speclist) {
     function getRefAndIdl(spec) {
-        var url = spec.latest ? spec.latest : spec.url;
+        const url = spec.latest ? spec.latest : spec.url;
         return loadSpecification(url).then(
             dom => Promise.all([
                 spec,
@@ -162,11 +162,18 @@ function crawlList(speclist) {
                 dom
                     ]))
             .then(res => {
-                res[4].close();
-                var spec = res[0];
+                const spec = res[0];
+                const doc = res[4].document;
+                const statusAndDateElement = doc.querySelector('.head h2');
+                const date = (statusAndDateElement ?
+                    statusAndDateElement.textContent.split(/\s+/).slice(-3).join(' ') :
+                    (new Date(Date.parse(doc.lastModified))).toDateString());
+
                 spec.title = spec.title ? spec.title : res[1];
+                spec.date = date;
                 spec.refs = res[2];
                 spec.idl = res[3];
+                res[4].close();
                 return spec;
             });
     }
