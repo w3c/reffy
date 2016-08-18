@@ -312,6 +312,37 @@ function generateReport(results) {
     });
     w();
     w('=> ' + count + ' WebIDL name' + ((count > 1) ? 's' : '') + ' found');
+    w();
+    w();
+
+    count = 0;
+    var countrefs = 0;
+    w('## Missing references for WebIDL names');
+    w();
+    results.forEach(spec => {
+        if (spec.report.missingReferences &&
+            (spec.report.missingReferences.length > 0)) {
+            count += 1;
+            if (spec.report.missingReferences.length === 1) {
+                countrefs += 1;
+                let i = spec.report.missingReferences[0];
+                w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')' +
+                    ' uses `' + i.name + '` but does not reference ' +
+                    i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' or '));
+            }
+            else {
+                w('- [' + spec.title + '](' + (spec.latest || spec.url) + ') uses:');
+                spec.report.missingReferences.map(i => {
+                    countrefs += 1;
+                    w(' * `' + i.name + '` but does not reference ' +
+                        i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' or '));
+                });
+            }
+        }
+    });
+    w();
+    w('=> ' + countrefs + ' missing reference' + ((count > 1) ? 's' : '') +
+        ' found in ' + count + ' specification' + ((count > 1) ? 's' : ''));
 }
 
 
