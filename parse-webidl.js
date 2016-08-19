@@ -26,6 +26,14 @@ function parse(idl) {
         }
         idlTree.forEach(parseIdlAstTree(jsNames, idlNames, idlExtendedNames, externalDependencies));
         externalDependencies = externalDependencies.filter(n => !idlNames[n]);
+        replaceFakePrimaryGlobal(jsNames.primaryGlobal, jsNames);
+
+        // TODO: consider outputting information about PrimaryGlobal and Global
+        // interfaces defined by the IDL as well.
+        if (jsNames.primaryGlobal) {
+            delete jsNames.primaryGlobal;
+        }
+
         resolve({jsNames, idlNames, idlExtendedNames, externalDependencies});
     });
 }
@@ -141,6 +149,15 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, ex
         var extendedAttributesHasReferences = ea => ["Exposed", "Global", "PrimaryGlobal"].indexOf(ea.name) !== -1;
         def.extAttrs.filter(extendedAttributesHasReferences).forEach(ea => {
             var contexts = [];
+            if (ea.name === "PrimaryGlobal") {
+                // We just found the primary global interface
+                if (ea.rhs && (ea.rhs.type === "identifier")) {
+                    jsNames.primaryGlobal = ea.rhs.value;
+                }
+                else {
+                    jsNames.primaryGlobal = def.name;
+                }
+            }
             if (ea.rhs) {
                 if (ea.rhs.type === "identifier") {
                     contexts = [ea.rhs.value];
@@ -191,7 +208,7 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, ex
  * @return {void} The function updates jsNames
  */
 function addToJSContext(eas, jsNames, name, type) {
-    var contexts = ["Window"];
+    var contexts = ["[PrimaryGlobal]"];
     var exposed = eas && eas.filter(ea => ea.name === "Exposed").length;
     if (exposed) {
         var exposedEa = eas.filter(ea => ea.name === "Exposed")[0];
@@ -271,6 +288,46 @@ function addDependency(name, idlNames, externalDependencies) {
         (externalDependencies.indexOf(name) === -1)) {
         externalDependencies.push(name);
     }
+}
+
+
+/**
+ * Merge IDL names defined with an [Exposed] extended attribute that points to
+ * the primary global interface and those that are defined with no [Exposed]
+ * keyword
+ *
+ * NB: In the absence of an interface defined with the [PrimaryGlobal] extended
+ * attribute, the function assumes that the IDL content is to be understood in
+ * a Web context and thus that the primary global interface is called "Window".
+ *
+ * @function
+ * @private
+ * @param {String} primaryGlobal The name of the primary global interface,
+ *   meaning the one defined with a [PrimaryGlobal] extended attribute, if any.
+ * @param {Object} jsNames The set of interfaces that are visible from the
+ *   JavaScript code, per context, either through Constructors or because they
+ *   are exposed by some function or object.
+ * @return {Object} The updated set of interfaces, where interfaces that were
+ *   initially attached to a pseudo '[PrimaryGlobal]' name are now attached to
+ *   the actual primary global interface. Note the object is updated in place.
+ */
+function replaceFakePrimaryGlobal(primaryGlobal, jsNames) {
+    const defaultPrimaryGlobal = '[PrimaryGlobal]';
+    primaryGlobal = primaryGlobal || 'Window';
+    Object.keys(jsNames).forEach(key => {
+        const contexts = jsNames[key];
+        if (key === 'primaryGlobal') {
+            return;
+        }
+        if (contexts[primaryGlobal] || contexts[defaultPrimaryGlobal]) {
+            contexts[primaryGlobal] = (contexts[primaryGlobal] || [])
+                .concat(contexts[defaultPrimaryGlobal] || []);
+            if (contexts[defaultPrimaryGlobal]) {
+                delete contexts[defaultPrimaryGlobal];
+            }
+        }
+    });
+    return jsNames;
 }
 
 
