@@ -1,8 +1,9 @@
 {
   "dependencies": {
     "filenamify-url": "^1.0.0",
-    "jsdom": "^9.4.1",
+    "jsdom": "^11.0.0",
     "node-fetch": "^1.5.3",
+    "respec": "^14.1.0",
     "rimraf": "^2.5.3",
     "webidl2": "^3.0.2"
   },
