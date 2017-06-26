@@ -10,7 +10,10 @@ const currentSpecs = report.map(s => s.versions)
 // known specs, and ones we want to ignore
 const matchingSpecs = currentSpecs.concat(blacklist);
 
-const canonicalize = url => url.split('#')[0].replace('http:', 'https:');
+const canonicalize = url => url
+      .split('#')[0]
+      .replace('http:', 'https:')
+      .replace(/https:\/\/([^\.]*).spec.whatwg.org\/.*/, 'https://$1.spec.whatwg.org/');
 
 const extractLinks = (url, selector) => new Promise((resolve, reject) => {
     return JSDOM.fromURL(url).then(dom => {
