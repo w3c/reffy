@@ -73,45 +73,46 @@ function getSpecFromW3CApi(spec) {
     // Note the mapping between some of the specs (e.g. HTML5.1 and HTML5)
     // is hardcoded below. In an ideal world, it would be easy to get that
     // info from the W3C API.
-    spec.versions = [];
+    spec.versions = new Set();
     function addKnownVersions() {
-        if (!spec.versions.includes(spec.url)) {
-            spec.versions.push(spec.url);
-        }
-        if (spec.latest && !spec.versions.includes(spec.latest)) {
-            spec.versions.push(spec.latest);
+        spec.versions.add(spec.url);
+        if (spec.latest) {
+            spec.versions.add(spec.latest);
         }
         if (shortname === 'html51') {
-            spec.versions.push('https://www.w3.org/TR/html5/');
-            spec.versions.push('https://html.spec.whatwg.org/');
-            spec.versions.push('https://html.spec.whatwg.org/multipage/');
+            spec.versions.add('https://www.w3.org/TR/html5/');
+            spec.versions.add('https://html.spec.whatwg.org/');
+            spec.versions.add('https://html.spec.whatwg.org/multipage/');
         }
         if (spec.url === 'https://dom.spec.whatwg.org/') {
-            spec.versions.push('https://www.w3.org/TR/dom/');
+            spec.versions.add('https://www.w3.org/TR/dom/');
         }
     }
 
     if (!shortname) {
         addKnownVersions();
+        spec.versions = [...spec.versions];
         return spec;
     }
-    var bogusEditorDraft = ['webmessaging', 'eventsource', 'webstorage', 'progress-events', 'payment-method-basic-card', 'payment-request', 'uievents'];
-    var unparseableEditorDraft = ['requestidlecallback', 'beacon'];
+    var bogusEditorDraft = ['webmessaging', 'eventsource', 'webstorage', 'progress-events', 'uievents'];
+    var unparseableEditorDraft = [];
     if ((bogusEditorDraft.indexOf(shortname) !== -1)
         || (unparseableEditorDraft.indexOf(shortname) !== -1)) {
         spec.latest = 'https://www.w3.org/TR/' + shortname;
         addKnownVersions();
+        spec.versions = [...spec.versions];
         return spec;
     }
     return fetch('https://api.w3.org/specifications/' + shortname, options)
         .then(r =>  r.json())
-        .then(s => fetch(s._links['latest-version'].href, options))
+        .then(s => fetch(s._links['version-history'].href + '?embed=1', options))
         .then(r => r.json())
         .then(s => {
-            spec.latest = (s['editor-draft'] ? s['editor-draft'] : s.uri);
-            if (!spec.versions.includes(s.uri)) {
-                spec.versions.push(s.uri);
-            }
+            const versions = s._embedded['version-history'].map(v => v.uri);
+            const editors = s._embedded['version-history'].map(v => v['editors-draft']).filter((u,i,a) => u && a.indexOf(u) == i);
+            const latest = s._embedded['version-history'][0]
+            spec.latest = (latest['editor-draft'] ? latest['editor-draft'] : latest.uri);
+            spec.versions = new Set([...spec.versions, ...versions, ...editors]);
             return spec;
         })
         .catch(e => {
@@ -120,6 +121,7 @@ function getSpecFromW3CApi(spec) {
         })
         .then(spec => {
             addKnownVersions();
+            spec.versions = [...spec.versions];
             return spec;
         });
 }
