@@ -157,8 +157,8 @@ function crawlList(speclist) {
             dom => Promise.all([
                 spec,
                 titleExtractor(dom),
-                refParser.extract(dom).catch(err => err),
-                webidlExtractor.extract(dom).then(idl => webidlParser.parse(idl)).catch(err => err),
+                refParser.extract(dom).catch(err => {console.error(url, err); return err;}),
+                webidlExtractor.extract(dom).then(idl => webidlParser.parse(idl)).catch(err => {console.error(url, err); return err;}),
                 dom
                     ]))
             .then(res => {
