@@ -178,11 +178,6 @@ function crawlList(speclist) {
             })
             .catch(err => {
                 spec.error = err.toString();
-                spec.title = "";
-                spec.date = "";
-                spec.refs = {};
-                spec.idl = {};
-
                 return spec;
             });
     }
