@@ -58,7 +58,9 @@ function extractBikeshedIdl(doc) {
             resolve(nextSibling.textContent);
         }
         else {
-            resolve("");
+            // the document may have been generated with "omit idl-index"
+            // in which case, we try the simple way
+            extractRespecIdl(doc).then(resolve);
         }
     });
 }
