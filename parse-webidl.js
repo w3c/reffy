@@ -1,5 +1,8 @@
 var WebIDL2 = require("webidl2");
 
+function normalizeWebIDL1to2(idl) {
+    return idl.replace(/attribute +([^\[ ]*)\[\]/g, "attribute FrozenArray<$1>")
+}
 
 /**
  * Main method that takes IDL definitions and parses that IDL to compute
@@ -13,6 +16,7 @@ var WebIDL2 = require("webidl2");
  *   global level.
  */
 function parse(idl) {
+    idl = normalizeWebIDL1to2(idl);
     return new Promise(function (resolve, reject) {
         var idlTree;
         var jsNames = {constructors: {}, functions: {}, objects:{}};
