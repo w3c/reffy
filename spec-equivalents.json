@@ -1,13 +1,44 @@
 {
+    "https://www.w3.org/TR/webmessaging/": [
+        "https://html.spec.whatwg.org/",
+        "https://html.spec.whatwg.org/multipage/"
+    ],
+    "https://www.w3.org/TR/2dcontext/": [
+        "https://html.spec.whatwg.org/",
+        "https://html.spec.whatwg.org/multipage/",
+        "http://www.whatwg.org/specs/web-apps/current-work/multipage/"
+    ],
+    "https://www.w3.org/TR/workers/": [
+        "https://html.spec.whatwg.org/",
+        "https://html.spec.whatwg.org/multipage/",
+        "https://html.spec.whatwg.org/multipage/workers.html"
+    ],
     "https://html.spec.whatwg.org/": [
+        "https://w3c.github.io/html/",
         "https://www.w3.org/TR/html5/",
         "https://www.w3.org/TR/html51/",
         "https://www.w3.org/TR/html52/",
         "https://html.spec.whatwg.org/",
-        "https://html.spec.whatwg.org/multipage/"
+        "https://html.spec.whatwg.org/multipage/",
+        "https://html.spec.whatwg.org/multipage/workers.html",
+        "http://www.whatwg.org/specs/web-apps/current-work/multipage/",
+        "https://www.w3.org/TR/eventsource/",
+        "https://www.w3.org/TR/webmessaging/",
+        "https://www.w3.org/TR/2dcontext/",
+        "https://www.w3.org/TR/webstorage/",
+        "https://www.w3.org/TR/workers/",
+        "https://www.w3.org/TR/websockets/",
+        "https://www.w3.org/TR/2014/REC-html5-20141028/"
+    ],
+    "https://www.w3.org/TR/dom41/": [
+        "https://dom.spec.whatwg.org/",
+        "https://www.w3.org/TR/dom/",
+        "http://www.w3.org/TR/2004/REC-DOM-Level-3-Core-20040407"
     ],
     "https://dom.spec.whatwg.org/": [
-        "https://www.w3.org/TR/dom/"
+        "https://www.w3.org/TR/dom/",
+        "https://www.w3.org/TR/dom41/",
+        "http://www.w3.org/TR/2004/REC-DOM-Level-3-Core-20040407"
     ],
     "https://www.khronos.org/registry/webgl/specs/latest/2.0/": [
         "https://www.khronos.org/registry/webgl/specs/latest/"
@@ -45,6 +76,7 @@
     ],
     "https://www.w3.org/TR/hr-time-3/": [
         "https://www.w3.org/TR/hr-time/",
+        "https://www.w3.org/TR/hr-time-2/",
         "https://www.w3.org/TR/2012/REC-hr-time-20121217/",
         "https://www.w3.org/TR/2016/CR-hr-time-2-20161101/"
     ],
@@ -71,6 +103,7 @@
         "https://www.w3.org/TR/2015/REC-IndexedDB-20150108/"
     ],
     "https://www.w3.org/TR/resource-timing-2/": [
+        "https://www.w3.org/TR/resource-timing-1/",
         "https://www.w3.org/TR/resource-timing/",
         "https://www.w3.org/TR/2017/CR-resource-timing-1-20170330/"
     ],
@@ -79,5 +112,8 @@
     ],
     "https://www.w3.org/TR/SVG2/": [
         "https://www.w3.org/TR/SVG/"
+    ],
+    "https://w3c.github.io/staticrange/": [
+        "https://w3c.github.io/staticrange/index.html"
     ]
 }
