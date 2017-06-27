@@ -5,6 +5,24 @@ function normalizeWebIDL1to2(idl) {
 }
 
 /**
+ * Checks whether the given IDL uses WebIDL Level 1 constructs that are no
+ * longer valid in WebIDL Level 2.
+ *
+ * Note a smarter method would typically return the list of obsolete constructs
+ * instead of just a boolean flag. To be considered...
+ *
+ * @function
+ * @public
+ * @param {String} idl IDL content to check
+ * @return {boolean} True when the IDL string contains obsolete constructs,
+ *   false otherwise.
+ */
+function hasObsoleteIDL(idl) {
+    return (idl !== normalizeWebIDL1to2(idl));
+}
+
+
+/**
  * Main method that takes IDL definitions and parses that IDL to compute
  * the list of internal/external dependencies.
  *
@@ -347,6 +365,7 @@ function replaceFakePrimaryGlobal(primaryGlobal, jsNames) {
 Export the parse method for use as module
 **************************************************/
 module.exports.parse = parse;
+module.exports.hasObsoleteIDL = hasObsoleteIDL;
 
 
 /**************************************************

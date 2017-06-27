@@ -159,9 +159,15 @@ function crawlList(speclist) {
                 spec,
                 titleExtractor(dom),
                 refParser.extract(dom).catch(err => {console.error(url, err); return err;}),
-                webidlExtractor.extract(dom).then(idl => webidlParser.parse(idl)).catch(err => {console.error(url, err); return err;}),
+                webidlExtractor.extract(dom)
+                    .then(idl => Promise.all([
+                        webidlParser.parse(idl),
+                        webidlParser.hasObsoleteIDL(idl)
+                    ])
+                    .then(res => { res[0].hasObsoleteIDL = res[1]; return res[0] })
+                    .catch(err => { console.error(url, err); return [err, null]; })),
                 dom
-                    ]))
+            ]))
             .then(res => {
                 const spec = res[0];
                 const doc = res[4].document;
