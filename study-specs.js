@@ -164,7 +164,7 @@ function generateReportPerSpec(results) {
                 (report.redefinedIdlNames.length > 0)) {
                 w('- WebIDL names also defined elsewhere: ');
                 report.redefinedIdlNames.map(i => {
-                    w(' * `' + i.name + '` also defined in ' +
+                    w('    * `' + i.name + '` also defined in ' +
                         i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' and '));
                 });
             }
@@ -172,7 +172,7 @@ function generateReportPerSpec(results) {
                 (report.missingReferences.length > 0)) {
                 w('- Missing references for WebIDL names: ');
                 report.missingReferences.map(i => {
-                    w(' * `' + i.name + '` defined in ' +
+                    w('     * `' + i.name + '` defined in ' +
                         i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' or '));
                 });
             }
@@ -336,7 +336,7 @@ function generateReport(results) {
                 w('- [' + spec.title + '](' + (spec.latest || spec.url) + ') uses:');
                 spec.report.missingReferences.map(i => {
                     countrefs += 1;
-                    w(' * `' + i.name + '` but does not reference ' +
+                    w('    * `' + i.name + '` but does not reference ' +
                         i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' or '));
                 });
             }
