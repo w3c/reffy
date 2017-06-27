@@ -225,6 +225,10 @@ function fetch(url, options) {
 function loadSpecification(url) {
     return fetch(url).then(response => new Promise((resolve, reject) => {
         response.text().then(html => {
+            // Drop Byte-Order-Mark character if needed, it bugs JSDOM
+            if (html.charCodeAt(0) === 0xFEFF) {
+                html = html.substring(1);
+            }
             const {window} = new JSDOM(html, {url: response.url});
             const doc = window.document;
             // ReSpec doc
