@@ -228,7 +228,7 @@ function loadSpecification(url) {
             const {window} = new JSDOM(html, {url: response.url});
             const doc = window.document;
             // ReSpec doc
-            if (doc.head.querySelector("script[src*='respec']")) {
+            if (doc.querySelector("script[src*='respec']")) {
                 // this does another network fetch :(
                 return respecWriter(url, '', {}, 20000).then(function(html) {
                     const dom = new JSDOM(html, {url: response.url});
