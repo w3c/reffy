@@ -158,17 +158,24 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, ex
                     jsNames.primaryGlobal = def.name;
                 }
             }
-            if (ea.rhs) {
-                if (ea.rhs.type === "identifier") {
-                    contexts = [ea.rhs.value];
-                } else {
-                    contexts = ea.rhs.value;
+            if ((ea.name === "Global" || ea.name === "PrimaryGlobal")
+                && ea.rhs && (ea.rhs.type === "identifier" || ea.rhs.type === "identifier-list")) {
+                const globalNames = ea.rhs.type === "identifier" ? [ea.rhs.value] : ea.rhs.value;
+                globalNames.forEach(n => idlNames[n] = [def.name]);
+                // record ea.rhs.value as "known"
+            } else { // Exposed
+                if (ea.rhs) {
+                    if (ea.rhs.type === "identifier") {
+                        contexts = [ea.rhs.value];
+                    } else {
+                        contexts = ea.rhs.value;
+                    }
                 }
+                contexts.forEach(c=> {
+                    addDependency(c, idlNames, externalDependencies);
+                    addDependency(c, {}, idlNames._dependencies[def.name], def.name);
+                });
             }
-            contexts.forEach(c=> {
-                addDependency(c, idlNames, externalDependencies);
-                addDependency(c, {}, idlNames._dependencies[def.name], def.name);
-            });
         });
         if (def.extAttrs.filter(ea => ea.name === "Constructor").length) {
             addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
