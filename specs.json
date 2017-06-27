@@ -1,5 +1,5 @@
 [
-    "https://www.w3.org/TR/html51/",
+    "http://html.spec.whatwg.org/",
     "https://www.w3.org/TR/2dcontext/",
     "https://www.w3.org/TR/webstorage/",
     "https://www.w3.org/TR/notifications/",
@@ -70,6 +70,7 @@
     "https://encoding.spec.whatwg.org/",
     "https://fetch.spec.whatwg.org/",
     "https://streams.spec.whatwg.org/",
+    "https://www.khronos.org/registry/webgl/specs/latest/1.0/",
     "https://www.khronos.org/registry/webgl/specs/latest/2.0/",
     "https://drafts.csswg.org/css-font-loading/",
     "https://www.w3.org/TR/web-animations-1/",
@@ -98,5 +99,8 @@
     "https://www.w3.org/TR/webvtt1/",
     "https://www.w3.org/TR/magnetometer/",
     "https://www.w3.org/TR/orientation-sensor/",
-    "https://www.w3.org/TR/SVG2/"
+    "https://www.w3.org/TR/SVG2/",
+    "https://www.w3.org/TR/permissions/",
+    "https://www.w3.org/TR/referrer-policy/",
+    "https://w3c.github.io/staticrange/"
 ]
