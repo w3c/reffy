@@ -2,7 +2,14 @@ const report = require("./results.json");
 const blacklist = require("./blacklist.json");
 const {JSDOM} = require("jsdom");
 
-const currentSpecs = report.map(s => s.versions)
+const canonicalize = url => url
+      .split('#')[0]
+      .replace('http:', 'https:')
+      .replace('index.html', '')
+      .replace('Overview.html', '')
+      .replace(/https:\/\/([^\.]*).spec.whatwg.org\/.*/, 'https://$1.spec.whatwg.org/');
+
+const currentSpecs = report.map(s => s.versions.map(v => canonicalize(v)))
       // flatten
       .reduce((a,b) => a.concat(b), []);
 
@@ -10,10 +17,6 @@ const currentSpecs = report.map(s => s.versions)
 // known specs, and ones we want to ignore
 const matchingSpecs = currentSpecs.concat(blacklist);
 
-const canonicalize = url => url
-      .split('#')[0]
-      .replace('http:', 'https:')
-      .replace(/https:\/\/([^\.]*).spec.whatwg.org\/.*/, 'https://$1.spec.whatwg.org/');
 
 const extractLinks = (url, selector) => new Promise((resolve, reject) => {
     return JSDOM.fromURL(url).then(dom => {
