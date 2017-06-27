@@ -39,7 +39,7 @@
     "https://www.w3.org/TR/webdriver/",
     "https://www.w3.org/TR/requestidlecallback/",
     "https://www.w3.org/TR/presentation-api/",
-    "https://www.w3.org/TR/resource-timing/",
+    "https://www.w3.org/TR/resource-timing-2/",
     "https://www.w3.org/TR/navigation-timing-2/",
     "https://www.w3.org/TR/selection-api/",
     "https://www.w3.org/TR/performance-timeline-2/",
@@ -94,5 +94,9 @@
     "https://www.w3.org/TR/appmanifest/",
     "https://www.w3.org/TR/payment-method-basic-card/",
     "https://console.spec.whatwg.org/",
-    "https://www.w3.org/TR/remote-playback/"
+    "https://www.w3.org/TR/remote-playback/",
+    "https://www.w3.org/TR/webvtt1/",
+    "https://www.w3.org/TR/magnetometer/",
+    "https://www.w3.org/TR/orientation-sensor/",
+    "https://www.w3.org/TR/SVG2/"
 ]

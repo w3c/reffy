@@ -7,14 +7,14 @@
     "https://dom.spec.whatwg.org/": [
         "https://www.w3.org/TR/dom/"
     ],
-    "https://www.khronos.org/registry/webgl/specs/latest/2.0": [
+    "https://www.khronos.org/registry/webgl/specs/latest/2.0/": [
         "https://www.khronos.org/registry/webgl/specs/latest/"
     ],
     "https://www.w3.org/TR/notifications/": [
         "https://notifications.spec.whatwg.org/"
     ],
     "https://www.w3.org/TR/geolocation-API/": [
-        "https://www.w3.org/TR/geolocation-API/"
+        "https://dev.w3.org/geo/api/spec-source.html"
     ],
     "https://www.w3.org/TR/uievents/": [
         "https://w3c.github.io/uievents/"
@@ -31,5 +31,51 @@
     "https://www.w3.org/TR/service-workers-1/": [
         "https://w3c.github.io/ServiceWorker/",
         "https://www.w3.org/TR/service-workers/"
+    ],
+    "https://www.w3.org/TR/webvtt1/": [
+        "https://dev.w3.org/html5/webvtt/"
+    ],
+    "https://www.w3.org/TR/WebCryptoAPI/": [
+        "https://w3c.github.io/webcrypto/"
+    ],
+    "https://www.w3.org/TR/pointerlock-2/": [
+        "https://www.w3.org/TR/2016/REC-pointerlock-20161027/"
+    ],
+    "https://www.w3.org/TR/hr-time-3/": [
+        "https://www.w3.org/TR/hr-time/",
+        "https://www.w3.org/TR/2012/REC-hr-time-20121217/",
+        "https://www.w3.org/TR/2016/CR-hr-time-2-20161101/"
+    ],
+    "https://www.w3.org/TR/navigation-timing-2/": [
+        "https://www.w3.org/TR/2012/REC-navigation-timing-20121217/",
+        "https://www.w3.org/TR/navigation-timing/"
+    ],
+    "https://www.w3.org/TR/pointerevents2/": [
+        "https://www.w3.org/TR/2015/REC-pointerevents-20150224/"
+    ],
+    "https://www.w3.org/TR/page-visibility-2/": [
+        "https://www.w3.org/TR/page-visibility/",
+        "https://www.w3.org/TR/2013/REC-page-visibility-20131029/"
+    ],
+    "https://www.w3.org/TR/user-timing-2/": [
+        "https://www.w3.org/TR/user-timing/",
+        "https://www.w3.org/TR/2013/REC-user-timing-20131212/"
+    ],
+    "https://www.w3.org/TR/performance-timeline-2/": [
+        "https://www.w3.org/TR/2013/REC-performance-timeline-20131212/",
+        "https://www.w3.org/TR/performance-timeline/"
+    ],
+    "https://www.w3.org/TR/IndexedDB-2/": [
+        "https://www.w3.org/TR/2015/REC-IndexedDB-20150108/"
+    ],
+    "https://www.w3.org/TR/resource-timing-2/": [
+        "https://www.w3.org/TR/resource-timing/",
+        "https://www.w3.org/TR/2017/CR-resource-timing-1-20170330/"
+    ],
+    "https://www.w3.org/TR/input-events-2/": [
+        "https://www.w3.org/TR/2017/WD-input-events-1-20170321/"
+    ],
+    "https://www.w3.org/TR/SVG2/": [
+        "https://www.w3.org/TR/SVG/"
     ]
 }
