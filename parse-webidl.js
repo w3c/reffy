@@ -70,6 +70,7 @@ function parse(idl) {
 function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, externalDependencies, contextName) {
     return function (def) {
         switch(def.type) {
+        case "namespace":
         case "interface":
         case "dictionary":
         case "callback interface":
