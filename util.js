@@ -235,12 +235,13 @@ function loadSpecification(url) {
                     resolve(dom.window);
                 }).catch(reject);
             } else { // ReSpec doesn't do multipages in any case
-                const links = doc.querySelectorAll('body > .head a[href]');
+                const links = doc.querySelectorAll('body .head dl a[href]');
                 for (let i = 0 ; i < links.length; i++) {
                     let link = links[i];
                     let text = (link.textContent || '').toLowerCase();
                     if (text.includes('single page') ||
                         text.includes('single file') ||
+                        text.includes('single-page') ||
                         text.includes('one-page')) {
                         let singlePage = URL.resolve(doc.baseURI, link.getAttribute('href'));
                         if (singlePage === url) {
