@@ -175,6 +175,15 @@ function crawlList(speclist) {
                 spec.idl = res[3];
                 res[4].close();
                 return spec;
+            })
+            .catch(err => {
+                spec.error = err.toString();
+                spec.title = "";
+                spec.date = "";
+                spec.refs = {};
+                spec.idl = {};
+
+                return spec;
             });
     }
 

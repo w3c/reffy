@@ -1,10 +1,11 @@
 const fs = require('fs');
 const URL = require('url');
-const jsdom = require('jsdom');
+const { JSDOM } = require('jsdom');
 const filenamify = require('filenamify-url');
 const baseFetch = require('node-fetch');
 const Response = require('node-fetch').Response;
 const rimraf = require('rimraf');
+const respecWriter = require("respec/tools/respecDocWriter").fetchAndWrite;
 var config = null;
 try {
     config = require('./config.json');
@@ -224,79 +225,38 @@ function fetch(url, options) {
 function loadSpecification(url) {
     return fetch(url).then(response => new Promise((resolve, reject) => {
         response.text().then(html => {
-            jsdom.env({
-                headers: response.headers._headers,
-                lastModified: new Date(response.headers._headers['last-modified']),
-                html: html,
-                url: response.url,
-                features: {
-                    FetchExternalResources: ['script'],
-                    ProcessExternalResources: ['script'],
-                    SkipExternalResources: false
-                },
-                resourceLoader: function (resource, callback) {
-                    // Restrict resource loading to ReSpec and script resources
-                    // that sit next to the spec under test, excluding scripts
-                    // of WebIDL as well as the WHATWG annotate_spec script that
-                    // jsdom does not seem to like
-                    // Explicitly whitelist the "autolink" script of the shadow DOM
-                    // spec which is needed to initialize respecConfig
-                    var baseUrl = resource.baseUrl;
-                    if (!baseUrl.endsWith('/')) {
-                        baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
-                    }
-                    if (/\/respec\//i.test(resource.url.path)) {
-                        fetch(resource.url.href)
-                            .then(response => response.text())
-                            .then(data => callback(null, data))
-                            .catch(err => callback(err));
-                    }
-                    else if ((resource.url.pathname === '/webcomponents/assets/scripts/autolink.js') ||
-                        (resource.url.href.startsWith(baseUrl) &&
-                            !(/annotate_spec/i.test(resource.url.pathname)) &&
-                            !(/link-fixup/i.test(resource.url.pathname)) &&
-                            !(/bug-assist/i.test(resource.url.pathname)) &&
-                            !(/dfn/i.test(resource.url.pathname)) &&
-                            !(/section-links/i.test(resource.url.pathname)) &&
-                            !(/^\/webidl\//i.test(resource.url.pathname)))) {
-                        fetch(resource.url.href)
-                            .then(response => response.text())
-                            .then(data => callback(null, data))
-                            .catch(err => callback(err));
-                    }
-                    else {
-                        callback(null, '');
-                    }
-                },
-                done: (err, window) => {
-                    if (err) {
-                        return reject(err);
-                    }
-                    const doc = window.document;
-                    const links = doc.querySelectorAll('body > .head a[href]');
-                    for (let i = 0 ; i < links.length; i++) {
-                        let link = links[i];
-                        let text = (link.textContent || '').toLowerCase();
-                        if (text.includes('single page') ||
-                            text.includes('single file') ||
-                            text.includes('one-page')) {
-                            let singlePage = URL.resolve(doc.baseURI, link.getAttribute('href'));
-                            if (singlePage === url) {
-                                // We're already looking at the single page version
-                                resolve(window);
-                            }
-                            else {
-                                loadSpecification(singlePage)
-                                    .then(window => resolve(window))
-                                    .catch(err => reject(err));
-                            }
-                            return;
+            const {window} = new JSDOM(html, {url: response.url});
+            const doc = window.document;
+            // ReSpec doc
+            if (doc.head.querySelector("script[src*='respec']")) {
+                // this does another network fetch :(
+                return respecWriter(url, '', {}, 20000).then(function(html) {
+                    const dom = new JSDOM(html, {url: response.url});
+                    resolve(dom.window);
+                }).catch(reject);
+            } else { // ReSpec doesn't do multipages in any case
+                const links = doc.querySelectorAll('body > .head a[href]');
+                for (let i = 0 ; i < links.length; i++) {
+                    let link = links[i];
+                    let text = (link.textContent || '').toLowerCase();
+                    if (text.includes('single page') ||
+                        text.includes('single file') ||
+                        text.includes('one-page')) {
+                        let singlePage = URL.resolve(doc.baseURI, link.getAttribute('href'));
+                        if (singlePage === url) {
+                            // We're already looking at the single page version
+                            resolve(window);
                         }
+                        else {
+                            loadSpecification(singlePage)
+                                .then(window => resolve(window))
+                                .catch(err => reject(err));
+                        }
+                        return;
                     }
-                    resolve(window);
                 }
-                /*,virtualConsole: jsdom.createVirtualConsole().sendTo(console)*/
-            });
+            }
+            resolve(window);
         });
     }));
 }
