@@ -1,5 +1,5 @@
 [
-    "http://html.spec.whatwg.org/",
+    "https://www.w3.org/TR/html52/",
     "https://www.w3.org/TR/2dcontext/",
     "https://www.w3.org/TR/webstorage/",
     "https://www.w3.org/TR/notifications/",
@@ -64,7 +64,7 @@
     "https://www.w3.org/TR/css-pseudo-4/",
     "https://www.w3.org/TR/shadow-dom/",
     "https://www.w3.org/TR/cssom-1/",
-    "https://dom.spec.whatwg.org/",
+    "https://www.w3.org/TR/dom41/",
     "https://fullscreen.spec.whatwg.org/",
     "https://wicg.github.io/mediasession/",
     "https://encoding.spec.whatwg.org/",
