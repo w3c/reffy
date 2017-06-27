@@ -93,9 +93,6 @@ function getSpecFromW3CApi(spec) {
     if ((bogusEditorDraft.indexOf(shortname) !== -1)
         || (unparseableEditorDraft.indexOf(shortname) !== -1)) {
         spec.latest = 'https://www.w3.org/TR/' + shortname;
-        addKnownVersions();
-        spec.versions = [...spec.versions];
-        return spec;
     }
     return fetch('https://api.w3.org/specifications/' + shortname, options)
         .then(r =>  r.json())
@@ -105,7 +102,7 @@ function getSpecFromW3CApi(spec) {
             const versions = s._embedded['version-history'].map(v => v.uri);
             const editors = s._embedded['version-history'].map(v => v['editors-draft']).filter((u,i,a) => u && a.indexOf(u) == i);
             const latest = s._embedded['version-history'][0]
-            spec.latest = (latest['editor-draft'] ? latest['editor-draft'] : latest.uri);
+            if (!spec.latest) spec.latest = (latest['editor-draft'] ? latest['editor-draft'] : latest.uri);
             spec.versions = new Set([...spec.versions, ...versions, ...editors]);
             return spec;
         })
