@@ -138,17 +138,7 @@ function extractReferencesWithoutRules(doc) {
         if (!referenceHeadings.length) {
             return reject(new Error("Could not detect a heading called \"references\" in document"));
         }
-        if (referenceHeadings.length === 1) {
-            var list = nextTag(referenceHeadings[0], "dl");
-            if (!list) {
-                return reject(new Error("Could not find a reference list formatted with a dl"));
-            }
-            var refs = parseReferences(list, { filterInformative: true });
-            resolve({
-                normative: refs[0],
-                informative: refs[1]
-            });
-        } else {
+        if (referenceHeadings.length > 1) {
             var normative = referenceHeadings.filter(h => h.textContent.match(/normative/i))[0];
             var references = {};
             if (normative) {
@@ -164,10 +154,27 @@ function extractReferencesWithoutRules(doc) {
                     references.informative = parseReferences(iList)[0];
                 }
             }
-            if (!informative && !normative) {
-                return reject(new Error("Could not detect references in document"));
+            if (informative || normative) {
+                return resolve(references);
             }
-            resolve(references);
+        }
+        if (referenceHeadings.length > 1) {
+            // Still multiple reference headings, only keep the last one
+            referenceHeadings = referenceHeadings.slice(-1);
+        }
+        if (referenceHeadings.length === 1) {
+            var list = nextTag(referenceHeadings[0], "dl");
+            if (!list) {
+                return reject(new Error("Could not find a reference list formatted with a dl"));
+            }
+            var refs = parseReferences(list, { filterInformative: true });
+            resolve({
+                normative: refs[0],
+                informative: refs[1]
+            });
+        }
+        else {
+            return reject(new Error("Could not detect references in document"));
         }
     });
 }
