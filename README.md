@@ -12,7 +12,7 @@ To launch the crawler and the report study tool, follow these steps:
 1. Clone the repository: `git clone git@github.com:tidoust/reffy.git`
 2. From the root folder of reffy, install required dependencies: `npm install`
 3. Create a `config.json` file, initialized with `{ "w3cApiKey": [API key] }`
-3. Run the crawler: `node crawl-specs.js ./specs.json results.json`
+3. Run the crawler: `node crawl-specs.js ./specs-w3c.json results.json`
 4. Once done, run the study tool: `node study-specs.js ./results.json [true]` (pass `true` to create a report per specification instead of a report per anomaly). You may want to redirect the output to a file, e.g. using `node study-specs.js ./results.json > report.md`
 
 Some notes:
@@ -75,7 +75,7 @@ There are a few exceptions to the rule, though. Notably, the crawler fails to pa
 
 ### List of specs to crawl
 
-The recommended list appears in `specs.json`. It was built out of the [JavaScript APIs](http://www.w3.org/TR/#tr_Javascript_APIs) *TR* bucket, manually completed to create a more comprehensive list.
+The recommended lists appear in `specs-w3c.json` and `spec-whatwg.json`. Both files reference a common list in `specs-common.json`. These lists were built out of the [JavaScript APIs](http://www.w3.org/TR/#tr_Javascript_APIs) *TR* bucket, semi-manually completed to create a more comprehensive list.
 
 It should be possible to crawl other specs, but note Reffy has not yet been tested with specs that do not define any WebIDL term, and would need to be adjusted to return "interesting" information. Feel free to try out other specs and report any issue!
 
