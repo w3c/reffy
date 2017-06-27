@@ -4,6 +4,7 @@ var loadSpecification = require('./util').loadSpecification;
 var webidlParser = require('./parse-webidl');
 var fetch = require('./util').fetch;
 var fs = require('fs');
+var specEquivalents = require('./spec-equivalents.json');
 
 /**
  * Extracts the title of the loaded document
@@ -79,14 +80,7 @@ function getSpecFromW3CApi(spec) {
         if (spec.latest) {
             spec.versions.add(spec.latest);
         }
-        if (shortname === 'html51') {
-            spec.versions.add('https://www.w3.org/TR/html5/');
-            spec.versions.add('https://html.spec.whatwg.org/');
-            spec.versions.add('https://html.spec.whatwg.org/multipage/');
-        }
-        if (spec.url === 'https://dom.spec.whatwg.org/') {
-            spec.versions.add('https://www.w3.org/TR/dom/');
-        }
+        if (specEquivalents[spec.url]) spec.versions = new Set([...spec.versions, ...specEquivalents[spec.url]]);
     }
 
     if (!shortname) {
