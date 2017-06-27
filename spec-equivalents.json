@@ -1,6 +1,8 @@
 {
-    "https://www.w3.org/TR/html51/": [
+    "https://html.spec.whatwg.org/": [
         "https://www.w3.org/TR/html5/",
+        "https://www.w3.org/TR/html51/",
+        "https://www.w3.org/TR/html52/",
         "https://html.spec.whatwg.org/",
         "https://html.spec.whatwg.org/multipage/"
     ],
