@@ -1,0 +1,15 @@
+[
+    "https://www.w3.org/TR/2dcontext/",
+    "https://www.w3.org/TR/custom-elements/",
+    "https://www.w3.org/TR/dom41/",
+    "https://www.w3.org/TR/eventsource/",
+    "https://www.w3.org/TR/html52/",
+    "https://www.w3.org/TR/notifications/",
+    "https://www.w3.org/TR/progress-events/",
+    "https://www.w3.org/TR/shadow-dom/",
+    "https://www.w3.org/TR/webmessaging/",
+    "https://www.w3.org/TR/websockets/",
+    "https://www.w3.org/TR/webstorage/",
+    "https://www.w3.org/TR/workers/",
+    { "file": "./specs-common.json" }
+]

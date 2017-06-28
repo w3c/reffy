@@ -6,6 +6,14 @@ var fetch = require('./util').fetch;
 var fs = require('fs');
 var specEquivalents = require('./spec-equivalents.json');
 
+/*
+ * Flattens an array
+ */
+const flatten = arr => arr.reduce(
+    (acc, val) => acc.concat(Array.isArray(val) ? flatten(val) : val),
+    []);
+
+
 /**
  * Extracts the title of the loaded document
  */
@@ -253,7 +261,8 @@ if (require.main === module) {
     }
     var speclist;
     try {
-        speclist = require(speclistPath);
+        speclist = require(speclistPath).map(s => s.file ? require(s.file) : s);
+        speclist = flatten(speclist);
     } catch(e) {
         console.error("Impossible to read " + speclistPath + ": " + e);
         process.exit(3);
