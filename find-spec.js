@@ -1,19 +1,7 @@
 const blacklist = require("./blacklist.json");
 const {JSDOM} = require("jsdom");
 
-/**
- * Canonicalize a URL extracted from a page for comparison purpose
- *
- * @function
- * @private
- */
-const canonicalize = url => url
-      .split('#')[0]
-      .replace('http:', 'https:')
-      .replace('index.html', '')
-      .replace('Overview.html', '')
-      .replace(/https:\/\/([^\.]*).spec.whatwg.org\/.*/, 'https://$1.spec.whatwg.org/');
-
+const canonicalize = require('./canonicalize-url');
 
 /**
  * Retrieve the document at the specified location and extract links that
