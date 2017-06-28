@@ -2,6 +2,8 @@ var array_concat = (a,b) => a.concat(b);
 var array_unique = (n, i, a) => a.indexOf(n) === i;
 var specEquivalents = require('./spec-equivalents.json');
 
+const canonicalizeURL = require('./canonicalize-url');
+
 
 function processReport(results) {
     var knownIdlNames = results
@@ -70,10 +72,8 @@ function processReport(results) {
                         if (spec.refs && spec.refs.normative) {
                             ref = refs.find(s =>
                                 !!spec.refs.normative.find(r =>
-                                    s.versions.includes(r.url) ||
-                                    s.versions.includes(r.url.replace(/^http:/, 'https:')) ||
-                                    s.versions.includes(r.url.replace(/^https:/, 'http:')) ||
-                                    (specEquivalents[s.url] && specEquivalents[s.url].includes(r.url))
+                                    s.versions.includes(canonicalizeURL(r.url)) ||
+                                    (specEquivalents[s.url] && specEquivalents[s.url].includes(canonicalizeURL(r.url)))
                                 )
                             );
                         }
