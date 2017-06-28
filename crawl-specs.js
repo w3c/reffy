@@ -115,8 +115,8 @@ function getSpecFromW3CApi(spec) {
         .then(s => fetch(s._links['version-history'].href + '?embed=1', options))
         .then(r => r.json())
         .then(s => {
-            const versions = s._embedded['version-history'].map(v => v.uri);
-            const editors = s._embedded['version-history'].map(v => v['editors-draft']).filter((u,i,a) => u && a.indexOf(u) == i);
+            const versions = s._embedded['version-history'].map(v => v.uri).map(url => canonicalizeURL(url));
+            const editors = s._embedded['version-history'].map(v => v['editors-draft']).filter((u,i,a) => u && a.indexOf(u) == i).map(url => canonicalizeURL(url));
             const latest = s._embedded['version-history'][0];
             spec.title = latest.title;
             if (!spec.latest) spec.latest = (latest['editor-draft'] ? latest['editor-draft'] : latest.uri);

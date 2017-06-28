@@ -1,6 +1,5 @@
 var array_concat = (a,b) => a.concat(b);
 var array_unique = (n, i, a) => a.indexOf(n) === i;
-var specEquivalents = require('./spec-equivalents.json');
 
 const canonicalizeURL = require('./canonicalize-url');
 
@@ -24,6 +23,19 @@ function processReport(results) {
 
     var sortedResults = results.sort((a,b) =>
         a.title.toUpperCase().localeCompare(b.title.toUpperCase()));
+
+    // Construct spec equivalence from the crawl report, which should be more
+    // complete than the initial equivalence list.
+    var specEquivalents = {};
+    sortedResults.forEach(spec =>
+        spec.versions.forEach(v => { specEquivalents[v] = spec.url; }
+    ));
+
+    // Strong canonicalization options to find references
+    var useEquivalents = {
+        datedToLatest: true,
+        equivalents: specEquivalents
+    };
 
     return sortedResults
         .map(spec => {
@@ -64,12 +76,8 @@ function processReport(results) {
                         var refs = idlNamesIndex[name];
                         var ref = null;
                         if (spec.refs && spec.refs.normative) {
-                            ref = refs.find(s =>
-                                !!spec.refs.normative.find(r =>
-                                    s.versions.includes(canonicalizeURL(r.url)) ||
-                                    (specEquivalents[s.url] && specEquivalents[s.url].includes(canonicalizeURL(r.url)))
-                                )
-                            );
+                            ref = refs.find(s => !!spec.refs.normative.find(r =>
+                                (canonicalizeURL(r.url, useEquivalents) === s.url)));
                         }
                         return (ref ? null : {
                             name,
@@ -79,17 +87,36 @@ function processReport(results) {
                     .filter(i => !!i),
                 missingReferences: spec.links
                     .filter(matchSpecUrl)
-                    .filter(l => !(spec.refs.normative && spec.refs.normative.find(r => canonicalizeURL(r.url) === l)) && !(spec.refs.informative && spec.refs.informative.find(r => canonicalizeURL(r.url) === l)))
+                    .filter(l => {
+                        let canon = canonicalizeURL(l, useEquivalents);
+                        let refs = (spec.refs.normative || []).concat(spec.refs.informative || []);
+                        return !refs.find(r => canonicalizeURL(r.url, useEquivalents) === canon);
+                    })
                     .filter(l => !spec.versions.includes(l)),
+                inconsistentReferences: spec.links
+                    .filter(matchSpecUrl)
+                    .map(l => {
+                        let canonSimple = canonicalizeURL(l);
+                        let canon = canonicalizeURL(l, useEquivalents);
+                        let refs = (spec.refs.normative || []).concat(spec.refs.informative || []);
+
+                        // Filter out "good" references
+                        if (refs.find(r => canonicalizeURL(r.url) === canonSimple)) {
+                            return null;
+                        }
+                        let ref = refs.find(r => canonicalizeURL(r.url, useEquivalents) === canon);
+                        return (ref ? { link: l, ref } : null);
+                    })
+                    .filter(l => !!l),
                 referencedBy: {
                     normative: sortedResults.filter(s =>
                         s.refs.normative && s.refs.normative.find(r =>
-                            (spec.url === canonicalizeURL(r.url)) ||
-                            spec.versions.includes(canonicalizeURL(r.url)))),
+                            (spec.url === canonicalizeURL(r.url, useEquivalents)) ||
+                            spec.versions.includes(canonicalizeURL(r.url, useEquivalents)))),
                     informative: sortedResults.filter(s =>
                         s.refs.informative && s.refs.informative.find(r =>
-                            (spec.url === canonicalizeURL(r.url)) ||
-                            spec.versions.includes(canonicalizeURL(r.url))))
+                            (spec.url === canonicalizeURL(r.url, useEquivalents)) ||
+                            spec.versions.includes(canonicalizeURL(r.url, useEquivalents))))
                 }
             };
             report.ok = !report.error &&
@@ -101,7 +128,8 @@ function processReport(results) {
                 (!report.unknownIdlNames || (report.unknownIdlNames.length === 0)) &&
                 (!report.redefinedIdlNames || (report.redefinedIdlNames.length === 0)) &&
                 (!report.missingWebIdlReferences || (report.missingWebIdlReferences.length === 0)) &&
-                report.missingReferences.length === 0
+                (report.missingReferences.length === 0) &&
+                (report.inconsistentReferences.length === 0);
             var res = {
                 title: spec.title,
                 shortname: spec.shortname,
@@ -221,6 +249,13 @@ function generateReportPerSpec(results) {
                 w('- Missing references for links: ');
                 report.missingReferences.map(l => {
                     w('     * [`' + l + '`](' + l + ')');
+                });
+            }
+            if (report.inconsistentReferences &&
+                (report.inconsistentReferences.length > 0)) {
+                w('- Inconsistent references for links: ');
+                report.inconsistentReferences.map(l => {
+                    w('     * [`' + l.link + '`](' + l.link + '), related reference "' + l.ref.name + '" uses URL [`' + l.ref.url + '`](' + l.ref.url + ')');
                 });
             }
             w();
@@ -455,6 +490,36 @@ function generateReport(results) {
     });
     w();
     w('=> ' + countrefs + ' missing reference' + ((countrefs > 1) ? 's' : '') +
+      ' for links found in ' + count + ' specification' +
+      ((count > 1) ? 's' : ''));
+    w();
+    w();
+
+    count = 0;
+    countrefs = 0;
+    w('## Reference URL is inconsistent with URL used in document links');
+    w();
+    results.forEach(spec => {
+        if (spec.report.inconsistentReferences &&
+            (spec.report.inconsistentReferences.length > 0)) {
+            count += 1;
+            if (spec.report.inconsistentReferences.length === 1) {
+                countrefs += 1;
+                let l = spec.report.inconsistentReferences[0];
+                w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')' +
+                  ' links to [`' + l.link + '`](' + l.link + ') but related reference "' + l.ref.name + '" uses URL [`' + l.ref.url + '`](' + l.ref.url + ')');
+            }
+            else {
+                w('- [' + spec.title + '](' + (spec.latest || spec.url) + ') links to:');
+                spec.report.inconsistentReferences.forEach(l => {
+                    countrefs++;
+                    w('    * [`' + l.link + '`](' + l.link + ') but related reference "' + l.ref.name + '" uses URL [`' + l.ref.url + '`](' + l.ref.url + ')');
+                });
+            }
+        }
+    });
+    w();
+    w('=> ' + countrefs + ' inconsistent reference' + ((countrefs > 1) ? 's' : '') +
       ' for links found in ' + count + ' specification' +
       ((count > 1) ? 's' : ''));
 

@@ -11,6 +11,7 @@
     ],
     "https://html.spec.whatwg.org/": [
         "https://w3c.github.io/html/",
+        "https://www.w3.org/TR/html/",
         "https://www.w3.org/TR/html5/",
         "https://www.w3.org/TR/html51/",
         "https://www.w3.org/TR/html52/",
@@ -32,6 +33,7 @@
         "https://www.w3.org/TR/REC-DOM-Level-1/"
     ],
     "https://www.w3.org/TR/html52/": [
+        "https://www.w3.org/TR/html/",
         "https://www.w3.org/TR/html5/",
         "https://www.w3.org/TR/html51/",
         "https://www.w3.org/TR/html52/",
