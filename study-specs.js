@@ -22,17 +22,8 @@ function processReport(results) {
     // TODO: we may end up with different variants of the WebIDL spec
     var WebIDLSpec = results.find(spec => (spec.shortname === 'WebIDL-1')) || {};
 
-    var sortedResults = results.sort((a, b) => {
-        var A = a.title.toUpperCase();
-        var B = b.title.toUpperCase();
-        if (A < B) {
-            return -1;
-        }
-        if (A > B) {
-            return 1;
-        }
-        return 0;
-    });
+    var sortedResults = results.sort((a,b) =>
+        a.title.toUpperCase().localeCompare(b.title.toUpperCase()));
 
     return sortedResults
         .map(spec => {
