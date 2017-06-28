@@ -270,7 +270,7 @@ function parseType(idltype, idlNames, externalDependencies, contextName) {
     if (isString(idltype)) {
         idltype = { idlType: 'DOMString' };
     }
-    if (idltype.union) {
+    if (idltype.union || (idltype.generic && Array.isArray(idltype.idlType))) {
         idltype.idlType.forEach(t => parseType(t, idlNames, externalDependencies, contextName));
         return;
     }
