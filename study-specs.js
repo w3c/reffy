@@ -4,7 +4,7 @@ var specEquivalents = require('./spec-equivalents.json');
 
 const canonicalizeURL = require('./canonicalize-url');
 
-const matchSpecUrl = url => url.match(/spec.whatwg.org/) || url.match(/www.w3.org\/TR\/[a-z0-9]/) || url.match(/w3c.github.io/);
+const matchSpecUrl = url => url.match(/spec.whatwg.org/) || url.match(/www.w3.org\/TR\/[a-z0-9]/) || (url.match(/w3c.github.io/) && ! url.match(/w3c.github.io\/test-results\//));
 
 function processReport(results) {
     var knownIdlNames = results
