@@ -39,6 +39,7 @@ function processReport(results) {
             var idlDeps = (spec.idl && spec.idl.externalDependencies) ?
                 spec.idl.externalDependencies : [];
             var report = {
+                error: spec.error,
                 hasNormativeRefs: (spec.refs.normative &&
                     (spec.refs.normative.length > 0)),
                 referencesWebIDL: (spec.refs.normative &&
@@ -84,9 +85,11 @@ function processReport(results) {
                     })
                     .filter(i => !!i)
             };
-            report.ok = report.hasNormativeRefs &&
+            report.ok = !report.error &&
+                report.hasNormativeRefs &&
                 report.hasIdl &&
                 !report.hasInvalidIdl &&
+                !report.hasObsoleteIdl &&
                 report.referencesWebIDL &&
                 (!report.unknownIdlNames || (report.unknownIdlNames.length === 0)) &&
                 (!report.redefinedIdlNames || (report.redefinedIdlNames.length === 0)) &&
@@ -127,10 +130,25 @@ function generateReportPerSpec(results) {
     w();
     w();
 
+    let parsingErrors = results.filter(spec => spec.report.error);
+    if (parsingErrors.length > 0) {
+        w('## Specifications that could not be parsed');
+        w();
+        count = 0;
+        parsingErrors.forEach(spec => {
+            count += 1;
+            w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')');
+        });
+        w();
+        w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
+        w();
+        w();
+    }
+
     w('## Specifications with possible issues');
     w();
     results
-        .filter(spec => !spec.report.ok)
+        .filter(spec => !spec.report.ok && !spec.report.error)
         .forEach(spec => {
             w('### ' + spec.title);
             w();
@@ -153,6 +171,9 @@ function generateReportPerSpec(results) {
             }
             if (report.hasInvalidIdl) {
                 w('- Invalid WebIDL content found');
+            }
+            if (report.hasObsoleteIdl) {
+                w('- Obsolete WebIDL constructs found');
             }
             if (report.hasIdl && !report.referencesWebIDL) {
                 w('- Spec uses WebIDL but does not reference it normatively');
@@ -203,6 +224,24 @@ function generateReport(results) {
     w();
     w();
 
+    let parsingErrors = results.filter(spec => spec.report.error);
+    if (parsingErrors.length > 0) {
+        w('## Specifications that could not be parsed');
+        w();
+        count = 0;
+        parsingErrors.forEach(spec => {
+            count += 1;
+            w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')');
+        });
+        w();
+        w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
+        w();
+        w();
+
+        // Remove specs that could not be parsed from the rest of the report
+        results = results.filter(spec => !spec.report.error);
+    }
+
     count = 0;
     w('## Specifications without normative dependencies');
     w();
@@ -246,6 +285,20 @@ function generateReport(results) {
     w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
     w();
     w('**NB:** this may be due to WebIDL having evolved in the meantime');
+    w();
+    w();
+
+    count = 0;
+    w('## List of specifications with obsolete WebIDL constructs');
+    w();
+    results
+        .filter(spec => spec.report.hasObsoleteIdl)
+        .forEach(spec => {
+            count += 1;
+            w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')');
+        });
+    w();
+    w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
     w();
     w();
 
