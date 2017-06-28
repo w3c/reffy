@@ -22,18 +22,19 @@ function processReport(results) {
     // TODO: we may end up with different variants of the WebIDL spec
     var WebIDLSpec = results.find(spec => (spec.shortname === 'WebIDL-1')) || {};
 
-    return results
-        .sort((a, b) => {
-            var A = a.title.toUpperCase();
-            var B = b.title.toUpperCase();
-            if (A < B) {
-                return -1;
-            }
-            if (A > B) {
-                return 1;
-            }
-            return 0;
-        })
+    var sortedResults = results.sort((a, b) => {
+        var A = a.title.toUpperCase();
+        var B = b.title.toUpperCase();
+        if (A < B) {
+            return -1;
+        }
+        if (A > B) {
+            return 1;
+        }
+        return 0;
+    });
+
+    return sortedResults
         .map(spec => {
             var idlDfns = (spec.idl && spec.idl.idlNames) ?
                 Object.keys(spec.idl.idlNames).filter(name => (name !== '_dependencies')) : [];
@@ -87,8 +88,18 @@ function processReport(results) {
                     .filter(i => !!i),
                 missingReferences: spec.links
                     .filter(matchSpecUrl)
-                    .filter(l => !spec.refs.normative.find(r => canonicalizeURL(r.url) === l) && !spec.refs.informative.find(r => canonicalizeURL(r.url) === l))
-                    .filter(l => !spec.versions.includes(l))
+                    .filter(l => !(spec.refs.normative && spec.refs.normative.find(r => canonicalizeURL(r.url) === l)) && !(spec.refs.informative && spec.refs.informative.find(r => canonicalizeURL(r.url) === l)))
+                    .filter(l => !spec.versions.includes(l)),
+                referencedBy: {
+                    normative: sortedResults.filter(s =>
+                        s.refs.normative && s.refs.normative.find(r =>
+                            (spec.url === canonicalizeURL(r.url)) ||
+                            spec.versions.includes(canonicalizeURL(r.url)))),
+                    informative: sortedResults.filter(s =>
+                        s.refs.informative && s.refs.informative.find(r =>
+                            (spec.url === canonicalizeURL(r.url)) ||
+                            spec.versions.includes(canonicalizeURL(r.url))))
+                }
             };
             report.ok = !report.error &&
                 report.hasNormativeRefs &&
@@ -110,6 +121,19 @@ function processReport(results) {
             };
             return res;
         });
+}
+
+
+function writeCrawlInfo(spec) {
+    var w = console.log.bind(console);
+
+    w('Crawl info:');
+    w('- URL: [' + (spec.latest ?
+        ((spec.latest.indexOf('www.w3.org/TR/') !== -1) ? 'Latest published version' : 'Editor\'s Draft') :
+        ((spec.url.indexOf('spec.whatwg.org') !== -1) ? 'Living Standard' : 'Initial URL'))
+        + '](' + (spec.latest || spec.url) + ')');
+    w('- Shortname: ' + (spec.shortname || 'no shortname'));
+    w('- Date: ' + (spec.date || 'unknown'));
 }
 
 
@@ -158,13 +182,7 @@ function generateReportPerSpec(results) {
         .forEach(spec => {
             w('### ' + spec.title);
             w();
-            w('Crawl info:');
-            w('- URL: [' + (spec.latest ?
-                ((spec.latest.indexOf('www.w3.org/TR/') !== -1) ? 'Latest published version' : 'Editor\'s Draft') :
-                ((spec.url.indexOf('spec.whatwg.org') !== -1) ? 'Living Standard' : 'Initial URL'))
-                + '](' + (spec.latest || spec.url) + ')');
-            w('- Shortname: ' + (spec.shortname || 'no shortname'));
-            w('- Date: ' + (spec.date || 'unknown'));
+            writeCrawlInfo(spec);
             w();
 
             var report = spec.report;
@@ -414,10 +432,11 @@ function generateReport(results) {
     w('=> ' + countrefs + ' missing reference' + ((countrefs > 1) ? 's' : '') +
       ' for IDL definitions found in ' + count + ' specification' +
       ((count > 1) ? 's' : ''));
+    w();
+    w();
 
     count = 0;
     countrefs = 0;
-    w();
     w('## Missing references based on document links');
     w();
     results.forEach(spec => {
@@ -449,12 +468,53 @@ function generateReport(results) {
 }
 
 
+function generateDependenciesReport(results) {
+    var count = 0;
+    var w = console.log.bind(console);
+
+    // Compute report information
+    results = processReport(results);
+
+    w('# Reffy dependencies report');
+    w();
+    results.forEach(spec => {
+        w('## ' + spec.title);
+        w();
+        writeCrawlInfo(spec);
+        w();
+        if (spec.report.referencedBy.normative.length > 0) {
+            w('Normative references to this spec from:');
+            spec.report.referencedBy.normative.forEach(s => {
+                w('- [' + s.title + '](' + (s.latest || s.url) + ')');
+            });
+        }
+        else {
+            w('No normative reference to this spec from other specs.');
+        }
+        w();
+
+        if (spec.report.referencedBy.informative.length > 0) {
+            w('Informative references to this spec from:');
+            spec.report.referencedBy.informative.forEach(s => {
+                w('- [' + s.title + '](' + (s.latest || s.url) + ')');
+            });
+        }
+        else {
+            w('No informative reference to this spec from other specs.');
+        }
+        w();
+        w();
+    });
+}
+
+
 /**************************************************
 Code run if the code is run as a stand-alone module
 **************************************************/
 if (require.main === module) {
     var specResultsPath = process.argv[2];
-    var perSpec = !!process.argv[3];
+    var perSpec = !!process.argv[3] || (process.argv[3] === 'perspec');
+    var depReport = (process.argv[3] === 'dep');
     if (!specResultsPath) {
         console.error("Required filename parameter missing");
         process.exit(2);
@@ -466,7 +526,10 @@ if (require.main === module) {
         console.error("Impossible to read " + specresultsPath + ": " + e);
         process.exit(3);
     }
-    if (perSpec) {
+    if (depReport) {
+        generateDependenciesReport(specResults);
+    }
+    else if (perSpec) {
         generateReportPerSpec(specResults);
     }
     else {

@@ -13,7 +13,7 @@ To launch the crawler and the report study tool, follow these steps:
 2. From the root folder of reffy, install required dependencies: `npm install`
 3. Create a `config.json` file, initialized with `{ "w3cApiKey": [API key] }`
 3. Run the crawler: `node crawl-specs.js ./specs-w3c.json results.json`
-4. Once done, run the study tool: `node study-specs.js ./results.json [true]` (pass `true` to create a report per specification instead of a report per anomaly). You may want to redirect the output to a file, e.g. using `node study-specs.js ./results.json > report.md`
+4. Once done, run the study tool: `node study-specs.js ./results.json [perspec|dep]` (pass `perspec` to create a report per specification instead of a report per anomaly and `dep` to generate a dependencies report). You may want to redirect the output to a file, e.g. using `node study-specs.js ./results.json > report.md`
 
 Some notes:
 
