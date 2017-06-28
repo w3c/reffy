@@ -17,7 +17,7 @@ function normalizeWebIDL1to2(idl) {
  * @return {boolean} True when the IDL string contains obsolete constructs,
  *   false otherwise.
  */
-function hasObsoleteIDL(idl) {
+function hasObsoleteIdl(idl) {
     return (idl !== normalizeWebIDL1to2(idl));
 }
 
@@ -365,7 +365,7 @@ function replaceFakePrimaryGlobal(primaryGlobal, jsNames) {
 Export the parse method for use as module
 **************************************************/
 module.exports.parse = parse;
-module.exports.hasObsoleteIDL = hasObsoleteIDL;
+module.exports.hasObsoleteIdl = hasObsoleteIdl;
 
 
 /**************************************************

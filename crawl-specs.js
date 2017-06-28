@@ -109,7 +109,8 @@ function getSpecFromW3CApi(spec) {
         .then(s => {
             const versions = s._embedded['version-history'].map(v => v.uri);
             const editors = s._embedded['version-history'].map(v => v['editors-draft']).filter((u,i,a) => u && a.indexOf(u) == i);
-            const latest = s._embedded['version-history'][0]
+            const latest = s._embedded['version-history'][0];
+            spec.title = latest.title;
             if (!spec.latest) spec.latest = (latest['editor-draft'] ? latest['editor-draft'] : latest.uri);
             spec.versions = new Set([...spec.versions, ...versions, ...editors]);
             return spec;
@@ -162,9 +163,9 @@ function crawlList(speclist) {
                 webidlExtractor.extract(dom)
                     .then(idl => Promise.all([
                         webidlParser.parse(idl),
-                        webidlParser.hasObsoleteIDL(idl)
+                        webidlParser.hasObsoleteIdl(idl)
                     ])
-                    .then(res => { res[0].hasObsoleteIDL = res[1]; return res[0] })
+                    .then(res => { res[0].hasObsoleteIdl = res[1]; return res[0] })
                     .catch(err => { console.error(url, err); return [err, null]; })),
                 dom
             ]))
@@ -176,7 +177,7 @@ function crawlList(speclist) {
                     statusAndDateElement.textContent.split(/\s+/).slice(-3).join(' ') :
                     (new Date(Date.parse(doc.lastModified))).toDateString());
 
-                spec.title = spec.title ? spec.title : res[1];
+                spec.title = res[1] ? res[1] : spec.title;
                 spec.date = date;
                 spec.refs = res[2];
                 spec.idl = res[3];
@@ -185,7 +186,7 @@ function crawlList(speclist) {
             })
             .catch(err => {
                 spec.error = err.toString();
-                spec.title = "";
+                spec.title = spec.title || "";
                 spec.date = "";
                 spec.refs = {};
                 spec.idl = {};
