@@ -1,5 +1,6 @@
 [
     "https://dom.spec.whatwg.org/",
     "https://html.spec.whatwg.org/",
+    "https://notifications.spec.whatwg.org/",
     { "file": "./specs-common.json" }
 ]
