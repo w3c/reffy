@@ -477,6 +477,7 @@ function generateDependenciesReport(results) {
         w();
         if (spec.report.referencedBy.normative.length > 0) {
             w('Normative references to this spec from:');
+            w();
             spec.report.referencedBy.normative.forEach(s => {
                 w('- [' + s.title + '](' + (s.latest || s.url) + ')');
             });
@@ -488,6 +489,7 @@ function generateDependenciesReport(results) {
 
         if (spec.report.referencedBy.informative.length > 0) {
             w('Informative references to this spec from:');
+            w();
             spec.report.referencedBy.informative.forEach(s => {
                 w('- [' + s.title + '](' + (s.latest || s.url) + ')');
             });
