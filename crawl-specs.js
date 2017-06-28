@@ -5,6 +5,7 @@ var webidlParser = require('./parse-webidl');
 var fetch = require('./util').fetch;
 var fs = require('fs');
 var specEquivalents = require('./spec-equivalents.json');
+var canonicalizeURL = require('./canonicalize-url');
 
 /*
  * Flattens an array
@@ -33,6 +34,13 @@ function titleExtractor(window) {
     }
 }
 
+/**
+ * Extract and canonicalize absolute links of the document
+*/
+function linkExtractor(window) {
+    const links = new Set([...window.document.querySelectorAll('a[href^=http]')].map(n => canonicalizeURL(n.href)));
+    return [...links];
+}
 
 /**
  * Return the given URL along with the W3C shortname for that specification
@@ -158,6 +166,7 @@ function crawlList(speclist) {
             dom => Promise.all([
                 spec,
                 titleExtractor(dom),
+                linkExtractor(dom),
                 refParser.extract(dom).catch(err => {console.error(url, err); return err;}),
                 webidlExtractor.extract(dom)
                     .then(idl => Promise.all([
@@ -170,7 +179,7 @@ function crawlList(speclist) {
             ]))
             .then(res => {
                 const spec = res[0];
-                const doc = res[4].document;
+                const doc = res[5].document;
                 const statusAndDateElement = doc.querySelector('.head h2');
                 const date = (statusAndDateElement ?
                     statusAndDateElement.textContent.split(/\s+/).slice(-3).join(' ') :
@@ -178,15 +187,17 @@ function crawlList(speclist) {
 
                 spec.title = spec.title ? spec.title : res[1];
                 spec.date = date;
-                spec.refs = res[2];
-                spec.idl = res[3];
-                res[4].close();
+                spec.links = res[2];
+                spec.refs = res[3];
+                spec.idl = res[4];
+                res[5].close();
                 return spec;
             })
             .catch(err => {
                 spec.error = err.toString();
                 spec.title = "";
                 spec.date = "";
+                spec.links = [];
                 spec.refs = {};
                 spec.idl = {};
 
