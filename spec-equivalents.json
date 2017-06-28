@@ -22,11 +22,13 @@
         "https://www.w3.org/TR/webstorage/",
         "https://www.w3.org/TR/workers/",
         "https://www.w3.org/TR/websockets/",
+        "https://www.w3.org/html/wg/drafts/html/master/webappapis.html"
     ],
     "https://www.w3.org/TR/dom41/": [
         "https://dom.spec.whatwg.org/",
         "https://www.w3.org/TR/dom/",
         "https://www.w3.org/TR/DOM-Level-3-Core/",
+        "https://www.w3.org/TR/domcore/"
     ],
     "https://www.w3.org/TR/html52/": [
         "https://www.w3.org/TR/html5/",
@@ -39,8 +41,10 @@
         "https://www.w3.org/TR/dom/",
         "https://www.w3.org/TR/dom41/",
         "https://www.w3.org/TR/DOM-Level-3-Core/",
+        "https://www.w3.org/TR/domcore/"
     ],
-    "https://www.khronos.org/registry/webgl/specs/latest/2.0/": [
+    "https://www.khronos.org/registry/webgl/specs/latest/1.0/": [
+        "https://www.khronos.org/registry/webgl/specs/1.0/",
         "https://www.khronos.org/registry/webgl/specs/latest/"
     ],
     "https://www.w3.org/TR/notifications/": [
@@ -104,9 +108,13 @@
         "https://www.w3.org/TR/input-events-1/"
     ],
     "https://www.w3.org/TR/SVG2/": [
-        "https://www.w3.org/TR/SVG/"
+        "https://www.w3.org/TR/SVG/",
+        "https://www.w3.org/TR/SVG11/"
     ],
     "https://w3c.github.io/staticrange/": [
         "https://w3c.github.io/staticrange/index.html"
+    ],
+    "https://www.w3.org/TR/geometry-1/": [
+        "https://drafts.fxtf.org/geometry/"
     ]
 }
