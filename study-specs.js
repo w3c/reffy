@@ -4,6 +4,7 @@ var specEquivalents = require('./spec-equivalents.json');
 
 const canonicalizeURL = require('./canonicalize-url');
 
+const matchSpecUrl = url => url.match(/spec.whatwg.org/) || url.match(/www.w3.org\/TR\/[a-z0-9]/) || (url.match(/w3c.github.io/) && ! url.match(/w3c.github.io\/test-results\//));
 
 function processReport(results) {
     var knownIdlNames = results
@@ -19,7 +20,7 @@ function processReport(results) {
     });
 
     // TODO: we may end up with different variants of the WebIDL spec
-    var WebIDLSpec = results.find(spec => (spec.shortname === 'WebIDL-1'));
+    var WebIDLSpec = results.find(spec => (spec.shortname === 'WebIDL-1')) || {};
 
     return results
         .sort((a, b) => {
@@ -65,7 +66,7 @@ function processReport(results) {
                             refs: idlNamesIndex[name].filter(ref => (ref.url !== spec.url))
                         };
                     }),
-                missingReferences: idlDeps
+                missingWebIdlReferences: idlDeps
                     .filter(name => knownIdlNames.indexOf(name) !== -1)
                     .map(name => {
                         var refs = idlNamesIndex[name];
@@ -83,7 +84,11 @@ function processReport(results) {
                             refs
                         });
                     })
-                    .filter(i => !!i)
+                    .filter(i => !!i),
+                missingReferences: spec.links
+                    .filter(matchSpecUrl)
+                    .filter(l => !spec.refs.normative.find(r => canonicalizeURL(r.url) === l) && !spec.refs.informative.find(r => canonicalizeURL(r.url) === l))
+                    .filter(l => !spec.versions.includes(l))
             };
             report.ok = !report.error &&
                 report.hasNormativeRefs &&
@@ -93,7 +98,8 @@ function processReport(results) {
                 report.referencesWebIDL &&
                 (!report.unknownIdlNames || (report.unknownIdlNames.length === 0)) &&
                 (!report.redefinedIdlNames || (report.redefinedIdlNames.length === 0)) &&
-                (!report.missingReferences || (report.missingReferences.length === 0));
+                (!report.missingWebIdlReferences || (report.missingWebIdlReferences.length === 0)) &&
+                report.missingReferences.length === 0
             var res = {
                 title: spec.title,
                 shortname: spec.shortname,
@@ -191,12 +197,19 @@ function generateReportPerSpec(results) {
                         i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' and '));
                 });
             }
-            if (report.missingReferences &&
-                (report.missingReferences.length > 0)) {
+            if (report.missingWebIdlReferences &&
+                (report.missingWebIdlReferences.length > 0)) {
                 w('- Missing references for WebIDL names: ');
-                report.missingReferences.map(i => {
+                report.missingWebIdlReferences.map(i => {
                     w('     * `' + i.name + '` defined in ' +
                         i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' or '));
+                });
+            }
+            if (report.missingReferences &&
+                (report.missingReferences.length > 0)) {
+                w('- Missing references for links: ');
+                report.missingReferences.map(l => {
+                    w('     * `[' + l + '](' + l + ')`');
                 });
             }
             w();
@@ -377,19 +390,19 @@ function generateReport(results) {
     w('## Missing references for WebIDL names');
     w();
     results.forEach(spec => {
-        if (spec.report.missingReferences &&
-            (spec.report.missingReferences.length > 0)) {
+        if (spec.report.missingWebIdlReferences &&
+            (spec.report.missingWebIdlReferences.length > 0)) {
             count += 1;
-            if (spec.report.missingReferences.length === 1) {
+            if (spec.report.missingWebIdlReferences.length === 1) {
                 countrefs += 1;
-                let i = spec.report.missingReferences[0];
+                let i = spec.report.missingWebIdlReferences[0];
                 w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')' +
                     ' uses `' + i.name + '` but does not reference ' +
                     i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' or '));
             }
             else {
                 w('- [' + spec.title + '](' + (spec.latest || spec.url) + ') uses:');
-                spec.report.missingReferences.map(i => {
+                spec.report.missingWebIdlReferences.map(i => {
                     countrefs += 1;
                     w('    * `' + i.name + '` but does not reference ' +
                         i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' or '));
@@ -398,8 +411,41 @@ function generateReport(results) {
         }
     });
     w();
-    w('=> ' + countrefs + ' missing reference' + ((count > 1) ? 's' : '') +
-        ' found in ' + count + ' specification' + ((count > 1) ? 's' : ''));
+    w('=> ' + countrefs + ' missing reference' + ((countrefs > 1) ? 's' : '') +
+      ' for IDL definitions found in ' + count + ' specification' +
+      ((count > 1) ? 's' : ''));
+
+    count = 0;
+    countrefs = 0;
+    w();
+    w('## Missing references based on document links');
+    w();
+    results.forEach(spec => {
+        if (spec.report.missingReferences &&
+            (spec.report.missingReferences.length > 0)) {
+            count += 1;
+            if (spec.report.missingReferences.length === 1) {
+                countrefs += 1;
+                let l = spec.report.missingReferences[0];
+                w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')' +
+                  ' links to `[' + l + '](' + l + ')` but does not list it' +
+                  ' in its references');
+            }
+            else {
+                w('- [' + spec.title + '](' + (spec.latest || spec.url) + ') links to:');
+                spec.report.missingReferences.forEach(l => {
+                    countrefs++;
+                    w('    * `[' + l + '](' + l + ')` but does not list it ' +
+                      'in its references');
+                });
+            }
+        }
+    });
+    w();
+    w('=> ' + countrefs + ' missing reference' + ((countrefs > 1) ? 's' : '') +
+      ' for links found in ' + count + ' specification' +
+      ((count > 1) ? 's' : ''));
+
 }
 
 
