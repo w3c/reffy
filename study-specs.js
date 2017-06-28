@@ -220,7 +220,7 @@ function generateReportPerSpec(results) {
                 (report.missingReferences.length > 0)) {
                 w('- Missing references for links: ');
                 report.missingReferences.map(l => {
-                    w('     * `[' + l + '](' + l + ')`');
+                    w('     * [`' + l + '`](' + l + ')');
                 });
             }
             w();
@@ -440,14 +440,14 @@ function generateReport(results) {
                 countrefs += 1;
                 let l = spec.report.missingReferences[0];
                 w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')' +
-                  ' links to `[' + l + '](' + l + ')` but does not list it' +
+                  ' links to [`' + l + '`](' + l + ') but does not list it' +
                   ' in its references');
             }
             else {
                 w('- [' + spec.title + '](' + (spec.latest || spec.url) + ') links to:');
                 spec.report.missingReferences.forEach(l => {
                     countrefs++;
-                    w('    * `[' + l + '](' + l + ')` but does not list it ' +
+                    w('    * [`' + l + '`](' + l + ') but does not list it ' +
                       'in its references');
                 });
             }
