@@ -119,6 +119,7 @@ function writeCrawlInfo(spec) {
     var w = console.log.bind(console);
 
     w('Crawl info:');
+    w();
     w('- URL: [' + (spec.latest ?
         ((spec.latest.indexOf('www.w3.org/TR/') !== -1) ? 'Latest published version' : 'Editor\'s Draft') :
         ((spec.url.indexOf('spec.whatwg.org') !== -1) ? 'Living Standard' : 'Initial URL'))
@@ -178,6 +179,7 @@ function generateReportPerSpec(results) {
 
             var report = spec.report;
             w('Potential issue(s):');
+            w();
             if (!report.hasNormativeRefs) {
                 w('- No normative references found');
             }
