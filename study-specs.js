@@ -59,6 +59,7 @@ function processReport(results) {
                         (Object.keys(spec.idl.idlNames).length === 1) &&
                         (Object.keys(spec.idl.idlExtendedNames).length === 0))),
                 hasInvalidIdl: !!(!spec.idl.idlNames && spec.idl.message),
+                hasObsoleteIdl: spec.idl.hasObsoleteIdl,
                 unknownIdlNames: idlDeps
                     .filter(name => knownIdlNames.indexOf(name) === -1)
                     .sort(),
