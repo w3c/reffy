@@ -726,6 +726,18 @@ function generateDependenciesReport(results) {
 
     w('# Reffy dependencies report');
     w();
+    w('Reffy is a spec exploration tool.' +
+        ' It takes a list of specifications as input, fetches and parses the latest Editor\'s Draft' +
+        ' of each of these specifications to study the IDL content that it defines, the links that it' +
+        ' contains, and the normative and informative references that it lists.');
+    w();
+    w('The report below lists incoming links for each specification, in other words the list' +
+        ' of specifications that normatively or informatively reference a given specification.');
+    w();
+    w('By definition, Reffy only knows about incoming links from specifications that have been' +
+        ' crawled and that could successfully be parsed. Other specifications that Reffy does' +
+        ' not know anything about may reference specifications listed here.');
+    w();
     results.forEach(spec => {
         w('## ' + spec.title);
         w();
@@ -742,6 +754,22 @@ function generateDependenciesReport(results) {
             w('No normative reference to this spec from other specs.');
         }
         w();
+
+        // Check the list of specifications that should normatively reference
+        // this specification because they use IDL content it defines.
+        let shouldBeReferencedBy = results.filter(s =>
+            s.report.missingWebIdlReferences &&
+            s.report.missingWebIdlReferences.find(i =>
+                i.refs.find(ref => (ref.url === spec.url))));
+        if (shouldBeReferencedBy.length > 0) {
+            w('Although they do not, the following specs should also normatively' +
+                ' reference this spec because they use IDL terms it defines:');
+            w();
+            shouldBeReferencedBy.forEach(s => {
+                w('- [' + s.title + '](' + (s.latest || s.url) + ')');
+            });
+            w();
+        }
 
         if (spec.report.referencedBy.informative.length > 0) {
             w('Informative references to this spec from:');
