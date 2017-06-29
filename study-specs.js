@@ -3,8 +3,23 @@ var array_unique = (n, i, a) => a.indexOf(n) === i;
 
 const canonicalizeURL = require('./canonicalize-url');
 
+/**
+ * Helper function that returns true when the given URL seems to target a real
+ * "spec" (as opposed to, say, a Wiki page, or something else)
+ */
 const matchSpecUrl = url => url.match(/spec.whatwg.org/) || url.match(/www.w3.org\/TR\/[a-z0-9]/) || (url.match(/w3c.github.io/) && ! url.match(/w3c.github.io\/test-results\//));
 
+
+/**
+ * Analyze the result of a crawl and produce a report that can easily be
+ * converted without more processing to a human readable version.
+ *
+ * @function
+ * @param {Array(Object)} A crawl result, one entry per spec
+ * @return {Array(Object)} A report, one entry per spec, each spec will have
+ *   a "report" property with "interesting" properties, see code comments inline
+ *   for details
+ */
 function processReport(results) {
     var knownIdlNames = results
         .map(r => r.idl && r.idl.idlNames ? Object.keys(r.idl.idlNames).filter(n => n !== "_dependencies") : [], [])
@@ -43,26 +58,54 @@ function processReport(results) {
                 Object.keys(spec.idl.idlNames).filter(name => (name !== '_dependencies')) : [];
             var idlDeps = (spec.idl && spec.idl.externalDependencies) ?
                 spec.idl.externalDependencies : [];
+
             var report = {
+                // An error at this level means the spec could not be parsed at all
                 error: spec.error,
+
+                // Whether the crawler found normative references
+                // (most specs should have)
                 hasNormativeRefs: (spec.refs.normative &&
                     (spec.refs.normative.length > 0)),
-                referencesWebIDL: (spec.refs.normative &&
-                    spec.refs.normative.find(ref =>
+
+                // Whether the spec normatively references the WebIDL spec
+                // (all specs that define IDL content should)
+                referencesWebIDL: (spec === WebIDLSpec) ||
+                    (spec.refs.normative && spec.refs.normative.find(ref =>
                         ref.name.match(/^WebIDL/i) ||
                             (ref.url === WebIDLSpec.url) ||
-                            (ref.url === WebIDLSpec.latest))
-                ),
+                            (ref.url === WebIDLSpec.latest))),
+
+                // Whether the crawler managed to find IDL content in the spec
+                // (most specs crawled here should)
                 hasIdl: !((Object.keys(spec.idl).length === 0) ||
                     (!spec.idl.idlNames && !spec.idl.message) ||
                     (spec.idl.idlNames &&
                         (Object.keys(spec.idl.idlNames).length === 1) &&
                         (Object.keys(spec.idl.idlExtendedNames).length === 0))),
+
+                // Whether the spec has invalid IDL content
+                // (the crawler cannot do much when IDL content is invalid, it
+                // cannot tell what IDL definitions and references the spec
+                // contains in particular)
                 hasInvalidIdl: !!(!spec.idl.idlNames && spec.idl.message),
+
+                // Whether the spec uses IDL constructs that were valid in
+                // WebIDL Level 1 but no longer are, typically "[]" instead of
+                // "FrozenArray"
                 hasObsoleteIdl: spec.idl.hasObsoleteIdl,
+
+                // List of IDL names used in the spec that we know nothing about
+                // (for instance because of some typo or because the term is
+                // defined in a spec that has not been crawled or that could
+                // not be parsed)
                 unknownIdlNames: idlDeps
                     .filter(name => knownIdlNames.indexOf(name) === -1)
                     .sort(),
+
+                // List of IDL definitions that are already defined in some
+                // other crawled spec
+                // (this should not happen, ideally)
                 redefinedIdlNames: idlDfns
                     .filter(name => (idlNamesIndex[name].length > 1))
                     .map(name => {
@@ -71,6 +114,12 @@ function processReport(results) {
                             refs: idlNamesIndex[name].filter(ref => (ref.url !== spec.url))
                         };
                     }),
+
+                // List of IDL names used in the spec that are defined in some
+                // other spec which does not seem to appear in the list of
+                // normative references
+                // (There should always be an entry in the normative list of
+                // references that links to that other spec)
                 missingWebIdlReferences: idlDeps
                     .filter(name => knownIdlNames.indexOf(name) !== -1)
                     .map(name => {
@@ -86,6 +135,10 @@ function processReport(results) {
                         });
                     })
                     .filter(i => !!i),
+
+                // Links to external specifications within the body of the spec
+                // that do not have a corresponding entry in the references
+                // (all links to external specs should have a companion ref)
                 missingReferences: spec.links
                     .filter(matchSpecUrl)
                     .filter(l => {
@@ -101,6 +154,12 @@ function processReport(results) {
                         (spec.url !== canonicalizeURL(l, useEquivalents)) &&
                         !spec.versions.includes(canonicalizeURL(l, useEquivalents))
                     ),
+
+                // Links to external specifications within the body of the spec
+                // that have a corresponding entry in the references, but for
+                // which the reference uses a different URL, e.g. because the
+                // link targets the Editor's Draft, whereas the reference
+                // targets the latest published version
                 inconsistentReferences: spec.links
                     .filter(matchSpecUrl)
                     .map(l => {
@@ -116,6 +175,10 @@ function processReport(results) {
                         return (ref ? { link: l, ref } : null);
                     })
                     .filter(l => !!l),
+
+                // Lists of specs present in the crawl report that reference
+                // the current spec, either normatively or informatively
+                // (used to produce the dependencies report)
                 referencedBy: {
                     normative: sortedResults.filter(s =>
                         s.refs.normative && s.refs.normative.find(r =>
@@ -127,6 +190,8 @@ function processReport(results) {
                             spec.versions.includes(canonicalizeURL(r.url, useEquivalents))))
                 }
             };
+
+            // A spec is OK if it does not contain anything "suspicious".
             report.ok = !report.error &&
                 report.hasNormativeRefs &&
                 report.hasIdl &&
@@ -151,6 +216,12 @@ function processReport(results) {
 }
 
 
+
+/**
+ * Helper function that outputs main crawl info about a spec
+ *
+ * @function
+ */
 function writeCrawlInfo(spec) {
     var w = console.log.bind(console);
 
@@ -165,6 +236,14 @@ function writeCrawlInfo(spec) {
 }
 
 
+/**
+ * Outputs a human-readable Markdown anomaly report from a crawl report,
+ * with one entry per spec.
+ *
+ * The function spits the report to the console.
+ *
+ * @function
+ */
 function generateReportPerSpec(results) {
     var count = 0;
     var w = console.log.bind(console);
@@ -274,6 +353,14 @@ function generateReportPerSpec(results) {
 }
 
 
+/**
+ * Outputs a human-readable Markdown anomaly report from a crawl report,
+ * sorted by type of anomaly.
+ *
+ * The function spits the report to the console.
+ *
+ * @function
+ */
 function generateReport(results) {
     var count = 0;
     var w = console.log.bind(console);
@@ -534,6 +621,14 @@ function generateReport(results) {
 }
 
 
+/**
+ * Outputs a human-readable Markdown dependencies report from a crawl report,
+ * one entry per spec.
+ *
+ * The function spits the report to the console.
+ *
+ * @function
+ */
 function generateDependenciesReport(results) {
     var count = 0;
     var w = console.log.bind(console);
