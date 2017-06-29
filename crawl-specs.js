@@ -38,7 +38,20 @@ function titleExtractor(window) {
  * Extract and canonicalize absolute links of the document
 */
 function linkExtractor(window) {
-    const links = new Set([...window.document.querySelectorAll('a[href^=http]')].map(n => canonicalizeURL(n.href)));
+    const links = new Set([...window.document.querySelectorAll('a[href^=http]')]
+        .filter(n => {
+            // Filter out links from the "head" section, which either link to
+            // self, the GitHub repo, the implementation report, and other
+            // documents that don't need to appear in the list of references.
+            while (n.parentElement) {
+                if (n.className && n.className.split(/\s/).includes('head')) {
+                    return false;
+                }
+                n = n.parentElement;
+            }
+            return true;
+        })
+        .map(n => canonicalizeURL(n.href)));
     return [...links];
 }
 
@@ -115,8 +128,8 @@ function getSpecFromW3CApi(spec) {
         .then(s => fetch(s._links['version-history'].href + '?embed=1', options))
         .then(r => r.json())
         .then(s => {
-            const versions = s._embedded['version-history'].map(v => v.uri);
-            const editors = s._embedded['version-history'].map(v => v['editors-draft']).filter((u,i,a) => u && a.indexOf(u) == i);
+            const versions = s._embedded['version-history'].map(v => v.uri).map(url => canonicalizeURL(url));
+            const editors = s._embedded['version-history'].map(v => v['editors-draft']).filter((u,i,a) => u && a.indexOf(u) == i).map(url => canonicalizeURL(url));
             const latest = s._embedded['version-history'][0];
             spec.title = latest.title;
             if (!spec.latest) spec.latest = (latest['editor-draft'] ? latest['editor-draft'] : latest.uri);
