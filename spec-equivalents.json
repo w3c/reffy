@@ -4,7 +4,8 @@
     ],
     "https://www.w3.org/TR/2dcontext/": [
         "https://html.spec.whatwg.org/",
-        "https://www.whatwg.org/specs/web-apps/current-work/multipage/"
+        "https://www.whatwg.org/specs/web-apps/current-work/multipage/",
+        "https://www.w3.org/TR/2dcontext2/"
     ],
     "https://www.w3.org/TR/workers/": [
         "https://html.spec.whatwg.org/"
@@ -20,6 +21,7 @@
         "https://www.w3.org/TR/eventsource/",
         "https://www.w3.org/TR/webmessaging/",
         "https://www.w3.org/TR/2dcontext/",
+        "https://www.w3.org/TR/2dcontext2/",
         "https://www.w3.org/TR/webstorage/",
         "https://www.w3.org/TR/workers/",
         "https://www.w3.org/TR/websockets/",
@@ -120,5 +122,27 @@
     ],
     "https://www.w3.org/TR/geometry-1/": [
         "https://drafts.fxtf.org/geometry/"
+    ],
+    "https://www.w3.org/TR/css-values-3/": [
+        "https://www.w3.org/TR/css3-values/",
+        "https://www.w3.org/TR/css-values/"
+    ],
+    "https://www.w3.org/TR/css-syntax-3/": [
+        "https://www.w3.org/TR/css-syntax/"
+    ],
+    "https://www.w3.org/TR/css-fonts-3/": [
+        "https://www.w3.org/TR/css3-fonts/"
+    ],
+    "https://www.w3.org/TR/css3-selectors/": [
+        "https://www.w3.org/TR/selectors/"
+    ],
+    "https://www.w3.org/TR/compositing-1/": [
+        "https://www.w3.org/TR/compositing/"
+    ],
+    "https://www.w3.org/TR/css-writing-modes-3/": [
+        "https://www.w3.org/TR/css3-writing-modes/"
+    ],
+    "https://www.w3.org/TR/cssom-view-1/": [
+        "https://www.w3.org/TR/cssom-view/"
     ]
 }
