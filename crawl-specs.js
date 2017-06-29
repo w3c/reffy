@@ -188,7 +188,7 @@ function crawlList(speclist) {
                         webidlParser.hasObsoleteIdl(idl)
                     ])
                     .then(res => { res[0].hasObsoleteIdl = res[1]; return res[0] })
-                    .catch(err => { console.error(url, err); return [err, null]; })),
+                    .catch(err => { console.error(url, err); return err; })),
                 dom
             ]))
             .then(res => {
