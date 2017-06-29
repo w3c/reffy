@@ -88,11 +88,18 @@ function processReport(results) {
                 missingReferences: spec.links
                     .filter(matchSpecUrl)
                     .filter(l => {
+                        // Filter out "good" and "inconsistent" references
                         let canon = canonicalizeURL(l, useEquivalents);
                         let refs = (spec.refs.normative || []).concat(spec.refs.informative || []);
                         return !refs.find(r => canonicalizeURL(r.url, useEquivalents) === canon);
                     })
-                    .filter(l => !spec.versions.includes(l)),
+                    .filter(l =>
+                        // Ignore links to other versions of "self". There may
+                        // be cases where it would be worth reporting them but
+                        // most of the time they appear in "changelog" sections.
+                        (spec.url !== canonicalizeURL(l, useEquivalents)) &&
+                        !spec.versions.includes(canonicalizeURL(l, useEquivalents))
+                    ),
                 inconsistentReferences: spec.links
                     .filter(matchSpecUrl)
                     .map(l => {

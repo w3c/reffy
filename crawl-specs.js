@@ -38,7 +38,20 @@ function titleExtractor(window) {
  * Extract and canonicalize absolute links of the document
 */
 function linkExtractor(window) {
-    const links = new Set([...window.document.querySelectorAll('a[href^=http]')].map(n => canonicalizeURL(n.href)));
+    const links = new Set([...window.document.querySelectorAll('a[href^=http]')]
+        .filter(n => {
+            // Filter out links from the "head" section, which either link to
+            // self, the GitHub repo, the implementation report, and other
+            // documents that don't need to appear in the list of references.
+            while (n.parentElement) {
+                if (n.className && n.className.split(/\s/).includes('head')) {
+                    return false;
+                }
+                n = n.parentElement;
+            }
+            return true;
+        })
+        .map(n => canonicalizeURL(n.href)));
     return [...links];
 }
 
