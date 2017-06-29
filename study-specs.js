@@ -216,6 +216,28 @@ function processReport(results) {
 }
 
 
+/**
+ * Helper function that outputs a generic "about" header to help readers
+ * understand what the report contains.
+ *
+ * @function
+ */
+function writeGenericInfo() {
+    var w = console.log.bind(console);
+
+    w('Reffy is a spec exploration tool.' +
+        ' It takes a list of specifications as input, fetches and parses the latest Editor\'s Draft' +
+        ' of each of these specifications to study the IDL content that it defines, the links that it' +
+        ' contains, and the normative and informative references that it lists.');
+    w();
+    w('Reffy only knows facts about specifications that it crawled. Some of the anomalies reported in' +
+        ' this report may be false positives as a result, triggered by the fact that Reffy has a very' +
+        ' narrow view of the spec-verse.');
+    w();
+    w('Some anomalies may also be triggered by temporary errors in the Editor\'s Drafts of the' +
+        ' specifications that were crawled such as invalid Web IDL definitions.');
+}
+
 
 /**
  * Helper function that outputs main crawl info about a spec
@@ -253,7 +275,16 @@ function generateReportPerSpec(results) {
 
     w('# Reffy crawl report');
     w();
+    writeGenericInfo();
+    w();
+    count = results.length;
+    w('' + count + ' specification' + ((count > 1) ? 's' : '') + ' were crawled in this report.');
+    w();
+    w();
+
     w('## Specifications without known issues');
+    w();
+    w('Reffy does not have anything special to report about the following specifications:')
     w();
     count = 0;
     results
@@ -270,6 +301,9 @@ function generateReportPerSpec(results) {
     let parsingErrors = results.filter(spec => spec.report.error);
     if (parsingErrors.length > 0) {
         w('## Specifications that could not be parsed');
+        w();
+        w('Reffy could not render these specifications for some reason.' +
+            ' This may happen when a specification uses an old version of ReSpec.');
         w();
         count = 0;
         parsingErrors.forEach(spec => {
@@ -371,16 +405,19 @@ function generateReport(results) {
     w('# Reffy crawl report');
     w();
 
-    w('## Specifications crawled');
+    writeGenericInfo();
     w();
     count = results.length;
-    w('- ' + count + ' specification' + ((count > 1) ? 's' : '') + ' crawled');
+    w('' + count + ' specification' + ((count > 1) ? 's' : '') + ' were crawled in this report.');
     w();
     w();
 
     let parsingErrors = results.filter(spec => spec.report.error);
     if (parsingErrors.length > 0) {
         w('## Specifications that could not be parsed');
+        w();
+        w('Reffy could not render these specifications for some reason.' +
+            ' This may happen when a specification uses an old version of ReSpec.');
         w();
         count = 0;
         parsingErrors.forEach(spec => {
@@ -407,8 +444,12 @@ function generateReport(results) {
         });
     w();
     w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
-    w();
-    w('**NB:** it may be normal!');
+    if (count > 0) {
+        w();
+        w('Basically all specifications have normative dependencies on some other' +
+            ' specification. Reffy could not find any normative dependencies for the' +
+            ' specifications mentioned above, which seems strange.');
+    }
     w();
     w();
 
@@ -423,6 +464,13 @@ function generateReport(results) {
         });
     w();
     w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
+    if (count > 0) {
+        w();
+        w('Not all specifications define IDL content, presence in this list' +
+            ' may be completely normal. Reffy\'s current focus is on IDL' +
+            ' specifications, the number of specifications listed here' +
+            ' should remain minimal.');
+    }
     w();
     w();
 
@@ -437,8 +485,12 @@ function generateReport(results) {
         });
     w();
     w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
-    w();
-    w('**NB:** this may be due to WebIDL having evolved in the meantime');
+    if (count > 0) {
+        w();
+        w('WebIDL continues to evolve. Reffy may incorrectly report as invalid' +
+            ' perfectly valid WebIDL content if the specification uses bleeding-edge' +
+            ' WebIDL features');
+    }
     w();
     w();
 
@@ -453,6 +505,10 @@ function generateReport(results) {
         });
     w();
     w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
+    if (count > 0) {
+        w();
+        w('A typical example is the use of `[]` instead of `FrozenArray`.');
+    }
     w();
     w();
 
@@ -467,6 +523,13 @@ function generateReport(results) {
     });
     w();
     w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
+    if (count > 0) {
+        w();
+        ('All specifications that define WebIDL content should have a ' +
+            ' **normative** reference to the WebIDL specification. ' +
+            ' Some specifications listed here may reference the WebIDL' +
+            ' specification informatively, but that is not enough!');
+    }
     w();
     w();
 
@@ -494,9 +557,12 @@ function generateReport(results) {
     });
     w();
     w('=> ' + count + ' WebIDL name' + ((count > 1) ? 's' : '') + ' found');
-    w();
-    w('**NB:** some of them are likely type errors in specs');
-    w('(e.g. "int" does not exist, "Array" cannot be used on its own, etc.)');
+    if (count > 0) {
+        w();
+        w('Some of them may be type errors in specs (e.g. "int" does not exist, "Array" cannot be used on its own, etc.)');
+        w('Also, please keep in mind that Reffy only knows about IDL terms defined in the' +
+            ' specifications that were crawled **and** that do not have invalid IDL content.');
+    }
     w();
     w();
 
@@ -523,6 +589,10 @@ function generateReport(results) {
     });
     w();
     w('=> ' + count + ' WebIDL name' + ((count > 1) ? 's' : '') + ' found');
+    if (count > 0) {
+        w();
+        w('"There can be only one"...');
+    }
     w();
     w();
 
@@ -587,6 +657,15 @@ function generateReport(results) {
     w('=> ' + countrefs + ' missing reference' + ((countrefs > 1) ? 's' : '') +
       ' for links found in ' + count + ' specification' +
       ((count > 1) ? 's' : ''));
+    if (count > 0) {
+        w();
+        w('Any link to an external document from within a specification should' +
+            ' trigger the creation of a corresponding entry in the references' +
+            ' section.');
+        w();
+        w('Note Reffy only reports on links to "well-known" specs and ignores' +
+            ' links to non-usual specs (e.g. PDF documents, etc.) for now.');
+    }
     w();
     w();
 
@@ -617,6 +696,15 @@ function generateReport(results) {
     w('=> ' + countrefs + ' inconsistent reference' + ((countrefs > 1) ? 's' : '') +
       ' for links found in ' + count + ' specification' +
       ((count > 1) ? 's' : ''));
+    if (count > 0) {
+        w();
+        w('Links in the body of a specification should be to the same document' +
+            ' as that pointed to by the related reference in the References section.' +
+            ' The specifications reported here use a different URL. For instance,' +
+            ' they may use a link to the Editor\'s Draft but target the latest' +
+            ' published version in the References section.' +
+            ' There should be some consistency across the specification.');
+    }
 
 }
 
