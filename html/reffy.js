@@ -1,13 +1,18 @@
 window.onload = function () {
+  const $ = (el, selector) =>
+    Array.prototype.slice.call(el.querySelectorAll(selector), 0);
+
   const toggleSubSections = spec =>
-    Array.prototype.slice.call(spec.querySelectorAll('h2 ~ section'), 0).forEach(
+    $(spec, 'h2 ~ section').forEach(
       section => section.hasAttribute('hidden') ?
         section.removeAttribute('hidden') :
         section.setAttribute('hidden', '')
     );
 
   // Collapse spec sections by default
-  Array.prototype.slice.call(document.querySelectorAll('[data-spec]'), 0).forEach(spec => {
+  let total = 0;
+  $(document, '[data-spec]').forEach(spec => {
+    total += 1;
     const title = spec.querySelector('h2');
 
     // Compute the set of anomaly icons to display
@@ -78,6 +83,39 @@ window.onload = function () {
       return false;
     };
   });
+
+  // Display the number of specifications in the report
+  document.getElementById('stats').innerHTML = 'This report contains ' +
+    '<strong>' + total + '</strong> specifications.';
+
+  // Bind to spec filter
+  document.getElementById('submit').onclick = () => {
+    const filter = document.getElementById('filter').value;
+    let count = 0;
+    $(document, '[data-spec]').forEach(spec => {
+      const hide = (filter !== 'all') &&
+        !filter.split('|').find(anomaly => spec.hasAttribute('data-' + anomaly));
+      if (hide) {
+        spec.setAttribute('hidden', '');
+      }
+      else {
+        count += 1;
+        spec.removeAttribute('hidden');
+      }
+    });
+    if (filter === 'all') {
+      document.getElementById('stats').innerHTML = 'This report contains ' +
+        '<strong>' + total + '</strong> specifications.';
+    }
+    else {
+      document.getElementById('stats').innerHTML = 'This report contains ' +
+        '<strong>' + total + '</strong> specifications. ' +
+        '<strong>' + count + '</strong> specification' +
+        ((count > 1) ? 's match' : ' matches') +
+        ' the selected filter.';
+    }
+    return false;
+  };
 
   // Force browser to re-scroll to requested position
   if (document.location.hash) {
