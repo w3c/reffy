@@ -32,9 +32,8 @@ function extract(url) {
  * @return {Promise} The promise to get a document and relevant extraction rules
  *   (or null if no rules seem to apply).
  */
-function getExtractionRules(data) {
-    var doc = data.doc, generator = data.generator;
-    var extractionRules = {
+function getExtractionRules({doc, generator}) {
+    const extractionRules = {
         bikeshed: {
             generator: "Bikeshed",
             sectionId: {
@@ -184,8 +183,7 @@ function extractReferencesWithoutRules(doc) {
  * @param {Object} rules Extraction rules to use
  * @return {Promise} The promise to get a list of references.
  */
-function extractReferences(data) {
-    var doc = data.doc, rules = data.rules;
+function extractReferences({doc, rules}) {
     if (!rules) {
         return extractReferencesWithoutRules(doc);
     }
@@ -198,13 +196,13 @@ function extractReferences(data) {
             !rules.listSelector.normative) {
             return reject(new Error("Extraction rules for the list of references are incorrect"));
         }
-        var generator = rules.generator || "an unknown generator";
+        const generator = rules.generator || "an unknown generator";
 
         var error = null;
-        var references = {};
+        const references = {};
         ['normative', 'informative'].forEach(function(referenceType) {
             if (error) return;
-            var refHeading = doc.getElementById(rules.sectionId[referenceType]);
+            const refHeading = doc.getElementById(rules.sectionId[referenceType]);
             if (!refHeading) {
                 if (referenceType === 'informative') {
                     return;
@@ -212,12 +210,12 @@ function extractReferences(data) {
                 error = new Error("Spec " + url + " is generated with " + generator + " but does not have a '" + rules.sectionId[referenceType]  + "' id");
                 return;
             }
-            var referenceList = doc.querySelector(rules.listSelector[referenceType]);
+            const referenceList = doc.querySelector(rules.listSelector[referenceType]);
             if (!referenceList) {
                 error = new Error("Spec " + url + " is generated with " + generator + " but does not have a definition list following the heading with id '" + rules.id[referenceType] + "'");
                 return;
             }
-            var refs = parseReferences(referenceList, {
+            const refs = parseReferences(referenceList, {
                 filterInformative: (referenceType === 'normative')
             });
             references[referenceType] = refs[0];

@@ -169,7 +169,7 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, ex
             addDependency(def.inheritance, {}, idlNames._dependencies[def.name]);
         }
         idlNames[def.name] = def;
-        var extendedAttributesHasReferences = ea => ["Exposed", "Global", "PrimaryGlobal"].indexOf(ea.name) !== -1;
+        var extendedAttributesHasReferences = ea => ["Exposed", "Global", "PrimaryGlobal"].includes(ea.name);
         def.extAttrs.filter(extendedAttributesHasReferences).forEach(ea => {
             var contexts = [];
             if (ea.name === "PrimaryGlobal") {
@@ -200,14 +200,14 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, ex
                 });
             }
         });
-        if (def.extAttrs.filter(ea => ea.name === "Constructor").length) {
+        if (def.extAttrs.some(ea => ea.name === "Constructor")) {
             addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
             def.extAttrs.filter(ea => ea.name === "Constructor").forEach(function(constructor) {
                 if (constructor.arguments) {
                     constructor.arguments.forEach(a => parseType(a.idlType, idlNames, externalDependencies, def.name));
                 }
             });
-        } else if (def.extAttrs.filter(ea => ea.name === "NamedConstructor").length) {
+        } else if (def.extAttrs.some(ea => ea.name === "NamedConstructor")) {
             def.extAttrs.filter(ea => ea.name === "NamedConstructor").forEach(function(constructor) {
                 idlNames[constructor.rhs.value] = constructor;
                 addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
@@ -216,7 +216,7 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, ex
                 }
             });
         } else if (def.type === "interface") {
-            if (!def.extAttrs.filter(ea => ea.name === "NoInterfaceObject").length) {
+            if (!def.extAttrs.some(ea => ea.name === "NoInterfaceObject")) {
                 addToJSContext(def.extAttrs, jsNames, def.name, "functions");
             }
         }
@@ -239,7 +239,7 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, ex
  */
 function addToJSContext(eas, jsNames, name, type) {
     var contexts = ["[PrimaryGlobal]"];
-    var exposed = eas && eas.filter(ea => ea.name === "Exposed").length;
+    var exposed = eas && eas.some(ea => ea.name === "Exposed");
     if (exposed) {
         var exposedEa = eas.find(ea => ea.name === "Exposed");
         if (exposedEa.rhs.type === "identifier") {
