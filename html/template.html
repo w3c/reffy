@@ -46,25 +46,23 @@
   $for(include-before)$
   $include-before$
   $endfor$
-  $if(title)$
-  <header>
-  <h1 class="title">$title$</h1>
-  $if(subtitle)$
-  <p class="subtitle">$subtitle$</p>
-  $endif$
-  $for(author)$
-  <p class="author">$author$</p>
-  $endfor$
-  $if(date)$
-  <p class="date">$date$</p>
-  $endif$
-  </header>
-  $endif$
-  $if(toc)$
-  <nav id="$idprefix$TOC">
-  $toc$
-  </nav>
-  $endif$
+  <h1>Reffy crawl report</h1>
+  <p><a href="https://github.com/tidoust/reffy">Reffy</a> is a <i>spec exploration tool</i>. It crawls a list of specifications to study the WebIDL content, the links that they contain, and the references that these specifications contain.</p>
+  <p>
+    <label for="filter">View</label>
+    <select name="filter" id="filter">
+      <option selected="selected" value="all">All</option>
+      <option value="ok">Specs without issues</option>
+      <option value="error">Specs that could not be parsed</option>
+      <option value="noNormativeRefs">Specs without normative references</option>
+      <option value="hasInvalidIdl|hasObsoleteIdl">Specs without invalid WebIDL content</option>
+      <option value="unknownIdlNames|redefinedIdlNames">Specs with problematic WebIDL terms</option>
+      <option value="noRefToWebIDL|missingWebIdlRef|missingLinkRef">Specs with missing references</option>
+      <option value="inconsistentRef">Specs with inconsistent references</option>
+    </select>
+    <input class="submit" id="submit" type="submit" value="Apply" />
+  </p>
+  <p id="stats"></p>
   $body$
   $for(include-after)$
   $include-after$

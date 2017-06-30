@@ -326,10 +326,6 @@ function generateReportPerSpec(results) {
     // Compute report information
     results = processReport(results);
 
-    w('# Reffy crawl report');
-    w();
-    writeGenericInfo();
-    w();
     results.forEach(spec => {
         // Prepare anomaly flags
         let flags = ['spec'];
