@@ -9,5 +9,15 @@
   },
   "devDependencies": {
     "jasmine": "^2.4.1"
+  },
+  "scripts": {
+    "w3c": "npm run-script w3c-crawl && npm run-script w3c-study && npm run-script w3c-html",
+    "w3c-crawl": "node crawl-specs.js ./specs-w3c.json ./results-w3c.json",
+    "w3c-study": "node study-specs.js ./results-w3c.json perspec > report-w3c.md",
+    "w3c-html": "pandoc report-w3c.md -f markdown -t html5 --section-divs -s --template html/template.html -o html/report-w3c.html",
+    "whatwg": "npm run-script whatwg-crawl && npm run-script whatwg-study && npm run-script whatwg-html",
+    "whatwg-crawl": "node crawl-specs.js ./specs-whatwg.json ./results-whatwg.json",
+    "whatwg-study": "node study-specs.js ./results-whatwg.json perspec > report-whatwg.md",
+    "whatwg-html": "pandoc report-whatwg.md -f markdown -t html5 --section-divs -s --template html/template.html -o html/report-whatwg.html"
   }
 }

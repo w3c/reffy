@@ -8,12 +8,17 @@ See [published reports](https://github.com/tidoust/reffy/wiki) for human-readabl
 
 To launch the crawler and the report study tool, follow these steps:
 
-0. Pre-requisites: [Git](https://git-scm.com/), [Node.js](https://nodejs.org/en/), a [W3C account](https://www.w3.org/accounts/request) and an [API key](https://www.w3.org/users/myprofile/apikeys) for the W3C API.
+0. Pre-requisites: [Git](https://git-scm.com/), [Node.js](https://nodejs.org/en/), a [W3C account](https://www.w3.org/accounts/request), an [API key](https://www.w3.org/users/myprofile/apikeys) for the W3C API, and [Pandoc](http://pandoc.org/) if you want to generate an HTML version of the report.
 1. Clone the repository: `git clone git@github.com:tidoust/reffy.git`
 2. From the root folder of reffy, install required dependencies: `npm install`
 3. Create a `config.json` file, initialized with `{ "w3cApiKey": [API key] }`
-3. Run the crawler: `node crawl-specs.js ./specs-w3c.json results.json`
-4. Once done, run the study tool: `node study-specs.js ./results.json [perspec|dep]` (pass `perspec` to create a report per specification instead of a report per anomaly and `dep` to generate a dependencies report). You may want to redirect the output to a file, e.g. using `node study-specs.js ./results.json > report.md`
+4. To produce a W3C-centric vision of the Web platform, run `npm run-script w3c`.
+5. To produce a WHATWG-centric vision of the Web platofrm, run `npm run-script whatwg`.
+
+Under the hoods, these commands run the following steps (and related commands) in turn:
+1. **Crawling**: Crawls a list of spec and outputs relevant information in a JSON structure. `node crawl-specs.js ./specs-w3c.json results-w3c.json`
+2. **Analysis**: Analyses the result of the crawling step, and produces a human-readable report in Markdown format. `node study-specs.js ./results.json [perspec|dep]`. By default, the tool generates a report per anomaly, pass `perspec` to create a report per specification, and `dep` to generate a dependencies report. You will probably want to redirect the output to a file, e.g. using `node study-specs.js ./results.json > report.md`.
+3. **Conversion to HTML**: Takes the Markdown analysis per specification and prepares an HTML report with expandable sections. `pandoc report.md -f markdown -t html5 --section-divs -s --template html/template.html -o html/report.html` (where `report.md` is the Markdown report)
 
 Some notes:
 
@@ -38,9 +43,12 @@ Some notes:
 1. specs that do not seem to reference any other spec normatively;
 2. specs that define WebIDL terms but do not normatively reference the WebIDL spec;
 3. specs that contain invalid WebIDL terms definitions;
-4. specs that define WebIDL terms that are *also* defined in another spec;
-5. specs that use WebIDL terms defined in another spec without referencing that spec normatively;
-6. specs that use WebIDL terms for which the crawler could not find any definition in any of the specs it studied.
+4. specs that use obsolete WebIDL constructs (e.g. `[]` instead of `FrozenArray`);
+5. specs that define WebIDL terms that are *also* defined in another spec;
+6. specs that use WebIDL terms defined in another spec without referencing that spec normatively;
+7. specs that use WebIDL terms for which the crawler could not find any definition in any of the specs it studied;
+8. specs that link to another spec but do not include a reference to that other spec;
+9. specs that link to another spec inconsistently in the body of the document and in the list of references (e.g. because the body of the document references the Editor's draft while the reference is to the latest published version).
 
 ### WebIDL terms explorer
 
@@ -56,6 +64,8 @@ The **WebIDL extractor** takes the URL of a spec as input and outputs the IDL de
 
 The **WebIDL parser** takes the URL of a spec as input and generates a JSON structure that describes WebIDL term definitions and references that the spec contains. The parser uses [WebIDL2](https://github.com/darobin/webidl2.js/) to parse the WebIDL content found in the spec. To run the WebIDL parser: `node parse-webidl.js [url]`
 
+The **Spec finder** takes a JSON crawl report as input and checks a couple of sites that list Web specifications to detect new specifications that are not yet part of the crawl. To run the spec finder: `node find-spec.js ./results.json`.
+
 
 For instance:
 
@@ -70,8 +80,6 @@ node parse-webidl.js https://fetch.spec.whatwg.org/
 **Reffy is at an early stage of development and is not stable**. It may crash from time to time and does not report errors/warnings in any meaningful way for the time being.
 
 Reffy should be able to parse most of the W3C/WHATWG specifications that define WebIDL terms (both published versions and Editor's Drafts). The tool may work with other types of specs, but has not been tested with any of them.
-
-There are a few exceptions to the rule, though. Notably, the crawler fails to parse Editor's Drafts of some specs that use [ReSpec](https://github.com/w3c/respec)'s markdown format, probably because jsdom lacks support for some feature required by ReSpec in that case.
 
 ### List of specs to crawl
 
