@@ -65,24 +65,24 @@ function processReport(results) {
 
                 // Whether the crawler found normative references
                 // (most specs should have)
-                hasNormativeRefs: (spec.refs.normative &&
-                    (spec.refs.normative.length > 0)),
+                noNormativeRefs: !spec.refs.normative ||
+                    (spec.refs.normative.length === 0),
 
                 // Whether the spec normatively references the WebIDL spec
                 // (all specs that define IDL content should)
-                referencesWebIDL: (spec === WebIDLSpec) ||
+                noRefToWebIDL: !((spec === WebIDLSpec) ||
                     (spec.refs.normative && spec.refs.normative.find(ref =>
                         ref.name.match(/^WebIDL/i) ||
                             (ref.url === WebIDLSpec.url) ||
-                            (ref.url === WebIDLSpec.latest))),
+                            (ref.url === WebIDLSpec.latest)))),
 
                 // Whether the crawler managed to find IDL content in the spec
                 // (most specs crawled here should)
-                hasIdl: !((Object.keys(spec.idl).length === 0) ||
+                noIdlContent: (Object.keys(spec.idl).length === 0) ||
                     (!spec.idl.idlNames && !spec.idl.message) ||
                     (spec.idl.idlNames &&
                         (Object.keys(spec.idl.idlNames).length === 1) &&
-                        (Object.keys(spec.idl.idlExtendedNames).length === 0))),
+                        (Object.keys(spec.idl.idlExtendedNames).length === 0)),
 
                 // Whether the spec has invalid IDL content
                 // (the crawler cannot do much when IDL content is invalid, it
@@ -120,7 +120,7 @@ function processReport(results) {
                 // normative references
                 // (There should always be an entry in the normative list of
                 // references that links to that other spec)
-                missingWebIdlReferences: idlDeps
+                missingWebIdlRef: idlDeps
                     .filter(name => knownIdlNames.indexOf(name) !== -1)
                     .map(name => {
                         var refs = idlNamesIndex[name];
@@ -139,7 +139,7 @@ function processReport(results) {
                 // Links to external specifications within the body of the spec
                 // that do not have a corresponding entry in the references
                 // (all links to external specs should have a companion ref)
-                missingReferences: spec.links
+                missingLinkRef: spec.links
                     .filter(matchSpecUrl)
                     .filter(l => {
                         // Filter out "good" and "inconsistent" references
@@ -160,7 +160,7 @@ function processReport(results) {
                 // which the reference uses a different URL, e.g. because the
                 // link targets the Editor's Draft, whereas the reference
                 // targets the latest published version
-                inconsistentReferences: spec.links
+                inconsistentRef: spec.links
                     .filter(matchSpecUrl)
                     .map(l => {
                         let canonSimple = canonicalizeURL(l);
@@ -193,16 +193,16 @@ function processReport(results) {
 
             // A spec is OK if it does not contain anything "suspicious".
             report.ok = !report.error &&
-                report.hasNormativeRefs &&
-                report.hasIdl &&
+                !report.noNormativeRefs &&
+                !report.noIdlContent &&
                 !report.hasInvalidIdl &&
                 !report.hasObsoleteIdl &&
-                report.referencesWebIDL &&
+                !report.noRefToWebIDL &&
                 (!report.unknownIdlNames || (report.unknownIdlNames.length === 0)) &&
                 (!report.redefinedIdlNames || (report.redefinedIdlNames.length === 0)) &&
-                (!report.missingWebIdlReferences || (report.missingWebIdlReferences.length === 0)) &&
-                (report.missingReferences.length === 0) &&
-                (report.inconsistentReferences.length === 0);
+                (!report.missingWebIdlRef || (report.missingWebIdlRef.length === 0)) &&
+                (report.missingLinkRef.length === 0) &&
+                (report.inconsistentRef.length === 0);
             var res = {
                 title: spec.title,
                 shortname: spec.shortname,
@@ -244,10 +244,15 @@ function writeGenericInfo() {
  *
  * @function
  */
-function writeCrawlInfo(spec) {
-    var w = console.log.bind(console);
+function writeCrawlInfo(spec, withHeader) {
+    const w = console.log.bind(console);
 
-    w('Crawl info:');
+    if (withHeader) {
+        w('### Crawl info {.info}');
+    }
+    else  {
+        w('Crawl info:');
+    }
     w();
     w('- URL: [' + (spec.latest ?
         ((spec.latest.indexOf('www.w3.org/TR/') !== -1) ? 'Latest published version' : 'Editor\'s Draft') :
@@ -257,6 +262,54 @@ function writeCrawlInfo(spec) {
     w('- Date: ' + (spec.date || 'unknown'));
 }
 
+
+function writeDependenciesInfo(spec, results, withHeader) {
+    const w = console.log.bind(console);
+
+    if (withHeader) {
+        w('### Known dependencies on this specification {.dependencies}');
+        w();
+    }
+
+    if (spec.report.referencedBy.normative.length > 0) {
+        w('Normative references to this spec from:');
+        w();
+        spec.report.referencedBy.normative.forEach(s => {
+            w('- [' + s.title + '](' + (s.latest || s.url) + ')');
+        });
+    }
+    else {
+        w('No normative reference to this spec from other specs.');
+    }
+    w();
+
+    // Check the list of specifications that should normatively reference
+    // this specification because they use IDL content it defines.
+    let shouldBeReferencedBy = results.filter(s =>
+        s.report.missingWebIdlRef &&
+        s.report.missingWebIdlRef.find(i =>
+            i.refs.find(ref => (ref.url === spec.url))));
+    if (shouldBeReferencedBy.length > 0) {
+        w('Although they do not, the following specs should also normatively' +
+            ' reference this spec because they use IDL terms it defines:');
+        w();
+        shouldBeReferencedBy.forEach(s => {
+            w('- [' + s.title + '](' + (s.latest || s.url) + ')');
+        });
+        w();
+    }
+
+    if (spec.report.referencedBy.informative.length > 0) {
+        w('Informative references to this spec from:');
+        w();
+        spec.report.referencedBy.informative.forEach(s => {
+            w('- [' + s.title + '](' + (s.latest || s.url) + ')');
+        });
+    }
+    else {
+        w('No informative reference to this spec from other specs.');
+    }
+}
 
 /**
  * Outputs a human-readable Markdown anomaly report from a crawl report,
@@ -277,62 +330,50 @@ function generateReportPerSpec(results) {
     w();
     writeGenericInfo();
     w();
-    count = results.length;
-    w('' + count + ' specification' + ((count > 1) ? 's' : '') + ' were crawled in this report.');
-    w();
-    w();
+    results.forEach(spec => {
+        // Prepare anomaly flags
+        let flags = ['spec'];
+        if (spec.report.error) {
+            flags.push('error');
+        }
+        else {
+            if (!spec.report.ok) {
+                flags.push('anomaly');
+            }
+            flags = flags.concat(Object.keys(spec.report)
+                .filter(anomaly => (anomaly !== 'referencedBy'))
+                .filter(anomaly => (Array.isArray(spec.report[anomaly]) ?
+                    (spec.report[anomaly].length > 0) :
+                    !!spec.report[anomaly])));
+        }
+        let attr = flags.reduce((res, anomaly) =>
+            res + (res ? ' ' : '') + 'data-' + anomaly + '=true', '');
 
-    w('## Specifications without known issues');
-    w();
-    w('Reffy does not have anything special to report about the following specifications:')
-    w();
-    count = 0;
-    results
-        .filter(spec => spec.report.ok)
-        .forEach(spec => {
-            count += 1;
-            w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')');
-        });
-    w();
-    w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
-    w();
-    w();
+        w('## ' + spec.title + ' {' + attr + '}');
+        w();
+        writeCrawlInfo(spec, true);
+        w();
 
-    let parsingErrors = results.filter(spec => spec.report.error);
-    if (parsingErrors.length > 0) {
-        w('## Specifications that could not be parsed');
+        const report = spec.report;
+        w('### Potential issue(s) {.anomalies}');
         w();
-        w('Reffy could not render these specifications for some reason.' +
-            ' This may happen when a specification uses an old version of ReSpec.');
-        w();
-        count = 0;
-        parsingErrors.forEach(spec => {
-            count += 1;
-            w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')');
-        });
-        w();
-        w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
-        w();
-        w();
-    }
-
-    w('## Specifications with possible issues');
-    w();
-    results
-        .filter(spec => !spec.report.ok && !spec.report.error)
-        .forEach(spec => {
-            w('### ' + spec.title);
+        if (report.ok) {
+            w('This specification looks good!');
+        }
+        else if (report.error) {
+            w('This specification could not be parsed into a DOM structure.' +
+                ' This may happen when a specification uses an old version' +
+                ' of ReSpec.');
             w();
-            writeCrawlInfo(spec);
-            w();
-
-            var report = spec.report;
-            w('Potential issue(s):');
-            w();
-            if (!report.hasNormativeRefs) {
+            w('Reffy cannot say anything about this specification as a result' +
+                ' and cannot include content defined in this specification' +
+                ' in the analysis of other specifications in this report.');
+        }
+        else {
+            if (report.noNormativeRefs) {
                 w('- No normative references found');
             }
-            if (!report.hasIdl) {
+            if (report.noIdlContent) {
                 w('- No WebIDL definitions found');
             }
             if (report.hasInvalidIdl) {
@@ -341,7 +382,7 @@ function generateReportPerSpec(results) {
             if (report.hasObsoleteIdl) {
                 w('- Obsolete WebIDL constructs found');
             }
-            if (report.hasIdl && !report.referencesWebIDL) {
+            if (!report.noIdlContent && report.noRefToWebIDL) {
                 w('- Spec uses WebIDL but does not reference it normatively');
             }
             if (report.unknownIdlNames &&
@@ -357,31 +398,34 @@ function generateReportPerSpec(results) {
                         i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' and '));
                 });
             }
-            if (report.missingWebIdlReferences &&
-                (report.missingWebIdlReferences.length > 0)) {
+            if (report.missingWebIdlRef &&
+                (report.missingWebIdlRef.length > 0)) {
                 w('- Missing references for WebIDL names: ');
-                report.missingWebIdlReferences.map(i => {
+                report.missingWebIdlRef.map(i => {
                     w('     * `' + i.name + '` defined in ' +
                         i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' or '));
                 });
             }
-            if (report.missingReferences &&
-                (report.missingReferences.length > 0)) {
+            if (report.missingLinkRef &&
+                (report.missingLinkRef.length > 0)) {
                 w('- Missing references for links: ');
-                report.missingReferences.map(l => {
+                report.missingLinkRef.map(l => {
                     w('     * [`' + l + '`](' + l + ')');
                 });
             }
-            if (report.inconsistentReferences &&
-                (report.inconsistentReferences.length > 0)) {
+            if (report.inconsistentRef &&
+                (report.inconsistentRef.length > 0)) {
                 w('- Inconsistent references for links: ');
-                report.inconsistentReferences.map(l => {
+                report.inconsistentRef.map(l => {
                     w('     * [`' + l.link + '`](' + l.link + '), related reference "' + l.ref.name + '" uses URL [`' + l.ref.url + '`](' + l.ref.url + ')');
                 });
             }
-            w();
-            w();
-        });
+        }
+        w();
+        writeDependenciesInfo(spec, results, true);
+        w();
+        w();
+    });
     w();
     w();
 }
@@ -437,7 +481,7 @@ function generateReport(results) {
     w('## Specifications without normative dependencies');
     w();
     results
-        .filter(spec => !spec.report.hasNormativeRefs)
+        .filter(spec => spec.report.noNormativeRefs)
         .forEach(spec => {
             count += 1;
             w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')');
@@ -457,7 +501,7 @@ function generateReport(results) {
     w('## Specifications without WebIDL definitions');
     w();
     results
-        .filter(spec => !spec.report.hasIdl)
+        .filter(spec => spec.report.noIdlContent)
         .forEach(spec => {
             count += 1;
             w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')');
@@ -516,7 +560,7 @@ function generateReport(results) {
     w('## Specifications that use WebIDL but do not reference the WebIDL spec');
     w();
     results.forEach(spec => {
-        if (spec.report.hasIdl && !spec.report.referencesWebIDL) {
+        if (!spec.report.noIdlContent && spec.report.noRefToWebIDL) {
             count += 1;
             w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')');
         }
@@ -601,19 +645,19 @@ function generateReport(results) {
     w('## Missing references for WebIDL names');
     w();
     results.forEach(spec => {
-        if (spec.report.missingWebIdlReferences &&
-            (spec.report.missingWebIdlReferences.length > 0)) {
+        if (spec.report.missingWebIdlRef &&
+            (spec.report.missingWebIdlRef.length > 0)) {
             count += 1;
-            if (spec.report.missingWebIdlReferences.length === 1) {
+            if (spec.report.missingWebIdlRef.length === 1) {
                 countrefs += 1;
-                let i = spec.report.missingWebIdlReferences[0];
+                let i = spec.report.missingWebIdlRef[0];
                 w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')' +
                     ' uses `' + i.name + '` but does not reference ' +
                     i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' or '));
             }
             else {
                 w('- [' + spec.title + '](' + (spec.latest || spec.url) + ') uses:');
-                spec.report.missingWebIdlReferences.map(i => {
+                spec.report.missingWebIdlRef.map(i => {
                     countrefs += 1;
                     w('    * `' + i.name + '` but does not reference ' +
                         i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' or '));
@@ -633,19 +677,19 @@ function generateReport(results) {
     w('## Missing references based on document links');
     w();
     results.forEach(spec => {
-        if (spec.report.missingReferences &&
-            (spec.report.missingReferences.length > 0)) {
+        if (spec.report.missingLinkRef &&
+            (spec.report.missingLinkRef.length > 0)) {
             count += 1;
-            if (spec.report.missingReferences.length === 1) {
+            if (spec.report.missingLinkRef.length === 1) {
                 countrefs += 1;
-                let l = spec.report.missingReferences[0];
+                let l = spec.report.missingLinkRef[0];
                 w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')' +
                   ' links to [`' + l + '`](' + l + ') but does not list it' +
                   ' in its references');
             }
             else {
                 w('- [' + spec.title + '](' + (spec.latest || spec.url) + ') links to:');
-                spec.report.missingReferences.forEach(l => {
+                spec.report.missingLinkRef.forEach(l => {
                     countrefs++;
                     w('    * [`' + l + '`](' + l + ') but does not list it ' +
                       'in its references');
@@ -674,18 +718,18 @@ function generateReport(results) {
     w('## Reference URL is inconsistent with URL used in document links');
     w();
     results.forEach(spec => {
-        if (spec.report.inconsistentReferences &&
-            (spec.report.inconsistentReferences.length > 0)) {
+        if (spec.report.inconsistentRef &&
+            (spec.report.inconsistentRef.length > 0)) {
             count += 1;
-            if (spec.report.inconsistentReferences.length === 1) {
+            if (spec.report.inconsistentRef.length === 1) {
                 countrefs += 1;
-                let l = spec.report.inconsistentReferences[0];
+                let l = spec.report.inconsistentRef[0];
                 w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')' +
                   ' links to [`' + l.link + '`](' + l.link + ') but related reference "' + l.ref.name + '" uses URL [`' + l.ref.url + '`](' + l.ref.url + ')');
             }
             else {
                 w('- [' + spec.title + '](' + (spec.latest || spec.url) + ') links to:');
-                spec.report.inconsistentReferences.forEach(l => {
+                spec.report.inconsistentRef.forEach(l => {
                     countrefs++;
                     w('    * [`' + l.link + '`](' + l.link + ') but related reference "' + l.ref.name + '" uses URL [`' + l.ref.url + '`](' + l.ref.url + ')');
                 });
@@ -743,44 +787,7 @@ function generateDependenciesReport(results) {
         w();
         writeCrawlInfo(spec);
         w();
-        if (spec.report.referencedBy.normative.length > 0) {
-            w('Normative references to this spec from:');
-            w();
-            spec.report.referencedBy.normative.forEach(s => {
-                w('- [' + s.title + '](' + (s.latest || s.url) + ')');
-            });
-        }
-        else {
-            w('No normative reference to this spec from other specs.');
-        }
-        w();
-
-        // Check the list of specifications that should normatively reference
-        // this specification because they use IDL content it defines.
-        let shouldBeReferencedBy = results.filter(s =>
-            s.report.missingWebIdlReferences &&
-            s.report.missingWebIdlReferences.find(i =>
-                i.refs.find(ref => (ref.url === spec.url))));
-        if (shouldBeReferencedBy.length > 0) {
-            w('Although they do not, the following specs should also normatively' +
-                ' reference this spec because they use IDL terms it defines:');
-            w();
-            shouldBeReferencedBy.forEach(s => {
-                w('- [' + s.title + '](' + (s.latest || s.url) + ')');
-            });
-            w();
-        }
-
-        if (spec.report.referencedBy.informative.length > 0) {
-            w('Informative references to this spec from:');
-            w();
-            spec.report.referencedBy.informative.forEach(s => {
-                w('- [' + s.title + '](' + (s.latest || s.url) + ')');
-            });
-        }
-        else {
-            w('No informative reference to this spec from other specs.');
-        }
+        writeDependenciesInfo(spec, results);
         w();
         w();
     });
