@@ -85,11 +85,11 @@ function getExtractionRules(data) {
  * @return {Node} The next sibling with the given name, null if not found
  */
 function nextTag(node, name) {
-    var nextSibling = node.nextSibling;
-    while(nextSibling && nextSibling.tagName !== name.toUpperCase()) {
-        nextSibling = nextSibling.nextSibling;
+    var nextEl = node.nextElementSibling;
+    while(nextEl && nextEl.tagName !== name.toUpperCase()) {
+        nextEl = nextEl.nextElementSibling;
     }
-    return nextSibling;
+    return nextEl;
 }
 
 
@@ -121,6 +121,7 @@ function parseReferences(referenceList, options) {
     return [defaultRef, informativeRef];
 };
 
+const textMatch = re => n => n.textContent.match(re);
 
 /**
  * Extract references from generic documents that we could not associate with
@@ -133,23 +134,23 @@ function parseReferences(referenceList, options) {
  */
 function extractReferencesWithoutRules(doc) {
     return new Promise(function (resolve, reject) {
-        var anchors = doc.querySelectorAll("h1, h2, h3");
-        var referenceHeadings = [].filter.call(anchors, a => a.textContent.match(/references/i));
+        const anchors = [...doc.querySelectorAll("h1, h2, h3")];
+        const referenceHeadings = anchors.filter(textMatch(/references/i));
         if (!referenceHeadings.length) {
             return reject(new Error("Could not detect a heading called \"references\" in document"));
         }
         if (referenceHeadings.length > 1) {
-            var normative = referenceHeadings.filter(h => h.textContent.match(/normative/i))[0];
-            var references = {};
+            const normative = referenceHeadings.find(textMatch(/normative/i));
+            const references = {};
             if (normative) {
-                var nList = nextTag(normative, "dl");
+                const nList = nextTag(normative, "dl");
                 if (nList) {
                     references.normative = parseReferences(nList)[0];
                 }
             }
-            var informative = referenceHeadings.filter(h => h.textContent.match(/informative/i))[0];
+            const informative = referenceHeadings.find(textMatch(/informative/i));
             if (informative) {
-                var iList = nextTag(informative, "dl");
+                const iList = nextTag(informative, "dl");
                 if (iList) {
                     references.informative = parseReferences(iList)[0];
                 }
@@ -158,24 +159,18 @@ function extractReferencesWithoutRules(doc) {
                 return resolve(references);
             }
         }
-        if (referenceHeadings.length > 1) {
-            // Still multiple reference headings, only keep the last one
-            referenceHeadings = referenceHeadings.slice(-1);
+        // If there are still multiple reference headings,
+        // keep only the last one
+        const referenceHeading = referenceHeadings.pop();
+        const list = nextTag(referenceHeading, "dl");
+        if (!list) {
+            return reject(new Error("Could not find a reference list formatted with a dl"));
         }
-        if (referenceHeadings.length === 1) {
-            var list = nextTag(referenceHeadings[0], "dl");
-            if (!list) {
-                return reject(new Error("Could not find a reference list formatted with a dl"));
-            }
-            var refs = parseReferences(list, { filterInformative: true });
-            resolve({
-                normative: refs[0],
-                informative: refs[1]
-            });
-        }
-        else {
-            return reject(new Error("Could not detect references in document"));
-        }
+        const refs = parseReferences(list, { filterInformative: true });
+        resolve({
+            normative: refs[0],
+            informative: refs[1]
+        });
     });
 }
 

@@ -241,7 +241,7 @@ function addToJSContext(eas, jsNames, name, type) {
     var contexts = ["[PrimaryGlobal]"];
     var exposed = eas && eas.filter(ea => ea.name === "Exposed").length;
     if (exposed) {
-        var exposedEa = eas.filter(ea => ea.name === "Exposed")[0];
+        var exposedEa = eas.find(ea => ea.name === "Exposed");
         if (exposedEa.rhs.type === "identifier") {
             contexts = [exposedEa.rhs.value];
         } else {

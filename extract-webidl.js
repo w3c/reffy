@@ -48,14 +48,14 @@ function extract(url) {
  * @return {Promise} The promise to get a dump of the IDL definitions
  */
 function extractBikeshedIdl(doc) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
         var idlHeading = doc.getElementById('idl-index');
         if (idlHeading) {
-            var nextSibling = idlHeading.nextSibling;
-            while(nextSibling && nextSibling.nodeType != 1) {
-                nextSibling = nextSibling.nextSibling
+            var nextEl = idlHeading.nextElementSibling;
+            if (nextEl) {
+                return resolve(nextEl.textContent);
             }
-            resolve(nextSibling.textContent);
+            reject(new Error("Could not find IDL in IDL index"));
         }
         else {
             // the document may have been generated with "omit idl-index"
@@ -82,16 +82,7 @@ function extractRespecIdl(doc) {
     return new Promise(resolve => {
         var idl = "";
         ["pre.idl", "pre > code.idl-code", "div.idl-code > pre", "pre.widl"]
-            .find(sel => {
-                var idlNodes = doc.querySelectorAll(sel);
-                for (var i = 0 ; i < idlNodes.length; i++) {
-                    idl += "\n" + idlNodes[i].textContent;
-                }
-                if (idl) {
-                    return true;
-                }
-            });
-
+            .find(sel => !!(idl += [...doc.querySelectorAll(sel)].map(n => "\n" + n.textContent).join('')));
         resolve(idl);
     });
 }
