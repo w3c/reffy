@@ -7,13 +7,23 @@ var fs = require('fs');
 var specEquivalents = require('./spec-equivalents.json');
 var canonicalizeURL = require('./canonicalize-url');
 
-/*
+/**
  * Flattens an array
  */
 const flatten = arr => arr.reduce(
     (acc, val) => acc.concat(Array.isArray(val) ? flatten(val) : val),
     []);
 
+
+/**
+ * Compares specs for ordering by URL
+ */
+const byURL = (a, b) => a.url.localeCompare(b.url);
+
+
+/**
+ * Shortcut that returns a property extractor iterator
+ */
 const prop = p => x => x[p];
 
 
@@ -114,8 +124,8 @@ function getSpecFromW3CApi(spec) {
     }
     var bogusEditorDraft = ['webmessaging', 'eventsource', 'webstorage', 'progress-events', 'uievents'];
     var unparseableEditorDraft = [];
-    if ((bogusEditorDraft.indexOf(shortname) !== -1)
-        || (unparseableEditorDraft.indexOf(shortname) !== -1)) {
+    if (bogusEditorDraft.includes(shortname)
+        || unparseableEditorDraft.includes(shortname)) {
         spec.latest = 'https://www.w3.org/TR/' + shortname;
     }
     return fetch('https://api.w3.org/specifications/' + shortname, options)
@@ -132,6 +142,7 @@ function getSpecFromW3CApi(spec) {
             return spec;
         })
         .catch(e => {
+            spec.error = e.toString();
             spec.latest = 'https://www.w3.org/TR/' + shortname;
             return spec;
         })
@@ -170,9 +181,17 @@ function createInitialSpecDescriptions(list) {
  */
 function crawlList(speclist) {
     function getRefAndIdl(spec) {
+        spec.title = spec.title || (spec.shortname ? spec.shortname : spec.url);
+        spec.date = "";
+        spec.links = [];
+        spec.refs = {};
+        spec.idl = {};
+        if (spec.error) {
+            return spec;
+        }
         const url = spec.latest ? spec.latest : spec.url;
-        return loadSpecification(url).then(
-            dom => Promise.all([
+        return loadSpecification(url)
+            .then(dom => Promise.all([
                 spec,
                 titleExtractor(dom),
                 linkExtractor(dom),
@@ -204,12 +223,6 @@ function crawlList(speclist) {
             })
             .catch(err => {
                 spec.error = err.toString();
-                spec.title = spec.title || "";
-                spec.date = "";
-                spec.links = [];
-                spec.refs = {};
-                spec.idl = {};
-
                 return spec;
             });
     }
@@ -220,7 +233,10 @@ function crawlList(speclist) {
 
 
 /**
- * Append the resulting data to the given file
+ * Append the resulting data to the given file.
+ *
+ * Note results are sorted by URL to guarantee that the crawl report produced
+ * will always follow the same order.
  *
  * @function
  * @param {Array(Object)} data The list of specification structures to save
@@ -236,6 +252,7 @@ function saveResults(data, path) {
                 existingdata = JSON.parse(content);
             } catch (e) {}
             var newdata = existingdata.concat(data);
+            newdata.sort(byURL);
             fs.writeFile(path, JSON.stringify(newdata, null, 2),
                          err => { if (err) return reject(err); resolve();});
         });

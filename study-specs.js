@@ -11,6 +11,12 @@ const matchSpecUrl = url => url.match(/spec.whatwg.org/) || url.match(/www.w3.or
 
 
 /**
+ * Compares specs for ordering by title
+ */
+const byTitle = (a, b) => a.title.toUpperCase().localeCompare(b.title.toUpperCase());
+
+
+/**
  * Analyze the result of a crawl and produce a report that can easily be
  * converted without more processing to a human readable version.
  *
@@ -36,8 +42,7 @@ function processReport(results) {
     // TODO: we may end up with different variants of the WebIDL spec
     var WebIDLSpec = results.find(spec => (spec.shortname === 'WebIDL-1')) || {};
 
-    var sortedResults = results.sort((a,b) =>
-        a.title.toUpperCase().localeCompare(b.title.toUpperCase()));
+    var sortedResults = results.sort(byTitle);
 
     // Construct spec equivalence from the crawl report, which should be more
     // complete than the initial equivalence list.
@@ -357,13 +362,14 @@ function generateReportPerSpec(results) {
             w('This specification looks good!');
         }
         else if (report.error) {
-            w('This specification could not be parsed into a DOM structure.' +
-                ' This may happen when a specification uses an old version' +
-                ' of ReSpec.');
+            w('The following network or parsing error occurred:');
+            w('`' + report.error + '`');
             w();
-            w('Reffy cannot say anything about this specification as a result' +
-                ' and cannot include content defined in this specification' +
-                ' in the analysis of other specifications in this report.');
+            w('Reffy could not render this specification as a DOM tree and' +
+                ' cannot say anything about it as a result. In particular,' +
+                ' it cannot include content defined in this specification' +
+                ' in the analysis of other specifications crawled in this' +
+                ' report.');
         }
         else {
             if (report.noNormativeRefs) {
@@ -435,7 +441,7 @@ function generateReportPerSpec(results) {
  *
  * @function
  */
-function generateReport(results) {
+function generateReportPerIssue(results) {
     var count = 0;
     var w = console.log.bind(console);
 
@@ -449,15 +455,16 @@ function generateReport(results) {
 
     let parsingErrors = results.filter(spec => spec.report.error);
     if (parsingErrors.length > 0) {
-        w('## Specifications that could not be parsed');
+        w('## Specifications that could not be rendered');
         w();
-        w('Reffy could not render these specifications for some reason.' +
-            ' This may happen when a specification uses an old version of ReSpec.');
+        w('Reffy could not fetch or render these specifications for some reason.' +
+            ' This may happen when a network error occurred or when a specification' +
+            ' uses an old version of ReSpec.');
         w();
         count = 0;
         parsingErrors.forEach(spec => {
             count += 1;
-            w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')');
+            w('- [' + spec.title + '](' + (spec.latest || spec.url) + '): `' + spec.error + '`');
         });
         w();
         w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
@@ -810,6 +817,6 @@ if (require.main === module) {
         generateReportPerSpec(specResults);
     }
     else {
-        generateReport(specResults);
+        generateReportPerIssue(specResults);
     }
 }
