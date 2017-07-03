@@ -1,3 +1,13 @@
 node_modules
 config.json
 cache
+reports/w3c/crawl.json
+reports/w3c/index.md
+reports/w3c/index.html
+reports/w3c/perissue.md
+reports/w3c/perissue.html
+reports/whatwg/crawl.json
+reports/whatwg/index.md
+reports/whatwg/index.html
+reports/whatwg/perissue.md
+reports/whatwg/perissue.html
