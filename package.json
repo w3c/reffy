@@ -15,10 +15,10 @@
     "w3c": "npm run w3c-crawl && npm run w3c-study && npm run w3c-html",
     "w3c-crawl": "node crawl-specs.js ./specs-w3c.json ./reports/w3c/crawl.json",
     "w3c-study": "node study-specs.js ./reports/w3c/crawl.json perspec > reports/w3c/index.md && node study-specs.js ./reports/w3c/crawl.json > reports/w3c/perissue.md",
-    "w3c-html": "pandoc reports/w3c/index.md -f markdown -t html5 --section-divs -s --template report-template.html -o reports/w3c/index.html",
+    "w3c-html": "pandoc reports/w3c/index.md -f markdown -t html5 --section-divs -s --template report-template.html -o reports/w3c/index.html && pandoc reports/w3c/perissue.md -f markdown -t html5 --section-divs -s --template report-perissue-template.html -o reports/w3c/perissue.html",
     "whatwg": "npm run-script whatwg-crawl && npm run-script whatwg-study && npm run-script whatwg-html",
     "whatwg-crawl": "node crawl-specs.js ./specs-whatwg.json ./reports/whatwg/crawl.json",
     "whatwg-study": "node study-specs.js ./reports/whatwg/crawl.json perspec > reports/whatwg/index.md && node study-specs.js ./reports/whatwg/crawl.json > reports/whatwg/perissue.md",
-    "whatwg-html": "pandoc reports/whatwg/index.md -f markdown -t html5 --section-divs -s --template report-template.html -o reports/whatwg/index.html"
+    "whatwg-html": "pandoc reports/whatwg/index.md -f markdown -t html5 --section-divs -s --template report-template.html -o reports/whatwg/index.html && pandoc reports/whatwg/perissue.md -f markdown -t html5 --section-divs -s --template report-perissue-template.html -o reports/whatwg/perissue.html"
   }
 }

@@ -442,11 +442,6 @@ function generateReport(results) {
     // Compute report information
     results = processReport(results);
 
-    w('# Reffy crawl report');
-    w();
-
-    writeGenericInfo();
-    w();
     count = results.length;
     w('' + count + ' specification' + ((count > 1) ? 's' : '') + ' were crawled in this report.');
     w();
