@@ -247,13 +247,22 @@ function saveResults(data, path) {
     return new Promise((resolve, reject) => {
         fs.readFile(path, function(err, content) {
             if (err) return reject(err);
-            var existingdata = [];
+
+            let filedata = {};
             try {
-                existingdata = JSON.parse(content);
+                filedata = JSON.parse(content);
             } catch (e) {}
-            var newdata = existingdata.concat(data);
-            newdata.sort(byURL);
-            fs.writeFile(path, JSON.stringify(newdata, null, 2),
+
+            filedata.date = filedata.date || (new Date()).toJSON();
+            filedata.stats = {};
+            filedata.results = (filedata.results || []).concat(data);
+            filedata.results.sort(byURL);
+            filedata.stats = {
+                crawled: filedata.results.length,
+                errors: filedata.results.filter(spec => !!spec.error).length
+            };
+
+            fs.writeFile(path, JSON.stringify(filedata, null, 2),
                          err => { if (err) return reject(err); resolve();});
         });
     });

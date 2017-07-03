@@ -324,12 +324,23 @@ function writeDependenciesInfo(spec, results, withHeader) {
  *
  * @function
  */
-function generateReportPerSpec(results) {
+function generateReportPerSpec(crawlResults) {
     var count = 0;
     var w = console.log.bind(console);
 
     // Compute report information
-    results = processReport(results);
+    const results = processReport(crawlResults.results);
+
+    const dateOptions = {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+    };
+
+    w('% ' + (crawlResults.title || 'Reffy crawl results'));
+    w('% Reffy');
+    w('% ' + (new Date(crawlResults.date)).toLocaleDateString('en-US', dateOptions));
+    w();
 
     results.forEach(spec => {
         // Prepare anomaly flags
@@ -441,12 +452,23 @@ function generateReportPerSpec(results) {
  *
  * @function
  */
-function generateReportPerIssue(results) {
+function generateReportPerIssue(crawlResults) {
     var count = 0;
     var w = console.log.bind(console);
 
     // Compute report information
-    results = processReport(results);
+    let results = processReport(crawlResults.results);
+
+    const dateOptions = {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+    };
+
+    w('% ' + (crawlResults.title || 'Reffy crawl results'));
+    w('% Reffy');
+    w('% ' + (new Date(crawlResults.date)).toLocaleDateString('en-US', dateOptions));
+    w();
 
     count = results.length;
     w('' + count + ' specification' + ((count > 1) ? 's' : '') + ' were crawled in this report.');
@@ -759,12 +781,12 @@ function generateReportPerIssue(results) {
  *
  * @function
  */
-function generateDependenciesReport(results) {
+function generateDependenciesReport(crawlResults) {
     var count = 0;
     var w = console.log.bind(console);
 
     // Compute report information
-    results = processReport(results);
+    const results = processReport(crawlResults.results);
 
     w('# Reffy dependencies report');
     w();
