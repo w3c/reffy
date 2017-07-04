@@ -19,6 +19,7 @@ Under the hoods, these commands run the following steps (and related commands) i
 1. **Crawling**: Crawls a list of spec and outputs relevant information in a JSON structure. `node crawl-specs.js ./specs-w3c.json ./reports/w3c/crawl.json`
 2. **Analysis**: Analyses the result of the crawling step, and produces a human-readable report in Markdown format. `node study-specs.js ./reports/w3c/crawl.json [perspec|dep]`. By default, the tool generates a report per anomaly, pass `perspec` to create a report per specification, and `dep` to generate a dependencies report. You will probably want to redirect the output to a file, e.g. using `node study-specs.js ./reports/w3c/crawl.json > reports/w3c/index.md`.
 3. **Conversion to HTML**: Takes the Markdown analysis per specification and prepares an HTML report with expandable sections. `pandoc reports/w3c/index.md -f markdown -t html5 --section-divs -s --template report-template.html -o reports/w3c/index.html` (where `report.md` is the Markdown report)
+4. **Diff with latest published version of the crawl report**: Compares the crawl results with the latest published crawl results and produce a human-readable diff in Markdown format. `node study-specs.js ./reports/w3c/crawl.json diff https://tidoust.github.io/reffy-reports/w3c/crawl.json`
 
 Some notes:
 

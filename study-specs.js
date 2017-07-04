@@ -1,7 +1,7 @@
-var array_concat = (a,b) => a.concat(b);
-var array_unique = (n, i, a) => a.indexOf(n) === i;
-
 const canonicalizeURL = require('./canonicalize-url');
+const fetch = require('./util').fetch;
+
+const array_concat = (a,b) => a.concat(b);
 
 /**
  * Helper function that returns true when the given URL seems to target a real
@@ -14,6 +14,23 @@ const matchSpecUrl = url => url.match(/spec.whatwg.org/) || url.match(/www.w3.or
  * Compares specs for ordering by title
  */
 const byTitle = (a, b) => a.title.toUpperCase().localeCompare(b.title.toUpperCase());
+
+
+/**
+ * Returns true when two arrays are equal
+ */
+const arrayEquals = (a, b, prop) =>
+    (a.length === b.length) &&
+    a.every(item => !!(prop ? b.find(i => i[prop] === item[prop]) : b.find(i => i === item)));
+
+/**
+ * Options for date formatting
+ */
+const dateOptions = {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+};
 
 
 /**
@@ -331,12 +348,6 @@ function generateReportPerSpec(crawlResults) {
     // Compute report information
     const results = processReport(crawlResults.results);
 
-    const dateOptions = {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-    };
-
     w('% ' + (crawlResults.title || 'Reffy crawl results'));
     w('% Reffy');
     w('% ' + (new Date(crawlResults.date)).toLocaleDateString('en-US', dateOptions));
@@ -458,12 +469,6 @@ function generateReportPerIssue(crawlResults) {
 
     // Compute report information
     let results = processReport(crawlResults.results);
-
-    const dateOptions = {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-    };
 
     w('% ' + (crawlResults.title || 'Reffy crawl results'));
     w('% Reffy');
@@ -814,31 +819,213 @@ function generateDependenciesReport(crawlResults) {
 }
 
 
+/**
+ * Outputs a human-readable diff between two crawl reports, one entry per spec.
+ *
+ * The function spits the report to the console.
+ *
+ * @function
+ */
+function generateDiffReport(crawlResults, crawlRef, options) {
+    options = options || {};
+    const w = console.log.bind(console);
+
+    // Compute report information for both crawl versions
+    const results = processReport(crawlResults.results);
+    const resultsRef = processReport(crawlRef.results);
+    
+    // Compute diff for all specs
+    // (note we're only interested in specs that are part in the new crawl,
+    // and won't report on specs that were there before and got dropped)
+    let resultsDiff = results.map(spec => {
+        let ref = resultsRef.find(s => s.url === spec.url) || {
+            missing: true,
+            report: {
+                unknownIdlNames: [],
+                redefinedIdlNames: [],
+                missingWebIdlRef: [],
+                missingLinkRef: [],
+                inconsistentRef: []
+            }
+        };
+
+        const report = spec.report;
+        const reportRef = ref.report;
+
+        const getSimpleDiff = prop =>
+            (report[prop] !== reportRef[prop]) ?
+            {
+                ins: (typeof report[prop] !== 'undefined') ? report[prop] : null,
+                del: (typeof reportRef[prop] !== 'undefined') ? reportRef[prop] : null
+            } :
+            null;
+        const getArrayDiff = (prop, key) =>
+            (!arrayEquals(report[prop], reportRef[prop], key) &&
+                (!options.onlyNew || report[prop].find(item => !reportRef[prop].find(i => (key ? i[key] === item[key] : i === item))))) ?
+            {
+                ins: report[prop].filter(item => !reportRef[prop].find(i => (key ? i[key] === item[key] : i === item))),
+                del: reportRef[prop].filter(item => !report[prop].find(i => (key ? i[key] === item[key] : i === item)))
+            } :
+            null;
+
+        // Compute diff between new and ref report for that spec
+        const diff = {
+            title: (spec.title !== ref.title) ? {
+                ins: (typeof spec.title !== 'undefined') ? spec.title : null,
+                del: (typeof ref.title !== 'undefined') ? ref.title : null
+            } : null,
+            latest: (spec.latest !== ref.latest) ? {
+                ins: (typeof spec.latest !== 'undefined') ? spec.latest : null,
+                del: (typeof ref.latest !== 'undefined') ? ref.latest : null,
+            } : null,
+            ok: getSimpleDiff('ok'),
+            error: getSimpleDiff('error'),
+            noNormativeRefs: getSimpleDiff('noNormativeRefs'),
+            noRefToWebIDL: getSimpleDiff('noRefToWebIDL'),
+            noIdlContent: getSimpleDiff('noIdlContent'),
+            hasInvalidIdl: getSimpleDiff('hasInvalidIdl'),
+            hasObsoleteIdl: getSimpleDiff('hasObsoleteIdl'),
+            unknownIdlNames: getArrayDiff('unknownIdlNames'),
+            redefinedIdlNames: getArrayDiff('redefinedIdlNames', 'name'),
+            missingWebIdlRef: getArrayDiff('missingWebIdlRef', 'name'),
+            missingLinkRef: getArrayDiff('missingLinkRef'),
+            inconsistentRef: getArrayDiff('inconsistentRef', 'link')
+        };
+
+        return {
+            title: spec.title,
+            shortname: spec.shortname,
+            date: spec.date,
+            url: spec.url,
+            latest: spec.latest,
+            isNewSpec: ref.missing,
+            hasDiff: Object.keys(diff).some(key => diff[key] !== null),
+            diff
+        };
+    });
+
+    w('% Diff between report from "' +
+        (new Date(crawlResults.date)).toLocaleDateString('en-US', dateOptions) +
+        '" and reference report from "' + 
+        (new Date(crawlRef.date)).toLocaleDateString('en-US', dateOptions) +
+        '"');
+    w('% Reffy');
+    w('% ' + (new Date(crawlResults.date)).toLocaleDateString('en-US', dateOptions));
+    w();
+
+    resultsDiff.forEach(spec => {
+        // Nothing to report if crawl result is the same
+        if (!spec.hasDiff) {
+            return;
+        }
+
+        w('## ' + spec.title);
+        w();
+        w('- URL: [' + spec.url + '](' + spec.url + ')');
+
+        if (spec.isNewSpec) {
+            w('- This specification was not in the reference crawl report.');
+            w();
+            w();
+            return;
+        }
+
+        const diff = spec.diff;
+        const simpleDiff = prop =>
+            ((diff[prop].ins !== null) ? '*INS* ' + diff[prop].ins : '') +
+            (((diff[prop].ins !== null) && (diff[prop].del !== null)) ? ' / ' : '') +
+            ((diff[prop].del !== null) ? '*DEL* ' + diff[prop].del : '');
+        const arrayDiff = (prop, key) =>
+            ((diff[prop].ins.length > 0) ? '*INS* ' + diff[prop].ins.map(i => (key ? i[key] : i)).join(', ') : '') +
+            (((diff[prop].ins.length > 0) && (diff[prop].del.length > 0)) ? ' / ' : '') +
+            ((diff[prop].del.length > 0) ? '*DEL* ' + diff[prop].del.map(i => (key ? i[key] : i)).join(', ') : '');
+
+        [
+            { title: 'Spec title', prop: 'title', diff: 'simple' },
+            { title: 'Latest URL', prop: 'latest', diff: 'simple' },
+            { title: 'Spec is OK', prop: 'ok', diff: 'simple' },
+            { title: 'Spec could not be rendered', prop: 'error', diff: 'simple' },
+            { title: 'No normative references found', prop: 'noNormativeRefs', diff: 'simple' },
+            { title: 'No WebIDL definitions found', prop: 'noIdlContent', diff: 'simple' },
+            { title: 'Invalid WebIDL content found', prop: 'hasInvalidIdl', diff: 'simple' },
+            { title: 'Obsolete WebIDL constructs found', prop: 'hasObsoleteIdl', diff: 'simple' },
+            { title: 'Spec does not reference WebIDL normatively', prop: 'noRefToWebIDL', diff: 'simple' },
+            { title: 'Unknown WebIDL names used', prop: 'unknownIdlNames', diff: 'array' },
+            { title: 'WebIDL names also defined elsewhere', prop: 'redefinedIdlNames', diff: 'array', key: 'name' },
+            { title: 'Missing references for WebIDL names', prop: 'missingWebIdlRef', diff: 'array', key: 'name' },
+            { title: 'Missing references for links', prop: 'missingLinkRef', diff: 'array' },
+            { title: 'Inconsistent references for links', prop: 'inconsistentRef', diff: 'array', key: 'link' }
+        ].forEach(item => {
+            // Only report actual changes, and don't report other changes when
+            // the spec could not be rendered in one of the crawl reports
+            if (diff[item.prop] && ((item.prop === 'error') || (item.prop === 'title') || (item.prop === 'latest') || !diff.error)) {
+                w('- ' + item.title + ': ' + ((item.diff === 'simple') ?
+                    simpleDiff(item.prop) :
+                    arrayDiff(item.prop, item.key)));
+            }
+        });
+        w();
+        w();
+    });
+}
+
+
 /**************************************************
 Code run if the code is run as a stand-alone module
 **************************************************/
 if (require.main === module) {
-    var specResultsPath = process.argv[2];
-    var perSpec = !!process.argv[3] || (process.argv[3] === 'perspec');
-    var depReport = (process.argv[3] === 'dep');
-    if (!specResultsPath) {
+    const crawlResultsPath = process.argv[2];
+    const perSpec = !!process.argv[3] || (process.argv[3] === 'perspec');
+    const depReport = (process.argv[3] === 'dep');
+    const diffReport = (process.argv[3] === 'diff');
+    const refResultsPath = diffReport ? process.argv[4] : null;
+    const onlyNew = (process.argv[5] === 'onlynew');
+
+    if (!crawlResultsPath) {
         console.error("Required filename parameter missing");
         process.exit(2);
     }
-    var specResults;
+    if (diffReport && !refResultsPath) {
+        console.error("Required filename to reference crawl for diff missing");
+        process.exit(2);
+    }
+
+    let crawlResults;
     try {
-        specResults = require(specResultsPath);
+        crawlResults = require(crawlResultsPath);
     } catch(e) {
-        console.error("Impossible to read " + specresultsPath + ": " + e);
+        console.error("Impossible to read " + crawlResultsPath + ": " + e);
         process.exit(3);
     }
-    if (depReport) {
-        generateDependenciesReport(specResults);
+
+    if (diffReport) {
+        if (refResultsPath.startsWith('http')) {
+            fetch(refResultsPath, { nolog: true })
+                .catch(e => {
+                    console.error("Impossible to fetch " + refResultsPath + ": " + e);
+                    process.exit(3);
+                })
+                .then(r => r.json())
+                .then(refResults => generateDiffReport(crawlResults, refResults, { onlyNew }));
+        }
+        else {
+            let refResults = {};
+            try {
+                refResults = require(refResultsPath);
+            } catch(e) {
+                console.error("Impossible to read " + refResultsPath + ": " + e);
+                process.exit(3);
+            }
+            generateDiffReport(crawlResults, refResults, { onlyNew });
+        }
+    }
+    else if (depReport) {
+        generateDependenciesReport(crawlResults);
     }
     else if (perSpec) {
-        generateReportPerSpec(specResults);
+        generateReportPerSpec(crawlResults);
     }
     else {
-        generateReportPerIssue(specResults);
+        generateReportPerIssue(crawlResults);
     }
 }

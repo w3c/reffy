@@ -173,7 +173,7 @@ function fetch(url, options) {
 
     function conditionalFetch(prevHeaders) {
         if ((prevHeaders && config.avoidNetworkRequests) || fetchedUrls[url]) {
-            console.log('Fetch (from cache): ' + url);
+            if (!options.nolog) console.log('Fetch (from cache): ' + url);
             return readFromCache();
         }
 
@@ -187,10 +187,10 @@ function fetch(url, options) {
 
         if (options.headers['If-Modified-Since'] ||
             options.headers['If-None-Match']) {
-            console.log('Fetch (conditional request): ' + url);
+            if (!options.nolog) console.log('Fetch (conditional request): ' + url);
         }
         else {
-            console.log('Fetch: ' + url);
+            if (!options.nolog) console.log('Fetch: ' + url);
         }
         return baseFetch(url, options)
             .then(saveToCacheIfNeeded)
