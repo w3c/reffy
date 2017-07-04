@@ -904,6 +904,25 @@ function generateDiffReport(crawlResults, crawlRef, options) {
         };
     });
 
+    if (!options.onlyNew) {
+        resultsDiff = resultsDiff.concat(resultsRef
+            .map(spec => {
+                let ref = results.find(s => s.url === spec.url);
+                if (ref) return null;
+                return {
+                    title: spec.title,
+                    shortname: spec.shortname,
+                    date: spec.date,
+                    url: spec.url,
+                    latest: spec.latest,
+                    isUnknownSpec: true,
+                    hasDiff: true
+                };
+            })
+            .filter(spec => !!spec));
+        resultsDiff.sort(byTitle);
+    }
+
     w('% Diff between report from "' +
         (new Date(crawlResults.date)).toLocaleDateString('en-US', dateOptions) +
         '" and reference report from "' + 
@@ -925,6 +944,13 @@ function generateDiffReport(crawlResults, crawlRef, options) {
 
         if (spec.isNewSpec) {
             w('- This specification was not in the reference crawl report.');
+            w();
+            w();
+            return;
+        }
+
+        if (spec.isUnknownSpec) {
+            w('- This specification is not in the new crawl report.');
             w();
             w();
             return;
