@@ -179,9 +179,12 @@ function createInitialSpecDescriptions(list) {
  * @return {Promise<Array(Object)} The promise to get an array of complete
  *   specification descriptions
  */
-function crawlList(speclist) {
+function crawlList(speclist, crawlOptions) {
+    crawlOptions = crawlOptions || {};
+
     function getRefAndIdl(spec) {
         spec.title = spec.title || (spec.shortname ? spec.shortname : spec.url);
+        spec.crawled = (spec.latest && !crawlOptions.publishedVersion) ? spec.latest : spec.url;
         spec.date = "";
         spec.links = [];
         spec.refs = {};
@@ -189,20 +192,19 @@ function crawlList(speclist) {
         if (spec.error) {
             return spec;
         }
-        const url = spec.latest ? spec.latest : spec.url;
-        return loadSpecification(url)
+        return loadSpecification(spec.crawled)
             .then(dom => Promise.all([
                 spec,
                 titleExtractor(dom),
                 linkExtractor(dom),
-                refParser.extract(dom).catch(err => {console.error(url, err); return err;}),
+                refParser.extract(dom).catch(err => {console.error(spec.crawled, err); return err;}),
                 webidlExtractor.extract(dom)
                     .then(idl => Promise.all([
                         webidlParser.parse(idl),
                         webidlParser.hasObsoleteIdl(idl)
                     ])
                     .then(res => { res[0].hasObsoleteIdl = res[1]; return res[0] })
-                    .catch(err => { console.error(url, err); return err; })),
+                    .catch(err => { console.error(spec.crawled, err); return err; })),
                 dom
             ]))
             .then(res => {
@@ -278,12 +280,12 @@ function saveResults(data, path) {
  * @function
  * @private
  */
-function processChunk(list, remain, resultsPath, chunkSize) {
-    return crawlList(list)
+function processChunk(list, remain, resultsPath, chunkSize, crawlOptions) {
+    return crawlList(list, crawlOptions)
         .then(data => saveResults(data, resultsPath))
         .then(() => {
             if (remain.length) {
-                return processChunk(remain.splice(0, chunkSize), remain, resultsPath, chunkSize);
+                return processChunk(remain.splice(0, chunkSize), remain, resultsPath, chunkSize, crawlOptions);
             }
         });
 }
@@ -301,6 +303,9 @@ Code run if the code is run as a stand-alone module
 if (require.main === module) {
     var speclistPath = process.argv[2];
     var resultsPath = process.argv[3];
+    var crawlOptions = {
+        publishedVersion: (process.argv[4] === 'tr')
+    };
     if (!speclistPath || !resultsPath) {
         console.error("Required filename parameter missing");
         process.exit(2);
@@ -322,7 +327,7 @@ if (require.main === module) {
     // splitting list to avoid memory exhaustion
     var chunkSize = 10;
     var sublist = speclist.splice(0, chunkSize);
-    processChunk(sublist, speclist, resultsPath, chunkSize)
+    processChunk(sublist, speclist, resultsPath, chunkSize, crawlOptions)
         .then(function (data) {
             console.log("Finished");
         })

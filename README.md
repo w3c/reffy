@@ -12,11 +12,12 @@ To launch the crawler and the report study tool, follow these steps:
 1. Clone the repository: `git clone git@github.com:tidoust/reffy.git`
 2. From the root folder of reffy, install required dependencies: `npm install`
 3. Create a `config.json` file, initialized with `{ "w3cApiKey": [API key] }`
-4. To produce a W3C-centric vision of the Web platform, run `npm run w3c`.
-5. To produce a WHATWG-centric vision of the Web platofrm, run `npm run whatwg`.
+4. To produce a W3C-centric vision of the Web platform using Editor's Drafts, run `npm run w3c`.
+5. To produce a W3C-centric vision of the Web platform using latest published versions in `/TR/`, run `npm run w3c`.
+6. To produce a WHATWG-centric vision of the Web platofrm, run `npm run whatwg`.
 
 Under the hoods, these commands run the following steps (and related commands) in turn:
-1. **Crawling**: Crawls a list of spec and outputs relevant information in a JSON structure. `node crawl-specs.js ./specs-w3c.json ./reports/w3c/crawl.json`
+1. **Crawling**: Crawls a list of spec and outputs relevant information in a JSON structure. `node crawl-specs.js ./specs-w3c.json ./reports/w3c/crawl.json [tr]`. Add `tr` to tell the crawler to load the latest published version of TR specifications instead of the latest Editor's Draft.
 2. **Analysis**: Analyses the result of the crawling step, and produces a human-readable report in Markdown format. `node study-specs.js ./reports/w3c/crawl.json [perspec|dep]`. By default, the tool generates a report per anomaly, pass `perspec` to create a report per specification, and `dep` to generate a dependencies report. You will probably want to redirect the output to a file, e.g. using `node study-specs.js ./reports/w3c/crawl.json > reports/w3c/index.md`.
 3. **Conversion to HTML**: Takes the Markdown analysis per specification and prepares an HTML report with expandable sections. `pandoc reports/w3c/index.md -f markdown -t html5 --section-divs -s --template report-template.html -o reports/w3c/index.html` (where `report.md` is the Markdown report)
 4. **Diff with latest published version of the crawl report**: Compares the crawl results with the latest published crawl results and produce a human-readable diff in Markdown format. `node study-specs.js ./reports/w3c/crawl.json diff https://tidoust.github.io/reffy-reports/w3c/crawl.json`

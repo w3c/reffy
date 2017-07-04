@@ -231,6 +231,7 @@ function processReport(results) {
                 date: spec.date,
                 url: spec.url,
                 latest: spec.latest,
+                crawled: spec.crawled,
                 report
             };
             return res;
@@ -276,10 +277,10 @@ function writeCrawlInfo(spec, withHeader) {
         w('Crawl info:');
     }
     w();
-    w('- URL: [' + (spec.latest ?
-        ((spec.latest.indexOf('www.w3.org/TR/') !== -1) ? 'Latest published version' : 'Editor\'s Draft') :
+    w('- URL: [' + (spec.crawled ?
+        ((spec.crawled.indexOf('www.w3.org/TR/') !== -1) ? 'Latest published version' : 'Editor\'s Draft') :
         ((spec.url.indexOf('spec.whatwg.org') !== -1) ? 'Living Standard' : 'Initial URL'))
-        + '](' + (spec.latest || spec.url) + ')');
+        + '](' + (spec.crawled || spec.url) + ')');
     w('- Shortname: ' + (spec.shortname || 'no shortname'));
     w('- Date: ' + (spec.date || 'unknown'));
 }
@@ -898,6 +899,7 @@ function generateDiffReport(crawlResults, crawlRef, options) {
             date: spec.date,
             url: spec.url,
             latest: spec.latest,
+            crawled: spec.crawled,
             isNewSpec: ref.missing,
             hasDiff: Object.keys(diff).some(key => diff[key] !== null),
             diff
@@ -915,6 +917,7 @@ function generateDiffReport(crawlResults, crawlRef, options) {
                     date: spec.date,
                     url: spec.url,
                     latest: spec.latest,
+                    crawled: spec.crawled,
                     isUnknownSpec: true,
                     hasDiff: true
                 };
