@@ -1,6 +1,10 @@
-[
-    "https://dom.spec.whatwg.org/",
-    "https://html.spec.whatwg.org/",
-    "https://notifications.spec.whatwg.org/",
-    { "file": "./specs-common.json" }
-]
+{
+    "title": "Specifications that define WebIDL content (WHATWG perspective)",
+    "description": "This crawl includes specifications that define WebIDL content, preferring WHATWG specifications to W3C specifications when both exist.",
+    "list": [
+        "https://dom.spec.whatwg.org/",
+        "https://html.spec.whatwg.org/",
+        "https://notifications.spec.whatwg.org/",
+        { "file": "./specs-common.json" }
+    ]
+}

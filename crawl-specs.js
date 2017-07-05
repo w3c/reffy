@@ -241,11 +241,14 @@ function crawlList(speclist, crawlOptions) {
  * will always follow the same order.
  *
  * @function
+ * @param {Object} crawlInfo Crawl information structure, contains the title
+ *   and the list of specs to crawl
+ * @param {Object} crawlOptions Crawl options
  * @param {Array(Object)} data The list of specification structures to save
  * @param {String} path The path to the file to save
  * @return {Promise<void>} The promise to have saved the data
  */
-function saveResults(data, path) {
+function saveResults(crawlInfo, crawlOptions, data, path) {
     return new Promise((resolve, reject) => {
         fs.readFile(path, function(err, content) {
             if (err) return reject(err);
@@ -255,7 +258,12 @@ function saveResults(data, path) {
                 filedata = JSON.parse(content);
             } catch (e) {}
 
+            filedata.title = crawlInfo.title || 'Reffy crawl';
+            if (crawlInfo.description) {
+                filedata.description = crawlInfo.description;
+            }
             filedata.date = filedata.date || (new Date()).toJSON();
+            filedata.options = crawlOptions;
             filedata.stats = {};
             filedata.results = (filedata.results || []).concat(data);
             filedata.results.sort(byURL);
@@ -280,14 +288,24 @@ function saveResults(data, path) {
  * @function
  * @private
  */
-function processChunk(list, remain, resultsPath, chunkSize, crawlOptions) {
+function processChunk(crawlInfo, pos, resultsPath, chunkSize, crawlOptions) {
+    let list = crawlInfo.list.slice(pos, pos + chunkSize);
     return crawlList(list, crawlOptions)
-        .then(data => saveResults(data, resultsPath))
-        .then(() => {
-            if (remain.length) {
-                return processChunk(remain.splice(0, chunkSize), remain, resultsPath, chunkSize, crawlOptions);
-            }
-        });
+        .then(data => saveResults(crawlInfo, crawlOptions, data, resultsPath))
+        .then(() => (pos < crawlInfo.list.length - 1) ?
+            processChunk(crawlInfo, pos + chunkSize, resultsPath, chunkSize, crawlOptions) :
+            null);
+}
+
+
+function assembleListOfSpec(filename, nested) {
+    let crawlInfo = require(filename);
+    if (Array.isArray(crawlInfo)) {
+        crawlInfo = { list: crawlInfo };
+    }
+    crawlInfo.list = crawlInfo.list.map(item => item.file ? assembleListOfSpec(item.file, true) : item);
+    crawlInfo.list = flatten(crawlInfo.list);
+    return (nested ? crawlInfo.list : crawlInfo);
 }
 
 
@@ -310,10 +328,9 @@ if (require.main === module) {
         console.error("Required filename parameter missing");
         process.exit(2);
     }
-    var speclist;
+    var crawlInfo;
     try {
-        speclist = require(speclistPath).map(s => s.file ? require(s.file) : s);
-        speclist = flatten(speclist);
+        crawlInfo = assembleListOfSpec(speclistPath);
     } catch(e) {
         console.error("Impossible to read " + speclistPath + ": " + e);
         process.exit(3);
@@ -326,8 +343,7 @@ if (require.main === module) {
     }
     // splitting list to avoid memory exhaustion
     var chunkSize = 10;
-    var sublist = speclist.splice(0, chunkSize);
-    processChunk(sublist, speclist, resultsPath, chunkSize, crawlOptions)
+    processChunk(crawlInfo, 0, resultsPath, chunkSize, crawlOptions)
         .then(function (data) {
             console.log("Finished");
         })
