@@ -1,8 +1,19 @@
 var WebIDL2 = require("webidl2");
 
+
+/**
+ * Update obsolete WebIDL constructs to make them compatible with latest
+ * version of WebIDL
+ */
 function normalizeWebIDL1to2(idl) {
-    return idl.replace(/attribute +([^\[ ]*)\[\]/g, "attribute FrozenArray<$1>")
+    return idl
+        // Use "FrozenArray" instead of "[]"
+        .replace(/attribute +([^\[ ]*)\[\]/g, "attribute FrozenArray<$1>")
+
+        // Use the default toJSON operation instead of serializers
+        .replace(/serializer\s*=\s*{[^}]*}/g, "[Default] object toJSON()");
 }
+
 
 /**
  * Checks whether the given IDL uses WebIDL Level 1 constructs that are no
