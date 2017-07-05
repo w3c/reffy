@@ -5,7 +5,7 @@ var webidlParser = require('./parse-webidl');
 var fetch = require('./util').fetch;
 var fs = require('fs');
 var specEquivalents = require('./spec-equivalents.json');
-var canonicalizeURL = require('./canonicalize-url');
+var canonicalizeURL = require('./canonicalize-url').canonicalizeURL;
 
 /**
  * Flattens an array

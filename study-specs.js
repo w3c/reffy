@@ -1,4 +1,5 @@
-const canonicalizeURL = require('./canonicalize-url');
+const canonicalizeURL = require('./canonicalize-url').canonicalizeURL;
+const canonicalizesTo = require('./canonicalize-url').canonicalizesTo;
 const fetch = require('./util').fetch;
 
 const array_concat = (a,b) => a.concat(b);
@@ -65,7 +66,19 @@ function processReport(results) {
     // complete than the initial equivalence list.
     var specEquivalents = {};
     sortedResults.forEach(spec =>
-        spec.versions.forEach(v => { specEquivalents[v] = spec.url; }
+        spec.versions.forEach(v => {
+            if (specEquivalents[v]) {
+                if (Array.isArray(specEquivalents[v])) {
+                    specEquivalents[v].push(spec.url);
+                }
+                else {
+                    specEquivalents[v] = [specEquivalents[v], spec.url];
+                }
+            }
+            else {
+                specEquivalents[v] = spec.url;
+            }
+        }
     ));
 
     // Strong canonicalization options to find references
@@ -149,7 +162,7 @@ function processReport(results) {
                         var ref = null;
                         if (spec.refs && spec.refs.normative) {
                             ref = refs.find(s => !!spec.refs.normative.find(r =>
-                                (canonicalizeURL(r.url, useEquivalents) === s.url)));
+                                canonicalizesTo(r.url, s.url, useEquivalents)));
                         }
                         return (ref ? null : {
                             name,
@@ -167,14 +180,14 @@ function processReport(results) {
                         // Filter out "good" and "inconsistent" references
                         let canon = canonicalizeURL(l, useEquivalents);
                         let refs = (spec.refs.normative || []).concat(spec.refs.informative || []);
-                        return !refs.find(r => canonicalizeURL(r.url, useEquivalents) === canon);
+                        return !refs.find(r => canonicalizesTo(r.url, canon, useEquivalents));
                     })
                     .filter(l =>
                         // Ignore links to other versions of "self". There may
                         // be cases where it would be worth reporting them but
                         // most of the time they appear in "changelog" sections.
-                        (spec.url !== canonicalizeURL(l, useEquivalents)) &&
-                        !spec.versions.includes(canonicalizeURL(l, useEquivalents))
+                        !canonicalizesTo(l, spec.url, useEquivalents) &&
+                        !canonicalizesTo(l, spec.versions, useEquivalents)
                     ),
 
                 // Links to external specifications within the body of the spec
@@ -190,10 +203,10 @@ function processReport(results) {
                         let refs = (spec.refs.normative || []).concat(spec.refs.informative || []);
 
                         // Filter out "good" references
-                        if (refs.find(r => canonicalizeURL(r.url) === canonSimple)) {
+                        if (refs.find(r => canonicalizesTo(r.url, canonSimple))) {
                             return null;
                         }
-                        let ref = refs.find(r => canonicalizeURL(r.url, useEquivalents) === canon);
+                        let ref = refs.find(r => canonicalizesTo(r.url, canon, useEquivalents));
                         return (ref ? { link: l, ref } : null);
                     })
                     .filter(l => !!l),
@@ -204,12 +217,12 @@ function processReport(results) {
                 referencedBy: {
                     normative: sortedResults.filter(s =>
                         s.refs.normative && s.refs.normative.find(r =>
-                            (spec.url === canonicalizeURL(r.url, useEquivalents)) ||
-                            spec.versions.includes(canonicalizeURL(r.url, useEquivalents)))),
+                            canonicalizesTo(r.url, spec.url, useEquivalents) ||
+                            canonicalizesTo(r.url, spec.versions, useEquivalents))),
                     informative: sortedResults.filter(s =>
                         s.refs.informative && s.refs.informative.find(r =>
-                            (spec.url === canonicalizeURL(r.url, useEquivalents)) ||
-                            spec.versions.includes(canonicalizeURL(r.url, useEquivalents))))
+                            canonicalizesTo(r.url, spec.url, useEquivalents) ||
+                            canonicalizesTo(r.url, spec.versions, useEquivalents)))
                 }
             };
 

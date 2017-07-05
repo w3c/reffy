@@ -8,7 +8,7 @@
  * to canonicalize dated W3C URLs to the Latest version, and to use a list of
  * equivalent URLs (that the crawler typically generates).
  */
-module.exports = (url, options) => {
+module.exports.canonicalizeURL = (url, options) => {
     options = options || {};
 
     let canon = url.replace(/^http:/, 'https:')
@@ -27,6 +27,24 @@ module.exports = (url, options) => {
             'w3.org/TR/$1/');
     }
 
-    let equivalentUrl = (options.equivalents) ? options.equivalents[canon] : null;
-    return (equivalentUrl ? equivalentUrl : canon);
-}
+    let equivalentUrls = (options.equivalents) ? options.equivalents[canon] : null;
+    if (Array.isArray(equivalentUrls)) {
+        return (options.returnAlternatives ? equivalentUrls : equivalentUrls[0]);
+    }
+    else {
+        return (equivalentUrls ? equivalentUrls : canon);
+    }
+};
+
+
+module.exports.canonicalizesTo = (url, refUrl, options) => {
+    let newOptions = {
+        datedToLatest: (options ? options.datedToLatest : false),
+        equivalents: (options ? options.equivalents : null),
+        returnAlternatives: true
+    };
+    let canon = module.exports.canonicalizeURL(url, newOptions);
+    return Array.isArray(refUrl) ?
+        refUrl.some(u => canon.includes(u)) :
+        canon.includes(refUrl);
+};
