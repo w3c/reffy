@@ -142,7 +142,7 @@ function getSpecFromW3CApi(spec) {
             return spec;
         })
         .catch(e => {
-            spec.error = e.toString();
+            spec.error = e.toString() + (e.stack ? ' ' + e.stack : '');
             spec.latest = 'https://www.w3.org/TR/' + shortname;
             return spec;
         })
@@ -224,7 +224,7 @@ function crawlList(speclist, crawlOptions) {
                 return spec;
             })
             .catch(err => {
-                spec.error = err.toString();
+                spec.error = err.toString() + (err.stack ? ' ' + err.stack : '');
                 return spec;
             });
     }

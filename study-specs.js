@@ -505,7 +505,7 @@ function generateReportPerIssue(crawlResults) {
         count = 0;
         parsingErrors.forEach(spec => {
             count += 1;
-            w('- [' + spec.title + '](' + (spec.latest || spec.url) + '): `' + spec.error + '`');
+            w('- [' + spec.title + '](' + (spec.latest || spec.url) + '): `' + spec.report.error + '`');
         });
         w();
         w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
