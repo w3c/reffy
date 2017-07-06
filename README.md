@@ -13,7 +13,7 @@ To launch the crawler and the report study tool, follow these steps:
 2. From the root folder of reffy, install required dependencies: `npm install`
 3. Create a `config.json` file, initialized with `{ "w3cApiKey": [API key] }`
 4. To produce a W3C-centric vision of the Web platform using Editor's Drafts, run `npm run w3c`.
-5. To produce a W3C-centric vision of the Web platform using latest published versions in `/TR/`, run `npm run w3c`.
+5. To produce a W3C-centric vision of the Web platform using latest published versions in `/TR/`, run `npm run w3c-tr`.
 6. To produce a WHATWG-centric vision of the Web platofrm, run `npm run whatwg`.
 
 Under the hoods, these commands run the following steps (and related commands) in turn:
@@ -79,7 +79,7 @@ node parse-webidl.js https://fetch.spec.whatwg.org/
 
 ## Technical notes
 
-**Reffy is at an early stage of development and is not stable**. It may crash from time to time and does not report errors/warnings in any meaningful way for the time being.
+**Reffy is still at an early stage of development**. It may crash from time to time.
 
 Reffy should be able to parse most of the W3C/WHATWG specifications that define WebIDL terms (both published versions and Editor's Drafts). The tool may work with other types of specs, but has not been tested with any of them.
 
@@ -95,12 +95,12 @@ Given the URL of a spec, the crawler basically goes through the following steps:
 
 1. If the URL looks like `http(s)://www.w3.org/TR/[something]`, the crawler extracts the shortname of the specification, and sends a couple of requests to the W3C API to retrieve the URL of the Editor's Draft, or the URL of the latest published version if the URL of the Editor's Draft could not be found. This new URL replaces the given one.
 2. Fetch the URL. Note Reffy uses a network cache on the local filesystem, and sends conditional HTTP requests if the URL is already in that cache
-3. Render the response with jsdom, which should create a `Window` object. Note rendering with jsdom may trigger additional fetches (e.g. to retrieve scripts), which also go through the network cache.
+3. Render the response with jsdom, which should create a `Window` object.
 4. If the document contains a "head" section that includes a link whose label looks like "single page", go back to step 2 and load the target of that link instead. This makes the crawler load the single page version of multi-page specifications such as HTML5.
-5. If needed, wait until the document is properly generated. This is typically needed for specs written with ReSpec that are generated on-the-fly.
+5. If the document uses ReSpec, use Respec HTML writer tool to render the document in a virtual browser environment and access the resulting DOM
 6. Run internal tools on the generated document to build the relevant information.
 
-The crawler processes 10 specifications at a time. It may crash from time to time, e.g. because of network errors. Beware: errors are not properly reported yet.
+The crawler processes 10 specifications at a time. Network and parsing errors should be reported in the crawl results.
 
 ### Config parameters
 
