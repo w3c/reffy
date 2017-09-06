@@ -138,6 +138,14 @@ function processReport(results) {
                     .filter(name => knownIdlNames.indexOf(name) === -1)
                     .sort(),
 
+                // List of IDL interfaces used in the spec that has neither
+                // NoInterfaceObject nor Exposed extended attributes
+                noexposedIdlInterfaces: Object.keys(spec.idl.idlNames || {})
+                    .map(name => spec.idl.idlNames[name])
+                    .filter(idl => idl.type == "interface" && !idl.partial)
+                    .filter(idl => !idl.extAttrs.find(ea => ea.name == "NoInterfaceObject" || ea.name == "Exposed"))
+                ,
+
                 // List of IDL definitions that are already defined in some
                 // other crawled spec
                 // (this should not happen, ideally)
@@ -428,6 +436,11 @@ function generateReportPerSpec(crawlResults) {
                 w('- Unknown WebIDL names used: ' +
                     report.unknownIdlNames.map(name => '`' + name + '`').join(', '));
             }
+            if (report.noexposedIdlInterfaces && report.noexposedIdlInterfaces.length > 0) {
+                w('- WebIDL interfaces without Exposed ext attribute' +
+                  report.noexposedIdlInterfaces.map(idl => idl.name).join(', '));
+            }
+
             if (report.redefinedIdlNames &&
                 (report.redefinedIdlNames.length > 0)) {
                 w('- WebIDL names also defined elsewhere: ');
@@ -646,6 +659,24 @@ function generateReportPerIssue(crawlResults) {
         w('Also, please keep in mind that Reffy only knows about IDL terms defined in the' +
             ' specifications that were crawled **and** that do not have invalid IDL content.');
     }
+    w();
+    w();
+
+
+    count = 0;
+    w('## Specifications that defined WebIDL interfaces that are neither Exposed nor NoInterfaceObject');
+    w();
+    var idlNames = {};
+    results.forEach(spec => {
+        if (!spec.report.noexposedIdlInterfaces ||
+            (spec.report.noexposedIdlInterfaces.length === 0)) {
+            return;
+        }
+        count += 1;
+        w('- [' + spec.title + '](' + (spec.latest || spec.url) + '): ' +
+          spec.report.noexposedIdlInterfaces.map(idl => idl.name).join(', '))
+    });
+    w('=> ' + count + ' spec' + ((count > 1) ? 's' : '') + ' found');
     w();
     w();
 
