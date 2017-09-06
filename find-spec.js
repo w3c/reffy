@@ -1,7 +1,7 @@
 const blacklist = require("./blacklist.json");
 const {JSDOM} = require("jsdom");
 
-const canonicalize = require('./canonicalize-url');
+const canonicalize = require('./canonicalize-url').canonicalizeURL;
 
 /**
  * Retrieve the document at the specified location and extract links that
@@ -13,7 +13,7 @@ const canonicalize = require('./canonicalize-url');
 const extractLinks = (url, selector) =>
     JSDOM.fromURL(url).then(dom =>
         [...dom.window.document.querySelectorAll(selector)]
-            .map(a => canonicalize(a.href)));
+            .map(a => canonicalize(a.href, {datedToLatest: true})));
 
 
 /**
@@ -66,7 +66,7 @@ if (require.main === module) {
     else {
         console.warn("No report given, proceeding with blacklist only");
     }
-    let specsInReport = report
+    let specsInReport = report.results
         .map(s => s.versions.map(v => canonicalize(v)))
         .reduce((a, b) => a.concat(b), []); // flatten
 
