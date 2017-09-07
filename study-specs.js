@@ -888,10 +888,6 @@ function generateDiffReport(crawlResults, crawlRef, options) {
                 ins: (typeof spec.title !== 'undefined') ? spec.title : null,
                 del: (typeof ref.title !== 'undefined') ? ref.title : null
             } : null,
-            latest: (spec.latest !== ref.latest) ? {
-                ins: (typeof spec.latest !== 'undefined') ? spec.latest : null,
-                del: (typeof ref.latest !== 'undefined') ? ref.latest : null,
-            } : null,
             ok: getSimpleDiff('ok'),
             error: getSimpleDiff('error'),
             noNormativeRefs: getSimpleDiff('noNormativeRefs'),
@@ -984,7 +980,6 @@ function generateDiffReport(crawlResults, crawlRef, options) {
 
         [
             { title: 'Spec title', prop: 'title', diff: 'simple' },
-            { title: 'Latest URL', prop: 'latest', diff: 'simple' },
             { title: 'Spec is OK', prop: 'ok', diff: 'simple' },
             { title: 'Spec could not be rendered', prop: 'error', diff: 'simple' },
             { title: 'No normative references found', prop: 'noNormativeRefs', diff: 'simple' },
