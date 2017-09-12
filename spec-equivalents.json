@@ -130,8 +130,9 @@
     "https://www.w3.org/TR/css-syntax-3/": [
         "https://www.w3.org/TR/css-syntax/"
     ],
-    "https://www.w3.org/TR/css-fonts-3/": [
-        "https://www.w3.org/TR/css3-fonts/"
+    "https://www.w3.org/TR/css-fonts-4/": [
+        "https://www.w3.org/TR/css3-fonts/",
+        "https://www.w3.org/TR/css-fonts-3/"
     ],
     "https://www.w3.org/TR/css3-selectors/": [
         "https://www.w3.org/TR/selectors/"
