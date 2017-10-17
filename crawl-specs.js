@@ -86,13 +86,17 @@ function getShortname(url) {
 
 
 /**
- * Enrich the spec description with the URL of the editor's draft,
- * and with the title of the specification, provided that the specification
- * is a W3C spec.
+ * Enrich the spec description based on information returned by the W3C API.
+ *
+ * Information typically includes the title of the spec, the link to the
+ * Editor's Draft, to the latest published version, and the history of
+ * published versions.
+ *
+ * For non W3C spec, the function basically returns the same object.
  *
  * @function
  * @param {Object} spec Spec description structure (only the URL is useful)
- * @return {Objec} The same structure, enriched with the URL of the editor's
+ * @return {Promise<Object>} The same structure, enriched with the URL of the editor's
  *   draft when one is found
  */
 function getSpecFromW3CApi(spec) {
@@ -156,6 +160,36 @@ function getSpecFromW3CApi(spec) {
 
 
 /**
+ * Retrieve the repository for each spec from Specref
+ *
+ * @function
+ * @param {Array} specs The list of specs to enrich
+ * @return {Promise<Array>} The same structure, enriched with the URL of the
+ *   repository when known.
+ */
+function getSpecsFromSpecref(specs) {
+    return fetch('https://api.specref.org/reverse-lookup?urls=' +
+            specs.map(s => s.latest || s.url).join(','))
+        .then(r =>  r.json())
+        .then(res => {
+            specs.forEach(spec => {
+                let url = spec.latest || spec.url;
+                if (res[url]) {
+                    if (res[url].repository) {
+                        spec.repository = res[url].repository;
+                    }
+                }
+            });
+            return specs;
+        })
+        .catch(err => {
+            console.warn('Specref returned an error', url, err);
+            return specs;
+        });
+}
+
+
+/**
  * Given a list of URLs, create a list of specification descriptions
  *
  * The description will include the URL of the spec, its shortname if possible,
@@ -167,7 +201,8 @@ function getSpecFromW3CApi(spec) {
  *  descriptions.
  */
 function createInitialSpecDescriptions(list) {
-    return Promise.all(list.map(getShortname).map(getSpecFromW3CApi));
+    return Promise.all(list.map(getShortname).map(getSpecFromW3CApi))
+        .then(getSpecsFromSpecref);
 }
 
 

@@ -248,6 +248,7 @@ function processReport(results) {
                 datedStatus: spec.datedStatus,
                 edDraft: spec.edDraft,
                 crawled: spec.crawled,
+                repository: spec.repository,
                 report
             };
             return res;
@@ -314,6 +315,14 @@ function writeCrawlInfo(spec, withHeader) {
     }
     if (spec.datedUrl && spec.datedStatus) {
         w('- Latest published status: [' + spec.datedStatus + '](' + spec.datedUrl + ')');
+    }
+    if (spec.repository) {
+        let githubcom = spec.repository.match(/^https:\/\/github.com\/([^\/]*)\/([^\/]*)/);
+        let repositoryName = spec.repository;
+        if (githubcom) {
+            repositoryName = 'GitHub ' + githubcom[1] + '/' + githubcom[2];
+        }
+        w('- Repository: [' + repositoryName + '](' + spec.repository + ')');
     }
     w('- Shortname: ' + (spec.shortname || 'no shortname'));
 }
@@ -932,6 +941,7 @@ function generateDiffReport(crawlResults, crawlRef, options) {
             datedStatus: spec.datedStatus,
             edDraft: spec.edDraft,
             crawled: spec.crawled,
+            repository: spec.repository,
             isNewSpec: ref.missing,
             hasDiff: Object.keys(diff).some(key => diff[key] !== null),
             diff
@@ -953,6 +963,7 @@ function generateDiffReport(crawlResults, crawlRef, options) {
                     datedStatus: spec.datedStatus,
                     edDraft: spec.edDraft,
                     crawled: spec.crawled,
+                    repository: spec.repository,
                     isUnknownSpec: true,
                     hasDiff: true
                 };
@@ -992,6 +1003,14 @@ function generateDiffReport(crawlResults, crawlRef, options) {
         w('- Crawled version: [' + crawledVersion + '](' + spec.crawled + ')');
         if (spec.edDraft && (spec.edDraft !== spec.crawled)) {
             w('- Editor\'s Draft: [' + spec.edDraft + '](' + spec.edDraft + ')');
+        }
+        if (spec.repository) {
+            let githubcom = spec.repository.match(/^https:\/\/github.com\/([^\/]*)\/([^\/]*)/);
+            let repositoryName = spec.repository;
+            if (githubcom) {
+                repositoryName = 'GitHub ' + githubcom[1] + '/' + githubcom[2];
+            }
+            w('- Repository: [' + repositoryName + '](' + spec.repository + ')');
         }
 
         if (spec.isNewSpec) {
