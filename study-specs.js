@@ -244,6 +244,9 @@ function processReport(results) {
                 date: spec.date,
                 url: spec.url,
                 latest: spec.latest,
+                datedUrl: spec.datedUrl,
+                datedStatus: spec.datedStatus,
+                edDraft: spec.edDraft,
                 crawled: spec.crawled,
                 report
             };
@@ -284,18 +287,35 @@ function writeCrawlInfo(spec, withHeader) {
     const w = console.log.bind(console);
 
     if (withHeader) {
-        w('### Crawl info {.info}');
+        w('### Spec info {.info}');
     }
     else  {
-        w('Crawl info:');
+        w('Spec info:');
     }
     w();
-    w('- URL: [' + (spec.crawled ?
-        ((spec.crawled.indexOf('www.w3.org/TR/') !== -1) ? 'Latest published version' : 'Editor\'s Draft') :
-        ((spec.url.indexOf('spec.whatwg.org') !== -1) ? 'Living Standard' : 'Initial URL'))
-        + '](' + (spec.crawled || spec.url) + ')');
+
+    let crawledVersion = 'Initial URL';
+    if ((spec.crawled === spec.datedUrl) || (spec.crawled === spec.latest)) {
+        crawledVersion = 'Latest published version';
+    }
+    else if (spec.crawled === spec.edDraft) {
+        crawledVersion = 'Editor\'s Draft';
+    }
+    else if (spec.crawled.indexOf('spec.whatwg.org') !== -1) {
+        crawledVersion = 'Living Standard';
+    }
+    w('- Crawled version: [' + crawledVersion + '](' + spec.crawled + ')' +
+        (spec.date ? ' (' + spec.date + ')' : ''));
+    if (spec.edDraft) {
+        w('- Editor\'s Draft: [' + spec.edDraft + '](' + spec.edDraft + ')');
+    }
+    if (spec.latest) {
+        w('- Latest published version: [' + spec.latest + '](' + spec.latest + ')');
+    }
+    if (spec.datedUrl && spec.datedStatus) {
+        w('- Latest published status: [' + spec.datedStatus + '](' + spec.datedUrl + ')');
+    }
     w('- Shortname: ' + (spec.shortname || 'no shortname'));
-    w('- Date: ' + (spec.date || 'unknown'));
 }
 
 
@@ -311,7 +331,7 @@ function writeDependenciesInfo(spec, results, withHeader) {
         w('Normative references to this spec from:');
         w();
         spec.report.referencedBy.normative.forEach(s => {
-            w('- [' + s.title + '](' + (s.latest || s.url) + ')');
+            w('- [' + s.title + '](' + s.crawled + ')');
         });
     }
     else {
@@ -330,7 +350,7 @@ function writeDependenciesInfo(spec, results, withHeader) {
             ' reference this spec because they use IDL terms it defines:');
         w();
         shouldBeReferencedBy.forEach(s => {
-            w('- [' + s.title + '](' + (s.latest || s.url) + ')');
+            w('- [' + s.title + '](' + s.crawled + ')');
         });
         w();
     }
@@ -339,7 +359,7 @@ function writeDependenciesInfo(spec, results, withHeader) {
         w('Informative references to this spec from:');
         w();
         spec.report.referencedBy.informative.forEach(s => {
-            w('- [' + s.title + '](' + (s.latest || s.url) + ')');
+            w('- [' + s.title + '](' + s.crawled + ')');
         });
     }
     else {
@@ -433,7 +453,7 @@ function generateReportPerSpec(crawlResults) {
                 w('- WebIDL names also defined elsewhere: ');
                 report.redefinedIdlNames.map(i => {
                     w('    * `' + i.name + '` also defined in ' +
-                        i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' and '));
+                        i.refs.map(ref => ('[' + ref.title + '](' + ref.crawled + ')')).join(' and '));
                 });
             }
             if (report.missingWebIdlRef &&
@@ -441,7 +461,7 @@ function generateReportPerSpec(crawlResults) {
                 w('- Missing references for WebIDL names: ');
                 report.missingWebIdlRef.map(i => {
                     w('     * `' + i.name + '` defined in ' +
-                        i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' or '));
+                        i.refs.map(ref => ('[' + ref.title + '](' + ref.crawled + ')')).join(' or '));
                 });
             }
             if (report.missingLinkRef &&
@@ -505,7 +525,7 @@ function generateReportPerIssue(crawlResults) {
         count = 0;
         parsingErrors.forEach(spec => {
             count += 1;
-            w('- [' + spec.title + '](' + (spec.latest || spec.url) + '): `' + spec.report.error + '`');
+            w('- [' + spec.title + '](' + spec.crawled + '): `' + spec.report.error + '`');
         });
         w();
         w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
@@ -523,7 +543,7 @@ function generateReportPerIssue(crawlResults) {
         .filter(spec => spec.report.noNormativeRefs)
         .forEach(spec => {
             count += 1;
-            w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')');
+            w('- [' + spec.title + '](' + spec.crawled + ')');
         });
     w();
     w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
@@ -543,7 +563,7 @@ function generateReportPerIssue(crawlResults) {
         .filter(spec => spec.report.noIdlContent)
         .forEach(spec => {
             count += 1;
-            w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')');
+            w('- [' + spec.title + '](' + spec.crawled + ')');
         });
     w();
     w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
@@ -564,7 +584,7 @@ function generateReportPerIssue(crawlResults) {
         .filter(spec => spec.report.hasInvalidIdl)
         .forEach(spec => {
             count += 1;
-            w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')');
+            w('- [' + spec.title + '](' + spec.crawled + ')');
         });
     w();
     w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
@@ -584,7 +604,7 @@ function generateReportPerIssue(crawlResults) {
         .filter(spec => spec.report.hasObsoleteIdl)
         .forEach(spec => {
             count += 1;
-            w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')');
+            w('- [' + spec.title + '](' + spec.crawled + ')');
         });
     w();
     w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
@@ -601,7 +621,7 @@ function generateReportPerIssue(crawlResults) {
     results.forEach(spec => {
         if (!spec.report.noIdlContent && spec.report.noRefToWebIDL) {
             count += 1;
-            w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')');
+            w('- [' + spec.title + '](' + spec.crawled + ')');
         }
     });
     w();
@@ -636,7 +656,7 @@ function generateReportPerIssue(crawlResults) {
     Object.keys(idlNames).sort().forEach(name => {
         count += 1;
         w('- `' + name + '` used in ' +
-            idlNames[name].map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(', '));
+            idlNames[name].map(ref => ('[' + ref.title + '](' + ref.crawled + ')')).join(', '));
     });
     w();
     w('=> ' + count + ' WebIDL name' + ((count > 1) ? 's' : '') + ' found');
@@ -668,7 +688,7 @@ function generateReportPerIssue(crawlResults) {
     Object.keys(idlNames).sort().forEach(name => {
         count += 1;
         w('- `' + name + '` defined in ' +
-            idlNames[name].map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' and '));
+            idlNames[name].map(ref => ('[' + ref.title + '](' + ref.crawled + ')')).join(' and '));
     });
     w();
     w('=> ' + count + ' WebIDL name' + ((count > 1) ? 's' : '') + ' found');
@@ -690,16 +710,16 @@ function generateReportPerIssue(crawlResults) {
             if (spec.report.missingWebIdlRef.length === 1) {
                 countrefs += 1;
                 let i = spec.report.missingWebIdlRef[0];
-                w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')' +
+                w('- [' + spec.title + '](' + spec.crawled + ')' +
                     ' uses `' + i.name + '` but does not reference ' +
-                    i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' or '));
+                    i.refs.map(ref => ('[' + ref.title + '](' + ref.crawled + ')')).join(' or '));
             }
             else {
-                w('- [' + spec.title + '](' + (spec.latest || spec.url) + ') uses:');
+                w('- [' + spec.title + '](' + spec.crawled + ') uses:');
                 spec.report.missingWebIdlRef.map(i => {
                     countrefs += 1;
                     w('    * `' + i.name + '` but does not reference ' +
-                        i.refs.map(ref => ('[' + ref.title + '](' + (ref.latest || ref.url) + ')')).join(' or '));
+                        i.refs.map(ref => ('[' + ref.title + '](' + ref.crawled + ')')).join(' or '));
                 });
             }
         }
@@ -722,12 +742,12 @@ function generateReportPerIssue(crawlResults) {
             if (spec.report.missingLinkRef.length === 1) {
                 countrefs += 1;
                 let l = spec.report.missingLinkRef[0];
-                w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')' +
+                w('- [' + spec.title + '](' + spec.crawled + ')' +
                   ' links to [`' + l + '`](' + l + ') but does not list it' +
                   ' in its references');
             }
             else {
-                w('- [' + spec.title + '](' + (spec.latest || spec.url) + ') links to:');
+                w('- [' + spec.title + '](' + spec.crawled + ') links to:');
                 spec.report.missingLinkRef.forEach(l => {
                     countrefs++;
                     w('    * [`' + l + '`](' + l + ') but does not list it ' +
@@ -763,11 +783,11 @@ function generateReportPerIssue(crawlResults) {
             if (spec.report.inconsistentRef.length === 1) {
                 countrefs += 1;
                 let l = spec.report.inconsistentRef[0];
-                w('- [' + spec.title + '](' + (spec.latest || spec.url) + ')' +
+                w('- [' + spec.title + '](' + spec.crawled + ')' +
                   ' links to [`' + l.link + '`](' + l.link + ') but related reference "' + l.ref.name + '" uses URL [`' + l.ref.url + '`](' + l.ref.url + ')');
             }
             else {
-                w('- [' + spec.title + '](' + (spec.latest || spec.url) + ') links to:');
+                w('- [' + spec.title + '](' + spec.crawled + ') links to:');
                 spec.report.inconsistentRef.forEach(l => {
                     countrefs++;
                     w('    * [`' + l.link + '`](' + l.link + ') but related reference "' + l.ref.name + '" uses URL [`' + l.ref.url + '`](' + l.ref.url + ')');
@@ -908,6 +928,9 @@ function generateDiffReport(crawlResults, crawlRef, options) {
             date: spec.date,
             url: spec.url,
             latest: spec.latest,
+            datedUrl: spec.datedUrl,
+            datedStatus: spec.datedStatus,
+            edDraft: spec.edDraft,
             crawled: spec.crawled,
             isNewSpec: ref.missing,
             hasDiff: Object.keys(diff).some(key => diff[key] !== null),
@@ -926,6 +949,9 @@ function generateDiffReport(crawlResults, crawlRef, options) {
                     date: spec.date,
                     url: spec.url,
                     latest: spec.latest,
+                    datedUrl: spec.datedUrl,
+                    datedStatus: spec.datedStatus,
+                    edDraft: spec.edDraft,
                     crawled: spec.crawled,
                     isUnknownSpec: true,
                     hasDiff: true
@@ -953,6 +979,20 @@ function generateDiffReport(crawlResults, crawlRef, options) {
         w('## ' + spec.title);
         w();
         w('- URL: [' + spec.url + '](' + spec.url + ')');
+        let crawledVersion = 'Initial URL';
+        if ((spec.crawled === spec.datedUrl) || (spec.crawled === spec.latest)) {
+            crawledVersion = 'Latest published version';
+        }
+        else if (spec.crawled === spec.edDraft) {
+            crawledVersion = 'Editor\'s Draft';
+        }
+        else if (spec.crawled.indexOf('spec.whatwg.org') !== -1) {
+            crawledVersion = 'Living Standard';
+        }
+        w('- Crawled version: [' + crawledVersion + '](' + spec.crawled + ')');
+        if (spec.edDraft && (spec.edDraft !== spec.crawled)) {
+            w('- Editor\'s Draft: [' + spec.edDraft + '](' + spec.edDraft + ')');
+        }
 
         if (spec.isNewSpec) {
             w('- This specification was not in the reference crawl report.');

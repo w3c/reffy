@@ -80,20 +80,19 @@ function getShortname(url) {
         res.shortname = statusShortname.split('-').slice(1, -1).join('-');
         return res;
     }
-    // latest version
     res.shortname = url.split('/')[4];
     return res;
 }
 
 
 /**
- * Enrich the spec description with the URL of the latest editor's draft,
+ * Enrich the spec description with the URL of the editor's draft,
  * and with the title of the specification, provided that the specification
  * is a W3C spec.
  *
  * @function
  * @param {Object} spec Spec description structure (only the URL is useful)
- * @return {Objec} The same structure, enriched with the URL of the latest
+ * @return {Objec} The same structure, enriched with the URL of the editor's
  *   draft when one is found
  */
 function getSpecFromW3CApi(spec) {
@@ -111,8 +110,11 @@ function getSpecFromW3CApi(spec) {
     spec.versions = new Set();
     function addKnownVersions() {
         spec.versions.add(spec.url);
-        if (spec.latest) {
+        if (spec.latest && (spec.latest !== spec.url)) {
             spec.versions.add(spec.latest);
+        }
+        if (spec.edDraft && (spec.edDraft !== spec.url)) {
+            spec.versions.add(spec.edDraft);
         }
         if (specEquivalents[spec.url]) spec.versions = new Set([...spec.versions, ...specEquivalents[spec.url]]);
     }
@@ -122,22 +124,21 @@ function getSpecFromW3CApi(spec) {
         spec.versions = [...spec.versions];
         return spec;
     }
-    var bogusEditorDraft = ['webmessaging', 'eventsource', 'webstorage', 'progress-events', 'uievents'];
-    var unparseableEditorDraft = [];
-    if (bogusEditorDraft.includes(shortname)
-        || unparseableEditorDraft.includes(shortname)) {
-        spec.latest = 'https://www.w3.org/TR/' + shortname;
-    }
     return fetch('https://api.w3.org/specifications/' + shortname, options)
         .then(r =>  r.json())
         .then(s => fetch(s._links['version-history'].href + '?embed=1', options))
         .then(r => r.json())
         .then(s => {
             const versions = s._embedded['version-history'].map(prop("uri")).map(canonicalizeURL);
-            const editors = s._embedded['version-history'].map(prop("editors-draft")).filter(u => !!u).map(canonicalizeURL);
-            const latest = s._embedded['version-history'][0];
-            spec.title = latest.title;
-            if (!spec.latest) spec.latest = (latest['editor-draft'] ? latest['editor-draft'] : latest.uri);
+            const editors = s._embedded['version-history'].map(prop("editor-draft")).filter(u => !!u).map(canonicalizeURL);
+            const latestVersion = s._embedded['version-history'][0];
+            spec.title = latestVersion.title;
+            if (!spec.latest) spec.latest = latestVersion.shortlink;
+            if (latestVersion.uri) {
+                spec.datedUrl = latestVersion.uri;
+                spec.datedStatus = latestVersion.status;
+            }
+            if (latestVersion['editor-draft']) spec.edDraft = latestVersion['editor-draft'];
             spec.versions = new Set([...spec.versions, ...versions, ...editors]);
             return spec;
         })
@@ -184,7 +185,14 @@ function crawlList(speclist, crawlOptions) {
 
     function getRefAndIdl(spec) {
         spec.title = spec.title || (spec.shortname ? spec.shortname : spec.url);
-        spec.crawled = (spec.latest && !crawlOptions.publishedVersion) ? spec.latest : spec.url;
+        var bogusEditorDraft = ['webmessaging', 'eventsource', 'webstorage', 'progress-events', 'uievents'];
+        var unparseableEditorDraft = [];
+        spec.crawled = ((
+                crawlOptions.publishedVersion ||
+                bogusEditorDraft.includes(spec.shortname) ||
+                unparseableEditorDraft.includes(spec.shortname)) ?
+            spec.datedUrl || spec.latest || spec.url :
+            spec.edDraft || spec.url);
         spec.date = "";
         spec.links = [];
         spec.refs = {};
