@@ -49,7 +49,20 @@ function parse(idl) {
     return new Promise(function (resolve, reject) {
         var idlTree;
         var jsNames = {constructors: {}, functions: {}, objects:{}};
-        var idlNames = {_dependencies: {}};
+        var idlNames = {
+            // List of dependencies per interface
+            _dependencies: {},
+
+            // Flag set when the IDL really depends on "Window", meaning when
+            // "Window" appears as a dependency elsewhere than in
+            // "Exposed=Window" statements.
+            // (This is being tracked because "Window" is considered to be an
+            // exception to the rule: in theory, "Exposed=Window" triggers the
+            // need to add a normative reference to HTML, but that is overkill
+            // in practice so Reffy will only warn about the missing reference
+            // when "Window" appears as a dependency in other statements)
+            _reallyDependsOnWindow: false
+        };
         var idlExtendedNames = {};
         var externalDependencies = [];
         try {
@@ -96,7 +109,7 @@ function parse(idl) {
  * @return A function that can be applied to all nodes of an IDL AST tree and
  *   that fills up the above sets.
  */
-function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, externalDependencies, contextName) {
+function parseIdlAstTree(jsNames, idlNames, idlExtendedNames, externalDependencies, contextName) {
     return function (def) {
         switch(def.type) {
         case "namespace":
@@ -120,6 +133,9 @@ function parseIdlAstTree(jsNames, idlNames,idlExtendedNames, externalDependencie
         case "implements":
             parseType(def.target, idlNames, externalDependencies);
             parseType(def.implements, idlNames, externalDependencies);
+            if (def.implements === 'window') {
+                idlNames._reallyDependsOnWindow = true;
+            }
             if (!idlNames._dependencies[def.target]) {
                 idlNames._dependencies[def.target] = [];
             }
@@ -173,9 +189,15 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, ex
             idlExtendedNames[def.name] = [];
         }
         idlExtendedNames[def.name].push(def);
+        if (def.name === 'window') {
+            idlNames._reallyDependsOnWindow = true;
+        }
         addDependency(def.name, idlNames, externalDependencies);
     } else {
         if (def.inheritance) {
+            if (def.implements === 'window') {
+                idlNames._reallyDependsOnWindow = true;
+            }
             addDependency(def.inheritance, idlNames, externalDependencies);
             addDependency(def.inheritance, {}, idlNames._dependencies[def.name]);
         }
@@ -205,7 +227,7 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, ex
                         contexts = ea.rhs.value;
                     }
                 }
-                contexts.forEach(c=> {
+                contexts.forEach(c => {
                     addDependency(c, idlNames, externalDependencies);
                     addDependency(c, {}, idlNames._dependencies[def.name], def.name);
                 });
@@ -293,6 +315,9 @@ function parseType(idltype, idlNames, externalDependencies, contextName) {
                           "RegExp", "Error", "DOMException", "ArrayBuffer", "DataView", "Int8Array", "Int16Array", "Int32Array", "Uint8Array", "Uint16Array", "Uint32Array", "Uint8ClampedArray", "Float32Array", "Float64Array",
                           "ArrayBufferView", "BufferSource", "DOMTimeStamp", "Function", "VoidFunction"];
     if (wellKnownTypes.indexOf(idltype.idlType) === -1) {
+        if (idltype.idlType === 'window') {
+            idlNames._reallyDependsOnWindow = true;
+        }
         addDependency(idltype.idlType, idlNames, externalDependencies);
         if (contextName) {
             addDependency(idltype.idlType, {}, idlNames._dependencies[contextName]);
@@ -321,6 +346,7 @@ function isString(obj) {
  * @function
  * @private
  * @param {String} name The IDL name to consider as a potential external dependency
+ * @param {Array(String)} idlNames The set of IDL names set by the IDL content
  * @param {Array(String)} externalDependencies The set of external dependencies
  * @return {void} The function updates externalDependencies as needed
  */
