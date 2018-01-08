@@ -46,7 +46,7 @@ const dateOptions = {
  */
 function processReport(results) {
     var knownIdlNames = results
-        .map(r => r.idl && r.idl.idlNames ? Object.keys(r.idl.idlNames).filter(n => n !== "_dependencies") : [], [])
+        .map(r => r.idl && r.idl.idlNames ? Object.keys(r.idl.idlNames).filter(n => (n !== '_dependencies') && (n !== '_reallyDependsOnWindow')) : [], [])
         .reduce(array_concat);
     var idlNamesIndex = {};
     knownIdlNames.forEach(name => {
@@ -90,9 +90,11 @@ function processReport(results) {
     return sortedResults
         .map(spec => {
             var idlDfns = (spec.idl && spec.idl.idlNames) ?
-                Object.keys(spec.idl.idlNames).filter(name => (name !== '_dependencies')) : [];
+                Object.keys(spec.idl.idlNames).filter(name => (name !== '_dependencies') && (name !== '_reallyDependsOnWindow')) : [];
             var idlDeps = (spec.idl && spec.idl.externalDependencies) ?
                 spec.idl.externalDependencies : [];
+            var reallyDependsOnWindow = (spec.idl && spec.idl.idlNames) ?
+                spec.idl.idlNames._reallyDependsOnWindow : false;
 
             var report = {
                 // An error at this level means the spec could not be parsed at all
@@ -151,12 +153,16 @@ function processReport(results) {
                     }),
 
                 // List of IDL names used in the spec that are defined in some
-                // other spec which does not seem to appear in the list of
+                // other spec, and which do not seem to appear in the list of
                 // normative references
                 // (There should always be an entry in the normative list of
                 // references that links to that other spec)
+                // NB: "Exposed=Window", which would in theory trigger the need
+                // to add a normative reference to HTML, is considered to be
+                // an exception to the rule, and ignored.
                 missingWebIdlRef: idlDeps
                     .filter(name => knownIdlNames.indexOf(name) !== -1)
+                    .filter(name => reallyDependsOnWindow || (name !== 'Window'))
                     .map(name => {
                         var refs = idlNamesIndex[name];
                         var ref = null;
