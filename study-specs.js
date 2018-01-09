@@ -89,11 +89,14 @@ function processReport(results) {
 
     return sortedResults
         .map(spec => {
-            var idlDfns = (spec.idl && spec.idl.idlNames) ?
+            spec.idl = spec.idl || {};
+            var idlDfns = spec.idl.idlNames ?
                 Object.keys(spec.idl.idlNames).filter(name => (name !== '_dependencies') && (name !== '_reallyDependsOnWindow')) : [];
-            var idlDeps = (spec.idl && spec.idl.externalDependencies) ?
+            var idlExtendedDfns = spec.idl.idlExtendedNames ?
+                Object.keys(spec.idl.idlExtendedNames) : [];
+            var idlDeps = spec.idl.externalDependencies ?
                 spec.idl.externalDependencies : [];
-            var reallyDependsOnWindow = (spec.idl && spec.idl.idlNames) ?
+            var reallyDependsOnWindow = spec.idl.idlNames ?
                 spec.idl.idlNames._reallyDependsOnWindow : false;
 
             var report = {
@@ -117,9 +120,7 @@ function processReport(results) {
                 // (most specs crawled here should)
                 noIdlContent: (Object.keys(spec.idl).length === 0) ||
                     (!spec.idl.idlNames && !spec.idl.message) ||
-                    (spec.idl.idlNames &&
-                        (Object.keys(spec.idl.idlNames).length === 1) &&
-                        (Object.keys(spec.idl.idlExtendedNames).length === 0)),
+                    ((idlDfns.length === 0) && (idlExtendedDfns.length === 0)),
 
                 // Whether the spec has invalid IDL content
                 // (the crawler cannot do much when IDL content is invalid, it
