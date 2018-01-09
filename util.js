@@ -219,10 +219,20 @@ function fetch(url, options) {
  * @function
  * @public
  * @param {String} url The URL of the specification to load
+ * @param {Number} counter Optional loop counter parameter to detect infinite
+ *   loop. The parameter is mostly meant to be an internal parameter, set and
+ *   incremented between calls when dealing with redirections. There should be
+ *   no need to set that parameter when calling that function externally.
  * @return {Promise} The promise to get a window object once the spec has
  *   been loaded with jsdom.
  */
-function loadSpecification(url) {
+function loadSpecification(url, counter) {
+    counter = counter || 0;
+    if (counter >= 5) {
+        return new Promise((resolve, reject) => {
+            reject(new Error('Infinite loop detected'));
+        });
+    }
     return fetch(url).then(response => new Promise((resolve, reject) => {
         response.text().then(html => {
             // Drop Byte-Order-Mark character if needed, it bugs JSDOM
@@ -231,6 +241,23 @@ function loadSpecification(url) {
             }
             const {window} = new JSDOM(html, {url: response.url});
             const doc = window.document;
+
+            // Handle <meta http-equiv="refresh"> redirection
+            // Note that we'll assume that the number in "content" is correct
+            let metaRefresh = doc.querySelector('meta[http-equiv="refresh"]');
+            if (metaRefresh) {
+                let redirectUrl = (metaRefresh.getAttribute('content') || '').split(';')[1];
+                if (redirectUrl) {
+                    redirectUrl = URL.resolve(doc.baseURI, redirectUrl.trim());
+                    if (redirectUrl !== url) {
+                        loadSpecification(redirectUrl, counter + 1)
+                            .then(window => resolve(window))
+                            .catch(err => reject(err));
+                        return;
+                    }
+                }
+            }
+
             // ReSpec doc
             if (doc.querySelector("script[src*='respec']")) {
                 // this does another network fetch :(
