@@ -96,6 +96,10 @@ function fetch(url, options) {
         }
     }
 
+    function addPendingFetch(url, promise) {
+        pendingFetches[url] = promise;
+    }
+
     function readHeadersFromCache() {
         return new Promise((resolve, reject) => {
             fs.readFile(cacheHeadersFilename, 'utf8', function (err, data) {
@@ -192,23 +196,44 @@ function fetch(url, options) {
         else {
             if (!options.nolog) console.log('Fetch: ' + url);
         }
-        return baseFetch(url, options)
+
+        // To overcome transient network errors, we'll fetch the same URL again
+        // a few times before we surrender when a network error occurs, letting
+        // a few seconds elapse between attempts
+        function fetchWithRetry(url, options, remainingAttempts) {
+            return (remainingAttempts <= 0) ?
+                baseFetch(url, options) :
+                baseFetch(url, options).catch(err => {
+                    if (!options.nolog) console.warn('Fetch attempt failed: ' + url);
+                    return new Promise((resolve, reject) => {
+                        setTimeout(function () {
+                            fetchWithRetry(url, options, remainingAttempts - 1)
+                                .then(resolve)
+                                .catch(reject);
+                        }, 2000 + Math.floor(Math.random() * 8000));
+                    });
+                });
+        }
+
+        return fetchWithRetry(url, options, 3)
             .then(saveToCacheIfNeeded)
             .then(readFromCache);
     }
 
     return checkCacheFolder()
         .then(checkPendingFetch)
-        .then(() => {
-            pendingFetches[url] = readHeadersFromCache()
-                .then(conditionalFetch)
-                .then(response => {
-                    delete pendingFetches[url];
-                    fetchedUrls[url] = true;
-                    return response;
-                });
-
-            return pendingFetches[url];
+        .then(pendingFetch => {
+            if (!pendingFetch) {
+                pendingFetch = readHeadersFromCache()
+                    .then(conditionalFetch)
+                    .then(response => {
+                        delete pendingFetches[url];
+                        fetchedUrls[url] = true;
+                        return response;
+                    });
+                addPendingFetch(url, pendingFetch);
+            }
+            return pendingFetch;
         });
 }
 
