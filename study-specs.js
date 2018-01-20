@@ -120,7 +120,7 @@ function processReport(results) {
                 // (most specs crawled here should)
                 noIdlContent: (Object.keys(spec.idl).length === 0) ||
                     (!spec.idl.idlNames && !spec.idl.message) ||
-                    ((idlDfns.length === 0) && (idlExtendedDfns.length === 0)),
+                    ((idlDfns.length === 0) && (idlExtendedDfns.length === 0) && !spec.idl.message),
 
                 // Whether the spec has invalid IDL content
                 // (the crawler cannot do much when IDL content is invalid, it
