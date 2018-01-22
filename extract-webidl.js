@@ -80,10 +80,16 @@ function extractBikeshedIdl(doc) {
  */
 function extractRespecIdl(doc) {
     return new Promise(resolve => {
-        var idl = "";
-        ["pre.idl", "pre > code.idl-code", "div.idl-code > pre", "pre.widl"]
-            .find(sel => !!(idl += [...doc.querySelectorAll(sel)].map(n => "\n" + n.textContent).join('')));
-        resolve(idl);
+        let idlEl = doc.querySelector('#idl-index pre');
+        if (idlEl) {
+            resolve(idlEl.textContent);
+        }
+        else {
+            let idl = '';
+            ['pre.idl', 'pre > code.idl-code', 'div.idl-code > pre', 'pre.widl']
+                .find(sel => !!(idl += [...doc.querySelectorAll(sel)].map(n => '\n' + n.textContent).join('')));
+            resolve(idl);
+        }
     });
 }
 
