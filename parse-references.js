@@ -1,3 +1,22 @@
+/**
+ * The references parser takes the URL of a spec as input, loads that spec and
+ * extracts the list of normative/informative references that it contains. The
+ * parser uses some hardcoded logic to detect the "References" section in specs
+ * that depend on the spec generator that may be used by the spec (ReSpec,
+ * Bikeshed, Anolis, or nothing).
+ *
+ * The references parser is used by the [crawler]{@link module:crawler} to
+ * populate the references sections of the crawl report.
+ *
+ * The references parser can be called directly through:
+ *
+ * `node parse-references.js [url]`
+ *
+ * where `url` is the URL of the spec to parse for references.
+ *
+ * @module referencesParser
+ */
+
 var urlOrDom = require('./util').urlOrDom;
 var getDocumentAndGenerator = require('./util').getDocumentAndGenerator;
 

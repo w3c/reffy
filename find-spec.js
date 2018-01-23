@@ -1,3 +1,17 @@
+/**
+ * The spec finder takes a crawl report as input and checks a couple of sites
+ * that list Web specifications to detect new specifications that are not yet
+ * part of the crawl and that could perhaps be added.
+ *
+ * The spec finder can be called directly through:
+ *
+ * `node find-spec.js [crawl report]`
+ *
+ * where `crawl report` is the name of the crawl report file to parse.
+ *
+ * @module finder
+ */
+
 const blacklist = require("./blacklist.json");
 const {JSDOM} = require("jsdom");
 

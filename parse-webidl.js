@@ -1,3 +1,22 @@
+/**
+ * The WebIDL parser takes the URL of a spec as input and outputs a JSON
+ * structure that describes the WebIDL term definitions and references that the
+ * spec contains.
+ *
+ * The WebIDL parser uses the [WebIDL extractor]{@link module:webidlExtractor}
+ * to fetch and extract the WebIDL definitions contained in the given spec, and
+ * analyzes that spec with [WebIDL2]{@link
+ * https://github.com/darobin/webidl2.js}
+ *
+ * The WebIDL parser can be called directly through:
+ *
+ * `node parse-webidl.js [url]`
+ *
+ * where `url` is the URL of the spec to fetch and parse.
+ *
+ * @module webidlParser
+ */
+
 var WebIDL2 = require("webidl2");
 
 

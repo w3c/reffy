@@ -1,14 +1,31 @@
-const canonicalizeURL = require('./canonicalize-url').canonicalizeURL;
-const canonicalizesTo = require('./canonicalize-url').canonicalizesTo;
-const fetch = require('./util').fetch;
-
-const array_concat = (a,b) => a.concat(b);
-
 /**
- * Helper function that returns true when the given URL seems to target a real
- * "spec" (as opposed to, say, a Wiki page, or something else)
+ * The Markdown report generator takes an anomalies report as input and
+ * generates a human-readable report in Markdown out of it. Depending on
+ * parameters, the generated report may be a report per spec, a report per
+ * issue, a dependencies report, or a diff report.
+ *
+ * The report generator can also take a crawl report as input. In that case, it
+ * will first start by running the [crawl analyzer]{@link module:analyzer} to
+ * produce the anomalies report.
+ *
+ * The report generator can be called directly through:
+ *
+ * `node generate-report.js [anomalies report] [type]`
+ *
+ * where `anomalies report` is the name of a JSON file that contains the
+ * anomalies report to parse (or the crawl report), and `type` is an optional
+ * parameter that specifies the type of report to generate, one of `perspec`
+ * (default value) to produce a report per spec, `perissue` to produce a report
+ * per issue, `dep` to produce a dependencies report, or `diff` to produce a
+ * diff report. When `diff` is used, an extra parameter must be given which must
+ * point to the reference anomalies report the new report needs to be compared
+ * with.
+ *
+ * @module markdownGenerator
  */
-const matchSpecUrl = url => url.match(/spec.whatwg.org/) || url.match(/www.w3.org\/TR\/[a-z0-9]/) || (url.match(/w3c.github.io/) && ! url.match(/w3c.github.io\/test-results\//));
+
+const fetch = require('./util').fetch;
+const studyCrawl = require('./study-crawl').studyCrawl;
 
 
 /**
@@ -32,235 +49,6 @@ const dateOptions = {
     month: 'long',
     year: 'numeric'
 };
-
-
-/**
- * Analyze the result of a crawl and produce a report that can easily be
- * converted without more processing to a human readable version.
- *
- * @function
- * @param {Array(Object)} A crawl result, one entry per spec
- * @return {Array(Object)} A report, one entry per spec, each spec will have
- *   a "report" property with "interesting" properties, see code comments inline
- *   for details
- */
-function processReport(results) {
-    var knownIdlNames = results
-        .map(r => r.idl && r.idl.idlNames ? Object.keys(r.idl.idlNames).filter(n => (n !== '_dependencies') && (n !== '_reallyDependsOnWindow')) : [], [])
-        .reduce(array_concat);
-    var idlNamesIndex = {};
-    knownIdlNames.forEach(name => {
-        idlNamesIndex[name] = results.filter(spec => {
-            return spec.idl &&
-                spec.idl.idlNames &&
-                spec.idl.idlNames[name];
-        });
-    });
-
-    // TODO: we may end up with different variants of the WebIDL spec
-    var WebIDLSpec = results.find(spec => (spec.shortname === 'WebIDL-1')) || {};
-
-    var sortedResults = results.sort(byTitle);
-
-    // Construct spec equivalence from the crawl report, which should be more
-    // complete than the initial equivalence list.
-    var specEquivalents = {};
-    sortedResults.forEach(spec =>
-        spec.versions.forEach(v => {
-            if (specEquivalents[v]) {
-                if (Array.isArray(specEquivalents[v])) {
-                    specEquivalents[v].push(spec.url);
-                }
-                else {
-                    specEquivalents[v] = [specEquivalents[v], spec.url];
-                }
-            }
-            else {
-                specEquivalents[v] = spec.url;
-            }
-        }
-    ));
-
-    // Strong canonicalization options to find references
-    var useEquivalents = {
-        datedToLatest: true,
-        equivalents: specEquivalents
-    };
-
-    return sortedResults
-        .map(spec => {
-            spec.idl = spec.idl || {};
-            var idlDfns = spec.idl.idlNames ?
-                Object.keys(spec.idl.idlNames).filter(name => (name !== '_dependencies') && (name !== '_reallyDependsOnWindow')) : [];
-            var idlExtendedDfns = spec.idl.idlExtendedNames ?
-                Object.keys(spec.idl.idlExtendedNames) : [];
-            var idlDeps = spec.idl.externalDependencies ?
-                spec.idl.externalDependencies : [];
-            var reallyDependsOnWindow = spec.idl.idlNames ?
-                spec.idl.idlNames._reallyDependsOnWindow : false;
-
-            var report = {
-                // An error at this level means the spec could not be parsed at all
-                error: spec.error,
-
-                // Whether the crawler found normative references
-                // (most specs should have)
-                noNormativeRefs: !spec.refs.normative ||
-                    (spec.refs.normative.length === 0),
-
-                // Whether the spec normatively references the WebIDL spec
-                // (all specs that define IDL content should)
-                noRefToWebIDL: !((spec === WebIDLSpec) ||
-                    (spec.refs.normative && spec.refs.normative.find(ref =>
-                        ref.name.match(/^WebIDL/i) ||
-                            (ref.url === WebIDLSpec.url) ||
-                            (ref.url === WebIDLSpec.latest)))),
-
-                // Whether the crawler managed to find IDL content in the spec
-                // (most specs crawled here should)
-                noIdlContent: (Object.keys(spec.idl).length === 0) ||
-                    (!spec.idl.idlNames && !spec.idl.message) ||
-                    ((idlDfns.length === 0) && (idlExtendedDfns.length === 0) && !spec.idl.message),
-
-                // Whether the spec has invalid IDL content
-                // (the crawler cannot do much when IDL content is invalid, it
-                // cannot tell what IDL definitions and references the spec
-                // contains in particular)
-                hasInvalidIdl: !!(!spec.idl.idlNames && spec.idl.message),
-
-                // Whether the spec uses IDL constructs that were valid in
-                // WebIDL Level 1 but no longer are, typically "[]" instead of
-                // "FrozenArray"
-                hasObsoleteIdl: spec.idl.hasObsoleteIdl,
-
-                // List of IDL names used in the spec that we know nothing about
-                // (for instance because of some typo or because the term is
-                // defined in a spec that has not been crawled or that could
-                // not be parsed)
-                unknownIdlNames: idlDeps
-                    .filter(name => knownIdlNames.indexOf(name) === -1)
-                    .sort(),
-
-                // List of IDL definitions that are already defined in some
-                // other crawled spec
-                // (this should not happen, ideally)
-                redefinedIdlNames: idlDfns
-                    .filter(name => (idlNamesIndex[name].length > 1))
-                    .map(name => {
-                        return {
-                            name,
-                            refs: idlNamesIndex[name].filter(ref => (ref.url !== spec.url))
-                        };
-                    }),
-
-                // List of IDL names used in the spec that are defined in some
-                // other spec, and which do not seem to appear in the list of
-                // normative references
-                // (There should always be an entry in the normative list of
-                // references that links to that other spec)
-                // NB: "Exposed=Window", which would in theory trigger the need
-                // to add a normative reference to HTML, is considered to be
-                // an exception to the rule, and ignored.
-                missingWebIdlRef: idlDeps
-                    .filter(name => knownIdlNames.indexOf(name) !== -1)
-                    .filter(name => reallyDependsOnWindow || (name !== 'Window'))
-                    .map(name => {
-                        var refs = idlNamesIndex[name];
-                        var ref = null;
-                        if (spec.refs && spec.refs.normative) {
-                            ref = refs.find(s => !!spec.refs.normative.find(r =>
-                                canonicalizesTo(r.url, s.url, useEquivalents)));
-                        }
-                        return (ref ? null : {
-                            name,
-                            refs
-                        });
-                    })
-                    .filter(i => !!i),
-
-                // Links to external specifications within the body of the spec
-                // that do not have a corresponding entry in the references
-                // (all links to external specs should have a companion ref)
-                missingLinkRef: spec.links
-                    .filter(matchSpecUrl)
-                    .filter(l => {
-                        // Filter out "good" and "inconsistent" references
-                        let canon = canonicalizeURL(l, useEquivalents);
-                        let refs = (spec.refs.normative || []).concat(spec.refs.informative || []);
-                        return !refs.find(r => canonicalizesTo(r.url, canon, useEquivalents));
-                    })
-                    .filter(l =>
-                        // Ignore links to other versions of "self". There may
-                        // be cases where it would be worth reporting them but
-                        // most of the time they appear in "changelog" sections.
-                        !canonicalizesTo(l, spec.url, useEquivalents) &&
-                        !canonicalizesTo(l, spec.versions, useEquivalents)
-                    ),
-
-                // Links to external specifications within the body of the spec
-                // that have a corresponding entry in the references, but for
-                // which the reference uses a different URL, e.g. because the
-                // link targets the Editor's Draft, whereas the reference
-                // targets the latest published version
-                inconsistentRef: spec.links
-                    .filter(matchSpecUrl)
-                    .map(l => {
-                        let canonSimple = canonicalizeURL(l);
-                        let canon = canonicalizeURL(l, useEquivalents);
-                        let refs = (spec.refs.normative || []).concat(spec.refs.informative || []);
-
-                        // Filter out "good" references
-                        if (refs.find(r => canonicalizesTo(r.url, canonSimple))) {
-                            return null;
-                        }
-                        let ref = refs.find(r => canonicalizesTo(r.url, canon, useEquivalents));
-                        return (ref ? { link: l, ref } : null);
-                    })
-                    .filter(l => !!l),
-
-                // Lists of specs present in the crawl report that reference
-                // the current spec, either normatively or informatively
-                // (used to produce the dependencies report)
-                referencedBy: {
-                    normative: sortedResults.filter(s =>
-                        s.refs.normative && s.refs.normative.find(r =>
-                            canonicalizesTo(r.url, spec.url, useEquivalents) ||
-                            canonicalizesTo(r.url, spec.versions, useEquivalents))),
-                    informative: sortedResults.filter(s =>
-                        s.refs.informative && s.refs.informative.find(r =>
-                            canonicalizesTo(r.url, spec.url, useEquivalents) ||
-                            canonicalizesTo(r.url, spec.versions, useEquivalents)))
-                }
-            };
-
-            // A spec is OK if it does not contain anything "suspicious".
-            report.ok = !report.error &&
-                !report.noNormativeRefs &&
-                !report.noIdlContent &&
-                !report.hasInvalidIdl &&
-                !report.hasObsoleteIdl &&
-                !report.noRefToWebIDL &&
-                (!report.unknownIdlNames || (report.unknownIdlNames.length === 0)) &&
-                (!report.redefinedIdlNames || (report.redefinedIdlNames.length === 0)) &&
-                (!report.missingWebIdlRef || (report.missingWebIdlRef.length === 0)) &&
-                (report.missingLinkRef.length === 0) &&
-                (report.inconsistentRef.length === 0);
-            var res = {
-                title: spec.title,
-                shortname: spec.shortname,
-                date: spec.date,
-                url: spec.url,
-                latest: spec.latest,
-                datedUrl: spec.datedUrl,
-                datedStatus: spec.datedStatus,
-                edDraft: spec.edDraft,
-                crawled: spec.crawled,
-                repository: spec.repository,
-                report
-            };
-            return res;
-        });
-}
 
 
 /**
@@ -391,16 +179,14 @@ function writeDependenciesInfo(spec, results, withHeader) {
  *
  * @function
  */
-function generateReportPerSpec(crawlResults) {
+function generateReportPerSpec(study) {
     var count = 0;
     var w = console.log.bind(console);
+    const results = study.results;
 
-    // Compute report information
-    const results = processReport(crawlResults.results);
-
-    w('% ' + (crawlResults.title || 'Reffy crawl results'));
+    w('% ' + (study.title || 'Reffy crawl results'));
     w('% Reffy');
-    w('% ' + (new Date(crawlResults.date)).toLocaleDateString('en-US', dateOptions));
+    w('% ' + (new Date(study.date)).toLocaleDateString('en-US', dateOptions));
     w();
 
     results.forEach(spec => {
@@ -513,16 +299,14 @@ function generateReportPerSpec(crawlResults) {
  *
  * @function
  */
-function generateReportPerIssue(crawlResults) {
+function generateReportPerIssue(study) {
     var count = 0;
     var w = console.log.bind(console);
+    let results = study.results;
 
-    // Compute report information
-    let results = processReport(crawlResults.results);
-
-    w('% ' + (crawlResults.title || 'Reffy crawl results'));
+    w('% ' + (study.title || 'Reffy crawl results'));
     w('% Reffy');
-    w('% ' + (new Date(crawlResults.date)).toLocaleDateString('en-US', dateOptions));
+    w('% ' + (new Date(study.date)).toLocaleDateString('en-US', dateOptions));
     w();
 
     count = results.length;
@@ -836,12 +620,10 @@ function generateReportPerIssue(crawlResults) {
  *
  * @function
  */
-function generateDependenciesReport(crawlResults) {
+function generateDependenciesReport(study) {
     var count = 0;
     var w = console.log.bind(console);
-
-    // Compute report information
-    const results = processReport(crawlResults.results);
+    const results = study.results;
 
     w('# Reffy dependencies report');
     w();
@@ -876,13 +658,12 @@ function generateDependenciesReport(crawlResults) {
  *
  * @function
  */
-function generateDiffReport(crawlResults, crawlRef, options) {
+function generateDiffReport(study, refStudy, options) {
     options = options || {};
     const w = console.log.bind(console);
 
-    // Compute report information for both crawl versions
-    const results = processReport(crawlResults.results);
-    const resultsRef = processReport(crawlRef.results);
+    const results = study.results;
+    const resultsRef = refStudy.results;
     
     // Compute diff for all specs
     // (note we're only interested in specs that are part in the new crawl,
@@ -980,12 +761,12 @@ function generateDiffReport(crawlResults, crawlRef, options) {
     }
 
     w('% Diff between report from "' +
-        (new Date(crawlResults.date)).toLocaleDateString('en-US', dateOptions) +
+        (new Date(study.date)).toLocaleDateString('en-US', dateOptions) +
         '" and reference report from "' + 
-        (new Date(crawlRef.date)).toLocaleDateString('en-US', dateOptions) +
+        (new Date(refStudy.date)).toLocaleDateString('en-US', dateOptions) +
         '"');
     w('% Reffy');
-    w('% ' + (new Date(crawlResults.date)).toLocaleDateString('en-US', dateOptions));
+    w('% ' + (new Date(study.date)).toLocaleDateString('en-US', dateOptions));
     w();
 
     resultsDiff.forEach(spec => {
@@ -1077,58 +858,72 @@ function generateDiffReport(crawlResults, crawlRef, options) {
 Code run if the code is run as a stand-alone module
 **************************************************/
 if (require.main === module) {
-    const crawlResultsPath = process.argv[2];
+    const studyPath = process.argv[2];
     const perSpec = !!process.argv[3] || (process.argv[3] === 'perspec');
     const depReport = (process.argv[3] === 'dep');
     const diffReport = (process.argv[3] === 'diff');
-    const refResultsPath = diffReport ? process.argv[4] : null;
+    const refStudyPath = diffReport ? process.argv[4] : null;
     const onlyNew = (process.argv[5] === 'onlynew');
 
-    if (!crawlResultsPath) {
+    if (!studyPath) {
         console.error("Required filename parameter missing");
         process.exit(2);
     }
-    if (diffReport && !refResultsPath) {
+    if (diffReport && !refStudyPath) {
         console.error("Required filename to reference crawl for diff missing");
         process.exit(2);
     }
 
-    let crawlResults;
+    let study;
     try {
-        crawlResults = require(crawlResultsPath);
+        study = require(studyPath);
     } catch(e) {
-        console.error("Impossible to read " + crawlResultsPath + ": " + e);
+        console.error("Impossible to read " + studyPath + ": " + e);
         process.exit(3);
     }
 
+    // Study the result of the crawl if the contents we have is not already the
+    // study result.
+    if (study.type !== 'study') {
+        study = studyCrawl(study);
+    }
+
     if (diffReport) {
-        if (refResultsPath.startsWith('http')) {
-            fetch(refResultsPath, { nolog: true })
+        if (refStudyPath.startsWith('http')) {
+            fetch(refStudyPath, { nolog: true })
                 .catch(e => {
-                    console.error("Impossible to fetch " + refResultsPath + ": " + e);
+                    console.error("Impossible to fetch " + refStudyPath + ": " + e);
                     process.exit(3);
                 })
                 .then(r => r.json())
-                .then(refResults => generateDiffReport(crawlResults, refResults, { onlyNew }));
+                .then(refStudy => {
+                    if (refStudy.type !== 'study') {
+                        refStudy = studyCrawl(refStudy);
+                    }
+                    generateDiffReport(study, refStudy, { onlyNew });
+                });
         }
         else {
-            let refResults = {};
+            let refStudy = {};
             try {
-                refResults = require(refResultsPath);
+                refStudy = require(refStudyPath);
             } catch(e) {
-                console.error("Impossible to read " + refResultsPath + ": " + e);
+                console.error("Impossible to read " + refStudyPath + ": " + e);
                 process.exit(3);
             }
-            generateDiffReport(crawlResults, refResults, { onlyNew });
+            if (refStudy.type !== 'study') {
+                refStudy = studyCrawl(refStudy);
+            }
+            generateDiffReport(study, refStudy, { onlyNew });
         }
     }
     else if (depReport) {
-        generateDependenciesReport(crawlResults);
+        generateDependenciesReport(study);
     }
     else if (perSpec) {
-        generateReportPerSpec(crawlResults);
+        generateReportPerSpec(study);
     }
     else {
-        generateReportPerIssue(crawlResults);
+        generateReportPerIssue(study);
     }
 }

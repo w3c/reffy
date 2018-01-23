@@ -1,3 +1,24 @@
+/**
+ * The spec crawler takes a list of spec URLs as input, gathers some knowledge
+ * about these specs (published versions, URL of the Editor's Draft, etc.),
+ * fetches these specs, parses them, extracts relevant information that they
+ * contain (such as the WebIDL they define, the list of specifications that they
+ * reference, and links to external specs), and produces a crawl report with the
+ * results of these investigations.
+ *
+ * The spec crawler can be called directly through:
+ *
+ * `node crawl-specs.js [listfile] [crawl report] [option]`
+ *
+ * where `listfile` is the name of a JSON file that contains the list of URLs to
+ * crawl, `crawl report` is the name of the crawl report file to create, and
+ * `option` is an optional parameter that can be set to `tr` to tell the crawler
+ * to crawl the published version of W3C specifications instead of the Editor's
+ * Draft.
+ *
+ * @module crawler
+ */
+
 var refParser = require('./parse-references');
 var webidlExtractor = require('./extract-webidl');
 var loadSpecification = require('./util').loadSpecification;
@@ -61,27 +82,26 @@ function linkExtractor(window) {
 }
 
 /**
- * Return the given URL along with the W3C shortname for that specification
+ * Complete the given spec object with the W3C shortname for that specification
+ * if it exists
  *
  * @function
  * @private
- * @param {String} url The URL to enrich
- * @return {{url: String, shortname: String} The beginning of a spec description
- *   structure that contains the URL along with the shortname, when possible
+ * @param {Object} spec The specification object to enrich
+ * @return {Object} same object completed with a "shortname" key
  */
-function getShortname(url) {
-    var res = { url };
-    if (!url.match(/www.w3.org\/TR\//)) {
-        return res;
+function completeWithShortName(spec) {
+    if (!spec.url.match(/www.w3.org\/TR\//)) {
+        return spec;
     }
-    if (url.match(/TR\/[0-9]+\//)) {
+    if (spec.url.match(/TR\/[0-9]+\//)) {
         // dated version
-        var statusShortname = url.split('/')[5];
-        res.shortname = statusShortname.split('-').slice(1, -1).join('-');
-        return res;
+        var statusShortname = spec.url.split('/')[5];
+        spec.shortname = statusShortname.split('-').slice(1, -1).join('-');
+        return spec;
     }
-    res.shortname = url.split('/')[4];
-    return res;
+    spec.shortname = spec.url.split('/')[4];
+    return spec;
 }
 
 
@@ -99,7 +119,7 @@ function getShortname(url) {
  * @return {Promise<Object>} The same structure, enriched with the URL of the editor's
  *   draft when one is found
  */
-function getSpecFromW3CApi(spec) {
+function completeWithInfoFromW3CApi(spec) {
     var shortname = spec.shortname;
     var config = require('./config.json');
     var options = {
@@ -167,7 +187,7 @@ function getSpecFromW3CApi(spec) {
  * @return {Promise<Array>} The same structure, enriched with the URL of the
  *   repository when known.
  */
-function getSpecsFromSpecref(specs) {
+function completeWithInfoFromSpecref(specs) {
     return fetch('https://api.specref.org/reverse-lookup?urls=' +
             specs.map(s => s.latest || s.url).join(','))
         .then(r =>  r.json())
@@ -201,8 +221,21 @@ function getSpecsFromSpecref(specs) {
  *  descriptions.
  */
 function createInitialSpecDescriptions(list) {
-    return Promise.all(list.map(getShortname).map(getSpecFromW3CApi))
-        .then(getSpecsFromSpecref);
+    function createSpecObject(spec) {
+        let res = {
+            url: (typeof spec === 'string') ? spec : (spec.url || 'about:blank')
+        };
+        if ((typeof spec !== 'string') && spec.html) {
+            res.html = spec.html;
+        }
+        return res;
+    }
+
+    return Promise.all(
+        list.map(createSpecObject)
+            .map(completeWithShortName)
+            .map(completeWithInfoFromW3CApi))
+        .then(completeWithInfoFromSpecref);
 }
 
 
@@ -235,7 +268,7 @@ function crawlList(speclist, crawlOptions) {
         if (spec.error) {
             return spec;
         }
-        return loadSpecification(spec.crawled)
+        return loadSpecification({ html: spec.html, url: spec.crawled })
             .then(dom => Promise.all([
                 spec,
                 titleExtractor(dom),
@@ -301,6 +334,7 @@ function saveResults(crawlInfo, crawlOptions, data, path) {
                 filedata = JSON.parse(content);
             } catch (e) {}
 
+            filedata.type = filedata.type || 'crawl';
             filedata.title = crawlInfo.title || 'Reffy crawl';
             if (crawlInfo.description) {
                 filedata.description = crawlInfo.description;
