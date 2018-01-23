@@ -1,3 +1,16 @@
+/**
+ * The WebIDL extractor takes the URL of a spec as input and outputs the WebIDL
+ * definitions found in the spec as one block of text
+ *
+ * The WebIDL extractor can be called directly through:
+ *
+ * `node extract-webidl.js [url]`
+ *
+ * where `url` is the URL of the spec to fetch and parse.
+ *
+ * @module webidlExtractor
+ */
+
 var urlOrDom = require('./util').urlOrDom;
 var getDocumentAndGenerator = require('./util').getDocumentAndGenerator;
 

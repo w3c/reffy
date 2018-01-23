@@ -239,7 +239,90 @@ function fetch(url, options) {
 
 
 /**
- * Load the given specification.
+ * Load the given HTML.
+ *
+ * @function
+ * @public
+ * @param {Object} spec The spec to load. Must contain an "html" property with
+ *   the HTML contents to load. May also contain an "url" property with the URL
+ *   of the document (defaults to "about:blank"), and a "responseUrl" property
+ *   with the final URL of the document (which may differ from the initial URL
+ *   in case there were redirects and which defaults to the value of the "url"
+ *   property)
+ * @param {Number} counter Optional loop counter parameter to detect infinite
+ *   loop. The parameter is mostly meant to be an internal parameter, set and
+ *   incremented between calls when dealing with redirections. There should be
+ *   no need to set that parameter when calling that function externally.
+ * @return {Promise} The promise to get a window object once the spec has
+ *   been loaded with jsdom.
+ */
+function loadSpecificationFromHtml(spec, counter) {
+    let url = spec.url || 'about:blank';
+    let responseUrl = spec.responseUrl || url;
+    let html = spec.html || '';
+    counter = counter || 0;
+
+    return new Promise((resolve, reject) => {
+        // Drop Byte-Order-Mark character if needed, it bugs JSDOM
+        if (html.charCodeAt(0) === 0xFEFF) {
+            html = html.substring(1);
+        }
+        const {window} = new JSDOM(html, {url: responseUrl});
+        const doc = window.document;
+
+        // Handle <meta http-equiv="refresh"> redirection
+        // Note that we'll assume that the number in "content" is correct
+        let metaRefresh = doc.querySelector('meta[http-equiv="refresh"]');
+        if (metaRefresh) {
+            let redirectUrl = (metaRefresh.getAttribute('content') || '').split(';')[1];
+            if (redirectUrl) {
+                redirectUrl = URL.resolve(doc.baseURI, redirectUrl.trim());
+                if ((redirectUrl !== url) && (redirectUrl !== responseUrl)) {
+                    loadSpecificationFromUrl(redirectUrl, counter + 1)
+                        .then(window => resolve(window))
+                        .catch(err => reject(err));
+                    return;
+                }
+            }
+        }
+
+        // ReSpec doc
+        if (doc.querySelector("script[src*='respec']")) {
+            // this does another network fetch :(
+            return respecWriter(url, '', {}, 20000).then(function(html) {
+                const dom = new JSDOM(html, {url: responseUrl});
+                resolve(dom.window);
+            }).catch(reject);
+        } else { // ReSpec doesn't do multipages in any case
+            const links = doc.querySelectorAll('body .head dl a[href]');
+            for (let i = 0 ; i < links.length; i++) {
+                let link = links[i];
+                let text = (link.textContent || '').toLowerCase();
+                if (text.includes('single page') ||
+                    text.includes('single file') ||
+                    text.includes('single-page') ||
+                    text.includes('one-page')) {
+                    let singlePage = URL.resolve(doc.baseURI, link.getAttribute('href'));
+                    if ((singlePage === url) || (singlePage === responseUrl)) {
+                        // We're already looking at the single page version
+                        resolve(window);
+                    }
+                    else {
+                        loadSpecificationFromUrl(singlePage, counter + 1)
+                            .then(window => resolve(window))
+                            .catch(err => reject(err));
+                    }
+                    return;
+                }
+            }
+        }
+        resolve(window);
+    });
+}
+
+
+/**
+ * Load the specification at the given URL.
  *
  * @function
  * @public
@@ -251,78 +334,44 @@ function fetch(url, options) {
  * @return {Promise} The promise to get a window object once the spec has
  *   been loaded with jsdom.
  */
-function loadSpecification(url, counter) {
+function loadSpecificationFromUrl(url, counter) {
     counter = counter || 0;
     if (counter >= 5) {
         return new Promise((resolve, reject) => {
             reject(new Error('Infinite loop detected'));
         });
     }
-    return fetch(url).then(response => new Promise((resolve, reject) => {
-        response.text().then(html => {
-            // Drop Byte-Order-Mark character if needed, it bugs JSDOM
-            if (html.charCodeAt(0) === 0xFEFF) {
-                html = html.substring(1);
-            }
-            const {window} = new JSDOM(html, {url: response.url});
-            const doc = window.document;
+    return fetch(url)
+        .then(response => response.text().then(html => {
+            return { url, html, responseUrl: response.url };
+        }))
+        .then(spec => loadSpecificationFromHtml(spec, counter));
+}
 
-            // Handle <meta http-equiv="refresh"> redirection
-            // Note that we'll assume that the number in "content" is correct
-            let metaRefresh = doc.querySelector('meta[http-equiv="refresh"]');
-            if (metaRefresh) {
-                let redirectUrl = (metaRefresh.getAttribute('content') || '').split(';')[1];
-                if (redirectUrl) {
-                    redirectUrl = URL.resolve(doc.baseURI, redirectUrl.trim());
-                    if (redirectUrl !== url) {
-                        loadSpecification(redirectUrl, counter + 1)
-                            .then(window => resolve(window))
-                            .catch(err => reject(err));
-                        return;
-                    }
-                }
-            }
 
-            // ReSpec doc
-            if (doc.querySelector("script[src*='respec']")) {
-                // this does another network fetch :(
-                return respecWriter(url, '', {}, 20000).then(function(html) {
-                    const dom = new JSDOM(html, {url: response.url});
-                    resolve(dom.window);
-                }).catch(reject);
-            } else { // ReSpec doesn't do multipages in any case
-                const links = doc.querySelectorAll('body .head dl a[href]');
-                for (let i = 0 ; i < links.length; i++) {
-                    let link = links[i];
-                    let text = (link.textContent || '').toLowerCase();
-                    if (text.includes('single page') ||
-                        text.includes('single file') ||
-                        text.includes('single-page') ||
-                        text.includes('one-page')) {
-                        let singlePage = URL.resolve(doc.baseURI, link.getAttribute('href'));
-                        if (singlePage === url) {
-                            // We're already looking at the single page version
-                            resolve(window);
-                        }
-                        else {
-                            loadSpecification(singlePage)
-                                .then(window => resolve(window))
-                                .catch(err => reject(err));
-                        }
-                        return;
-                    }
-                }
-            }
-            resolve(window);
-        });
-    }));
+/**
+ * Load the given specification.
+ *
+ * @function
+ * @public
+ * @param {String|Object} spec The URL of the specification to load or an object
+ *   with an "html" key that contains the HTML to load (and an optional "url"
+ *   key to force the URL in the loaded DOM)
+ * @return {Promise} The promise to get a window object once the spec has
+ *   been loaded with jsdom.
+ */
+function loadSpecification(spec) {
+    spec = (typeof spec === 'string') ? { url: spec } : spec;
+    return (spec.html ?
+        loadSpecificationFromHtml(spec) :
+        loadSpecificationFromUrl(spec.url));
 }
 
 function urlOrDom(input) {
     if (typeof input === "string") {
         return loadSpecification(input);
     } else {
-        return new Promise((res, rej) =>  res(input));
+        return Promise.resolve(input);
     }
 }
 
