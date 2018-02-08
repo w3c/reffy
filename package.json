@@ -1,11 +1,11 @@
 {
   "dependencies": {
     "filenamify-url": "^1.0.0",
-    "jsdom": "^11.0.0",
-    "node-fetch": "^1.5.3",
-    "respec": "^14.1.0",
+    "jsdom": "^11.6.2",
+    "node-fetch": "^2.0.0",
+    "respec": "^19.1.1",
     "rimraf": "^2.5.3",
-    "webidl2": "^10.0.0"
+    "webidl2": "^10.2.0"
   },
   "devDependencies": {
     "jasmine": "^2.4.1"
@@ -14,7 +14,6 @@
     "all": "npm run w3c && npm run w3c-tr && npm run whatwg",
     "diff": "npm run w3c-diff && npm run w3c-tr-diff && npm run whatwg-diff",
     "diffnew": "npm run w3c-diffnew && npm run w3c-tr-diffnew && npm runwhatwg-diffnew",
-
     "w3c": "npm run w3c-crawl && npm run w3c-study && npm run w3c-markdown && npm run w3c-html && npm run w3c-diff && npm run w3c-diffnew",
     "w3c-crawl": "node crawl-specs.js ./specs-w3c.json ./reports/w3c/crawl.json",
     "w3c-study": "node study-crawl.js ./reports/w3c/crawl.json > reports/w3c/study.json",
@@ -22,7 +21,6 @@
     "w3c-html": "pandoc reports/w3c/index.md -f markdown -t html5 --section-divs -s --template report-template.html -o reports/w3c/index.html && pandoc reports/w3c/perissue.md -f markdown -t html5 --section-divs -s --template report-perissue-template.html -o reports/w3c/perissue.html",
     "w3c-diff": "node generate-report.js ./reports/w3c/crawl.json diff https://tidoust.github.io/reffy-reports/w3c/crawl.json > reports/w3c/diff.md",
     "w3c-diffnew": "node generate-report.js ./reports/w3c/crawl.json diff https://tidoust.github.io/reffy-reports/w3c/crawl.json onlynew > reports/w3c/diffnew.md",
-
     "w3c-tr": "npm run w3c-tr-crawl && npm run w3c-tr-study && npm run w3c-tr-markdown && npm run w3c-tr-html && npm run w3c-tr-diff && npm run w3c-tr-diffnew",
     "w3c-tr-crawl": "node crawl-specs.js ./specs-w3c.json ./reports/w3c-tr/crawl.json tr",
     "w3c-tr-study": "node study-crawl.js ./reports/w3c-tr/crawl.json > reports/w3c-tr/study.json",
@@ -30,7 +28,6 @@
     "w3c-tr-html": "pandoc reports/w3c-tr/index.md -f markdown -t html5 --section-divs -s --template report-template.html -o reports/w3c-tr/index.html && pandoc reports/w3c-tr/perissue.md -f markdown -t html5 --section-divs -s --template report-perissue-template.html -o reports/w3c-tr/perissue.html",
     "w3c-tr-diff": "node generate-report.js ./reports/w3c-tr/crawl.json diff https://tidoust.github.io/reffy-reports/w3c-tr/crawl.json > reports/w3c-tr/diff.md",
     "w3c-tr-diffnew": "node generate-report.js ./reports/w3c-tr/crawl.json diff https://tidoust.github.io/reffy-reports/w3c-tr/crawl.json onlynew > reports/w3c-tr/diffnew.md",
-
     "whatwg": "npm run whatwg-crawl && npm run whatwg-study && npm run whatwg-markdown && npm run whatwg-html && npm run whatwg-diff && npm run whatwg-diffnew",
     "whatwg-crawl": "node crawl-specs.js ./specs-whatwg.json ./reports/whatwg/crawl.json",
     "whatwg-study": "node study-crawl.js ./reports/whatwg/crawl.json > reports/whatwg/study.json",
