@@ -133,6 +133,7 @@ function parseIdlAstTree(jsNames, idlNames, idlExtendedNames, externalDependenci
         switch(def.type) {
         case "namespace":
         case "interface":
+        case "interface mixin":
         case "dictionary":
         case "callback interface":
             parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, externalDependencies);
