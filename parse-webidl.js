@@ -149,17 +149,18 @@ function parseIdlAstTree(jsNames, idlNames, idlExtendedNames, externalDependenci
         case "attribute":
         case "field":
             parseType(def.idlType, idlNames, externalDependencies, contextName);
-            break;
+          break;
+        case "includes":
         case "implements":
             parseType(def.target, idlNames, externalDependencies);
-            parseType(def.implements, idlNames, externalDependencies);
-            if (def.implements === 'window') {
+            parseType(def[def.type], idlNames, externalDependencies);
+            if (def[def.type] === 'window') {
                 idlNames._reallyDependsOnWindow = true;
             }
             if (!idlNames._dependencies[def.target]) {
                 idlNames._dependencies[def.target] = [];
             }
-            addDependency(def.implements, {}, idlNames._dependencies[def.target]);
+            addDependency(def[def.type], {}, idlNames._dependencies[def.target]);
             break;
         case "typedef":
             parseType(def.idlType, idlNames, externalDependencies);
