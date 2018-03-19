@@ -27,6 +27,7 @@ var fetch = require('./util').fetch;
 var fs = require('fs');
 var specEquivalents = require('./spec-equivalents.json');
 var canonicalizeURL = require('./canonicalize-url').canonicalizeURL;
+const pathlib = require('path');
 
 /**
  * Flattens an array
@@ -276,10 +277,11 @@ function crawlList(speclist, crawlOptions) {
                 refParser.extract(dom).catch(err => {console.error(spec.crawled, err); return err;}),
                 webidlExtractor.extract(dom)
                     .then(idl => Promise.all([
+                        idl,
                         webidlParser.parse(idl),
                         webidlParser.hasObsoleteIdl(idl)
                     ])
-                    .then(res => { res[0].hasObsoleteIdl = res[1]; return res[0] })
+                    .then(([idl, parsedIdl, hasObsoletedIdl]) => { parsedIdl.hasObsoleteIdl = hasObsoletedIdl; parsedIdl.idl = idl; return parsedIdl; })
                     .catch(err => { console.error(spec.crawled, err); return err; })),
                 dom
             ]))
@@ -310,6 +312,22 @@ function crawlList(speclist, crawlOptions) {
 }
 
 
+function getShortname(spec) {
+  if (spec.shortname) {
+    // do not include versionning
+    return spec.shortname.replace(/-?[0-9]*$/, '');
+  }
+  const whatwgMatch = spec.url.match(/\/\/(.*)\.spec.whatwg.org\/$/);
+  if (whatwgMatch) {
+    return whatwgMatch[1];
+  }
+  const githubMatch = spec.url.match(/\/.*.github.io\/([^\/]*)\//);
+  if (githubMatch) {
+    return githubMatch[1];
+  }
+  return spec.url.replace(/[^-a-z0-9]/g, '');
+}
+
 /**
  * Append the resulting data to the given file.
  *
@@ -325,19 +343,29 @@ function crawlList(speclist, crawlOptions) {
  * @return {Promise<void>} The promise to have saved the data
  */
 function saveResults(crawlInfo, crawlOptions, data, path) {
-    return new Promise((resolve, reject) => {
-        fs.readFile(path, function(err, content) {
+  return Promise.all(
+    data.map(
+      spec =>
+        new Promise((resolve, reject) => {
+          if (spec.idl.idl) {
+            fs.writeFile(pathlib.dirname(path) + '/idl/' + getShortname(spec) + '.idl',
+                         spec.idl.idl,
+                         err => { if (err) return console.log(err); return resolve();});
+            delete spec.idl.idl;
+          } else resolve();
+        }))).then(_ => new Promise((resolve, reject) => {
+          fs.readFile(path, function(err, content) {
             if (err) return reject(err);
 
             let filedata = {};
             try {
-                filedata = JSON.parse(content);
+              filedata = JSON.parse(content);
             } catch (e) {}
 
             filedata.type = filedata.type || 'crawl';
             filedata.title = crawlInfo.title || 'Reffy crawl';
             if (crawlInfo.description) {
-                filedata.description = crawlInfo.description;
+              filedata.description = crawlInfo.description;
             }
             filedata.date = filedata.date || (new Date()).toJSON();
             filedata.options = crawlOptions;
@@ -345,14 +373,14 @@ function saveResults(crawlInfo, crawlOptions, data, path) {
             filedata.results = (filedata.results || []).concat(data);
             filedata.results.sort(byURL);
             filedata.stats = {
-                crawled: filedata.results.length,
-                errors: filedata.results.filter(spec => !!spec.error).length
+              crawled: filedata.results.length,
+              errors: filedata.results.filter(spec => !!spec.error).length
             };
 
             fs.writeFile(path, JSON.stringify(filedata, null, 2),
-                         err => { if (err) return reject(err); resolve();});
-        });
-    });
+                         err => { if (err) return reject(err); return resolve();});
+          });
+        }));
 }
 
 
