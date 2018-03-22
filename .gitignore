@@ -9,6 +9,7 @@ reports/w3c/perissue.html
 reports/w3c/study.json
 reports/w3c/diff.md
 reports/w3c/diffnew.md
+reports/w3c/idl
 reports/w3c-tr/crawl.json
 reports/w3c-tr/index.md
 reports/w3c-tr/index.html
@@ -17,6 +18,7 @@ reports/w3c-tr/perissue.html
 reports/w3c-tr/study.json
 reports/w3c-tr/diff.md
 reports/w3c-tr/diffnew.md
+reports/w3c-tr/idl
 reports/whatwg/crawl.json
 reports/whatwg/index.md
 reports/whatwg/index.html
@@ -25,3 +27,4 @@ reports/whatwg/perissue.html
 reports/whatwg/study.json
 reports/whatwg/diff.md
 reports/whatwg/diffnew.md
+reports/whatwg/idl
