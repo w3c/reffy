@@ -321,6 +321,10 @@ function getShortname(spec) {
   if (whatwgMatch) {
     return whatwgMatch[1];
   }
+  const khronosMatch = spec.url.match(/https:\/\/www.khronos.org\/registry\/webgl\/specs\/latest\/([12]).0\/$/);
+  if (khronosMatch) {
+    return "webgl" + whatwgMatch[1];
+  }
   const githubMatch = spec.url.match(/\/.*.github.io\/([^\/]*)\//);
   if (githubMatch) {
     return githubMatch[1];
