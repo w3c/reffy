@@ -8,13 +8,13 @@
  *
  * The spec crawler can be called directly through:
  *
- * `node crawl-specs.js [listfile] [crawl report] [option]`
+ * `node crawl-specs.js [listfile] [crawl folder] [option]`
  *
  * where `listfile` is the name of a JSON file that contains the list of URLs to
- * crawl, `crawl report` is the name of the crawl report file to create, and
- * `option` is an optional parameter that can be set to `tr` to tell the crawler
- * to crawl the published version of W3C specifications instead of the Editor's
- * Draft.
+ * crawl, `crawl folder` is the name of the folder where the crawl report will
+ * be created, and `option` is an optional parameter that can be set to `tr` to
+ * tell the crawler to crawl the published version of W3C specifications
+ * instead of the Editor's Draft.
  *
  * @module crawler
  */
@@ -27,7 +27,7 @@ var fetch = require('./util').fetch;
 var fs = require('fs');
 var specEquivalents = require('./spec-equivalents.json');
 var canonicalizeURL = require('./canonicalize-url').canonicalizeURL;
-const pathlib = require('path');
+const path = require('path');
 
 /**
  * Flattens an array
@@ -339,48 +339,55 @@ function getShortname(spec) {
  *   and the list of specs to crawl
  * @param {Object} crawlOptions Crawl options
  * @param {Array(Object)} data The list of specification structures to save
- * @param {String} path The path to the file to save
+ * @param {String} folder The path to the report folder
  * @return {Promise<void>} The promise to have saved the data
  */
-function saveResults(crawlInfo, crawlOptions, data, path) {
-  return Promise.all(
-    data.map(
-      spec =>
+function saveResults(crawlInfo, crawlOptions, data, folder) {
+    return new Promise((resolve, reject) => {
+        let idlFolder = path.join(folder, 'idl');
+        fs.mkdir(idlFolder, (err => {
+            if (err && (err.code !== 'EEXIST')) return reject(err);
+            return resolve(idlFolder);
+        }));
+    })
+    .then(idlFolder => Promise.all(data.map(spec =>
         new Promise((resolve, reject) => {
-          if (spec.idl.idl) {
-            fs.writeFile(pathlib.dirname(path) + '/idl/' + getShortname(spec) + '.idl',
-                         spec.idl.idl,
-                         err => { if (err) return console.log(err); return resolve();});
-            delete spec.idl.idl;
+            if (spec.idl.idl) {
+                fs.writeFile(path.join(idlFolder, getShortname(spec) + '.idl'),
+                             spec.idl.idl,
+                             err => { if (err) return console.log(err); return resolve();});
+                delete spec.idl.idl;
           } else resolve();
         }))).then(_ => new Promise((resolve, reject) => {
-          fs.readFile(path, function(err, content) {
-            if (err) return reject(err);
+            let reportFilename = path.join(folder, 'crawl.json');
+            fs.readFile(reportFilename, function(err, content) {
+                if (err) return reject(err);
 
-            let filedata = {};
-            try {
-              filedata = JSON.parse(content);
-            } catch (e) {}
+                let filedata = {};
+                try {
+                    filedata = JSON.parse(content);
+                } catch (e) {}
 
-            filedata.type = filedata.type || 'crawl';
-            filedata.title = crawlInfo.title || 'Reffy crawl';
-            if (crawlInfo.description) {
-              filedata.description = crawlInfo.description;
-            }
-            filedata.date = filedata.date || (new Date()).toJSON();
-            filedata.options = crawlOptions;
-            filedata.stats = {};
-            filedata.results = (filedata.results || []).concat(data);
-            filedata.results.sort(byURL);
-            filedata.stats = {
-              crawled: filedata.results.length,
-              errors: filedata.results.filter(spec => !!spec.error).length
-            };
+                filedata.type = filedata.type || 'crawl';
+                filedata.title = crawlInfo.title || 'Reffy crawl';
+                if (crawlInfo.description) {
+                    filedata.description = crawlInfo.description;
+                }
+                filedata.date = filedata.date || (new Date()).toJSON();
+                filedata.options = crawlOptions;
+                filedata.stats = {};
+                filedata.results = (filedata.results || []).concat(data);
+                filedata.results.sort(byURL);
+                filedata.stats = {
+                    crawled: filedata.results.length,
+                    errors: filedata.results.filter(spec => !!spec.error).length
+                };
 
-            fs.writeFile(path, JSON.stringify(filedata, null, 2),
-                         err => { if (err) return reject(err); return resolve();});
-          });
-        }));
+                fs.writeFile(reportFilename, JSON.stringify(filedata, null, 2),
+                             err => { if (err) return reject(err); return resolve();});
+            });
+        }))
+    );
 }
 
 
@@ -430,7 +437,7 @@ if (require.main === module) {
         publishedVersion: (process.argv[4] === 'tr')
     };
     if (!speclistPath || !resultsPath) {
-        console.error("Required filename parameter missing");
+        console.error("Required folder parameter missing");
         process.exit(2);
     }
     var crawlInfo;
@@ -441,7 +448,7 @@ if (require.main === module) {
         process.exit(3);
     }
     try {
-        fs.writeFileSync(resultsPath, "");
+        fs.writeFileSync(path.join(resultsPath, 'crawl.json'), '');
     } catch (e) {
         console.error("Impossible to write to " + resultsPath + ": " + e);
         process.exit(3);
