@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * The WebIDL parser takes the URL of a spec as input and outputs a JSON
  * structure that describes the WebIDL term definitions and references that the

@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * The WebIDL extractor takes the URL of a spec as input and outputs the WebIDL
  * definitions found in the spec as one block of text

@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * The references parser takes the URL of a spec as input, loads that spec and
  * extracts the list of normative/informative references that it contains. The

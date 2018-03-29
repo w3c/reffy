@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * The crawl analyzer takes a crawl report as input and creates a report that
  * contains, for each spec, a list of potential anomalies, such as:
