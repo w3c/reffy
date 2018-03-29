@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * The Markdown report generator takes an anomalies report as input and
  * generates a human-readable report in Markdown out of it. Depending on

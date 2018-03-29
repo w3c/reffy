@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * The spec crawler takes a list of spec URLs as input, gathers some knowledge
  * about these specs (published versions, URL of the Editor's Draft, etc.),

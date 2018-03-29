@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * The spec checker crawls a spec (or a list of specs) and creates an anomalies
  * report for it (or for them). The analysis is made against a knowledge base

@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * The crawl report merger can be used to merge a new crawl report into a
  * reference one. This tool is typically useful to make incremental updates to a

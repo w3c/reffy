@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * The spec finder takes a crawl report as input and checks a couple of sites
  * that list Web specifications to detect new specifications that are not yet
