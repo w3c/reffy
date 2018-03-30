@@ -25,6 +25,7 @@
  * @module markdownGenerator
  */
 
+const requireFromWorkingDirectory = require('./util').requireFromWorkingDirectory;
 const fetch = require('./util').fetch;
 const studyCrawl = require('./study-crawl').studyCrawl;
 
@@ -53,35 +54,13 @@ const dateOptions = {
 
 
 /**
- * Helper function that outputs a generic "about" header to help readers
- * understand what the report contains.
- *
- * @function
- */
-function writeGenericInfo() {
-    var w = console.log.bind(console);
-
-    w('Reffy is a spec exploration tool.' +
-        ' It takes a list of specifications as input, fetches and parses the latest Editor\'s Draft' +
-        ' of each of these specifications to study the IDL content that it defines, the links that it' +
-        ' contains, and the normative and informative references that it lists.');
-    w();
-    w('Reffy only knows facts about specifications that it crawled. Some of the anomalies reported in' +
-        ' this report may be false positives as a result, triggered by the fact that Reffy has a very' +
-        ' narrow view of the spec-verse.');
-    w();
-    w('Some anomalies may also be triggered by temporary errors in the Editor\'s Drafts of the' +
-        ' specifications that were crawled such as invalid Web IDL definitions.');
-}
-
-
-/**
  * Helper function that outputs main crawl info about a spec
  *
  * @function
  */
-function writeCrawlInfo(spec, withHeader) {
-    const w = console.log.bind(console);
+function writeCrawlInfo(spec, withHeader, w) {
+    let wres = '';
+    w = w || (msg => wres += (msg || '') + '\n');
 
     if (withHeader) {
         w('### Spec info {.info}');
@@ -121,11 +100,13 @@ function writeCrawlInfo(spec, withHeader) {
         w('- Repository: [' + repositoryName + '](' + spec.repository + ')');
     }
     w('- Shortname: ' + (spec.shortname || 'no shortname'));
+    return wres;
 }
 
 
-function writeDependenciesInfo(spec, results, withHeader) {
-    const w = console.log.bind(console);
+function writeDependenciesInfo(spec, results, withHeader, w) {
+    let wres = '';
+    w = w || (msg => wres += (msg || '') + '\n');
 
     if (withHeader) {
         w('### Known dependencies on this specification {.dependencies}');
@@ -170,6 +151,7 @@ function writeDependenciesInfo(spec, results, withHeader) {
     else {
         w('No informative reference to this spec from other specs.');
     }
+    return wres;
 }
 
 /**
@@ -182,7 +164,8 @@ function writeDependenciesInfo(spec, results, withHeader) {
  */
 function generateReportPerSpec(study) {
     var count = 0;
-    var w = console.log.bind(console);
+    let wres = '';
+    const w = msg => wres += (msg || '') + '\n';
     const results = study.results;
 
     w('% ' + (study.title || 'Reffy crawl results'));
@@ -211,7 +194,7 @@ function generateReportPerSpec(study) {
 
         w('## ' + spec.title + ' {' + attr + '}');
         w();
-        writeCrawlInfo(spec, true);
+        writeCrawlInfo(spec, true, w);
         w();
 
         const report = spec.report;
@@ -283,12 +266,14 @@ function generateReportPerSpec(study) {
             }
         }
         w();
-        writeDependenciesInfo(spec, results, true);
+        writeDependenciesInfo(spec, results, true, w);
         w();
         w();
     });
     w();
     w();
+
+    return wres;
 }
 
 
@@ -301,8 +286,10 @@ function generateReportPerSpec(study) {
  * @function
  */
 function generateReportPerIssue(study) {
-    var count = 0;
-    var w = console.log.bind(console);
+    let wres = '';
+    const w = msg => wres += (msg || '') + '\n';
+
+    let count = 0;
     let results = study.results;
 
     w('% ' + (study.title || 'Reffy crawl results'));
@@ -610,6 +597,7 @@ function generateReportPerIssue(study) {
             ' There should be some consistency across the specification.');
     }
 
+    return wres;
 }
 
 
@@ -622,8 +610,10 @@ function generateReportPerIssue(study) {
  * @function
  */
 function generateDependenciesReport(study) {
-    var count = 0;
-    var w = console.log.bind(console);
+    let wres = '';
+    const w = msg => wres += (msg || '') + '\n';
+
+    let count = 0;
     const results = study.results;
 
     w('# Reffy dependencies report');
@@ -643,12 +633,14 @@ function generateDependenciesReport(study) {
     results.forEach(spec => {
         w('## ' + spec.title);
         w();
-        writeCrawlInfo(spec);
+        writeCrawlInfo(spec, false, w);
         w();
-        writeDependenciesInfo(spec, results);
+        writeDependenciesInfo(spec, results, false, w);
         w();
         w();
     });
+
+    return wres;
 }
 
 
@@ -661,7 +653,8 @@ function generateDependenciesReport(study) {
  */
 function generateDiffReport(study, refStudy, options) {
     options = options || {};
-    const w = console.log.bind(console);
+    let wres = '';
+    const w = msg => wres += (msg || '') + '\n';
 
     const results = study.results;
     const resultsRef = refStudy.results;
@@ -852,35 +845,33 @@ function generateDiffReport(study, refStudy, options) {
         w();
         w();
     });
+
+    return wres;
 }
 
 
-/**************************************************
-Code run if the code is run as a stand-alone module
-**************************************************/
-if (require.main === module) {
-    const studyPath = process.argv[2];
-    const perSpec = !!process.argv[3] || (process.argv[3] === 'perspec');
-    const depReport = (process.argv[3] === 'dep');
-    const diffReport = (process.argv[3] === 'diff');
-    const refStudyPath = diffReport ? process.argv[4] : null;
-    const onlyNew = (process.argv[5] === 'onlynew');
-
-    if (!studyPath) {
-        console.error("Required filename parameter missing");
-        process.exit(2);
+/**
+ * Main function that generates a Markdown report from a study file.
+ *
+ * @function
+ * @param {String} studyFile Path to the study file to parse
+ * @param {Object} options Type of report to generate and other options
+ * @return {String} The generated report
+ */
+async function generateReport(studyFile, options) {
+    options = options || {};
+    if (!studyFile) {
+        throw new Error('Required filename parameter missing');
     }
-    if (diffReport && !refStudyPath) {
-        console.error("Required filename to reference crawl for diff missing");
-        process.exit(2);
+    if (options.diffReport && !options.refStudyFile) {
+        throw new Error('Required filename to reference crawl for diff missing');
     }
 
     let study;
     try {
-        study = require(studyPath);
-    } catch(e) {
-        console.error("Impossible to read " + studyPath + ": " + e);
-        process.exit(3);
+        study = requireFromWorkingDirectory(studyFile);
+    } catch (e) {
+        throw new Error('Impossible to read ' + studyFile + ': ' + e);
     }
 
     // Study the result of the crawl if the contents we have is not already the
@@ -889,42 +880,66 @@ if (require.main === module) {
         study = studyCrawl(study);
     }
 
-    if (diffReport) {
-        if (refStudyPath.startsWith('http')) {
-            fetch(refStudyPath, { nolog: true })
-                .catch(e => {
-                    console.error("Impossible to fetch " + refStudyPath + ": " + e);
-                    process.exit(3);
-                })
-                .then(r => r.json())
-                .then(refStudy => {
-                    if (refStudy.type !== 'study') {
-                        refStudy = studyCrawl(refStudy);
-                    }
-                    generateDiffReport(study, refStudy, { onlyNew });
-                });
+    if (options.diffReport) {
+        if (options.refStudyFile.startsWith('http')) {
+            try {
+                let response = await fetch(options.refStudyFile, { nolog: true });
+                let refStudy = await response.json();
+                if (refStudy.type !== 'study') {
+                    refStudy = studyCrawl(refStudy);
+                }
+                return generateDiffReport(study, refStudy, { onlyNew: options.onlyNew });
+            }
+            catch (e) {
+                throw new Error('Impossible to fetch ' + options.refStudyFile + ': ' + e);
+            }
         }
         else {
             let refStudy = {};
             try {
-                refStudy = require(refStudyPath);
-            } catch(e) {
-                console.error("Impossible to read " + refStudyPath + ": " + e);
-                process.exit(3);
+                refStudy = requireFromWorkingDirectory(options.refStudyFile);
+            } catch (e) {
+                throw new Error('Impossible to read ' + options.refStudyFile + ': ' + e);
             }
             if (refStudy.type !== 'study') {
                 refStudy = studyCrawl(refStudy);
             }
-            generateDiffReport(study, refStudy, { onlyNew });
+            return generateDiffReport(study, refStudy, { onlyNew: options.onlyNew });
         }
     }
-    else if (depReport) {
-        generateDependenciesReport(study);
+    else if (options.depReport) {
+        return generateDependenciesReport(study);
     }
-    else if (perSpec) {
-        generateReportPerSpec(study);
+    else if (options.perSpec) {
+        return generateReportPerSpec(study);
     }
     else {
-        generateReportPerIssue(study);
+        return generateReportPerIssue(study);
     }
+    return report;
+}
+
+
+/**************************************************
+Export methods for use as module
+**************************************************/
+module.exports.generateReport = generateReport;
+
+
+/**************************************************
+Code run if the code is run as a stand-alone module
+**************************************************/
+if (require.main === module) {
+    const studyFile = process.argv[2];
+    const options = {
+        perSpec: !!process.argv[3] || (process.argv[3] === 'perspec'),
+        depReport: (process.argv[3] === 'dep'),
+        diffReport: (process.argv[3] === 'diff'),
+        refStudyFile: (process.argv[3] === 'diff') ? process.argv[4] : null,
+        onlyNew: (process.argv[5] === 'onlynew')
+    };
+
+    generateReport(studyFile, options)
+        .then(report => console.log(report))
+        .catch(err => console.error(err.toString()));
 }

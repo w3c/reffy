@@ -29,6 +29,7 @@ var fs = require('fs');
 var specEquivalents = require('./spec-equivalents.json');
 var canonicalizeURL = require('./canonicalize-url').canonicalizeURL;
 const path = require('path');
+const requireFromWorkingDirectory = require('./util').requireFromWorkingDirectory;
 
 /**
  * Flattens an array
@@ -123,7 +124,7 @@ function completeWithShortName(spec) {
  */
 function completeWithInfoFromW3CApi(spec) {
     var shortname = spec.shortname;
-    var config = require('./config.json');
+    var config = requireFromWorkingDirectory('config.json');
     var options = {
         headers: {
             Authorization: 'W3C-API apikey="' + config.w3cApiKey + '"'
@@ -324,7 +325,7 @@ function getShortname(spec) {
   }
   const khronosMatch = spec.url.match(/https:\/\/www.khronos.org\/registry\/webgl\/specs\/latest\/([12]).0\/$/);
   if (khronosMatch) {
-    return "webgl" + whatwgMatch[1];
+    return "webgl" + khronosMatch[1];
   }
   const githubMatch = spec.url.match(/\/.*.github.io\/([^\/]*)\//);
   if (githubMatch) {
@@ -416,7 +417,7 @@ function processChunk(crawlInfo, pos, resultsPath, chunkSize, crawlOptions) {
 
 
 function assembleListOfSpec(filename, nested) {
-    let crawlInfo = require(filename);
+    let crawlInfo = requireFromWorkingDirectory(filename);
     if (Array.isArray(crawlInfo)) {
         crawlInfo = { list: crawlInfo };
     }
@@ -426,10 +427,43 @@ function assembleListOfSpec(filename, nested) {
 }
 
 
+/**
+ * Crawls the specifications listed in the given JSON file and generates a
+ * crawl report in the given folder.
+ *
+ * @function
+ * @param {String} speclistPath JSON file that contains the specifications to parse
+ * @param {String} resultsPath Folder that is to contain the crawl report
+ * @param {Object} options Crawl options
+ * @return {Promise<void>} The promise that the crawl will have been made
+ */
+function crawlFile(speclistPath, resultsPath, options) {
+    if (!speclistPath || !resultsPath) {
+        return Promise.reject('Required folder parameter missing');
+    }
+    let crawlInfo;
+    try {
+        crawlInfo = assembleListOfSpec(speclistPath);
+    } catch (err) {
+        return Promise.reject('Impossible to read ' + speclistPath + ': ' + err);
+    }
+    try {
+        fs.writeFileSync(path.join(resultsPath, 'crawl.json'), '');
+    } catch (err) {
+        return Promise.reject('Impossible to write to ' + resultsPath + ': ' + err);
+    }
+
+    // splitting list to avoid memory exhaustion
+    const chunkSize = 10;
+    return processChunk(crawlInfo, 0, resultsPath, chunkSize, options);
+}
+
+
 /**************************************************
 Export the crawlList method for use as module
 **************************************************/
 module.exports.crawlList = crawlList;
+module.exports.crawlFile = crawlFile;
 
 
 /**************************************************
@@ -441,31 +475,11 @@ if (require.main === module) {
     var crawlOptions = {
         publishedVersion: (process.argv[4] === 'tr')
     };
-    if (!speclistPath || !resultsPath) {
-        console.error("Required folder parameter missing");
-        process.exit(2);
-    }
-    var crawlInfo;
-    try {
-        crawlInfo = assembleListOfSpec(speclistPath);
-    } catch(e) {
-        console.error("Impossible to read " + speclistPath + ": " + e);
-        process.exit(3);
-    }
-    try {
-        fs.writeFileSync(path.join(resultsPath, 'crawl.json'), '');
-    } catch (e) {
-        console.error("Impossible to write to " + resultsPath + ": " + e);
-        process.exit(3);
-    }
-    // splitting list to avoid memory exhaustion
-    var chunkSize = 10;
-    processChunk(crawlInfo, 0, resultsPath, chunkSize, crawlOptions)
-        .then(function (data) {
-            console.log("Finished");
+    crawlFile(speclistPath, resultsPath, crawlOptions)
+        .then(data => {
+            console.log('finished');
         })
-        .catch(function (err) {
+        .catch(err => {
             console.error(err);
-            process.exit(64);
         });
 }

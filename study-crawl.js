@@ -32,6 +32,7 @@
 
 const canonicalizeURL = require('./canonicalize-url').canonicalizeURL;
 const canonicalizesTo = require('./canonicalize-url').canonicalizesTo;
+const requireFromWorkingDirectory = require('./util').requireFromWorkingDirectory;
 
 const array_concat = (a,b) => a.concat(b);
 
@@ -308,7 +309,12 @@ function studyCrawlResults(results, specsToInclude) {
 
 
 function studyCrawl(crawlResults, toInclude) {
-  crawlResults = crawlResults || {};
+  if (typeof crawlResults === 'string') {
+    crawlResults = requireFromWorkingDirectory(crawlResults);
+  }
+  else {
+    crawlResults = crawlResults || {};
+  }
   crawlResults.results = crawlResults.results || [];
   crawlResults.stats = crawlResults.stats || {};
   toInclude = toInclude || [];
@@ -351,7 +357,7 @@ if (require.main === module) {
 
     let crawlResults;
     try {
-        crawlResults = require(crawlResultsPath);
+        crawlResults = requireFromWorkingDirectory(crawlResultsPath);
     } catch(e) {
         console.error("Impossible to read " + crawlResultsPath + ": " + e);
         process.exit(3);
