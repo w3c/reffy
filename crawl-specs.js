@@ -421,7 +421,9 @@ function assembleListOfSpec(filename, nested) {
     if (Array.isArray(crawlInfo)) {
         crawlInfo = { list: crawlInfo };
     }
-    crawlInfo.list = crawlInfo.list.map(item => item.file ? assembleListOfSpec(item.file, true) : item);
+    crawlInfo.list = crawlInfo.list.map(item => item.file ?
+        assembleListOfSpec(path.resolve(path.dirname(filename), item.file), true) :
+        item);
     crawlInfo.list = flatten(crawlInfo.list);
     return (nested ? crawlInfo.list : crawlInfo);
 }
