@@ -26,9 +26,9 @@ This should install Reffy's command-line interface tools to Node.js path.
 To launch the crawler and the report study tool, follow these steps:
 
 1. Create a `config.json` file, initialized with `{ "w3cApiKey": [API key] }`, where `[API key]` is your API key.
-2. To produce a W3C-centric vision of the Web platform using Editor's Drafts, run `reffy run w3c`.
-3. To produce a W3C-centric vision of the Web platform using latest published versions in `/TR/`, run `reffy run w3c-tr`.
-6. To produce a WHATWG-centric vision of the Web platform, run `reffy run whatwg`.
+2. To produce a W3C-centric vision of the Web platform using Editor's Drafts, create a `reports/w3c` folder and run `reffy run w3c`.
+3. To produce a W3C-centric vision of the Web platform using latest published versions in `/TR/`, create a `reports/w3c-tr` folder and run `reffy run w3c-tr`.
+6. To produce a WHATWG-centric vision of the Web platform, create a `reports/whatwg` folder and run `reffy run whatwg`.
 
 Under the hoods, these commands run the following steps (and related commands) in turn:
 1. **Crawling**: Crawls a list of spec and outputs relevant information in a JSON structure in the specified folder. `crawl-specs specs-w3c.json reports/w3c [tr]`. Add `tr` to tell the crawler to load the latest published version of TR specifications instead of the latest Editor's Draft.
