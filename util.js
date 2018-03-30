@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 const URL = require('url');
 const { JSDOM } = require('jsdom');
 const filenamify = require('filenamify-url');
@@ -6,9 +7,29 @@ const baseFetch = require('node-fetch');
 const Response = require('node-fetch').Response;
 const rimraf = require('rimraf');
 const respecWriter = require("respec/tools/respecDocWriter").fetchAndWrite;
+
+
+/**
+ * Wrapper around the "require" function to require files relative to the
+ * current working directory (CWD), instead of relative to the current JS
+ * file.
+ *
+ * This is typically needed to be able to use "require" to load JSON config
+ * files provided as command-line arguments.
+ *
+ * @function
+ * @param {String} filename The path to the file to require
+ * @return {Object} The result of requiring the file relative to the current
+ *   working directory.
+ */
+function requireFromWorkingDirectory(filename) {
+    return require(path.resolve(filename));
+}
+
+
 var config = null;
 try {
-    config = require('./config.json');
+    config = requireFromWorkingDirectory('config.json');
 }
 catch (e) {
     config = {};
@@ -420,6 +441,7 @@ function getDocumentAndGenerator(window) {
     });
 }
 
+module.exports.requireFromWorkingDirectory = requireFromWorkingDirectory;
 module.exports.loadSpecification = loadSpecification;
 module.exports.urlOrDom = urlOrDom;
 module.exports.getDocumentAndGenerator = getDocumentAndGenerator;

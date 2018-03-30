@@ -16,6 +16,7 @@
  */
 
 var fs = require('fs');
+const requireFromWorkingDirectory = require('./util').requireFromWorkingDirectory;
 
 
 /**
@@ -83,8 +84,8 @@ function mergeCrawlResults(newCrawl, refCrawl, options) {
 function mergeCrawlFiles(newCrawlPath, refCrawlPath, resPath, options) {
     options = options || {};
 
-    let newCrawl = require(newCrawlPath);
-    let refCrawl = require(refCrawlPath);
+    let newCrawl = requireFromWorkingDirectory(newCrawlPath);
+    let refCrawl = requireFromWorkingDirectory(refCrawlPath);
     return mergeCrawlResults(newCrawl, refCrawl, options)
         .then(filedata => new Promise((resolve, reject) =>
             fs.writeFile(resPath, JSON.stringify(filedata, null, 2),

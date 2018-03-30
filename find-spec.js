@@ -13,6 +13,7 @@
  * @module finder
  */
 
+const requireFromWorkingDirectory = require('./util').requireFromWorkingDirectory;
 const blacklist = require("./blacklist.json");
 const {JSDOM} = require("jsdom");
 
@@ -72,7 +73,7 @@ if (require.main === module) {
     let report = [];
     if (resultsPath) {
         try {
-            report = require(resultsPath);
+            report = requireFromWorkingDirectory(resultsPath);
         } catch(e) {
             console.error("Impossible to read " + resultsPath + ": " + e);
             process.exit(3);
