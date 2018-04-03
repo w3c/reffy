@@ -1,6 +1,6 @@
 node_modules
 config.json
-cache
+.cache
 reports/w3c/crawl.json
 reports/w3c/index.md
 reports/w3c/index.html
