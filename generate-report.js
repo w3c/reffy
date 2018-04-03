@@ -26,7 +26,7 @@
  */
 
 const requireFromWorkingDirectory = require('./util').requireFromWorkingDirectory;
-const fetch = require('./util').fetch;
+const fetch = require('fetch-filecache-for-crawling');
 const studyCrawl = require('./study-crawl').studyCrawl;
 
 

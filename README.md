@@ -40,7 +40,7 @@ Under the hoods, these commands run the following steps (and related commands) i
 Some notes:
 
 * The crawler may take some time
-* The crawler uses a local cache for HTTP exchanges. It will create and fill a `cache` subfolder in particular.
+* The crawler uses a local cache for HTTP exchanges. It will create and fill a `.cache` subfolder in particular.
 
 ## Reffy's tools
 

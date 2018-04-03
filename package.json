@@ -34,12 +34,10 @@
   },
   "dependencies": {
     "commander": "^2.15.1",
-    "filenamify-url": "^1.0.0",
+    "fetch-filecache-for-crawling": "^1.1.1",
     "jsdom": "^11.6.2",
-    "node-fetch": "^2.0.0",
     "node-pandoc": "^0.3.0",
     "respec": "^19.1.1",
-    "rimraf": "^2.5.3",
     "webidl2": "^10.2.0"
   },
   "devDependencies": {
