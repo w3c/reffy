@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "commander": "^2.15.1",
-    "fetch-filecache-for-crawling": "^1.4.0",
+    "fetch-filecache-for-crawling": "^1.4.1",
     "jsdom": "^11.6.2",
     "node-pandoc": "^0.3.0",
     "respec": "^19.1.1",
