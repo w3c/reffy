@@ -35,10 +35,10 @@
   "dependencies": {
     "commander": "^2.15.1",
     "fetch-filecache-for-crawling": "^3.0.0",
-    "jsdom": "^11.6.2",
+    "jsdom": "^11.10.0",
     "node-pandoc": "^0.3.0",
     "respec": "^19.1.1",
-    "webidl2": "^10.2.0"
+    "webidl2": "^10.3.1"
   },
   "devDependencies": {
     "jasmine": "^2.4.1"
