@@ -104,7 +104,7 @@ Reffy should be able to parse most of the W3C/WHATWG specifications that define 
 
 ### List of specs to crawl
 
-The recommended lists appear in `specs-w3c.json` and `spec-whatwg.json`. Both files reference a common list in `specs-common.json`. These lists were built out of the [JavaScript APIs](http://www.w3.org/TR/#tr_Javascript_APIs) *TR* bucket, semi-manually completed to create a more comprehensive list.
+The recommended lists appear in `specs-w3c.json` and `spec-whatwg.json`. Both files reference a common list in `specs-common.json` and in `specs-cg.json`. These lists were built out of the [JavaScript APIs](http://www.w3.org/TR/#tr_Javascript_APIs) *TR* bucket, semi-manually completed to create a more comprehensive list.
 
 It should be possible to crawl other specs, but note Reffy has not yet been tested with specs that do not define any WebIDL term, and would need to be adjusted to return "interesting" information. Feel free to try out other specs and report any issue!
 
@@ -127,7 +127,7 @@ The crawler reads parameters from the `config.json` file. To be able to interact
 
 Optional parameters:
 
-* `avoidNetworkRequests`: set this flag to `true` to tell the crawler to use the cache entry for a URL directly, instead of sending a conditional HTTP request to check whether the entry is still valid. This parameter is typically useful when developing Reffy's code to work offline.
+* `cacheRefresh`: set this flag to `never` to tell the crawler to use the cache entry for a URL directly, instead of sending a conditional HTTP request to check whether the entry is still valid. This parameter is typically useful when developing Reffy's code to work offline.
 * `resetCache`: set this flag to `true` to tell the crawler to reset the contents of the local cache when it starts.
 
 ### Hardcoded rules

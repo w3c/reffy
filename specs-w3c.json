@@ -15,6 +15,7 @@
         "https://www.w3.org/TR/websockets/",
         "https://www.w3.org/TR/webstorage/",
         "https://www.w3.org/TR/workers/",
-        { "file": "./specs-common.json" }
+        { "file": "./specs-common.json" },
+        { "file": "./specs-cg.json" }
     ]
 }
