@@ -332,7 +332,7 @@ function crawlList(speclist, crawlOptions) {
 function getShortname(spec) {
   if (spec.shortname) {
     // do not include versionning
-    return spec.shortname.replace(/-?[0-9]*$/, '');
+    return spec.shortname.replace(/-?[0-9\.]*$/, '');
   }
   const whatwgMatch = spec.url.match(/\/\/(.*)\.spec.whatwg.org\/$/);
   if (whatwgMatch) {
