@@ -276,15 +276,30 @@ function crawlList(speclist, crawlOptions) {
                 spec,
                 titleExtractor(dom),
                 linkExtractor(dom),
-                refParser.extract(dom).catch(err => {console.error(spec.crawled, err); return err;}),
+                refParser.extract(dom).catch(err => {
+                    console.error(spec.crawled, err);
+                    return err;
+                }),
                 webidlExtractor.extract(dom)
-                    .then(idl => Promise.all([
-                        idl,
-                        webidlParser.parse(idl),
-                        webidlParser.hasObsoleteIdl(idl)
-                    ])
-                    .then(([idl, parsedIdl, hasObsoletedIdl]) => { parsedIdl.hasObsoleteIdl = hasObsoletedIdl; parsedIdl.idl = idl; return parsedIdl; })
-                    .catch(err => { console.error(spec.crawled, err); return err; })),
+                    .then(idl =>
+                        Promise.all([
+                            idl,
+                            webidlParser.parse(idl),
+                            webidlParser.hasObsoleteIdl(idl)
+                        ])
+                        .then(([idl, parsedIdl, hasObsoletedIdl]) => {
+                            parsedIdl.hasObsoleteIdl = hasObsoletedIdl;
+                            parsedIdl.idl = idl;
+                            return parsedIdl;
+                        })
+                        .catch(err => {
+                            // IDL content is invalid and cannot be parsed.
+                            // Let's return the error, along with the raw IDL
+                            // content so that it may be saved to a file.
+                            console.error(spec.crawled, err);
+                            err.idl = idl;
+                            return err;
+                        })),
                 dom
             ]))
             .then(res => {
