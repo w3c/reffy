@@ -94,7 +94,8 @@ function extractBikeshedIdl(doc) {
  */
 function extractRespecIdl(doc) {
     return new Promise(resolve => {
-        let idlEl = doc.querySelector('#idl-index pre');
+        let idlEl = doc.querySelector('#idl-index pre') ||
+            doc.querySelector('#chapter-idl pre');  // Used in SVG 2 draft
         if (idlEl) {
             resolve(idlEl.textContent);
         }
