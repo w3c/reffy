@@ -20,6 +20,7 @@
  * and in the list of references (e.g. because the body of the document
  * references the Editor's draft while the reference is to the latest published
  * version).
+ * 10. W3C specs that do not have a known Editor's Draft
  *
  * The crawl analyzer can be called directly through:
  *
@@ -275,7 +276,11 @@ function studyCrawlResults(results, specsToInclude) {
                             canonicalizesTo(r.url, spec.url, useEquivalents) ||
                             canonicalizesTo(r.url, spec.versions, useEquivalents)))
                         .map(filterSpecInfo)
-                }
+                },
+
+                // Warn when a W3C spec does not link to an Editor's Draft
+                noEdDraft: spec.url.match(/www.w3.org\/TR\//) &&
+                    !spec.edDraft
             };
 
             // A spec is OK if it does not contain anything "suspicious".
@@ -289,7 +294,8 @@ function studyCrawlResults(results, specsToInclude) {
                 (!report.redefinedIdlNames || (report.redefinedIdlNames.length === 0)) &&
                 (!report.missingWebIdlRef || (report.missingWebIdlRef.length === 0)) &&
                 (report.missingLinkRef.length === 0) &&
-                (report.inconsistentRef.length === 0);
+                (report.inconsistentRef.length === 0) &&
+                !report.noEdDraft;
             var res = {
                 title: spec.title,
                 shortname: spec.shortname,
