@@ -214,6 +214,9 @@ function generateReportPerSpec(study) {
                 ' report.');
         }
         else {
+            if (report.noEdDraft) {
+                w('- Link to an Editor\'s Draft not found');
+            }
             if (report.noNormativeRefs) {
                 w('- No normative references found');
             }
@@ -323,6 +326,29 @@ function generateReportPerIssue(study) {
         // Remove specs that could not be parsed from the rest of the report
         results = results.filter(spec => !spec.report.error);
     }
+
+
+    count = 0;
+    w('## Specifications that do not link to an Editor\'s Draft');
+    w();
+    results
+        .filter(spec => spec.report.noEdDraft)
+        .forEach(spec => {
+            count += 1;
+            w('- [' + spec.title + '](' + spec.crawled + ')');
+        });
+    w();
+    w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
+    if (count > 0) {
+        w();
+        w('It is good practice to link to Editor\'s Draft for W3C specifications ' +
+            'even for specifications published as Recommendations. Reffy (or ' +
+            'rather the W3C API) could not find a link to an Editor\'s Draft ' +
+            'for the specifications mentioned above.');
+    }
+    w();
+    w();
+
 
     count = 0;
     w('## Specifications without normative dependencies');
@@ -701,6 +727,7 @@ function generateDiffReport(study, refStudy, options) {
             } : null,
             ok: getSimpleDiff('ok'),
             error: getSimpleDiff('error'),
+            noEdDraft: getSimpleDiff('noEdDraft'),
             noNormativeRefs: getSimpleDiff('noNormativeRefs'),
             noRefToWebIDL: getSimpleDiff('noRefToWebIDL'),
             noIdlContent: getSimpleDiff('noIdlContent'),
@@ -823,6 +850,7 @@ function generateDiffReport(study, refStudy, options) {
             { title: 'Spec title', prop: 'title', diff: 'simple' },
             { title: 'Spec is OK', prop: 'ok', diff: 'simple' },
             { title: 'Spec could not be rendered', prop: 'error', diff: 'simple' },
+            { title: 'Link to an Editor\'s Draft not found', prop: 'noEdDraft', diff: 'simple' },
             { title: 'No normative references found', prop: 'noNormativeRefs', diff: 'simple' },
             { title: 'No WebIDL definitions found', prop: 'noIdlContent', diff: 'simple' },
             { title: 'Invalid WebIDL content found', prop: 'hasInvalidIdl', diff: 'simple' },

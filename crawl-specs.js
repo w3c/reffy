@@ -256,7 +256,7 @@ function crawlList(speclist, crawlOptions) {
 
     function getRefAndIdl(spec) {
         spec.title = spec.title || (spec.shortname ? spec.shortname : spec.url);
-        var bogusEditorDraft = ['webmessaging', 'eventsource', 'webstorage', 'progress-events', 'uievents'];
+        var bogusEditorDraft = ['webmessaging', 'eventsource', 'webstorage', 'progress-events'];
         var unparseableEditorDraft = [];
         spec.crawled = ((
                 crawlOptions.publishedVersion ||
