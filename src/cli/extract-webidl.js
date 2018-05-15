@@ -12,8 +12,8 @@
  * @module webidlExtractor
  */
 
-var urlOrDom = require('./util').urlOrDom;
-var getDocumentAndGenerator = require('./util').getDocumentAndGenerator;
+const urlOrDom = require('../lib/util').urlOrDom;
+const getDocumentAndGenerator = require('../lib/util').getDocumentAndGenerator;
 
 
 /**

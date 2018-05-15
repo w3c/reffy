@@ -15,8 +15,8 @@
  * @module merger
  */
 
-var fs = require('fs');
-const requireFromWorkingDirectory = require('./util').requireFromWorkingDirectory;
+const fs = require('fs');
+const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
 
 
 /**

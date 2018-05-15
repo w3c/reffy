@@ -24,7 +24,7 @@
  */
 
 const fs = require('fs');
-const requireFromWorkingDirectory = require('./util').requireFromWorkingDirectory;
+const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
 const crawlList = require('./crawl-specs').crawlList;
 const mergeCrawlResults = require('./merge-crawl-results').mergeCrawlResults;
 const studyCrawl = require('./study-crawl').studyCrawl;

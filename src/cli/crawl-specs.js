@@ -20,16 +20,16 @@
  * @module crawler
  */
 
-var refParser = require('./parse-references');
-var webidlExtractor = require('./extract-webidl');
-var loadSpecification = require('./util').loadSpecification;
-var webidlParser = require('./parse-webidl');
-var fetch = require('./util').fetch;
-var fs = require('fs');
-var specEquivalents = require('./spec-equivalents.json');
-var canonicalizeURL = require('./canonicalize-url').canonicalizeURL;
+const fs = require('fs');
 const path = require('path');
-const requireFromWorkingDirectory = require('./util').requireFromWorkingDirectory;
+const refParser = require('./parse-references');
+const webidlExtractor = require('./extract-webidl');
+const loadSpecification = require('../lib/util').loadSpecification;
+const webidlParser = require('./parse-webidl');
+const fetch = require('../lib/util').fetch;
+const specEquivalents = require('../specs/spec-equivalents.json');
+const canonicalizeURL = require('../lib/canonicalize-url').canonicalizeURL;
+const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
 
 /**
  * Flattens an array

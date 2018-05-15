@@ -25,8 +25,8 @@
  * @module markdownGenerator
  */
 
-const requireFromWorkingDirectory = require('./util').requireFromWorkingDirectory;
-const fetch = require('./util').fetch;
+const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
+const fetch = require('../lib/util').fetch;
 const studyCrawl = require('./study-crawl').studyCrawl;
 
 
