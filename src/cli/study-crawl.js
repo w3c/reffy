@@ -31,9 +31,9 @@
  * @module analyzer
  */
 
-const canonicalizeURL = require('./canonicalize-url').canonicalizeURL;
-const canonicalizesTo = require('./canonicalize-url').canonicalizesTo;
-const requireFromWorkingDirectory = require('./util').requireFromWorkingDirectory;
+const canonicalizeURL = require('../lib/canonicalize-url').canonicalizeURL;
+const canonicalizesTo = require('../lib/canonicalize-url').canonicalizesTo;
+const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
 
 const array_concat = (a,b) => a.concat(b);
 

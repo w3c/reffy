@@ -16,9 +16,9 @@ const program = require('commander');
 const version = require('./package.json').version;
 const fs = require('fs');
 const path = require('path');
-const crawlFile = require('./crawl-specs.js').crawlFile;
-const studyCrawl = require('./study-crawl.js').studyCrawl;
-const generateReport = require('./generate-report.js').generateReport;
+const crawlFile = require('./src/cli/crawl-specs.js').crawlFile;
+const studyCrawl = require('./src/cli/study-crawl.js').studyCrawl;
+const generateReport = require('./src/cli/generate-report.js').generateReport;
 const pandoc = require('node-pandoc');
 
 
@@ -84,7 +84,7 @@ program
       switch (action) {
       case 'crawl':
         promise = promise
-          .then(_ => crawlFile(path.resolve(__dirname, specsfile), reportFolder));
+          .then(_ => crawlFile(path.resolve(__dirname, 'src', 'specs', specsfile), reportFolder));
         break;
 
       case 'study':
@@ -109,7 +109,7 @@ program
           .then(_ => new Promise((resolve, reject) => {
             let args = [
               '-f', 'markdown', '-t', 'html5', '--section-divs', '-s',
-              '--template', path.join(__dirname, 'report-template.html'),
+              '--template', path.join(__dirname, 'src', 'templates', 'report-template.html'),
               '-o', path.join(reportFolder, 'index.html')
             ];
             pandoc(path.join(reportFolder, 'index.md'), args,
@@ -119,7 +119,7 @@ program
                 }
                 args = [
                   '-f', 'markdown', '-t', 'html5', '--section-divs', '-s',
-                  '--template', path.join(__dirname, 'report-perissue-template.html'),
+                  '--template', path.join(__dirname, 'src', 'templates', 'report-perissue-template.html'),
                   '-o', path.join(reportFolder, 'perissue.html')];
                 pandoc(path.join(reportFolder, 'perissue.md'), args,
                   (err => {

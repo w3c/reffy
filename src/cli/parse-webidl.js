@@ -18,7 +18,7 @@
  * @module webidlParser
  */
 
-var WebIDL2 = require("webidl2");
+const WebIDL2 = require("webidl2");
 
 
 /**

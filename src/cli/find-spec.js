@@ -13,11 +13,11 @@
  * @module finder
  */
 
-const requireFromWorkingDirectory = require('./util').requireFromWorkingDirectory;
-const blacklist = require("./blacklist.json");
+const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
+const blacklist = require("../specs/blacklist.json");
 const {JSDOM} = require("jsdom");
 
-const canonicalize = require('./canonicalize-url').canonicalizeURL;
+const canonicalize = require('../lib/canonicalize-url').canonicalizeURL;
 
 /**
  * Retrieve the document at the specified location and extract links that
