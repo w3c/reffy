@@ -155,7 +155,7 @@ program
 
     return promise.then(_ => console.log('-- THE END -- '))
       .catch(err => {
-        console.error('-- ERROR CAUCHT --');
+        console.error('-- ERROR CAUGHT --');
         console.error(err);
         process.exit(1);
       });
