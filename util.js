@@ -1,8 +1,12 @@
+/**
+ * A bunch of utility functions common to multiple scripts
+ */
+
 const path = require('path');
 const URL = require('url');
-const { JSDOM } = require('jsdom');
-const baseFetch = require('fetch-filecache-for-crawling');
-const respecWriter = require("respec/tools/respecDocWriter").fetchAndWrite;
+const fetch = require('./fetch');
+const { JSDOM } = require('./jsdom-monkeypatch');
+
 
 
 /**
@@ -20,43 +24,6 @@ const respecWriter = require("respec/tools/respecDocWriter").fetchAndWrite;
  */
 function requireFromWorkingDirectory(filename) {
     return require(path.resolve(filename));
-}
-
-// Read configuration parameters from `config.json` file
-let config = null;
-try {
-    config = requireFromWorkingDirectory('config.json');
-}
-catch (err) {
-    config = {};
-}
-
-
-/**
- * Fetch function that applies fetch parameters defined in `config.json`
- * unless parameters are already set.
- *
- * By default, force the HTTP refresh strategy to "once", so that only one
- * HTTP request gets sent on a given URL per crawl.
- *
- * @function
- * @param {String} url URL to fetch
- * @param {Object} options Fetch options (and options for node-fetch, and
- *   options for fetch-filecache-for-crawling)
- * @return {Promise(Response)} Promise to get an HTTP response
- */
-function fetch(url, options) {
-    options = Object.assign({}, options);
-    ['cacheFolder', 'resetCache', 'cacheRefresh', 'logToConsole'].forEach(param => {
-        let fetchParam = (param === 'cacheRefresh') ? 'refresh' : param;
-        if (config[param] && !options.hasOwnProperty(fetchParam)) {
-            options[fetchParam] = config[param];
-        }
-    });
-    if (!options.refresh) {
-        options.refresh = 'once';
-    }
-    return baseFetch(url, options);
 }
 
 
@@ -78,19 +45,47 @@ function fetch(url, options) {
  * @return {Promise} The promise to get a window object once the spec has
  *   been loaded with jsdom.
  */
-function loadSpecificationFromHtml(spec, counter) {
+async function loadSpecificationFromHtml(spec, counter) {
     let url = spec.url || 'about:blank';
     let responseUrl = spec.responseUrl || url;
     let html = spec.html || '';
     counter = counter || 0;
 
-    return new Promise((resolve, reject) => {
+    let promise = new Promise((resolve, reject) => {
         // Drop Byte-Order-Mark character if needed, it bugs JSDOM
         if (html.charCodeAt(0) === 0xFEFF) {
             html = html.substring(1);
         }
-        const {window} = new JSDOM(html, {url: responseUrl});
-        const doc = window.document;
+        const {window} = new JSDOM(html, {
+            url: responseUrl,
+            resources: 'usable',
+            runScripts: 'dangerously',
+            beforeParse(window) {
+                // Wait until the generation of Respec documents is over
+                window.addEventListener('load', function () {
+                    let usesRespec = window.respecConfig &&
+                        window.document.head.querySelector("script[src*='respec']");
+                    let resolveWhenReady = _ => {
+                        if (window.document.respecIsReady) {
+                            window.document.respecIsReady
+                                .then(_=> resolve(window))
+                                .catch(reject);
+                        }
+                        else if (usesRespec) {
+                            setTimeout(resolveWhenReady, 100);
+                        }
+                        else {
+                            resolve(window);
+                        }
+                    }
+                    resolveWhenReady();
+                });
+            }
+        });
+    });
+
+    return promise.then(window => {
+        let doc = window.document;
 
         // Handle <meta http-equiv="refresh"> redirection
         // Note that we'll assume that the number in "content" is correct
@@ -100,45 +95,31 @@ function loadSpecificationFromHtml(spec, counter) {
             if (redirectUrl) {
                 redirectUrl = URL.resolve(doc.baseURI, redirectUrl.trim());
                 if ((redirectUrl !== url) && (redirectUrl !== responseUrl)) {
-                    loadSpecificationFromUrl(redirectUrl, counter + 1)
-                        .then(window => resolve(window))
-                        .catch(err => reject(err));
-                    return;
+                    return loadSpecificationFromUrl(redirectUrl, counter + 1);
                 }
             }
         }
 
-        // ReSpec doc
-        if (doc.querySelector("script[src*='respec']")) {
-            // this does another network fetch :(
-            return respecWriter(url, '', {}, 20000).then(function(html) {
-                const dom = new JSDOM(html, {url: responseUrl});
-                resolve(dom.window);
-            }).catch(reject);
-        } else { // ReSpec doesn't do multipages in any case
-            const links = doc.querySelectorAll('body .head dl a[href]');
-            for (let i = 0 ; i < links.length; i++) {
-                let link = links[i];
-                let text = (link.textContent || '').toLowerCase();
-                if (text.includes('single page') ||
-                    text.includes('single file') ||
-                    text.includes('single-page') ||
-                    text.includes('one-page')) {
-                    let singlePage = URL.resolve(doc.baseURI, link.getAttribute('href'));
-                    if ((singlePage === url) || (singlePage === responseUrl)) {
-                        // We're already looking at the single page version
-                        resolve(window);
-                    }
-                    else {
-                        loadSpecificationFromUrl(singlePage, counter + 1)
-                            .then(window => resolve(window))
-                            .catch(err => reject(err));
-                    }
-                    return;
+        const links = doc.querySelectorAll('body .head dl a[href]');
+        for (let i = 0 ; i < links.length; i++) {
+            let link = links[i];
+            let text = (link.textContent || '').toLowerCase();
+            if (text.includes('single page') ||
+                text.includes('single file') ||
+                text.includes('single-page') ||
+                text.includes('one-page')) {
+                let singlePage = URL.resolve(doc.baseURI, link.getAttribute('href'));
+                if ((singlePage === url) || (singlePage === responseUrl)) {
+                    // We're already looking at the single page version
+                    return window;
                 }
+                else {
+                    return loadSpecificationFromUrl(singlePage, counter + 1);
+                }
+                return;
             }
         }
-        resolve(window);
+        return window;
     });
 }
 

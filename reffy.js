@@ -153,8 +153,12 @@ program
       }
     });
 
-    promise.then(_ => console.log('-- THE END -- '))
-      .catch(err => console.error(err));
+    return promise.then(_ => console.log('-- THE END -- '))
+      .catch(err => {
+        console.error('-- ERROR CAUCHT --');
+        console.error(err);
+        process.exit(1);
+      });
   });
 
 program.on('--help', function(){
