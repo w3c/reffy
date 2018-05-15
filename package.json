@@ -37,7 +37,6 @@
     "fetch-filecache-for-crawling": "^3.0.1",
     "jsdom": "^11.10.0",
     "node-pandoc": "^0.3.0",
-    "respec": "^20.10.3",
     "webidl2": "^10.3.3"
   },
   "devDependencies": {
