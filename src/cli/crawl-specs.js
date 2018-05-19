@@ -374,9 +374,20 @@ function saveResults(crawlInfo, crawlOptions, data, folder) {
     .then(idlFolder => Promise.all(data.map(spec =>
         new Promise((resolve, reject) => {
             if (spec.idl.idl) {
-                fs.writeFile(path.join(idlFolder, getShortname(spec) + '.idl'),
-                             spec.idl.idl,
-                             err => { if (err) return console.log(err); return resolve();});
+                let idl = `
+                    // GENERATED CONTENT - DO NOT EDIT
+                    // Content of this file was automatically extracted from the
+                    // "${spec.title}" spec.
+                    // See: ${spec.crawled}`;
+                idl = idl.replace(/^\s+/gm, '').trim();
+                idl += `\n\n${spec.idl.idl.trim()}`;
+                fs.writeFile(
+                    path.join(idlFolder, getShortname(spec) + '.idl'),
+                    idl,
+                    err => {
+                        if (err) console.log(err);
+                        return resolve();
+                    });
                 delete spec.idl.idl;
           } else resolve();
         }))).then(_ => new Promise((resolve, reject) => {
