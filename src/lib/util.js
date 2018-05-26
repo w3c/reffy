@@ -92,8 +92,9 @@ async function loadSpecificationFromHtml(spec, counter) {
         let metaRefresh = doc.querySelector('meta[http-equiv="refresh"]');
         if (metaRefresh) {
             let redirectUrl = (metaRefresh.getAttribute('content') || '').split(';')[1];
+            redirectUrl = redirectUrl.trim().replace(/url=/i, '');
             if (redirectUrl) {
-                redirectUrl = URL.resolve(doc.baseURI, redirectUrl.trim());
+                redirectUrl = URL.resolve(doc.baseURI, redirectUrl);
                 if ((redirectUrl !== url) && (redirectUrl !== responseUrl)) {
                     return loadSpecificationFromUrl(redirectUrl, counter + 1);
                 }
