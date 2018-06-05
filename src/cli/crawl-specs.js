@@ -380,7 +380,7 @@ function saveResults(crawlInfo, crawlOptions, data, folder) {
                     // "${spec.title}" spec.
                     // See: ${spec.crawled}`;
                 idl = idl.replace(/^\s+/gm, '').trim();
-                idl += `\n\n${spec.idl.idl.trim()}`;
+                idl += `\n\n${spec.idl.idl.trim()}\n`;
                 fs.writeFile(
                     path.join(idlFolder, getShortname(spec) + '.idl'),
                     idl,
