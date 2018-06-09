@@ -84,7 +84,10 @@ program
       switch (action) {
       case 'crawl':
         promise = promise
-          .then(_ => crawlFile(path.resolve(__dirname, 'src', 'specs', specsfile), reportFolder));
+          .then(_ => crawlFile(
+            path.resolve(__dirname, 'src', 'specs', specsfile),
+            reportFolder,
+            { publishedVersion }));
         break;
 
       case 'study':
