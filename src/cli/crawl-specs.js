@@ -339,6 +339,7 @@ async function crawlList(speclist, crawlOptions, resultsPath) {
     async function crawlSpecInChildProcess(spec) {
         return new Promise(resolve => {
             let resolved = false;
+            let timeout = null;
 
             function reportSuccess(result) {
                 if (resolved) {
@@ -378,7 +379,7 @@ async function crawlList(speclist, crawlOptions, resultsPath) {
                 }
             });
 
-            let timeout = setTimeout(_ => {
+            timeout = setTimeout(_ => {
                 console.warn(spec.url, 'Crawl timeout');
                 reportError(new Error('Crawl took too long'));
                 child.kill();
