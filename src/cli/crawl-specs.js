@@ -340,12 +340,6 @@ async function crawlList(speclist, crawlOptions, resultsPath) {
         return new Promise(resolve => {
             let resolved = false;
 
-            let timeout = setTimeout(_ => {
-                console.warn(spec.url, 'Crawl timeout');
-                reportError(new Error('Crawl took too long'));
-                child.kill();
-            }, 60000);
-
             function reportSuccess(result) {
                 if (resolved) {
                     console.warn('Got a second resolution for crawl in a child process');
@@ -383,6 +377,13 @@ async function crawlList(speclist, crawlOptions, resultsPath) {
                     reportError(new Error(`Crawl exited without sending result`));
                 }
             });
+
+            let timeout = setTimeout(_ => {
+                console.warn(spec.url, 'Crawl timeout');
+                reportError(new Error('Crawl took too long'));
+                child.kill();
+            }, 60000);
+
             child.send(spec);
         });
     }
