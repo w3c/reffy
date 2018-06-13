@@ -134,6 +134,8 @@ function studyCrawlResults(results, specsToInclude) {
                 (spec.html && toInclude.html && (spec.html === toInclude.html))))
         .map(spec => {
             spec.idl = spec.idl || {};
+            spec.refs = spec.refs || {};
+            spec.links = spec.links || [];
             var idlDfns = spec.idl.idlNames ?
                 Object.keys(spec.idl.idlNames).filter(name => (name !== '_dependencies') && (name !== '_reallyDependsOnWindow')) : [];
             var idlExtendedDfns = spec.idl.idlExtendedNames ?
@@ -267,12 +269,12 @@ function studyCrawlResults(results, specsToInclude) {
                 // (used to produce the dependencies report)
                 referencedBy: {
                     normative: sortedResults.filter(s =>
-                        s.refs.normative && s.refs.normative.find(r =>
+                        s.refs && s.refs.normative && s.refs.normative.find(r =>
                             canonicalizesTo(r.url, spec.url, useEquivalents) ||
                             canonicalizesTo(r.url, spec.versions, useEquivalents)))
                         .map(filterSpecInfo),
                     informative: sortedResults.filter(s =>
-                        s.refs.informative && s.refs.informative.find(r =>
+                        s.refs && s.refs.informative && s.refs.informative.find(r =>
                             canonicalizesTo(r.url, spec.url, useEquivalents) ||
                             canonicalizesTo(r.url, spec.versions, useEquivalents)))
                         .map(filterSpecInfo)
