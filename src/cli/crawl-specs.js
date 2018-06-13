@@ -365,7 +365,7 @@ async function crawlList(speclist, crawlOptions, resultsPath) {
             // Spawn a child process
             // NB: passing the spec URL is useless but gives useful info when
             // looking at processes during debugging in the task manager
-            let child = fork('src/cli/crawl-specs.js', [
+            let child = fork(path.join(__dirname, 'crawl-specs.js'), [
                     '--child', spec.url, (crawlOptions.publishedVersion ? 'tr' : 'ed')
                 ]);
             child.once('message', result => reportSuccess(result));
