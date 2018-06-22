@@ -473,13 +473,16 @@ function saveResults(crawlInfo, crawlOptions, data, folder) {
     .then(idlFolder => Promise.all(data.map(spec =>
         new Promise((resolve, reject) => {
             if (spec.idl && spec.idl.idl) {
-                let idl = `
+                let idlHeader = `
                     // GENERATED CONTENT - DO NOT EDIT
                     // Content of this file was automatically extracted from the
                     // "${spec.title}" spec.
                     // See: ${spec.crawled}`;
-                idl = idl.replace(/^\s+/gm, '').trim();
-                idl += `\n\n${spec.idl.idl.trim()}\n`;
+                idlHeader = idlHeader.replace(/^\s+/gm, '').trim() + '\n\n';
+                let idl = spec.idl.idl
+                    .replace(/\s+$/gm, '\n')
+                    .trim();
+                idl = idlHeader + idl + '\n';
                 fs.writeFile(
                     path.join(idlFolder, getShortname(spec) + '.idl'),
                     idl,

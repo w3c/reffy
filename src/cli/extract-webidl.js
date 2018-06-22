@@ -101,8 +101,16 @@ function extractRespecIdl(doc) {
         }
         else {
             let idl = '';
-            ['pre.idl', 'pre > code.idl-code', 'div.idl-code > pre', 'pre.widl']
-                .find(sel => !!(idl += [...doc.querySelectorAll(sel)].map(n => '\n' + n.textContent).join('')));
+            [
+                'pre.idl',
+                'pre > code.idl-code',
+                'div.idl-code > pre',
+                'pre.widl'
+            ].find(sel => {
+                let snippets = [...doc.querySelectorAll(sel)]
+                    .map(el => el.textContent.trim());
+                return !!(idl += snippets.join('\n\n'));
+            });
             resolve(idl);
         }
     });
