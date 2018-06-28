@@ -365,10 +365,28 @@ async function crawlList(speclist, crawlOptions, resultsPath) {
             // Spawn a child process
             // NB: passing the spec URL is useless but gives useful info when
             // looking at processes during debugging in the task manager
+            // NB: all fetch requests are processed by the parent process,
+            // see fetch.js for details
             let child = fork(path.join(__dirname, 'crawl-specs.js'), [
                     '--child', spec.url, (crawlOptions.publishedVersion ? 'tr' : 'ed')
                 ]);
-            child.once('message', result => reportSuccess(result));
+            child.on('message', msg => {
+                if (msg.type === 'result') {
+                    reportSuccess(msg.result);
+                }
+                else if (msg.cmd === 'fetch') {
+                    fetch(msg.url, msg.options)
+                        .then(_ => child.send({
+                            type: 'fetch',
+                            reqId: msg.reqId
+                        }))
+                        .catch(err => child.send({
+                            type: 'fetch',
+                            reqId: msg.reqId,
+                            err: err.toString()
+                        }));
+                }
+            });
             child.once('exit', code => {
                 clearTimeout(timeout);
                 if (code && (code !== 0)) {
@@ -406,6 +424,9 @@ async function crawlList(speclist, crawlOptions, resultsPath) {
                         running += 1;
                         crawlSpecInChildProcess(list[pos], crawlOptions)
                             .then(result => {
+                                if (!result.crawled) {
+                                    result.crawled = result.latest;
+                                }
                                 results.push(result);
                                 running -= 1;
                                 crawlOneMoreSpec();
@@ -591,7 +612,10 @@ if (require.main === module) {
         // info and send the result using message passing
         process.once('message', spec =>
             crawlSpec(spec, crawlOptions)
-                .then(result => process.send(result)));
+                .then(result => {
+                    process.send({ type: 'result', result });
+                    process.removeAllListeners('message');
+                }));
     }
     else {
         // Process the file and crawl specifications it contains
