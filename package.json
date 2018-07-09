@@ -33,9 +33,11 @@
     "study-crawl": "./src/cli/study-crawl.js"
   },
   "dependencies": {
+    "chai": "^4.1.2",
     "commander": "^2.15.1",
     "fetch-filecache-for-crawling": "^3.0.1",
     "jsdom": "^11.10.0",
+    "mocha": "^5.2.0",
     "node-pandoc": "^0.3.0",
     "webidl2": "^10.3.3"
   },

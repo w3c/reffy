@@ -1,0 +1,16 @@
+<integer>
+left | right | center | justify
+<length> | <percentage>
+<color> | invert
+none | underline || overline || line-through || blink
+[ <family-name> | <generic-family> ]#
+[ <length> | thick | medium | thin ]{1,4}
+[ inset? && [ <length>{2,4} && <color>? ] ]# | none 
+<single-animation>#
+<time>
+<single-animation-fill-mode>
+[ none | <keyframes-name> ]
+none | [ objects || [ spaces | [ leading-spaces || trailing-spaces ] ] || edges || box-decoration ]
+<length-percentage>{1,2}
+[<number> | <percentage>]{1,4} && fill?
+<'border-image-source'> || <'border-image-slice'> [ / <'border-image-width'> | / <'border-image-width'>? / <'border-image-outset'> ]? || <'border-image-repeat'>
