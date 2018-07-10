@@ -5,8 +5,15 @@
 const path = require('path');
 const URL = require('url');
 const fetch = require('./fetch');
+const specEquivalents = require('../specs/spec-equivalents.json');
+const canonicalizeURL = require('./canonicalize-url').canonicalizeURL;
 const { JSDOM } = require('./jsdom-monkeypatch');
 
+
+/**
+ * Shortcut that returns a property extractor iterator
+ */
+const prop = p => x => x[p];
 
 
 /**
@@ -51,7 +58,7 @@ async function loadSpecificationFromHtml(spec, counter) {
     let html = spec.html || '';
     counter = counter || 0;
 
-    let promise = new Promise((resolve, reject) => {
+    let window = await new Promise((resolve, reject) => {
         // Drop Byte-Order-Mark character if needed, it bugs JSDOM
         if (html.charCodeAt(0) === 0xFEFF) {
             html = html.substring(1);
@@ -84,44 +91,64 @@ async function loadSpecificationFromHtml(spec, counter) {
         });
     });
 
-    return promise.then(window => {
-        let doc = window.document;
+    let doc = window.document;
 
-        // Handle <meta http-equiv="refresh"> redirection
-        // Note that we'll assume that the number in "content" is correct
-        let metaRefresh = doc.querySelector('meta[http-equiv="refresh"]');
-        if (metaRefresh) {
-            let redirectUrl = (metaRefresh.getAttribute('content') || '').split(';')[1];
-            redirectUrl = redirectUrl.trim().replace(/url=/i, '');
-            if (redirectUrl) {
-                redirectUrl = URL.resolve(doc.baseURI, redirectUrl);
-                if ((redirectUrl !== url) && (redirectUrl !== responseUrl)) {
-                    return loadSpecificationFromUrl(redirectUrl, counter + 1);
-                }
+    // Handle <meta http-equiv="refresh"> redirection
+    // Note that we'll assume that the number in "content" is correct
+    let metaRefresh = doc.querySelector('meta[http-equiv="refresh"]');
+    if (metaRefresh) {
+        let redirectUrl = (metaRefresh.getAttribute('content') || '').split(';')[1];
+        redirectUrl = redirectUrl.trim().replace(/url=/i, '');
+        if (redirectUrl) {
+            redirectUrl = URL.resolve(doc.baseURI, redirectUrl);
+            if ((redirectUrl !== url) && (redirectUrl !== responseUrl)) {
+                return loadSpecificationFromUrl(redirectUrl, counter + 1);
             }
         }
+    }
 
-        const links = doc.querySelectorAll('body .head dl a[href]');
-        for (let i = 0 ; i < links.length; i++) {
-            let link = links[i];
-            let text = (link.textContent || '').toLowerCase();
-            if (text.includes('single page') ||
-                text.includes('single file') ||
-                text.includes('single-page') ||
-                text.includes('one-page')) {
-                let singlePage = URL.resolve(doc.baseURI, link.getAttribute('href'));
-                if ((singlePage === url) || (singlePage === responseUrl)) {
-                    // We're already looking at the single page version
-                    return window;
-                }
-                else {
-                    return loadSpecificationFromUrl(singlePage, counter + 1);
-                }
-                return;
+    // Handle links to single page in multi-page specs
+    const links = doc.querySelectorAll('body .head dl a[href]');
+    for (let i = 0 ; i < links.length; i++) {
+        let link = links[i];
+        let text = (link.textContent || '').toLowerCase();
+        if (text.includes('single page') ||
+            text.includes('single file') ||
+            text.includes('single-page') ||
+            text.includes('one-page')) {
+            let singlePage = URL.resolve(doc.baseURI, link.getAttribute('href'));
+            if ((singlePage === url) || (singlePage === responseUrl)) {
+                // We're already looking at the single page version
+                return window;
+            }
+            else {
+                return loadSpecificationFromUrl(singlePage, counter + 1);
             }
         }
-        return window;
-    });
+    }
+
+    // Handle remaining multi-page specs manually, merging all subpages
+    // into the main page to create a single-page spec.
+    let multiPagesRules = {
+        'https://www.w3.org/TR/CSS2/': '.quick.toc .tocxref',
+        'https://www.w3.org/TR/CSS22/': '#toc .tocxref',
+        'https://drafts.csswg.org/css2/': '.quick.toc .tocxref'
+    };
+    if (multiPagesRules[spec.url]) {
+        console.warn('-- MULTIPAGE --');
+        const pages = [...doc.querySelectorAll(multiPagesRules[spec.url])]
+            .map(link => URL.resolve(doc.baseURI, link.getAttribute('href')));
+        console.warn(JSON.stringify(pages, null, 2));
+        const subWindows = await Promise.all(
+            pages.map(page => loadSpecificationFromUrl(page)));
+        subWindows.map(subWindow => {
+            const section = doc.createElement('section');
+            [...subWindow.document.body.children].forEach(
+                child => section.appendChild(child));
+            doc.body.appendChild(section);
+        });
+    }
+    return window;
 }
 
 
@@ -224,8 +251,110 @@ function getDocumentAndGenerator(window) {
     });
 }
 
+
+/**
+ * Complete the given spec object with the W3C shortname for that specification
+ * if it exists
+ *
+ * @function
+ * @private
+ * @param {Object} spec The specification object to enrich
+ * @return {Object} same object completed with a "shortname" key
+ */
+function completeWithShortName(spec) {
+    if (!spec.url.match(/www.w3.org\/TR\//)) {
+        return spec;
+    }
+    if (spec.url.match(/TR\/[0-9]+\//)) {
+        // dated version
+        var statusShortname = spec.url.split('/')[5];
+        spec.shortname = statusShortname.split('-').slice(1, -1).join('-');
+        return spec;
+    }
+    spec.shortname = spec.url.split('/')[4];
+    return spec;
+}
+
+
+/**
+ * Enrich the spec description based on information returned by the W3C API.
+ *
+ * Information typically includes the title of the spec, the link to the
+ * Editor's Draft, to the latest published version, and the history of
+ * published versions.
+ *
+ * For non W3C spec, the function basically returns the same object.
+ *
+ * @function
+ * @param {Object} spec Spec description structure (only the URL is useful)
+ * @return {Promise<Object>} The same structure, enriched with the URL of the editor's
+ *   draft when one is found
+ */
+function completeWithInfoFromW3CApi(spec) {
+    var shortname = spec.shortname;
+    var config = requireFromWorkingDirectory('config.json');
+    var options = {
+        headers: {
+            Authorization: 'W3C-API apikey="' + config.w3cApiKey + '"'
+        }
+    };
+
+    // Note the mapping between some of the specs (e.g. HTML5.1 and HTML5)
+    // is hardcoded below. In an ideal world, it would be easy to get that
+    // info from the W3C API.
+    spec.versions = new Set();
+    function addKnownVersions() {
+        spec.versions.add(spec.url);
+        if (spec.latest && (spec.latest !== spec.url)) {
+            spec.versions.add(spec.latest);
+        }
+        if (spec.edDraft && (spec.edDraft !== spec.url)) {
+            spec.versions.add(spec.edDraft);
+        }
+        if (specEquivalents[spec.url]) spec.versions = new Set([...spec.versions, ...specEquivalents[spec.url]]);
+    }
+
+    if (!shortname) {
+        addKnownVersions();
+        spec.versions = [...spec.versions];
+        return spec;
+    }
+    return fetch('https://api.w3.org/specifications/' + shortname, options)
+        .then(r =>  r.json())
+        .then(s => fetch(s._links['version-history'].href + '?embed=1', options))
+        .then(r => r.json())
+        .then(s => {
+            const versions = s._embedded['version-history'].map(prop("uri")).map(canonicalizeURL);
+            const editors = s._embedded['version-history'].map(prop("editor-draft")).filter(u => !!u).map(canonicalizeURL);
+            const latestVersion = s._embedded['version-history'][0];
+            spec.title = latestVersion.title;
+            if (!spec.latest) spec.latest = latestVersion.shortlink;
+            if (latestVersion.uri) {
+                spec.datedUrl = latestVersion.uri;
+                spec.datedStatus = latestVersion.status;
+            }
+            spec.informative =
+                !latestVersion['rec-track'] || latestVersion.informative;
+            if (latestVersion['editor-draft']) spec.edDraft = latestVersion['editor-draft'];
+            spec.versions = new Set([...spec.versions, ...versions, ...editors]);
+            return spec;
+        })
+        .catch(e => {
+            spec.error = e.toString() + (e.stack ? ' ' + e.stack : '');
+            spec.latest = 'https://www.w3.org/TR/' + shortname;
+            return spec;
+        })
+        .then(spec => {
+            addKnownVersions();
+            spec.versions = [...spec.versions];
+            return spec;
+        });
+}
+
 module.exports.fetch = fetch;
 module.exports.requireFromWorkingDirectory = requireFromWorkingDirectory;
 module.exports.loadSpecification = loadSpecification;
 module.exports.urlOrDom = urlOrDom;
 module.exports.getDocumentAndGenerator = getDocumentAndGenerator;
+module.exports.completeWithShortName = completeWithShortName;
+module.exports.completeWithInfoFromW3CApi = completeWithInfoFromW3CApi;

@@ -2,19 +2,10 @@
     "title": "Specifications that define WebIDL content (W3C perspective)",
     "description": "This crawl includes specifications that define WebIDL content, preferring W3C specifications to WHATWG specifications when both exist.",
     "list": [
-        "https://www.w3.org/TR/2dcontext/",
-        "https://www.w3.org/TR/dom41/",
-        "https://www.w3.org/TR/eventsource/",
-        "https://www.w3.org/TR/html52/",
-        "https://www.w3.org/TR/mediaont-api-1.0/",
-        "https://www.w3.org/TR/notifications/",
-        "https://www.w3.org/TR/progress-events/",
-        "https://www.w3.org/TR/selectors-api/",
-        "https://www.w3.org/TR/webmessaging/",
-        "https://www.w3.org/TR/websockets/",
-        "https://www.w3.org/TR/webstorage/",
-        "https://www.w3.org/TR/workers/",
-        { "file": "./specs-common.json" },
-        { "file": "./specs-cg.json" }
+        { "file": "./specs-w3c-idl.json" },
+        { "file": "./specs-idl.json" },
+        { "file": "./specs-cg-idl.json" },
+        { "file": "./specs-css.json" },
+        { "file": "./specs-other.json" }
     ]
 }

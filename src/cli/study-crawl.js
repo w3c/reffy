@@ -133,6 +133,7 @@ function studyCrawlResults(results, specsToInclude) {
                 (spec.url && toInclude.url && (spec.url === toInclude.url)) ||
                 (spec.html && toInclude.html && (spec.html === toInclude.html))))
         .map(spec => {
+            spec.flags = spec.flags || {};
             spec.idl = spec.idl || {};
             spec.refs = spec.refs || {};
             spec.links = spec.links || [];
@@ -156,17 +157,23 @@ function studyCrawlResults(results, specsToInclude) {
 
                 // Whether the spec normatively references the WebIDL spec
                 // (all specs that define IDL content should)
-                noRefToWebIDL: !((spec === WebIDLSpec) ||
-                    (spec.refs.normative && spec.refs.normative.find(ref =>
+                noRefToWebIDL: (spec !== WebIDLSpec) &&
+                    spec.flags.idl &&
+                    (!spec.refs.normative || !spec.refs.normative.find(ref =>
                         ref.name.match(/^WebIDL/i) ||
                             (ref.url === WebIDLSpec.url) ||
-                            (ref.url === WebIDLSpec.latest)))),
+                            (ref.url === WebIDLSpec.latest))),
 
-                // Whether the crawler managed to find IDL content in the spec
-                // (most specs crawled here should)
-                noIdlContent: (Object.keys(spec.idl).length === 0) ||
-                    (!spec.idl.idlNames && !spec.idl.message) ||
-                    ((idlDfns.length === 0) && (idlExtendedDfns.length === 0) && !spec.idl.message),
+                // For specs that should have IDL, whether the crawler managed
+                // to find IDL content in the spec
+                noIdlContent: spec.flags.idl &&
+                    ((Object.keys(spec.idl).length === 0) ||
+                        (!spec.idl.idlNames && !spec.idl.message) ||
+                        ((idlDfns.length === 0) && (idlExtendedDfns.length === 0) && !spec.idl.message)),
+
+                // For specs that should not define any IDL, whether the
+                // crawler extracted IDL content from the spec
+                hasUnexpectedIdl: !spec.flags.idl && (idlDfns.length > 0),
 
                 // Whether the spec has invalid IDL content
                 // (the crawler cannot do much when IDL content is invalid, it
@@ -289,6 +296,7 @@ function studyCrawlResults(results, specsToInclude) {
             report.ok = !report.error &&
                 !report.noNormativeRefs &&
                 !report.noIdlContent &&
+                !report.hasUnexpectedIdl &&
                 !report.hasInvalidIdl &&
                 !report.hasObsoleteIdl &&
                 !report.noRefToWebIDL &&

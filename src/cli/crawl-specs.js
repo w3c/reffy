@@ -28,9 +28,10 @@ const webidlExtractor = require('./extract-webidl');
 const loadSpecification = require('../lib/util').loadSpecification;
 const webidlParser = require('./parse-webidl');
 const fetch = require('../lib/util').fetch;
-const specEquivalents = require('../specs/spec-equivalents.json');
 const canonicalizeURL = require('../lib/canonicalize-url').canonicalizeURL;
 const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
+const completeWithInfoFromW3CApi = require('../lib/util').completeWithInfoFromW3CApi;
+const completeWithShortName = require('../lib/util').completeWithShortName;
 
 /**
  * Flattens an array
@@ -44,12 +45,6 @@ const flatten = arr => arr.reduce(
  * Compares specs for ordering by URL
  */
 const byURL = (a, b) => a.url.localeCompare(b.url);
-
-
-/**
- * Shortcut that returns a property extractor iterator
- */
-const prop = p => x => x[p];
 
 
 /**
@@ -83,103 +78,6 @@ function linkExtractor(window) {
     const links = new Set([...window.document.querySelectorAll('a[href^=http]')]
         .map(n => canonicalizeURL(n.href)));
     return [...links];
-}
-
-/**
- * Complete the given spec object with the W3C shortname for that specification
- * if it exists
- *
- * @function
- * @private
- * @param {Object} spec The specification object to enrich
- * @return {Object} same object completed with a "shortname" key
- */
-function completeWithShortName(spec) {
-    if (!spec.url.match(/www.w3.org\/TR\//)) {
-        return spec;
-    }
-    if (spec.url.match(/TR\/[0-9]+\//)) {
-        // dated version
-        var statusShortname = spec.url.split('/')[5];
-        spec.shortname = statusShortname.split('-').slice(1, -1).join('-');
-        return spec;
-    }
-    spec.shortname = spec.url.split('/')[4];
-    return spec;
-}
-
-
-/**
- * Enrich the spec description based on information returned by the W3C API.
- *
- * Information typically includes the title of the spec, the link to the
- * Editor's Draft, to the latest published version, and the history of
- * published versions.
- *
- * For non W3C spec, the function basically returns the same object.
- *
- * @function
- * @param {Object} spec Spec description structure (only the URL is useful)
- * @return {Promise<Object>} The same structure, enriched with the URL of the editor's
- *   draft when one is found
- */
-function completeWithInfoFromW3CApi(spec) {
-    var shortname = spec.shortname;
-    var config = requireFromWorkingDirectory('config.json');
-    var options = {
-        headers: {
-            Authorization: 'W3C-API apikey="' + config.w3cApiKey + '"'
-        }
-    };
-
-    // Note the mapping between some of the specs (e.g. HTML5.1 and HTML5)
-    // is hardcoded below. In an ideal world, it would be easy to get that
-    // info from the W3C API.
-    spec.versions = new Set();
-    function addKnownVersions() {
-        spec.versions.add(spec.url);
-        if (spec.latest && (spec.latest !== spec.url)) {
-            spec.versions.add(spec.latest);
-        }
-        if (spec.edDraft && (spec.edDraft !== spec.url)) {
-            spec.versions.add(spec.edDraft);
-        }
-        if (specEquivalents[spec.url]) spec.versions = new Set([...spec.versions, ...specEquivalents[spec.url]]);
-    }
-
-    if (!shortname) {
-        addKnownVersions();
-        spec.versions = [...spec.versions];
-        return spec;
-    }
-    return fetch('https://api.w3.org/specifications/' + shortname, options)
-        .then(r =>  r.json())
-        .then(s => fetch(s._links['version-history'].href + '?embed=1', options))
-        .then(r => r.json())
-        .then(s => {
-            const versions = s._embedded['version-history'].map(prop("uri")).map(canonicalizeURL);
-            const editors = s._embedded['version-history'].map(prop("editor-draft")).filter(u => !!u).map(canonicalizeURL);
-            const latestVersion = s._embedded['version-history'][0];
-            spec.title = latestVersion.title;
-            if (!spec.latest) spec.latest = latestVersion.shortlink;
-            if (latestVersion.uri) {
-                spec.datedUrl = latestVersion.uri;
-                spec.datedStatus = latestVersion.status;
-            }
-            if (latestVersion['editor-draft']) spec.edDraft = latestVersion['editor-draft'];
-            spec.versions = new Set([...spec.versions, ...versions, ...editors]);
-            return spec;
-        })
-        .catch(e => {
-            spec.error = e.toString() + (e.stack ? ' ' + e.stack : '');
-            spec.latest = 'https://www.w3.org/TR/' + shortname;
-            return spec;
-        })
-        .then(spec => {
-            addKnownVersions();
-            spec.versions = [...spec.versions];
-            return spec;
-        });
 }
 
 
@@ -232,6 +130,10 @@ async function createInitialSpecDescriptions(list) {
         if ((typeof spec !== 'string') && spec.html) {
             res.html = spec.html;
         }
+        res.flags = {
+            css: !!spec.css,
+            idl: !!spec.idl
+        };
         return res;
     }
 
@@ -497,7 +399,7 @@ function saveResults(crawlInfo, crawlOptions, data, folder) {
     })
     .then(idlFolder => Promise.all(data.map(spec =>
         new Promise((resolve, reject) => {
-            if (spec.idl && spec.idl.idl) {
+            if (spec.flags.idl && spec.idl && spec.idl.idl) {
                 let idlHeader = `
                     // GENERATED CONTENT - DO NOT EDIT
                     // Content of this file was automatically extracted from the
@@ -556,10 +458,22 @@ function assembleListOfSpec(filename, nested) {
     if (Array.isArray(crawlInfo)) {
         crawlInfo = { list: crawlInfo };
     }
-    crawlInfo.list = crawlInfo.list.map(item => item.file ?
-        assembleListOfSpec(path.resolve(path.dirname(filename), item.file), true) :
-        item);
+    crawlInfo.list = crawlInfo.list
+        .map(u => (typeof u === 'string') ? Object.assign({ url: u }) : u)
+        .map(u => u.file ? assembleListOfSpec(path.resolve(path.dirname(filename), u.file), true) : u);
     crawlInfo.list = flatten(crawlInfo.list);
+    if (filename.match(/-css/)) {
+        crawlInfo.list.forEach(u => u.css = true);
+    }
+    if (filename.match(/-idl/)) {
+        crawlInfo.list.forEach(u => u.idl = true);
+    }
+    crawlInfo.list = crawlInfo.list.filter((u, i) => {
+        let first = crawlInfo.list.find(s => s.url === u.url);
+        first.css = first.css || u.css;
+        first.idl = first.idl || u.idl;
+        return first === u;
+    });
     return (nested ? crawlInfo.list : crawlInfo);
 }
 

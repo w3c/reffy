@@ -15,6 +15,7 @@ module.exports.canonicalizeURL = (url, options) => {
             .split('#')[0]
             .replace('index.html', '')
             .replace('Overview.html', '')
+            .replace('cover.html', '')
             .replace(/spec.whatwg.org\/.*/, 'spec.whatwg.org/')  // subpage to main document in whatwg
             .replace(/w3.org\/TR\/(([^\/]+\/)+)[^\/]+\.[^\/]+$/, 'w3.org/TR/$1') // subpage to main document in w3c
             .replace(/w3.org\/TR\/([^\/]+)$/, 'w3.org/TR/$1/') // enforce trailing slash
