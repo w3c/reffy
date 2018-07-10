@@ -161,11 +161,11 @@ const parseTerminals = s => {
     return {type: "string", content: s};
   } else if ((m = s.match(/^\'([^\']*)\'$/))) {
     return {type: "string", content: m[1]};
-  } else if ((m = modifiee.match(/^<\'([^\'>]*)\'>$/))) {
+  } else if ((m = modifiee.match(/^<\'([-_a-zA-Z][^\'>]*)\'>$/))) {
     return parseMultiplier(multiplier, {type: "propertyref", name: m[1]});
   } else if ([...primitives.keys()].map(p => "<" + p + ">").includes(modifiee)) {
     return parseMultiplier(multiplier, {type: "primitive", name: modifiee.slice(1, modifiee.length -1)});
-  } else if ((m = modifiee.match(/^<([^>]*)>$/))) {
+  } else if ((m = modifiee.match(/^<[-_a-zA-Z]([^>]*)>$/))) {
     return parseMultiplier(multiplier, {type: "valuespace", name: modifiee.slice(1, modifiee.length -1)});
   } else if ((m = modifiee.match(/^[-_a-zA-Z]/))) {
     return parseMultiplier(multiplier, {type: "keyword", name: modifiee});
