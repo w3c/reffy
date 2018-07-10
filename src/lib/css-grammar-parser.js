@@ -98,60 +98,59 @@ const parseMultiplierRange = range => {
 };
 
 const parseMultiplier = (multiplier, modifiee) => {
+  let ret;
+  let multiplierLength = 1;
   if (multiplier === '') {
     return modifiee;
-  } else if (multiplier === '*') {
-    return {
+  } else if (multiplier[0] === '*') {
+    ret = {
       type: "array",
       items: modifiee
     };
-  } else if (multiplier === '+') {
-    return {
+  } else if (multiplier[0] === '+') {
+    ret = {
       type: "array",
       items: modifiee,
       minItems: 1
     };
-  } else if (multiplier.startsWith('#')) {
-    if (multiplier === '#')
-      return {
+  } else if (multiplier[0] === '#') {
+      ret =  {
         type: "array",
         items: modifiee,
         separator: ","
       };
-    return {
-      type: "array",
-      items: modifiee,
-      ...parseMultiplierRange(multiplier.slice(1))
-    };
   } else if (multiplier.startsWith('{')) {
-    return {
+    multiplierLength = (multiplier.match(/^(\{[^\}]*\})/)[1] || "{").length;
+    ret =  {
       type: "array",
       items: modifiee,
       ...parseMultiplierRange(multiplier)
     };
-  } else if (multiplier === '?') {
+  } else if (multiplier[0] === '?') {
     if (Array.isArray(modifiee)) {
-      return {type: "array", items: modifiee, maxItems: 1};
+      ret =  {type: "array", items: modifiee, maxItems: 1};
+    } else {
+      ret = {...modifiee, optional: true};
     }
-    return {...modifiee, optional: true};
-  } else if (multiplier === '!') {
+  } else if (multiplier[0] === '!') {
     if (Array.isArray(modifiee)) {
-      return {type: "array", items: modifiee, minItems: 1};
+      ret =  {type: "array", items: modifiee, minItems: 1};
+    } else {
+      throw new Error(`Multiplier "!" applied to non-group ${modifiee}`);
     }
-    throw new Error(`Multiplier "!" applied to non-group ${modifiee}`);
-    return {...modifiee, nonempty: true};
   } else {
     throw new Error(`Unrecognized multiplier ${multiplier}`);
   }
+  return parseMultiplier(multiplier.slice(multiplierLength), ret);
 };
 
 const parseTerminals = s => {
   let m;
   let multiplier = '';
   let modifiee = s;
-  if ((m = s.match(/([\+\?\*#\!])$/))) {
+  if ((m = s.match(/([\+\?\*#\!]+)$/))) {
     multiplier = m[1];
-    modifiee = s.slice(0, s.length - 1);
+    modifiee = s.slice(0, s.length - m[1].length);
   } else if ((m = s.match(/^(.*)(#?\{.*\})$/))) {
     multiplier = m[2];
     modifiee = m[1];
