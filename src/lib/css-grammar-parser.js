@@ -197,7 +197,7 @@ const parsePropDefValue = (value) => {
 
     // closing bracket may be more than just ']'
     // since it can be accompanied with multipliers
-    const matchingBracketIdx = parts.findIndex(p => typeof(p)==="string" && p.startsWith(']'));
+    const matchingBracketIdx = parts.findIndex((p, i) => typeof(p)==="string" && p.startsWith(']') && i > bracketIdx);
 
     if (matchingBracketIdx <= bracketIdx) {
       throw new Error(`Unexpected closing bracket in ${value}`);
