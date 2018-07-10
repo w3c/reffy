@@ -179,10 +179,14 @@ const parsePropDefValue = (value) => {
   value = value.trim();
   // TODO: whitespace normalization?
 
-  // Not sure if [ ] are supposed to be white-space separated from their content
+  // Not sure if combinators are supposed to be white-space separated from their content
   // but forcing it for now
-  value = value.replace(/\[/, '[ ')
-    .replace(/\]/, ' ]');
+  value = value.replace(/\[/g, '[ ')
+    .replace(/\]/g, ' ]')
+    .replace(/ #/g, '#')
+    .replace(/>\|/g, '> |')
+    .replace(/\],/g, '] ,')
+    .replace(/\]\?,/g, ']? ,');
 
   let parts = value.split(' ').filter(x => x)
         .map(parseTerminals);
