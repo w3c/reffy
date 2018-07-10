@@ -135,6 +135,7 @@ function studyCrawlResults(results, specsToInclude) {
         .map(spec => {
             spec.flags = spec.flags || {};
             spec.idl = spec.idl || {};
+            spec.css = spec.css || {};
             spec.refs = spec.refs || {};
             spec.links = spec.links || [];
             var idlDfns = spec.idl.idlNames ?
@@ -185,6 +186,18 @@ function studyCrawlResults(results, specsToInclude) {
                 // WebIDL Level 1 but no longer are, typically "[]" instead of
                 // "FrozenArray"
                 hasObsoleteIdl: spec.idl.hasObsoleteIdl,
+
+                // For specs that should contain CSS definitions, whether the
+                // crawler managed to find some in the spec
+                noCssDefinitions: spec.flags.css &&
+                    (Object.keys(spec.css.properties || {}).length === 0) &&
+                    (Object.keys(spec.css.descriptors || {}).length === 0),
+
+                // For specs that should not contains CSS definitions, whether
+                // the crawled managed to extract some
+                hasUnexpectedCssDefinitions: !spec.flags.css &&
+                    ((Object.keys(spec.css.properties || {}).length > 0) ||
+                        (Object.keys(spec.css.descriptors || {}).length > 0)),
 
                 // List of IDL names used in the spec that we know nothing about
                 // (for instance because of some typo or because the term is
@@ -299,6 +312,8 @@ function studyCrawlResults(results, specsToInclude) {
                 !report.hasUnexpectedIdl &&
                 !report.hasInvalidIdl &&
                 !report.hasObsoleteIdl &&
+                !report.noCssDefinitions &&
+                !report.hasUnexpectedCssDefinitions &&
                 !report.noRefToWebIDL &&
                 (!report.unknownIdlNames || (report.unknownIdlNames.length === 0)) &&
                 (!report.redefinedIdlNames || (report.redefinedIdlNames.length === 0)) &&

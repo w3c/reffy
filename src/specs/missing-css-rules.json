@@ -1,0 +1,188 @@
+{
+  "<alphavalue>": {
+    "value": "<number>",
+    "spec": "https://drafts.csswg.org/css-color-3/#opacity"
+  },
+  "<basic-shape>": {
+    "value": "<inset()> | <circle()> | <ellipse()> | <polygon()>",
+    "spec": "https://drafts.csswg.org/css-shapes/#typedef-basic-shape"
+  },
+  "<border-style>": {
+    "value": "none | hidden | dotted | dashed | solid | double | groove | ridge | inset | outset",
+    "spec": "https://drafts.csswg.org/css2/box.html#value-def-border-style"
+  },
+  "<border-width>": {
+    "value": "thin | medium | thick | <length>",
+    "spec": "https://drafts.csswg.org/css2/box.html#value-def-border-width"
+  },
+  "<bottom>": {
+    "value": "<length> | auto",
+    "spec": "https://drafts.fxtf.org/css-masking-1/#typedef-clip-bottom"
+  },
+  "<counter>": {
+    "value": "counter(<identifier>) | counter(<identifier>, <'list-style-type'>) | counters(<identifier>, <string>) | counters(<identifier>, <string>, <'list-style-type'>)",
+    "spec": "https://drafts.csswg.org/css2/syndata.html#value-def-counter"
+  },
+  "<counter-style-name>": {
+    "value": "<custom-ident>",
+    "spec": "https://drafts.csswg.org/css-counter-styles/#typedef-counter-style-name",
+    "prose": "<counter-style-name> is a <custom-ident> that is not an ASCII case-insensitive match for \"none\""
+  },
+  "<custom-property-name>": {
+    "prose": "The <custom-property-name> production corresponds to this: it’s defined as any valid identifier that starts with two dashes.",
+    "spec": "https://drafts.csswg.org/css-variables/#typedef-custom-property-name"
+  },
+  "<dashndashdigit-ident>": {
+    "value": "<ident-token>",
+    "prose": "<dashndashdigit-ident> is an <ident-token> whose value is an ASCII case-insensitive match for \"-n-*\", where \"*\" is a series of one or more digits",
+    "spec": "https://drafts.csswg.org/css-syntax-3/#typedef-dashndashdigit-ident"
+  },
+  "<deprecated-system-color>": {
+    "value": "ActiveBorder | ActiveCaption | AppWorkspace | Background | ButtonFace | ButtonHighlight | ButtonShadow | ButtonText | CaptionText | GrayText | Highlight | HighlightText | InactiveBorder | InactiveCaption | InactiveCaptionText | InfoBackground | InfoText | Menu | MenuText | Scrollbar | ThreeDDarkShadow | ThreeDFace | ThreeDHighlight | ThreeDLightShadow | ThreeDShadow | Window | WindowFrame | WindowText",
+    "spec": "https://drafts.csswg.org/css-color/#typedef-deprecated-system-color"
+  },
+  "<flex>": {
+    "value": "<number> fr",
+    "spec": "https://drafts.csswg.org/css-grid-1/#typedef-flex"
+  },
+  "<font-face-name>": {
+    "value": "local( <family-name> )",
+    "spec": "https://drafts.csswg.org/css-fonts/#font-face-name-value"
+  },
+  "<generic-font-family>": {
+    "value": "serif | sans-serif | cursive | fantasy | monospace | system-ui | emoji | math | fangsong",
+    "spec": "https://drafts.csswg.org/css-fonts-4/#generic-family-value"
+  },
+  "<generic-voice>": {
+    "value": "male | female | child",
+    "spec": "https://drafts.csswg.org/css2/aural.html#value-def-generic-voice"
+  },
+  "<hex-color>": {
+    "value": "<hash-token>",
+    "prose": "The syntax of a <hex-color> is a <hash-token> token whose value consists of 3, 4, 6, or 8 hexadecimal digits. In other words, a hex color is written as a hash character, \"#\", followed by some number of digits 0-9 or letters a-f (the case of the letters doesn’t matter - #00ff00 is identical to #00FF00).",
+    "spec": "https://drafts.csswg.org/css-color/#typedef-hex-color"
+  },
+  "<hsla()>": {
+    "value": "hsla( <hue> <percentage> <percentage> [ / <alpha-value> ]? )",
+    "spec": "https://drafts.csswg.org/css-color/#funcdef-hsla"
+  },
+  "<left>": {
+    "value": "<length> | auto",
+    "spec": "https://drafts.fxtf.org/css-masking-1/#typedef-clip-left"
+  },
+  "<margin-width>": {
+    "value": "<length> | <percentage> | auto",
+    "spec": "https://drafts.csswg.org/css2/box.html#value-def-margin-width"
+  },
+  "<mq-boolean>": {
+    "value": "<integer>",
+    "prose": "The <mq-boolean> value type is an <integer> with the value 0 or 1. Any other integer value is invalid.",
+    "spec": "https://drafts.csswg.org/mediaqueries-4/#typedef-mq-boolean"
+  },
+  "<named-color>": {
+    "value": "aliceblue | antiquewhite | aqua | aquamarine | azure | beige | bisque | black | blanchedalmond | blue | blueviolet | brown | burlywood | cadetblue | chartreuse | chocolate | coral | cornflowerblue | cornsilk | crimson | cyan | darkblue | darkcyan | darkgoldenrod | darkgray | darkgreen | darkgrey | darkkhaki | darkmagenta | darkolivegreen | darkorange | darkorchid | darkred | darksalmon | darkseagreen | darkslateblue | darkslategray | darkslategrey | darkturquoise | darkviolet | deeppink | deepskyblue | dimgray | dimgrey | dodgerblue | firebrick | floralwhite | forestgreen | fuchsia | gainsboro | ghostwhite | gold | goldenrod | gray | green | greenyellow | grey | honeydew | hotpink | indianred | indigo | ivory | khaki | lavender | lavenderblush | lawngreen | lemonchiffon | lightblue | lightcoral | lightcyan | lightgoldenrodyellow | lightgray | lightgreen | lightgrey | lightpink | lightsalmon | lightseagreen | lightskyblue | lightslategray | lightslategrey | lightsteelblue | lightyellow | lime | limegreen | linen | magenta | maroon | mediumaquamarine | mediumblue | mediumorchid | mediumpurple | mediumseagreen | mediumslateblue | mediumspringgreen | mediumturquoise | mediumvioletred | midnightblue | mintcream | mistyrose | moccasin | navajowhite | navy | oldlace | olive | olivedrab | orange | orangered | orchid | palegoldenrod | palegreen | paleturquoise | palevioletred | papayawhip | peachpuff | peru | pink | plum | powderblue | purple | rebeccapurple | red | rosybrown | royalblue | saddlebrown | salmon | sandybrown | seagreen | seashell | sienna | silver | skyblue | slateblue | slategray | slategrey | snow | springgreen | steelblue | tan | teal | thistle | tomato | turquoise | violet | wheat | white | whitesmoke | yellow | yellowgreen",
+    "spec": "https://drafts.csswg.org/css-color/#typedef-named-color"
+  },
+  "<n-dimension>": {
+    "value": "<dimension-token>",
+    "prose": "<n-dimension> is a <dimension-token> with its type flag set to \"integer\", and a unit that is an ASCII case-insensitive match for \"n\"",
+    "spec": "https://drafts.csswg.org/css-syntax-3/#typedef-n-dimension"
+  },
+  "<ndash-dimension>": {
+    "value": "<dimension-token>",
+    "prose": "<ndash-dimension> is a <dimension-token> with its type flag set to \"integer\", and a unit that is an ASCII case-insensitive match for \"n-\"",
+    "spec": "https://drafts.csswg.org/css-syntax-3/#typedef-ndash-dimension"
+  },
+  "<ndashdigit-dimension>": {
+    "value": "<dimension-token>",
+    "prose": "<ndashdigit-dimension> is a <dimension-token> with its type flag set to \"integer\", and a unit that is an ASCII case-insensitive match for \"n-*\", where \"*\" is a series of one or more digits",
+    "spec": "https://drafts.csswg.org/css-syntax-3/#typedef-ndashdigit-dimension"
+  },
+  "<ndashdigit-ident>": {
+    "value": "<ident-token>",
+    "prose": "<ndashdigit-ident> is an <ident-token> whose value is an ASCII case-insensitive match for \"n-*\", where \"*\" is a series of one or more digits",
+    "spec": "https://drafts.csswg.org/css-syntax-3/#typedef-ndashdigit-ident"
+  },
+  "<padding-width>": {
+    "value": "<length> | <percentage>",
+    "spec": "https://drafts.csswg.org/css2/box.html#value-def-padding-width"
+  },
+  "<page-size>": {
+    "value": "A5 | A4 | A3 | B5 | B4 | letter | legal | ledger",
+    "spec": "https://www.w3.org/TR/css3-page/#size"
+  },
+  "<ratio>": {
+    "value": "<integer> / <integer>",
+    "prose": "The <ratio> value type is a positive (not zero or negative) <integer> followed by optional whitespace, followed by a solidus ('/'), followed by optional whitespace, followed by a positive <integer>.",
+    "spec": "https://drafts.csswg.org/mediaqueries-4/#typedef-ratio"
+  },
+  "<repeating-linear-gradient()>": {
+    "value": "repeating-linear-gradient( [ <angle> | to <side-or-corner> ]? , <color-stop-list> )",
+    "spec": "https://drafts.csswg.org/css-images-4/#funcdef-repeating-linear-gradient"
+  },
+  "<repeating-linear-gradient>": {
+    "value": "repeating-linear-gradient( [ [ <angle> | to <side-or-corner> ] ,]? <color-stop>[, <color-stop>]+ )",
+    "spec": "https://drafts.csswg.org/css-images-4/#funcdef-repeating-linear-gradient"
+  },
+  "<repeating-radial-gradient()>": {
+    "value": "repeating-radial-gradient( [ [ circle || <length> ] [ at <position> ]? , | [ ellipse || <length-percentage>{2} ] [ at <position> ]? , | [ [ circle | ellipse ] || <extent-keyword> ] [ at <position> ]? , | at <position> , ]? <color-stop> [ , <color-stop> ]+ )",
+    "spec": "https://drafts.csswg.org/css-images-4/#funcdef-repeating-radial-gradient"
+  },
+  "<repeating-radial-gradient>": {
+    "value": "repeating-radial-gradient( [ [ <shape> || <size> ] [ at <position> ]? , | at <position>, ]? <color-stop> [ , <color-stop> ]+ )",
+    "spec": "https://drafts.csswg.org/css-images-4/#funcdef-repeating-radial-gradient"
+  },
+  "<repeating-conic-gradient()>": {
+    "value": "repeating-conic-gradient( [ from <angle> ]? [ at <position> ]?, <angular-color-stop-list> )",
+    "spec": "https://drafts.csswg.org/css-images-4/#funcdef-repeating-conic-gradient"
+  },
+  "<rgba()>": {
+    "value": "rgba( <percentage>{3} [ / <alpha-value> ]? ) | rgb( <number>{3} [ / <alpha-value> ]? )",
+    "spec": "https://drafts.csswg.org/css-color/#funcdef-rgba"
+  },
+  "<right>": {
+    "value": "<length> | auto",
+    "spec": "https://drafts.fxtf.org/css-masking-1/#typedef-clip-right"
+  },
+  "<shape>": {
+    "value": "<rect()>",
+    "spec": "https://drafts.csswg.org/css2/visufx.html#value-def-shape"
+  },
+  "<signed-integer>": {
+    "value": "<number-token>",
+    "prose": "<signed-integer> is a <number-token> with its type flag set to \"integer\", and whose representation starts with \"+\" or \"-\"",
+    "spec": "https://drafts.csswg.org/css-syntax-3/#typedef-signed-integer"
+  },
+  "<signless-integer>": {
+    "value": "<number-token>",
+    "prose": "<signless-integer> is a <number-token> with its type flag set to \"integer\", and whose representation start with a digit",
+    "spec": "https://drafts.csswg.org/css-syntax-3/#typedef-signless-integer"
+  },
+  "<specific-voice>": {
+    "prose": "Values are specific instances (e.g., comedian, trinoids, carlos, lani)."
+  },
+  "<top>": {
+    "value": "<length> | auto",
+    "spec": "https://drafts.fxtf.org/css-masking-1/#typedef-clip-top"
+  },
+  "<transform-function>": {
+    "value": "<matrix()> | <translate()> | <translateX()> | <translateY()> | <scale()> | <scaleX()> | <scaleY()> | <rotate()> | <skew()> | <skewX()> | <skewY()> | <matrix3d()> | <translate3d()> | <translateZ()> | <scale3d()> | <scaleZ()> | <rotate3d()> | <rotateX()> | <rotateY()> | <rotateZ()> | <perspective()>",
+    "spec": "https://drafts.csswg.org/css-transforms/#typedef-transform-function"
+  },
+  "<uri>": {
+    "value": "<url>",
+    "spec": "https://www.w3.org/TR/css3-values/#url-value"
+  },
+  "<url-modifier>": {
+    "prose": "<url-modifier> is either an <ident> or a functional notation.",
+    "spec": "https://drafts.csswg.org/css-values/#typedef-url-modifier"
+  },
+  "<x>": {
+    "value": "<number>",
+    "spec": "https://drafts.csswg.org/css-ui/#propdef-cursor"
+  },
+  "<y>": {
+    "value": "<number>",
+    "spec": "https://drafts.csswg.org/css-ui/#propdef-cursor"
+  }
+}

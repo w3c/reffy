@@ -80,6 +80,8 @@ The **WebIDL extractor** takes the URL of a spec as input and outputs the IDL de
 
 The **WebIDL parser** takes the URL of a spec as input and generates a JSON structure that describes WebIDL term definitions and references that the spec contains. The parser uses [WebIDL2](https://github.com/darobin/webidl2.js/) to parse the WebIDL content found in the spec. To run the WebIDL parser: `parse-webidl [url]`
 
+The **CSS definitions extractor** takes the URL of a spec as input and outputs the CSS definitions found in the spec in a JSON structure. To run the extractor: `extract-cssdfn [url]`
+
 The **Spec finder** takes a JSON crawl report as input and checks a couple of sites that list Web specifications to detect new specifications that are not yet part of the crawl. To run the spec finder: `find-spec results.json`
 
 The **crawl results merger** merges a new JSON crawl report into a reference one. This tool is typically useful to replace the crawl results of a given specification with the results of a new run of the crawler on that specification. To run the crawl results merger: `merge-crawl-results [new crawl report] [reference crawl report] [crawl report to create]`
@@ -92,6 +94,7 @@ For instance:
 ```bash
 parse-references https://w3c.github.io/presentation-api/
 extract-webidl https://www.w3.org/TR/webrtc/
+extract-cssdfn https://www.w3.org/TR/css-fonts-4/
 parse-webidl https://fetch.spec.whatwg.org/
 check-specs https://www.w3.org/TR/webstorage/ reports/w3c/crawl.json reports/study-webstorage.json
 ```

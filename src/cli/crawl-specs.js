@@ -25,6 +25,7 @@ const path = require('path');
 const { fork } = require('child_process');
 const refParser = require('./parse-references');
 const webidlExtractor = require('./extract-webidl');
+const cssDfnExtractor = require('./extract-cssdfn');
 const loadSpecification = require('../lib/util').loadSpecification;
 const webidlParser = require('./parse-webidl');
 const fetch = require('../lib/util').fetch;
@@ -200,11 +201,12 @@ async function crawlSpec(spec, crawlOptions) {
                         err.idl = idl;
                         return err;
                     })),
+            cssDfnExtractor.extract(dom),
             dom
         ]))
         .then(res => {
             const spec = res[0];
-            const doc = res[5].document;
+            const doc = res[6].document;
             const statusAndDateElement = doc.querySelector('.head h2');
             const date = (statusAndDateElement ?
                 statusAndDateElement.textContent.split(/\s+/).slice(-3).join(' ') :
@@ -215,7 +217,8 @@ async function crawlSpec(spec, crawlOptions) {
             spec.links = res[2];
             spec.refs = res[3];
             spec.idl = res[4];
-            res[5].close();
+            spec.css = res[5];
+            res[6].close();
             return spec;
         })
         .catch(err => {
@@ -389,66 +392,127 @@ function getShortname(spec) {
  * @param {String} folder The path to the report folder
  * @return {Promise<void>} The promise to have saved the data
  */
-function saveResults(crawlInfo, crawlOptions, data, folder) {
-    return new Promise((resolve, reject) => {
+async function saveResults(crawlInfo, crawlOptions, data, folder) {
+    const idlFolder = await new Promise((resolve, reject) => {
         let idlFolder = path.join(folder, 'idl');
         fs.mkdir(idlFolder, (err => {
             if (err && (err.code !== 'EEXIST')) return reject(err);
             return resolve(idlFolder);
         }));
-    })
-    .then(idlFolder => Promise.all(data.map(spec =>
-        new Promise((resolve, reject) => {
-            if (spec.flags.idl && spec.idl && spec.idl.idl) {
-                let idlHeader = `
-                    // GENERATED CONTENT - DO NOT EDIT
-                    // Content of this file was automatically extracted from the
-                    // "${spec.title}" spec.
-                    // See: ${spec.crawled}`;
-                idlHeader = idlHeader.replace(/^\s+/gm, '').trim() + '\n\n';
-                let idl = spec.idl.idl
-                    .replace(/\s+$/gm, '\n')
-                    .replace(/\t/g, '  ')
-                    .trim();
-                idl = idlHeader + idl + '\n';
-                fs.writeFile(
-                    path.join(idlFolder, getShortname(spec) + '.idl'),
-                    idl,
-                    err => {
-                        if (err) console.log(err);
-                        return resolve();
-                    });
-                delete spec.idl.idl;
-          } else resolve();
-        }))).then(_ => new Promise((resolve, reject) => {
-            let reportFilename = path.join(folder, 'crawl.json');
-            fs.readFile(reportFilename, function(err, content) {
-                if (err) return reject(err);
+    });
 
-                let filedata = {};
-                try {
-                    filedata = JSON.parse(content);
-                } catch (e) {}
+    const cssFolder = await new Promise((resolve, reject) => {
+        let cssFolder = path.join(folder, 'css');
+        fs.mkdir(cssFolder, (err => {
+            if (err && (err.code !== 'EEXIST')) return reject(err);
+            return resolve(cssFolder);
+        }));
+    });
 
-                filedata.type = filedata.type || 'crawl';
-                filedata.title = crawlInfo.title || 'Reffy crawl';
-                if (crawlInfo.description) {
-                    filedata.description = crawlInfo.description;
-                }
-                filedata.date = filedata.date || (new Date()).toJSON();
-                filedata.options = crawlOptions;
-                filedata.stats = {};
-                filedata.results = (filedata.results || []).concat(data);
-                filedata.results.sort(byURL);
-                filedata.stats = {
-                    crawled: filedata.results.length,
-                    errors: filedata.results.filter(spec => !!spec.error).length
-                };
+    const saveCssAndIdl = async spec => {
+        if (spec.flags.idl && spec.idl && spec.idl.idl) {
+            let idlHeader = `
+                // GENERATED CONTENT - DO NOT EDIT
+                // Content of this file was automatically extracted from the
+                // "${spec.title}" spec.
+                // See: ${spec.crawled}`;
+            idlHeader = idlHeader.replace(/^\s+/gm, '').trim() + '\n\n';
+            let idl = spec.idl.idl
+                .replace(/\s+$/gm, '\n')
+                .replace(/\t/g, '  ')
+                .trim();
+            idl = idlHeader + idl + '\n';
+            delete spec.idl.idl;
+            await new Promise(resolve => fs.writeFile(
+                path.join(idlFolder, getShortname(spec) + '.idl'),
+                idl,
+                err => {
+                    if (err) console.log(err);
+                    return resolve();
+                }));
+        }
 
-                fs.writeFile(reportFilename, JSON.stringify(filedata, null, 2),
-                             err => { if (err) return reject(err); return resolve();});
-            });
-        }))
+        if (spec.flags.css && spec.css && (
+                (Object.keys(spec.css.properties || {}).length > 0) ||
+                (Object.keys(spec.css.descriptors || {}).length > 0) ||
+                (Object.keys(spec.css.valuespaces || {}).length > 0))) {
+            let properties = (Object.values(spec.css.properties || {}))
+                .filter(s => s.Name && (s.Value || s['New values']))
+                .map(s => s.Value ? `${s.Name} = ${s.Value}` :
+                        `${s.Name} |= ${s['New values']}`);
+            let descriptors = (Object.values(spec.css.descriptors || {}))
+                .filter(s => s.Name && (s.Value || s['New values']))
+                .map(s => s.Value ? `${s.Name} = ${s.Value}` :
+                        `${s.Name} |= ${s['New values']}`);
+            let valuespaces = (Object.keys(spec.css.valuespaces || {}))
+                .filter(s => spec.css.valuespaces[s].value)
+                .map(s => `${s} = ${spec.css.valuespaces[s].value}`);
+            let parts = properties.concat(descriptors, valuespaces);
+
+            let css = parts.join('\n\n')
+                .replace(/\s+$/gm, '\n')
+                .replace(/\t/g, '  ')
+                .trim();
+            css = css + '\n';
+            await new Promise(resolve => fs.writeFile(
+                path.join(cssFolder, getShortname(spec) + '.cvds'),
+                css,
+                err => {
+                    if (err) console.log(err);
+                    return resolve();
+                }));
+        }
+    };
+
+    // Only save CSS/IDL definitions for the last level of specifications
+    // when the crawl contains multiple levels
+    // (Note the code below assumes that levels are below 10)
+    await Promise.all(data
+        .filter(spec => {
+            if (!spec.url.match(/-\d\/$/)) {
+                // Handle special CSS 2.1 / CSS 2.2 spec which does not
+                // follow the same naming conventions as other CSS specs
+                return !spec.url.match(/CSS2\/$/i) ||
+                    !data.find(s => s.url.match(/CSS22\/$/i));
+            }
+            let start = spec.url.split(/-\d\/$/)[0];
+            let level = spec.url.match(/-(\d)\/$/)[1];
+            let moreRecent = data.find(s =>
+                s.url.startsWith(start) &&
+                s.url.match(/-\d\/$/) &&
+                (s.url.match(/-(\d)\/$/)[1] > level));
+            return !moreRecent;
+        })
+        .map(saveCssAndIdl));
+
+    let reportFilename = path.join(folder, 'crawl.json');
+    return new Promise((resolve, reject) =>
+        fs.readFile(reportFilename, function(err, content) {
+            if (err) return reject(err);
+
+            let filedata = {};
+            try {
+                filedata = JSON.parse(content);
+            } catch (e) {}
+
+            filedata.type = filedata.type || 'crawl';
+            filedata.title = crawlInfo.title || 'Reffy crawl';
+            if (crawlInfo.description) {
+                filedata.description = crawlInfo.description;
+            }
+            filedata.date = filedata.date || (new Date()).toJSON();
+            filedata.options = crawlOptions;
+            filedata.stats = {};
+            filedata.results = (filedata.results || []).concat(data);
+            filedata.results.sort(byURL);
+            filedata.stats = {
+                crawled: filedata.results.length,
+                errors: filedata.results.filter(spec => !!spec.error).length
+            };
+
+            fs.writeFile(reportFilename, JSON.stringify(filedata, null, 2),
+                         err => { if (err) return reject(err); return resolve();});
+        })
     );
 }
 

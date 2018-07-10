@@ -224,8 +224,14 @@ function generateReportPerSpec(study) {
             if (report.noIdlContent) {
                 w('- No WebIDL definitions found');
             }
+            if (report.noCssDefinitions) {
+                w('- No CSS definitions found');
+            }
             if (report.hasUnexpectedIdl) {
                 w('- Unexpected WebIDL definitions found')
+            }
+            if (report.hasUnexpectedCssDefinitions) {
+                w('- Unexpected CSS definitions found')
             }
             if (report.hasInvalidIdl) {
                 w('- Invalid WebIDL content found');
@@ -393,6 +399,26 @@ function generateReportPerIssue(study) {
     w();
     w();
 
+
+    count = 0;
+    w('## Specifications without CSS definitions');
+    w();
+    results
+        .filter(spec => spec.report.noCssDefinitions)
+        .forEach(spec => {
+            count += 1;
+            w('- [' + spec.title + '](' + spec.crawled + ')');
+        });
+    w();
+    w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
+    if (count > 0) {
+        w();
+        w('Reffy was expecting to find CSS definitions in the specifications ' + 
+            ' listed here but could not extract any.');
+    }
+    w();
+    w();
+
     count = 0;
     w('## Specifications with unexpected WebIDL definitions');
     w();
@@ -411,6 +437,25 @@ function generateReportPerIssue(study) {
             ' specifications that define IDL content and exist at different' +
             ' levels: only one level is flagged as defining the IDL. Other' +
             ' levels will incorrectly appear in this list as a consequence.');
+    }
+    w();
+    w();
+
+    count = 0;
+    w('## Specifications with unexpected CSS definitions');
+    w();
+    results
+        .filter(spec => spec.report.hasUnexpectedCssDefinitions)
+        .forEach(spec => {
+            count += 1;
+            w('- [' + spec.title + '](' + spec.crawled + ')');
+        });
+    w();
+    w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
+    if (count > 0) {
+        w();
+        w('Reffy was not expecting to find CSS definitions in the' +
+            ' specifications listed here but it did.');
     }
     w();
     w();
@@ -755,7 +800,9 @@ function generateDiffReport(study, refStudy, options) {
             noNormativeRefs: getSimpleDiff('noNormativeRefs'),
             noRefToWebIDL: getSimpleDiff('noRefToWebIDL'),
             noIdlContent: getSimpleDiff('noIdlContent'),
+            noCssDefinitions: getSimpleDiff('noCssDefinitions'),
             hasUnexpectedIdl: getSimpleDiff('hasUnexpectedIdl'),
+            hasUnexpectedCssDefinitions: getSimpleDiff('hasUnexpectedCssDefinitions'),
             hasInvalidIdl: getSimpleDiff('hasInvalidIdl'),
             hasObsoleteIdl: getSimpleDiff('hasObsoleteIdl'),
             unknownIdlNames: getArrayDiff('unknownIdlNames'),
@@ -879,7 +926,9 @@ function generateDiffReport(study, refStudy, options) {
             { title: 'Link to an Editor\'s Draft not found', prop: 'noEdDraft', diff: 'simple' },
             { title: 'No normative references found', prop: 'noNormativeRefs', diff: 'simple' },
             { title: 'No WebIDL definitions found', prop: 'noIdlContent', diff: 'simple' },
+            { title: 'No CSS definitions found', prop: 'noCssDefinitions', diff: 'simple' },
             { title: 'Unexpected WebIDL definitions found', prop: 'hasUnexpectedIdl', diff: 'simple' },
+            { title: 'Unexpected CSS definitions found', prop: 'hasUnexpectedCssDefinitions', diff: 'simple' },
             { title: 'Invalid WebIDL content found', prop: 'hasInvalidIdl', diff: 'simple' },
             { title: 'Obsolete WebIDL constructs found', prop: 'hasObsoleteIdl', diff: 'simple' },
             { title: 'Spec does not reference WebIDL normatively', prop: 'noRefToWebIDL', diff: 'simple' },

@@ -58,12 +58,16 @@ async function loadSpecificationFromHtml(spec, counter) {
     let html = spec.html || '';
     counter = counter || 0;
 
+    // Prevent execution of Shepherd script in CSS specs that makes
+    // node.js run forever.
+    html = html.replace(/system\.addLoadEvent\(setupPage\);/, '');
+
     let window = await new Promise((resolve, reject) => {
         // Drop Byte-Order-Mark character if needed, it bugs JSDOM
         if (html.charCodeAt(0) === 0xFEFF) {
             html = html.substring(1);
         }
-        const {window} = new JSDOM(html, {
+        new JSDOM(html, {
             url: responseUrl,
             resources: 'usable',
             runScripts: 'dangerously',
@@ -135,10 +139,8 @@ async function loadSpecificationFromHtml(spec, counter) {
         'https://drafts.csswg.org/css2/': '.quick.toc .tocxref'
     };
     if (multiPagesRules[spec.url]) {
-        console.warn('-- MULTIPAGE --');
         const pages = [...doc.querySelectorAll(multiPagesRules[spec.url])]
             .map(link => URL.resolve(doc.baseURI, link.getAttribute('href')));
-        console.warn(JSON.stringify(pages, null, 2));
         const subWindows = await Promise.all(
             pages.map(page => loadSpecificationFromUrl(page)));
         subWindows.map(subWindow => {

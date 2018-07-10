@@ -1,4 +1,5 @@
 [
+  "https://compat.spec.whatwg.org/",
   "https://drafts.csswg.org/css-animations-2/",
   "https://drafts.csswg.org/css-backgrounds-4/",
   "https://drafts.csswg.org/css-box-3/",
@@ -19,7 +20,10 @@
   "https://drafts.csswg.org/mediaqueries-5/",
   "https://drafts.fxtf.org/compositing-2/",
   "https://drafts.fxtf.org/filter-effects-2/",
+  "https://wicg.github.io/overscroll-behavior/",
+  "https://wicg.github.io/scroll-animations/",
   "https://www.w3.org/TR/compositing-1/",
+  "https://www.w3.org/TR/cssom-view-1/",
   "https://www.w3.org/TR/css-align-3/",
   "https://www.w3.org/TR/css-animations-1/",
   "https://www.w3.org/TR/css-backgrounds-3/",
@@ -83,12 +87,14 @@
   "https://www.w3.org/TR/css3-images/",
   "https://www.w3.org/TR/css3-mediaqueries/",
   "https://www.w3.org/TR/css3-page/",
-  "https://www.w3.org/TR/css3-speech/",
   "https://www.w3.org/TR/fill-stroke-3/",
   "https://www.w3.org/TR/filter-effects-1/",
   "https://www.w3.org/TR/mediaqueries-4/",
   "https://www.w3.org/TR/motion-1/",
   "https://www.w3.org/TR/selectors-3/",
   "https://www.w3.org/TR/selectors-4/",
-  "https://www.w3.org/TR/selectors-nonelement-1/"
+  "https://www.w3.org/TR/selectors-nonelement-1/",
+  "https://www.w3.org/TR/SVG2/",
+  "https://www.w3.org/TR/svg-markers/",
+  "https://www.w3.org/TR/svg-strokes/"
 ]
