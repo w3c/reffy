@@ -151,7 +151,7 @@ const parseTerminals = s => {
   if ((m = s.match(/([\+\?\*#\!]+)$/))) {
     multiplier = m[1];
     modifiee = s.slice(0, s.length - m[1].length);
-  } else if ((m = s.match(/^(.*)(#?\{.*\})$/))) {
+  } else if ((m = s.match(/^([^#]*)(#?\{.*\})$/))) {
     multiplier = m[2];
     modifiee = m[1];
   }
@@ -159,17 +159,17 @@ const parseTerminals = s => {
     return s;
   } else if (unquotedTokens.includes(s)) {
     return {type: "string", content: s};
-  } else if ((m = s.match(/^\'([^\']*)\'$/))) {
-    return {type: "string", content: m[1]};
+  } else if ((m = modifiee.match(/^\'([^\']*)\'$/))) {
+    return parseMultiplier(multiplier, {type: "string", content: m[1]});
   } else if ((m = modifiee.match(/^<\'([-_a-zA-Z][^\'>]*)\'>$/))) {
     return parseMultiplier(multiplier, {type: "propertyref", name: m[1]});
   } else if ([...primitives.keys()].map(p => "<" + p + ">").includes(modifiee)) {
     return parseMultiplier(multiplier, {type: "primitive", name: modifiee.slice(1, modifiee.length -1)});
   } else if ((m = modifiee.match(/^<[-_a-zA-Z]([^>]*)>$/))) {
     return parseMultiplier(multiplier, {type: "valuespace", name: modifiee.slice(1, modifiee.length -1)});
-  } else if ((m = modifiee.match(/^[-_a-zA-Z]/))) {
+  } else if ((m = modifiee.match(/^[-_a-zA-Z][-_a-zA-Z0-9]*$/))) {
     return parseMultiplier(multiplier, {type: "keyword", name: modifiee});
-  } else {
+  } else { // TODO: add support for functional notations https://drafts.csswg.org/css-values-4/#functional-notation even though they're not recognized as top-level items in the grammar
     throw new Error(`Unrecognized token ${s}`);
   }
 };
@@ -178,14 +178,20 @@ const parsePropDefValue = (value) => {
   value = value.trim();
   // TODO: whitespace normalization?
 
-  // Not sure if combinators are supposed to be white-space separated from their content
-  // but forcing it for now
-  value = value.replace(/\[/g, '[ ')
-    .replace(/\]/g, ' ]')
+  // This is a kludge as shortcut: instead of doing a proper tokenization,
+  // we use white space as our token delimiter
+  // and regexp-adapt cases that don't quite fit that assumption
+  value = value.replace(/\]\]/g, ' ] ] ')
+    .replace(/\[\[/g, ' [ [ ')
+    .replace(/>\[/g, '> [ ')
+    .replace(/\[([^'])/g, '[ $1')
+    .replace(/([^'])\]/g, '$1 ]')
     .replace(/ #/g, '#')
     .replace(/>\|/g, '> |')
+      .replace(/\|</g, '| <')
     .replace(/\],/g, '] ,')
-    .replace(/\]\?,/g, ']? ,');
+    .replace(/\]\?,/g, ']? ,')
+    .replace(/\] \?,/g, ']? ,');
 
   let parts = value.split(' ').filter(x => x)
         .map(parseTerminals);
@@ -198,15 +204,13 @@ const parsePropDefValue = (value) => {
     // since it can be accompanied with multipliers
     const matchingBracketIdx = parts.findIndex((p, i) => typeof(p)==="string" && p.startsWith(']') && i > bracketIdx);
 
-    if (matchingBracketIdx <= bracketIdx) {
-      throw new Error(`Unexpected closing bracket in ${value}`);
-    }
     if (matchingBracketIdx === -1) {
+      console.log(value, bracketIdx, matchingBracketIdx);
       throw new Error(`Unterminated bracket-group in ${value}`);
     }
     const group = parts.slice(bracketIdx + 1, matchingBracketIdx);
     const multiplier = parts[matchingBracketIdx].slice(1);
-    const multipliedGroup = multiplier ? parseMultiplier(multiplier, group) : [ group ] ;
+    const multipliedGroup = multiplier && !multiplier.startsWith(']') ? parseMultiplier(multiplier, group) : [ group ] ;
     parts = parts.slice(0, bracketIdx)
       .concat(multipliedGroup)
       .concat(parts.slice(matchingBracketIdx + 1));
