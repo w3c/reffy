@@ -27,6 +27,8 @@ const combinatorsMap = [['&&', 'allOf'],
                         ['||', 'anyOf'],
                         ['|', 'oneOf']];
 
+const multipliersStarters = ['{', '+', '#', '!', '?', '*'];
+
 const unquotedTokens = ['/', ',', '(', ')'];
 
 const componentizeByCombinators = (parts, combinators = new Map(combinatorsMap)) => {
@@ -97,104 +99,262 @@ const parseMultiplierRange = range => {
   }
 };
 
-const parseMultiplier = (multiplier, modifiee) => {
+const applyMultiplier = (multiplier, modifiee) => {
   let ret;
-  let multiplierLength = 1;
-  if (multiplier === '') {
-    return modifiee;
-  } else if (multiplier[0] === '*') {
-    ret = {
+  if (multiplier === '*') {
+    return {
       type: "array",
       items: modifiee
     };
-  } else if (multiplier[0] === '+') {
-    ret = {
+  } else if (multiplier === '+') {
+    return {
       type: "array",
       items: modifiee,
       minItems: 1
     };
-  } else if (multiplier[0] === '#') {
-      ret =  {
+  } else if (multiplier === '#') {
+      return  {
         type: "array",
         items: modifiee,
         separator: ","
       };
   } else if (multiplier.startsWith('{')) {
-    multiplierLength = (multiplier.match(/^(\{[^\}]*\})/)[1] || "{").length;
-    ret =  {
+    return  {
       type: "array",
       items: modifiee,
       ...parseMultiplierRange(multiplier)
     };
-  } else if (multiplier[0] === '?') {
+  } else if (multiplier === '?') {
     if (Array.isArray(modifiee)) {
-      ret =  {type: "array", items: modifiee, maxItems: 1};
+      return {type: "array", items: modifiee, maxItems: 1};
     } else {
-      ret = {...modifiee, optional: true};
+      return {...modifiee, optional: true};
     }
-  } else if (multiplier[0] === '!') {
+  } else if (multiplier === '!') {
     if (Array.isArray(modifiee)) {
-      ret =  {type: "array", items: modifiee, minItems: 1};
+      return  {type: "array", items: modifiee, minItems: 1};
     } else {
       throw new Error(`Multiplier "!" applied to non-group ${modifiee}`);
     }
   } else {
     throw new Error(`Unrecognized multiplier ${multiplier}`);
   }
-  return parseMultiplier(multiplier.slice(multiplierLength), ret);
 };
+
+const isMultiplier = s => typeof s === "string" &&  multipliersStarters.map(starter => s.startsWith(starter)).includes(true);
 
 const parseTerminals = s => {
   let m;
-  let multiplier = '';
   let modifiee = s;
-  if ((m = s.match(/([\+\?\*#\!]+)$/))) {
-    multiplier = m[1];
-    modifiee = s.slice(0, s.length - m[1].length);
-  } else if ((m = s.match(/^([^#]*)(#?\{.*\})$/))) {
-    multiplier = m[2];
-    modifiee = m[1];
-  }
-  if ([...new Map(combinatorsMap).keys()].includes(s) || s === '[' || s.startsWith(']')) {
+  if ([...new Map(combinatorsMap).keys()].includes(s) || s === '[' || s.startsWith(']') || isMultiplier(s)) {
     return s;
   } else if (unquotedTokens.includes(s)) {
     return {type: "string", content: s};
   } else if ((m = modifiee.match(/^\'([^\']*)\'$/))) {
-    return parseMultiplier(multiplier, {type: "string", content: m[1]});
+    return {type: "string", content: m[1]};
   } else if ((m = modifiee.match(/^<\'([-_a-zA-Z][^\'>]*)\'>$/))) {
-    return parseMultiplier(multiplier, {type: "propertyref", name: m[1]});
+    return {type: "propertyref", name: m[1]};
   } else if ([...primitives.keys()].map(p => "<" + p + ">").includes(modifiee)) {
-    return parseMultiplier(multiplier, {type: "primitive", name: modifiee.slice(1, modifiee.length -1)});
+    return {type: "primitive", name: modifiee.slice(1, modifiee.length -1)};
   } else if ((m = modifiee.match(/^<[-_a-zA-Z]([^>]*)>$/))) {
-    return parseMultiplier(multiplier, {type: "valuespace", name: modifiee.slice(1, modifiee.length -1)});
+    return {type: "valuespace", name: modifiee.slice(1, modifiee.length -1)};
   } else if ((m = modifiee.match(/^[-_a-zA-Z][-_a-zA-Z0-9]*$/))) {
-    return parseMultiplier(multiplier, {type: "keyword", name: modifiee});
+    return {type: "keyword", name: modifiee};
   } else { // TODO: add support for functional notations https://drafts.csswg.org/css-values-4/#functional-notation even though they're not recognized as top-level items in the grammar
     throw new Error(`Unrecognized token ${s}`);
   }
 };
 
+const tokenize = (value) => {
+  let i = 0, currentToken='', tokens=[], state = 'new';
+  const delimiterStates = ['new', 'keyword', 'pipe'];
+  while(i < value.length) {
+    const c = value[i];
+    if (c.match(/\s/)) {
+      if (currentToken) tokens.push(currentToken);
+      currentToken = '';
+      state = 'new';
+    } else if (c === '<') {
+      if (delimiterStates.includes(state)) {
+        if (currentToken) tokens.push(currentToken);
+        currentToken = c;
+        state = 'labracket';
+      } else if (state === 'quote') {
+        currentToken += c;
+      } else {
+        throw new Error(`Unexpected < in ${currentToken} while parsing ${value} in state ${state}`);
+      }
+    } else if (c === ">") {
+      if (state === 'quote') {
+        currentToken += c;
+      } else if (state === 'rabracket' || state === 'labracket') {
+        currentToken += c;
+        tokens.push(currentToken);
+        currentToken = '';
+        state = 'new';
+      } else {
+        throw new Error(`Unexpected > in ${currentToken} while parsing ${value} in state ${state}`);
+      }
+    } else if (c === "'") {
+      if (state === 'quote') {
+        currentToken += c;
+        tokens.push(currentToken);
+        currentToken = '';
+        state = 'new';
+      } else if (state === 'labracket') {
+        currentToken += c;
+        state = 'labracketquote';
+      } else if (state === 'labracketquote') {
+        currentToken += c;
+        state = 'rabracket';
+      } else {
+        if (currentToken) tokens.push(currentToken);
+        currentToken = c;
+        state = 'quote';
+      }
+    } else if (c === "[" || c === "]" || c === "+" || c === "*" || c === "#" || c === "!" || c === '?' || c === '/') {
+      if (delimiterStates.includes(state)) {
+        if (currentToken) tokens.push(currentToken);
+        tokens.push(c);
+        currentToken='';
+        state = 'new';
+      } else if (state === 'quote') {
+        currentToken += c;
+      } else {
+        throw new Error(`Unexpected ${c} in ${currentToken} while parsing ${value} in state ${state}`);
+      }
+    } else if ( c === '{' ) {
+      if (state === 'quote') {
+        currentToken += c;
+      } else if (delimiterStates.includes(state)) {
+        if (currentToken) tokens.push(currentToken);
+        currentToken = c;
+        state = 'curlybracket';
+      } else {
+        throw new Error(`Unexpected ${c} in ${currentToken} while parsing ${value} in state ${state}`);
+      }
+    } else if ( c === '}' ) {
+      if (state === 'quote') {
+        currentToken += c;
+      } else if (state === 'curlybracket') {
+        currentToken += c;
+        tokens.push(currentToken);
+        currentToken = '';
+        state = 'new';
+      } else {
+        throw new Error(`Unexpected ${c} in ${currentToken} while parsing ${value} in state ${state}`);
+      }
+    } else if ( c === ',') {
+      if (delimiterStates.includes(state)) {
+        if (currentToken) tokens.push(currentToken);
+        tokens.push(c);
+        currentToken='';
+        state = 'new';
+      } else if (state === 'quote' || state === 'curlybracket') {
+        currentToken += c;
+      } else {
+        throw new Error(`Unexpected ${c} in ${currentToken} while parsing ${value} in state ${state}`);
+      }
+    } else if ( c === '(') {
+      if (state === 'new' || state === 'pipe') {
+        if (currentToken) tokens.push(currentToken);
+        tokens.push(c);
+        currentToken='';
+        state = 'new';
+      } else if (state === 'quote' || state === 'labracket' || state === 'labracketquote') {
+        currentToken += c;
+      } else if (state === 'keyword') {
+        currentToken += c;
+        tokens.push(c);
+        currentToken ='';
+        state = 'new';
+      } else {
+        throw new Error(`Unexpected ${c} in ${currentToken} while parsing ${value} in state ${state}`);
+      }
+    } else if (c === ")") {
+      if (delimiterStates.includes(state)) {
+        if (currentToken) tokens.push(currentToken);
+        tokens.push(c);
+        currentToken='';
+        state = 'new';
+      } else if (state === 'quote' || state === 'labracket' || state === 'labracketquote') {
+        currentToken += c;
+      } else {
+        throw new Error(`Unexpected ${c} in ${currentToken} while parsing ${value} in state ${state}`);
+      }
+    } else if ( c === '&') {
+      if (state === 'new' || state === 'keyword') { // 'pipe' can't appear just before ampersand
+        if (currentToken) tokens.push(currentToken);
+        currentToken=c;
+        state = 'ampersand';
+      } else if (state === 'quote') {
+        currentToken += c;
+      } else if (state === 'ampersand') {
+        currentToken += c;
+        tokens.push(currentToken);
+        currentToken='';
+        state = 'new';
+      } else {
+        throw new Error(`Unexpected ${c} in ${currentToken} while parsing ${value} in state ${state}`);
+      }
+    } else if (c === '|') {
+      if (state === 'new' || state === 'keyword') {
+        if (currentToken) tokens.push(currentToken);
+        currentToken=c;
+        state = 'pipe';
+      } else if (state === 'quote') {
+        currentToken += c;
+      } else if (state === 'pipe') {
+        currentToken += c;
+        tokens.push(currentToken);
+        currentToken='';
+        state = 'new';
+      } else {
+        throw new Error(`Unexpected ${c} in ${currentToken} while parsing ${value} in state ${state}`);
+      }
+    } else {
+      if (state === 'pipe') {
+        tokens.push(currentToken);
+        currentToken = 'c';
+        state = 'keyword';
+      }  else {
+        currentToken += c;
+        if (state === 'new') state = 'keyword';
+      }
+    }
+    i++;
+  }
+  if (state === 'new' || state === 'keyword') {
+    if (currentToken) tokens.push(currentToken);
+  } else {
+    throw new Error(`Unexpected EOF while parsing ${value} in state ${state}`);
+  }
+  return tokens;
+};
+
 const parsePropDefValue = (value) => {
   value = value.trim();
-  // TODO: whitespace normalization?
-
-  // This is a kludge as shortcut: instead of doing a proper tokenization,
-  // we use white space as our token delimiter
-  // and regexp-adapt cases that don't quite fit that assumption
-  value = value.replace(/\]\]/g, ' ] ] ')
-    .replace(/\[\[/g, ' [ [ ')
-    .replace(/>\[/g, '> [ ')
-    .replace(/\[([^'])/g, '[ $1')
-    .replace(/([^'])\]/g, '$1 ]')
-    .replace(/ #/g, '#')
-    .replace(/>\|/g, '> |')
-      .replace(/\|</g, '| <')
-    .replace(/\],/g, '] ,')
-    .replace(/\]\?,/g, ']? ,')
-    .replace(/\] \?,/g, ']? ,');
-
-  let parts = value.split(' ').filter(x => x)
+  const tokens = tokenize(value);
+  let parts = tokens.filter(x => x)
         .map(parseTerminals);
+
+  // Applying multipliers on terminals
+  parts = parts.reduce((arr, item, i) => {
+    if (!isMultiplier(item)) {
+      arr.push(item);
+      return arr;
+    }
+    if (i === 0)
+      throw new Error(`Unexpected multiplier ${item} at the start of ${value}`);
+    const prevItem = arr.pop();
+    if (prevItem !== ']') {
+      arr.push(applyMultiplier(item, prevItem));
+    } else {
+      arr.push(prevItem);
+      arr.push(item);
+    }
+    return arr;
+  }, []);
 
   // matching bracket-groups
   while(parts.lastIndexOf('[') !== -1) {
@@ -205,15 +365,19 @@ const parsePropDefValue = (value) => {
     const matchingBracketIdx = parts.findIndex((p, i) => typeof(p)==="string" && p.startsWith(']') && i > bracketIdx);
 
     if (matchingBracketIdx === -1) {
-      console.log(value, bracketIdx, matchingBracketIdx);
       throw new Error(`Unterminated bracket-group in ${value}`);
     }
-    const group = parts.slice(bracketIdx + 1, matchingBracketIdx);
-    const multiplier = parts[matchingBracketIdx].slice(1);
-    const multipliedGroup = multiplier && !multiplier.startsWith(']') ? parseMultiplier(multiplier, group) : [ group ] ;
+    let group = parts.slice(bracketIdx + 1, matchingBracketIdx);
+    let multiplier, i = 0, multiplied = false;
+    while ((multiplier = parts.slice(matchingBracketIdx + 1)[i]) && isMultiplier(multiplier)) {
+      group = applyMultiplier(multiplier, group);
+      multiplied = true;
+      i++;
+    }
+    const multipliedGroup = multiplied ? group : [ group ] ;
     parts = parts.slice(0, bracketIdx)
       .concat(multipliedGroup)
-      .concat(parts.slice(matchingBracketIdx + 1));
+      .concat(parts.slice(matchingBracketIdx + 1 + i));
   }
   const res = componentizeByCombinators(parts);
   return res.length === 1 ? res[0] : res;
