@@ -2,6 +2,8 @@
 
 
 const primitives = new Map([
+  ["ident", {}],
+  ["hash-token", {}],
   ["custom-ident", {url: "https://drafts.csswg.org/css-values-4/#custom-idents"}],
   ["string", {url: "https://drafts.csswg.org/css-values-4/#strings"}],
   ["url", {url: "https://drafts.csswg.org/css-values-4/#urls"}],
@@ -145,21 +147,22 @@ const isMultiplier = s => typeof s === "string" &&  multipliersStarters.map(star
 
 const parseTerminals = s => {
   let m;
-  let modifiee = s;
   if ([...new Map(combinatorsMap).keys()].includes(s) || s === '[' || s.startsWith(']') || isMultiplier(s)) {
     return s;
   } else if (unquotedTokens.includes(s)) {
     return {type: "string", content: s};
-  } else if ((m = modifiee.match(/^\'([^\']*)\'$/))) {
+  } else if ((m = s.match(/^\'([^\']*)\'$/))) {
     return {type: "string", content: m[1]};
-  } else if ((m = modifiee.match(/^<\'([-_a-zA-Z][^\'>]*)\'>$/))) {
+  } else if ((m = s.match(/^<\'([-_a-zA-Z][^\'>]*)\'>$/))) {
     return {type: "propertyref", name: m[1]};
-  } else if ([...primitives.keys()].map(p => "<" + p + ">").includes(modifiee)) {
-    return {type: "primitive", name: modifiee.slice(1, modifiee.length -1)};
-  } else if ((m = modifiee.match(/^<[-_a-zA-Z]([^>]*)>$/))) {
-    return {type: "valuespace", name: modifiee.slice(1, modifiee.length -1)};
-  } else if ((m = modifiee.match(/^[-_a-zA-Z][-_a-zA-Z0-9]*$/))) {
-    return {type: "keyword", name: modifiee};
+  } else if ([...primitives.keys()].map(p => "<" + p + ">").includes(s)) {
+    return {type: "primitive", name: s.slice(1, s.length -1)};
+  } else if ((m = s.match(/^<[-_a-zA-Z]([^>]*)>$/))) {
+    return {type: "valuespace", name: s.slice(1, s.length -1)};
+  } else if ((m = s.match(/^[-_a-zA-Z][-_a-zA-Z0-9]*$/))) {
+    return {type: "keyword", name: s};
+  } else if ((m = s.match(/^[-_a-zA-Z][-_a-zA-Z0-9]*\($/))) {
+    return {type: "functionstart", name: s};
   } else { // TODO: add support for functional notations https://drafts.csswg.org/css-values-4/#functional-notation even though they're not recognized as top-level items in the grammar
     throw new Error(`Unrecognized token ${s}`);
   }
@@ -265,7 +268,7 @@ const tokenize = (value) => {
         currentToken += c;
       } else if (state === 'keyword') {
         currentToken += c;
-        tokens.push(c);
+        tokens.push(currentToken);
         currentToken ='';
         state = 'new';
       } else {
@@ -356,13 +359,30 @@ const parsePropDefValue = (value) => {
     return arr;
   }, []);
 
-  // matching bracket-groups
+  // matching functional notations
+  while(parts.findIndex(p => p.type === 'functionstart') !== -1) {
+    const funcIdx = parts.findIndex(p => p.type === 'functionstart');
+    const matchingClosingFuncIdx = parts.findIndex((p, i) => p.content === ')' && i > funcIdx);
+    if (matchingClosingFuncIdx === -1) {
+      throw new Error(`Unterminated function notation in ${value}`);
+    }
+    const name = parts[funcIdx].name;
+    const func = { type: "function",
+                   name: name.slice(0, name.length - 1),
+                   arguments: parts.slice(funcIdx + 1, matchingClosingFuncIdx)
+                 };
+    parts = parts.slice(0, funcIdx)
+      .concat([func])
+      .concat(parts.slice(matchingClosingFuncIdx + 1));
+  }
+
+  // matching potentially nested bracket-groups
   while(parts.lastIndexOf('[') !== -1) {
     const bracketIdx = parts.lastIndexOf('[');
 
     // closing bracket may be more than just ']'
     // since it can be accompanied with multipliers
-    const matchingBracketIdx = parts.findIndex((p, i) => typeof(p)==="string" && p.startsWith(']') && i > bracketIdx);
+    const matchingBracketIdx = parts.findIndex((p, i) => p === ']' && i > bracketIdx);
 
     if (matchingBracketIdx === -1) {
       throw new Error(`Unterminated bracket-group in ${value}`);

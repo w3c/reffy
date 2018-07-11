@@ -75,6 +75,23 @@
       "additionalProperties": false,
       "required": ["type", "items"]
     },
+    "function": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "pattern": "^function$"},
+        "arguments": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": { "$ref": "#/definitions/component"}
+            },
+            { "$ref": "#/definitions/component"}
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": ["type", "arguments"]
+    },
     "component": {
       "oneOf": [
         { "$ref": "#/definitions/typedterminal" },
@@ -82,7 +99,8 @@
         { "$ref": "#/definitions/oneOf" },
         { "$ref": "#/definitions/anyOf" },
         { "$ref": "#/definitions/allOf" },
-        { "$ref": "#/definitions/sequence" }
+        { "$ref": "#/definitions/sequence" },
+        { "$ref": "#/definitions/function" }
       ]
     }
   },
