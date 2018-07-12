@@ -462,6 +462,10 @@ function getShortname(spec) {
   if (khronosMatch) {
     return "webgl" + khronosMatch[1];
   }
+  const extensionMatch = spec.url.match(/\/.*.github.io\/([^\/]*)\/extension\.html$/);
+  if (extensionMatch) {
+    return extensionMatch[1] + '-extension';
+  }
   const githubMatch = spec.url.match(/\/.*.github.io\/([^\/]*)\//);
   if (githubMatch) {
     return githubMatch[1];
