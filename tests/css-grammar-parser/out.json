@@ -1,0 +1,325 @@
+[
+  {
+    "type": "primitive",
+    "name": "integer"
+  },
+  {
+    "oneOf": [
+      {"type": "keyword",
+       "name": "left"
+      },
+      {"type": "keyword",
+       "name": "right"
+      },
+      {"type": "keyword",
+       "name": "center"
+    },
+      {"type": "keyword",
+       "name": "justify"
+      }
+    ]
+  },
+  {
+    "oneOf": [
+    {
+      "type": "primitive",
+      "name": "length"
+    },
+      {
+        "type": "primitive",
+        "name": "percentage"
+      }
+    ]
+  },
+  {
+    "oneOf": [
+      {
+        "type": "primitive",
+        "name": "color"
+      },
+      {
+      "type": "keyword",
+        "name": "invert"
+      }
+    ]
+  },
+  {
+    "anyOf": [
+      {
+        "oneOf": [
+          {
+            "type": "keyword",
+            "name": "none"
+          },
+          {
+            "type": "keyword",
+            "name": "underline"
+          }
+        ]
+      },
+      {
+        "type": "keyword",
+        "name": "overline"
+      },
+      {
+        "type": "keyword",
+        "name": "line-through"
+      },
+      {
+        "type": "keyword",
+        "name": "blink"
+      }
+    ]
+  },
+  {
+    "type": "array",
+    "items": {
+      "oneOf": [
+        {
+          "type": "valuespace",
+          "name": "family-name"
+        },
+        {
+          "type": "valuespace",
+          "name": "generic-family"
+        }
+      ]
+    },
+    "separator": ","
+  },
+  {
+    "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "primitive",
+            "name": "length"
+          },
+          {
+            "type": "keyword",
+            "name": "thick"
+          },
+          {
+            "type": "keyword",
+            "name": "medium"
+          },
+          {
+            "type": "keyword",
+            "name": "thin"
+          }
+        ]
+      },
+    "minItems": 1,
+    "maxItems": 4
+  },
+  {
+    "oneOf": [
+      {
+        "type": "array",
+        "items": {
+          "allOf": [
+            {
+              "type": "keyword",
+              "name": "inset",
+              "optional": true
+            },
+            {
+              "allOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "primitive",
+                    "name": "length"
+                  },
+                  "minItems": 2,
+                  "maxItems": 4
+                },
+                {
+                  "type": "primitive",
+                  "name": "color",
+                  "optional": true
+                }
+              ]
+            }
+          ]
+        },
+        "separator": ","
+      },
+      {
+        "type": "keyword",
+        "name": "none"
+      }
+    ]
+  },
+  {
+    "type": "array",
+    "items": {
+      "type": "valuespace",
+      "name": "single-animation"
+    },
+    "separator": ","
+  },
+  {
+    "type": "primitive",
+    "name": "time"
+  },
+  {
+    "type": "valuespace",
+    "name": "single-animation-fill-mode"
+  },
+  {
+    "oneOf": [
+      {
+        "type": "keyword",
+        "name": "none"
+      },
+      {
+        "type": "valuespace",
+        "name": "keyframes-name"
+      }
+    ]
+  },
+  {
+    "oneOf": [
+      {
+        "type": "keyword",
+        "name": "none"
+      },
+      {
+        "anyOf": [
+          {
+            "type": "keyword",
+            "name": "objects"
+          },
+          {
+            "oneOf": [
+              {
+                "type": "keyword",
+                "name": "spaces"
+              },
+              {
+                "anyOf": [
+                  {
+                    "type": "keyword",
+                    "name": "leading-spaces"
+                  },
+                  {
+                    "type": "keyword",
+                    "name": "trailing-spaces"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "keyword",
+            "name": "edges"
+          },
+          {
+            "type": "keyword",
+            "name": "box-decoration"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "array",
+    "items": {
+      "type": "primitive",
+      "name": "length-percentage"
+    },
+    "minItems": 1,
+    "maxItems": 2
+  },
+  {
+    "allOf": [
+      {
+        "type": "array",
+        "items": {
+          "oneOf": [
+            {
+              "type": "primitive",
+              "name": "number"
+            },
+            {
+              "type": "primitive",
+              "name": "percentage"
+            }
+          ]
+        },
+        "minItems": 1,
+        "maxItems": 4
+      },
+      {
+        "type": "keyword",
+        "name": "fill",
+        "optional": true
+      }
+    ]
+  },
+  {
+    "anyOf": [
+      {
+        "type": "propertyref",
+        "name": "border-image-source"
+      },
+      {
+        "type": "array",
+        "items": [
+          {
+            "type": "propertyref",
+            "name": "border-image-slice"
+          },
+          {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "type": "string",
+                      "content": "/"
+                    },
+                    {
+                      "type": "propertyref",
+                      "name": "border-image-width"
+                    }
+                  ]
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "type": "string",
+                      "content": "/"
+                    },
+                    {
+                      "type": "propertyref",
+                      "name": "border-image-width",
+                      "optional": true
+                    },
+                    {
+                      "type": "string",
+                      "content": "/"
+                    },
+                    {
+                      "type": "propertyref",
+                      "name": "border-image-outset"
+                    }
+                  ]
+                }
+              ]
+            },
+            "maxItems": 1
+          }
+        ]
+      },
+      {
+        "type": "propertyref",
+        "name": "border-image-repeat"
+      }
+    ]
+  }
+]
