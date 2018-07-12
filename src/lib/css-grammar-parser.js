@@ -107,7 +107,7 @@ const parseMultiplierRange = range => {
     return {minItems: parseInt(values, 10), maxItems: parseInt(values, 10)};
   } else if (values.match(/^[0-9]+,([0-9]+)?$/)) {
     const [min,max] = values.split(',');
-    return {minItems: parseInt(min, 10), maxItems: parseInt(max, 10)};
+    return { ...{minItems: parseInt(min, 10)}, ...(max ? { maxItems: parseInt(max, 10)} : {})};
   } else {
     throw new Error(`Unrecognized range format in multiplier ${range}`);
   }
