@@ -105,7 +105,7 @@ const parseMultiplierRange = range => {
   const values = range.slice(1,range.length - 1);
   if (values.match(/^[0-9]+$/)) {
     return {minItems: parseInt(values, 10), maxItems: parseInt(values, 10)};
-  } else if (values.match(/^[0-9]+,[0-9]+$/)) {
+  } else if (values.match(/^[0-9]+,([0-9]+)?$/)) {
     const [min,max] = values.split(',');
     return {minItems: parseInt(min, 10), maxItems: parseInt(max, 10)};
   } else {
