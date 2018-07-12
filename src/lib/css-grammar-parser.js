@@ -3,13 +3,25 @@
 
 const primitives = new Map([
   ["ident", {}],
+  ["ident-token", {}],
+  ["declaration-value", {}],
+  // the subset below is only used in selectors / MQ
+  // probably ought to be removed
+  ["number-token", {}],
   ["hash-token", {}],
+  ["any-value", {}],
+  ["string-token", {}],
+  ["function-token", {}],
+  ["dimension-token", {}],
+  // ----
+  ["zero", {url: ""}],
   ["custom-ident", {url: "https://drafts.csswg.org/css-values-4/#custom-idents"}],
   ["string", {url: "https://drafts.csswg.org/css-values-4/#strings"}],
   ["url", {url: "https://drafts.csswg.org/css-values-4/#urls"}],
   ["integer", {url: "https://drafts.csswg.org/css-values-4/#integers"}],
   ["number", {url: "https://drafts.csswg.org/css-values-4/#numbers"}],
   ["percentage", {url: "https://drafts.csswg.org/css-values-4/#percentages"}],
+  ["number-percentage", {url: "https://drafts.csswg.org/css-values-4/#number-percentage"}],
   ["length-percentage", {url: "https://drafts.csswg.org/css-values-4/#length-percentage"}],
   ["frequency-percentage", {url: "https://drafts.csswg.org/css-values-4/#frequency-percentage"}],
   ["angle-percentage", {url: "https://drafts.csswg.org/css-values-4/#angle-percentage"}],
