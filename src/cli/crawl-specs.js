@@ -28,6 +28,7 @@ const webidlExtractor = require('./extract-webidl');
 const cssDfnExtractor = require('./extract-cssdfn');
 const loadSpecification = require('../lib/util').loadSpecification;
 const webidlParser = require('./parse-webidl');
+const cssDfnParser = require('../lib/css-grammar-parser');
 const fetch = require('../lib/util').fetch;
 const canonicalizeURL = require('../lib/canonicalize-url').canonicalizeURL;
 const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
@@ -201,7 +202,33 @@ async function crawlSpec(spec, crawlOptions) {
                         err.idl = idl;
                         return err;
                     })),
-            cssDfnExtractor.extract(dom),
+            cssDfnExtractor.extract(dom)
+                .then(css => {
+                    Object.keys(css.properties || {}).forEach(prop => {
+                        try {
+                            css.properties[prop].parsedValue = cssDfnParser.parsePropDefValue(css.properties[prop].Value || css.properties[prop]["New values"]);
+                        } catch (e) {
+                            css.properties[prop].valueParseError = e.message;
+                        }
+                    });
+                    Object.keys(css.descriptors || {}).forEach(desc => {
+                        try {
+                            css.descriptors[desc].parsedValue = cssDfnParser.parsePropDefValue(css.descriptors[desc].Value);
+                        } catch (e) {
+                            css.descriptors[desc].valueParseError = e.message;
+                        }
+                    });
+                    Object.keys(css.valuespaces || {}).forEach(vs => {
+                        if (vs.value) {
+                            try {
+                                css.valuespaces[vs].parsedValue = cssDfnParser.parsePropDefValue(css.valuespaces[vs].value);
+                            } catch (e) {
+                                css.valuespaces[vs].valueParseError = e.message;
+                            }
+                        }
+                    });
+                    return css;
+                }),
             dom
         ]))
         .then(res => {
