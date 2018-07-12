@@ -506,6 +506,7 @@ function saveResults(crawlInfo, crawlOptions, data, folder) {
                 idlHeader = idlHeader.replace(/^\s+/gm, '').trim() + '\n\n';
                 let idl = spec.idl.idl
                     .replace(/\s+$/gm, '\n')
+                    .replace(/\t/g, '  ')
                     .trim();
                 idl = idlHeader + idl + '\n';
                 fs.writeFile(
