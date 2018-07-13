@@ -102,6 +102,9 @@ function completeWithInfoFromSpecref(specs) {
                     if (res[url].repository) {
                         spec.repository = res[url].repository;
                     }
+                    if (res[url].title && !spec.title) {
+                        spec.title = res[url].title;
+                    }
                 }
             });
             return specs;
@@ -249,6 +252,7 @@ async function crawlSpec(spec, crawlOptions) {
             return spec;
         })
         .catch(err => {
+            spec.title = spec.title || '[Could not be determined, see error]';
             spec.error = err.toString() + (err.stack ? ' ' + err.stack : '');
             return spec;
         });
