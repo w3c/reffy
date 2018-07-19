@@ -388,7 +388,9 @@ async function crawlList(speclist, crawlOptions, resultsPath) {
 function getShortname(spec) {
   if (spec.shortname) {
     // do not include versionning
-    return spec.shortname.replace(/-?[0-9\.]*$/, '');
+    return spec.shortname
+        .replace(/^css3-/, 'css-')
+        .replace(/-?[0-9\.]*$/, '');
   }
   const whatwgMatch = spec.url.match(/\/\/(.*)\.spec.whatwg.org\/$/);
   if (whatwgMatch) {
