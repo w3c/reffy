@@ -4,7 +4,6 @@
     "list": [
         { "file": "./specs-w3c-idl.json" },
         { "file": "./specs-idl.json" },
-        { "file": "./specs-cg-idl.json" },
         { "file": "./specs-css.json" },
         { "file": "./specs-other.json" }
     ]
