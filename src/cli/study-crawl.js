@@ -322,7 +322,7 @@ function studyCrawlResults(results, specsToInclude) {
                 (report.inconsistentRef.length === 0) &&
                 !report.noEdDraft;
             var res = {
-                title: spec.title,
+                title: spec.title || spec.url,
                 shortname: spec.shortname,
                 date: spec.date,
                 url: spec.url,
