@@ -47,7 +47,7 @@ const matchSpecUrl = url => url.match(/spec.whatwg.org/) || url.match(/www.w3.or
 /**
  * Compares specs for ordering by title
  */
-const byTitle = (a, b) => a.title.toUpperCase().localeCompare(b.title.toUpperCase());
+const byTitle = (a, b) => (a.title || '').toUpperCase().localeCompare((b.title || '').toUpperCase());
 
 
 /**
