@@ -337,7 +337,7 @@ async function crawlList(speclist, crawlOptions, resultsPath) {
                 console.warn(spec.url, 'Crawl timeout');
                 reportError(new Error('Crawl took too long'));
                 child.kill();
-            }, 60000);
+            }, 90000);
 
             child.send(spec);
         });
