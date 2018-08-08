@@ -104,6 +104,7 @@ function extractRespecIdl(doc) {
             [
                 'pre.idl',
                 'pre > code.idl-code',
+                'pre > code.idl',
                 'div.idl-code > pre',
                 'pre.widl'
             ].find(sel => {
