@@ -222,7 +222,7 @@ async function crawlSpec(spec, crawlOptions) {
                         }
                     });
                     Object.keys(css.valuespaces || {}).forEach(vs => {
-                        if (vs.value) {
+                        if (css.valuespaces[vs].value) {
                             try {
                                 css.valuespaces[vs].parsedValue = cssDfnParser.parsePropDefValue(css.valuespaces[vs].value);
                             } catch (e) {
