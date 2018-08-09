@@ -459,9 +459,9 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
         if (spec.flags.idl && spec.idl && spec.idl.idl) {
             let idlHeader = `
                 // GENERATED CONTENT - DO NOT EDIT
-                // Content was automatically extracted from the "${spec.title}" spec
-                // by Reffy into reffy-reports (https://github.com/tidoust/reffy-reports)
-                // Spec URL: ${spec.crawled}`;
+                // Content was automatically extracted by Reffy into reffy-reports
+                // (https://github.com/tidoust/reffy-reports)
+                // Source: ${spec.title} (${spec.crawled})`;
             idlHeader = idlHeader.replace(/^\s+/gm, '').trim() + '\n\n';
             let idl = spec.idl.idl
                 .replace(/\s+$/gm, '\n')
