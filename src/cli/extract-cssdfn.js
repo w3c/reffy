@@ -18,6 +18,22 @@ const getDocumentAndGenerator = require('../lib/util').getDocumentAndGenerator;
 
 
 /**
+ * Converts a definition label as it appears in a CSS spec to a lower camel
+ * case property name.
+ *
+ * @param  {String} label Definition label
+ * @return {String} lower camel case property name for the label
+ */
+const dfnLabel2Property = label => label.trim()
+  .replace(/:/, '')
+  .split(' ')
+  .map((str, idx) => (idx === 0) ?
+    str.toLowerCase() :
+    str.charAt(0).toUpperCase() + str.slice(1))
+  .join('');
+
+
+/**
  * Extract a CSS definition from a table
  *
  * All recent CSS specs should follow that pattern
@@ -26,7 +42,7 @@ const extractTableDfn = table => {
   let res = {};
   const lines = [...table.querySelectorAll('tr')]
     .map(line => Object.assign({
-      name: line.querySelector(':first-child').textContent.trim().replace(/:/, ''),
+      name: dfnLabel2Property(line.querySelector(':first-child').textContent),
       value: line.querySelector('td:last-child').textContent.trim().replace(/\s+/g, ' ')
     }));
   for (let prop of lines) {
@@ -43,10 +59,10 @@ const extractTableDfn = table => {
  */
 const extractDlDfn = dl => {
   let res = {};
-  res.Name = dl.querySelector('dt').textContent.replace(/'/g, '').trim();
+  res.name = dl.querySelector('dt').textContent.replace(/'/g, '').trim();
   const lines = [...dl.querySelectorAll('dd table tr')]
     .map(line => Object.assign({
-      name: line.querySelector(':first-child').textContent.trim().replace(/:/, ''),
+      name: dfnLabel2Property(line.querySelector(':first-child').textContent),
       value: line.querySelector('td:last-child').textContent.trim().replace(/\s+/g, ' ')
     }));
   for (let prop of lines) {
@@ -63,17 +79,17 @@ const extractDfns = (doc, selector, extractor) => {
   let res = {};
   [...doc.querySelectorAll(selector)]
     .map(extractor)
-    .filter(dfn => !!dfn.Name)
-    .map(dfn => dfn.Name.split(',').map(name => Object.assign({},
-      dfn, { Name: name.trim() })))
+    .filter(dfn => !!dfn.name)
+    .map(dfn => dfn.name.split(',').map(name => Object.assign({},
+      dfn, { name: name.trim() })))
     .reduce((acc, val) => acc.concat(val), [])
     .forEach(dfn => {
-      if ((dfn.Name === 'property-name') ||
-          (dfn.Name === '--*')) {
+      if ((dfn.name === 'property-name') ||
+          (dfn.name === '--*')) {
         // Ignore sample definition && custom properties definition
         return;
       }
-      res[dfn.Name] = dfn;
+      res[dfn.name] = dfn;
     });
   return res;
 };
