@@ -209,14 +209,14 @@ async function crawlSpec(spec, crawlOptions) {
                 .then(css => {
                     Object.keys(css.properties || {}).forEach(prop => {
                         try {
-                            css.properties[prop].parsedValue = cssDfnParser.parsePropDefValue(css.properties[prop].Value || css.properties[prop]["New values"]);
+                            css.properties[prop].parsedValue = cssDfnParser.parsePropDefValue(css.properties[prop].value || css.properties[prop].newValues);
                         } catch (e) {
                             css.properties[prop].valueParseError = e.message;
                         }
                     });
                     Object.keys(css.descriptors || {}).forEach(desc => {
                         try {
-                            css.descriptors[desc].parsedValue = cssDfnParser.parsePropDefValue(css.descriptors[desc].Value);
+                            css.descriptors[desc].parsedValue = cssDfnParser.parsePropDefValue(css.descriptors[desc].value);
                         } catch (e) {
                             css.descriptors[desc].valueParseError = e.message;
                         }
@@ -430,6 +430,11 @@ function getShortname(spec) {
  * Note results are sorted by URL to guarantee that the crawl report produced
  * will always follow the same order.
  *
+ * The function also dumps raw CSS/IDL extracts for each spec to the css and
+ * idl folders. Note that if the crawl contains multiple levels of a given spec
+ * that contain the same type of definitions (css, or idl), the dump is for the
+ * latest level.
+ *
  * @function
  * @param {Object} crawlInfo Crawl information structure, contains the title
  *   and the list of specs to crawl
@@ -455,82 +460,81 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
         }));
     });
 
-    const saveCssAndIdl = async spec => {
-        if (spec.flags.idl && spec.idl && spec.idl.idl) {
-            let idlHeader = `
-                // GENERATED CONTENT - DO NOT EDIT
-                // Content was automatically extracted by Reffy into reffy-reports
-                // (https://github.com/tidoust/reffy-reports)
-                // Source: ${spec.title} (${spec.crawled})`;
-            idlHeader = idlHeader.replace(/^\s+/gm, '').trim() + '\n\n';
-            let idl = spec.idl.idl
-                .replace(/\s+$/gm, '\n')
-                .replace(/\t/g, '  ')
-                .trim();
-            idl = idlHeader + idl + '\n';
-            delete spec.idl.idl;
-            await new Promise(resolve => fs.writeFile(
-                path.join(idlFolder, getShortname(spec) + '.idl'),
-                idl,
-                err => {
-                    if (err) console.log(err);
-                    return resolve();
-                }));
-        }
-
-        if (spec.flags.css && spec.css && (
-                (Object.keys(spec.css.properties || {}).length > 0) ||
-                (Object.keys(spec.css.descriptors || {}).length > 0) ||
-                (Object.keys(spec.css.valuespaces || {}).length > 0))) {
-            let properties = (Object.values(spec.css.properties || {}))
-                .filter(s => s.Name && (s.Value || s['New values']))
-                .map(s => s.Value ? `${s.Name} = ${s.Value}` :
-                        `${s.Name} |= ${s['New values']}`);
-            let descriptors = (Object.values(spec.css.descriptors || {}))
-                .filter(s => s.Name && (s.Value || s['New values']))
-                .map(s => s.Value ? `${s.Name} = ${s.Value}` :
-                        `${s.Name} |= ${s['New values']}`);
-            let valuespaces = (Object.keys(spec.css.valuespaces || {}))
-                .filter(s => spec.css.valuespaces[s].value)
-                .map(s => `${s} = ${spec.css.valuespaces[s].value}`);
-            let parts = properties.concat(descriptors, valuespaces);
-
-            let css = parts.join('\n\n')
-                .replace(/\s+$/gm, '\n')
-                .replace(/\t/g, '  ')
-                .trim();
-            css = css + '\n';
-            await new Promise(resolve => fs.writeFile(
-                path.join(cssFolder, getShortname(spec) + '.cvds'),
-                css,
-                err => {
-                    if (err) console.log(err);
-                    return resolve();
-                }));
-        }
+    const saveIdl = async spec => {
+        let idlHeader = `
+            // GENERATED CONTENT - DO NOT EDIT
+            // Content was automatically extracted by Reffy into reffy-reports
+            // (https://github.com/tidoust/reffy-reports)
+            // Source: ${spec.title} (${spec.crawled})`;
+        idlHeader = idlHeader.replace(/^\s+/gm, '').trim() + '\n\n';
+        let idl = spec.idl.idl
+            .replace(/\s+$/gm, '\n')
+            .replace(/\t/g, '  ')
+            .trim();
+        idl = idlHeader + idl + '\n';
+        delete spec.idl.idl;
+        await new Promise(resolve => fs.writeFile(
+            path.join(idlFolder, getShortname(spec) + '.idl'),
+            idl,
+            err => {
+                if (err) console.log(err);
+                return resolve();
+            }));
     };
 
-    // Only save CSS/IDL definitions for the last level of specifications
-    // when the crawl contains multiple levels
-    // (Note the code below assumes that levels are below 10)
-    await Promise.all(data
-        .filter(spec => {
-            if (!spec.url.match(/-\d\/$/)) {
-                // Handle special CSS 2.1 / CSS 2.2 spec which does not
-                // follow the same naming conventions as other CSS specs
-                return !spec.url.match(/CSS2\/$/i) ||
-                    !data.find(s => s.url.match(/CSS22\/$/i));
+    const saveCss = async spec => {
+        let css = JSON.stringify(spec.css, (key, val) => {
+            if ((key === 'parsedValue') || (key === 'valueParseError')) {
+                return undefined;
             }
-            let start = spec.url.split(/-\d\/$/)[0];
-            let level = spec.url.match(/-(\d)\/$/)[1];
-            let moreRecent = data.find(s =>
-                s.url.startsWith(start) &&
-                s.url.match(/-\d\/$/) &&
-                (s.url.match(/-(\d)\/$/)[1] > level));
-            return !moreRecent;
-        })
-        .map(saveCssAndIdl));
+            else {
+                return val;
+            }
+        }, 2) + '\n';
+        await new Promise(resolve => fs.writeFile(
+            path.join(cssFolder, getShortname(spec) + '.json'),
+            css,
+            err => {
+                if (err) console.log(err);
+                return resolve();
+            }));
+    };
 
+    // Helper function that returns true when the given spec is is the latest
+    // level of that spec in the crawl for the given type of content
+    // ("css" or "idl")
+    const isLatestLevel = (spec, flag) => {
+        if (!spec.url.match(/-\d\/$/)) {
+            // Handle special CSS 2.1 / CSS 2.2 spec which does not
+            // follow the same naming conventions as other CSS specs
+            return !spec.url.match(/CSS2\/$/i) ||
+                !data.find(s => s.url.match(/CSS22\/$/i));
+        }
+        let level = spec.url.match(/-(\d)\/$/)[1];
+        let moreRecent = data.find(s =>
+            s.flags[flag] &&
+            (getShortname(s) === getShortname(spec)) &&
+            s.url.match(/-\d\/$/) &&
+            (s.url.match(/-(\d)\/$/)[1] > level));
+        return !moreRecent;
+    };
+
+    // Save IDL dumps for the latest level of a spec to the idl folder
+    await Promise.all(data
+        .filter(spec => spec.flags.idl && spec.idl && spec.idl.idl)
+        .filter(spec => isLatestLevel(spec, 'idl'))
+        .map(saveIdl));
+
+    // Save CSS dumps for the latest level of a spec to the css folder
+    await Promise.all(data
+        .filter(spec => spec.flags.css && spec.css && (
+            (Object.keys(spec.css.properties || {}).length > 0) ||
+            (Object.keys(spec.css.descriptors || {}).length > 0) ||
+            (Object.keys(spec.css.valuespaces || {}).length > 0)))
+        .filter(spec => isLatestLevel(spec, 'css'))
+        .map(saveCss));
+
+    // Save all results to the crawl.json file
     let reportFilename = path.join(folder, 'crawl.json');
     return new Promise((resolve, reject) =>
         fs.readFile(reportFilename, function(err, content) {
