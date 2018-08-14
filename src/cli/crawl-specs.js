@@ -483,7 +483,16 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
     };
 
     const saveCss = async spec => {
-        let css = JSON.stringify(spec.css, (key, val) => {
+        // There are no comments in JSON, so include the spec title+URL as the
+        // first property instead.
+        let css = {
+            spec: {
+                title: spec.title,
+                url: spec.crawled
+            }
+        };
+        Object.assign(css, spec.css);
+        let json = JSON.stringify(css, (key, val) => {
             if ((key === 'parsedValue') || (key === 'valueParseError')) {
                 return undefined;
             }
@@ -493,7 +502,7 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
         }, 2) + '\n';
         await new Promise(resolve => fs.writeFile(
             path.join(cssFolder, getShortname(spec) + '.json'),
-            css,
+            json,
             err => {
                 if (err) console.log(err);
                 return resolve();
