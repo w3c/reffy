@@ -74,7 +74,7 @@ async function loadSpecificationFromHtml(spec, counter) {
             beforeParse(window) {
                 // Wait until the generation of Respec documents is over
                 window.addEventListener('load', function () {
-                    let usesRespec = window.respecConfig &&
+                    let usesRespec = (window.respecConfig || window.eval('typeof respecConfig !== "undefined"')) &&
                         window.document.head.querySelector("script[src*='respec']");
                     let resolveWhenReady = _ => {
                         if (window.document.respecIsReady) {
@@ -212,9 +212,8 @@ function urlOrDom(input) {
  * Given a "window" object loaded with jsdom, retrieve the document along
  * with the name of the well-known generator that was used, if known.
  *
- * Note that the function only returns when the document is properly generated
- * (typically, once ReSpec is done generating the document if the spec being
- * considered is a raw ReSpec document)
+ * Note that the function expects the generation of documents generated
+ * on-the-fly to have already happened
  *
  * @function
  * @public
@@ -225,26 +224,12 @@ function urlOrDom(input) {
 function getDocumentAndGenerator(window) {
     return new Promise(function (resolve, reject) {
         var doc = window.document;
-        var generator = window.document.querySelector("meta[name='generator']");
-        var timeout = null;
+        var generator = window.document.querySelector('meta[name="generator"]');
         if (generator && generator.content.match(/bikeshed/i)) {
-            resolve({doc, generator:'bikeshed'});
-        } else if (doc.body.id === "respecDocument") {
-            resolve({doc, generator:'respec'});
-        } else if (window.respecConfig &&
-            window.document.head.querySelector("script[src*='respec']")) {
-            if (!window.respecConfig.postProcess) {
-                window.respecConfig.postProcess = [];
-            }
-            window.respecConfig.postProcess.push(function() {
-                if (timeout) {
-                    clearTimeout(timeout);
-                }
-                resolve({doc, generator: 'respec'});
-            });
-            timeout = setTimeout(function () {
-              reject(new Error('Specification apparently uses ReSpec but document generation timed out'));
-            }, 30000);
+            resolve({doc, generator: 'bikeshed'});
+        } else if ((doc.body.id === 'respecDocument') ||
+                window.respecConfig || window.eval('typeof respecConfig !== "undefined"')) {
+            resolve({doc, generator: 'respec'});
         } else if (doc.getElementById('anolis-references')) {
             resolve({doc, generator: 'anolis'});
         } else {
