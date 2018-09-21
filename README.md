@@ -107,7 +107,7 @@ Reffy should be able to parse most of the W3C/WHATWG specifications that define 
 
 ### List of specs to crawl
 
-The recommended lists appear in `src/specs/specs-w3c.json` and `src/specs/spec-whatwg.json`. Both files reference a common list in `src/specs/specs-common.json` and in `src/specs/specs-cg.json`. These lists were built out of the [JavaScript APIs](http://www.w3.org/TR/#tr_Javascript_APIs) *TR* bucket, semi-manually completed to create a more comprehensive list.
+The recommended lists appear in `src/specs/specs-w3c.json` and `src/specs/spec-whatwg.json`. Both files reference common lists in `src/specs/specs-idl.json`, `src/specs/specs-css.json`, and `src/specs/specs-other.json`. These lists were built out of the [JavaScript APIs](http://www.w3.org/TR/#tr_Javascript_APIs) *TR* bucket, semi-manually completed to create a more comprehensive list.
 
 It should be possible to crawl other specs, but note Reffy has not yet been tested with specs that do not define any WebIDL term, and would need to be adjusted to return "interesting" information. Feel free to try out other specs and report any issue!
 
