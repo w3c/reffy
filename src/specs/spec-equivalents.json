@@ -71,6 +71,10 @@
     "https://www.w3.org/TR/html-media-capture/": [
         "https://dev.w3.org/2009/dap/camera/"
     ],
+    "https://www.w3.org/TR/service-workers-1/": [
+        "https://w3c.github.io/ServiceWorker/",
+        "https://www.w3.org/TR/service-workers/"
+    ],
     "https://www.w3.org/TR/webvtt1/": [
         "https://dev.w3.org/html5/webvtt/"
     ],
