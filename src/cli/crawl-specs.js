@@ -307,20 +307,33 @@ async function crawlList(speclist, crawlOptions, resultsPath) {
                     '--child', spec.url, (crawlOptions.publishedVersion ? 'tr' : 'ed')
                 ]);
             child.on('message', msg => {
+                if (resolved) {
+                    return;
+                }
                 if (msg.type === 'result') {
                     reportSuccess(msg.result);
                 }
                 else if (msg.cmd === 'fetch') {
                     fetch(msg.url, msg.options)
-                        .then(_ => child.send({
-                            type: 'fetch',
-                            reqId: msg.reqId
-                        }))
-                        .catch(err => child.send({
-                            type: 'fetch',
-                            reqId: msg.reqId,
-                            err: err.toString()
-                        }));
+                        .then(_ => {
+                            if (resolved) {
+                                return;
+                            }
+                            child.send({
+                                type: 'fetch',
+                                reqId: msg.reqId
+                            });
+                        })
+                        .catch(err => {
+                            if (resolved) {
+                                return;
+                            }
+                            child.send({
+                                type: 'fetch',
+                                reqId: msg.reqId,
+                                err: err.toString()
+                            })
+                        });
                 }
             });
             child.once('exit', code => {
