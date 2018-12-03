@@ -30,7 +30,9 @@ resourceLoader.download = function (url, options, callback) {
   // WHATWG annotate_spec script that JSDOM does not seem to like.
   // Explicitly whitelist the "autolink" script of the shadow DOM spec which
   // is needed to initialize respecConfig
-  const respecUrl = 'https://www.w3.org/Tools/respec/respec-w3c-common';
+  // TEMP: Force use of previous version of Respec, see https://github.com/tidoust/reffy/issues/134
+  //const respecUrl = 'https://www.w3.org/Tools/respec/respec-w3c-common';
+  const respecUrl = 'https://raw.githubusercontent.com/w3c/respec/f17445a290e4619fda7e85afbd76f14390974114/builds/respec-w3c-common.js';
   function getUrlToFetch() {
     let referrer = options.referrer;
     if (!referrer.endsWith('/')) {
