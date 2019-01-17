@@ -93,6 +93,13 @@ function extractBikeshedIdl(doc) {
  * @return {Promise} The promise to get a dump of the IDL definitions
  */
 function extractRespecIdl(doc) {
+    // IDL filter voluntarily similar to that defined in Respec to exclude
+    // IDL defined with an `exclude` class:
+    // https://github.com/w3c/respec/blob/develop/src/core/webidl-index.js#L34
+    // https://github.com/w3c/respec/blob/develop/src/core/utils.js#L100
+    const nonNormativeSelector =
+        '.informative, .note, .issue, .example, .ednote, .practice';
+
     return new Promise(resolve => {
         let idlEl = doc.querySelector('#idl-index pre') ||
             doc.querySelector('#chapter-idl pre');  // Used in SVG 2 draft
@@ -101,15 +108,16 @@ function extractRespecIdl(doc) {
         }
         else {
             let idl = [
-                'pre.idl',
-                'pre > code.idl-code',
-                'pre > code.idl',
-                'div.idl-code > pre',
-                'pre.widl'
+                'pre.idl:not(.exclude)',
+                'pre:not(.exclude) > code.idl-code:not(.exclude)',
+                'pre:not(.exclude) > code.idl:not(.exclude)',
+                'div.idl-code:not(.exclude) > pre:not(.exclude)',
+                'pre.widl:not(.exclude)'
             ]
                 .map(sel => [...doc.querySelectorAll(sel)])
                 .reduce((res, elements) => res.concat(elements), [])
                 .filter((el, idx, self) => self.indexOf(el) === idx)
+                .filter(el => !el.closest(nonNormativeSelector))
                 .map(el => el.textContent.trim())
                 .join('\n\n');
             resolve(idl);
