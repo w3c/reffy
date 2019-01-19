@@ -108,11 +108,11 @@ function extractRespecIdl(doc) {
         }
         else {
             let idl = [
-                'pre.idl:not(.exclude)',
-                'pre:not(.exclude) > code.idl-code:not(.exclude)',
-                'pre:not(.exclude) > code.idl:not(.exclude)',
-                'div.idl-code:not(.exclude) > pre:not(.exclude)',
-                'pre.widl:not(.exclude)'
+                'pre.idl:not(.exclude):not(.extract)',
+                'pre:not(.exclude):not(.extract) > code.idl-code:not(.exclude):not(.extract)',
+                'pre:not(.exclude):not(.extract) > code.idl:not(.exclude):not(.extract)',
+                'div.idl-code:not(.exclude):not(.extract) > pre:not(.exclude):not(.extract)',
+                'pre.widl:not(.exclude):not(.extract)'
             ]
                 .map(sel => [...doc.querySelectorAll(sel)])
                 .reduce((res, elements) => res.concat(elements), [])
