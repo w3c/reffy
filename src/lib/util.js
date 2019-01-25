@@ -274,15 +274,16 @@ function completeWithShortName(spec) {
  *
  * @function
  * @param {Object} spec Spec description structure (only the URL is useful)
+ * @param {String} key W3C Api key to use
  * @return {Promise<Object>} The same structure, enriched with the URL of the editor's
  *   draft when one is found
  */
-function completeWithInfoFromW3CApi(spec) {
+function completeWithInfoFromW3CApi(spec, key) {
     var shortname = spec.shortname;
-    var config = requireFromWorkingDirectory('config.json');
+    key = key || requireFromWorkingDirectory('config.json').w3cApiKey;
     var options = {
         headers: {
-            Authorization: 'W3C-API apikey="' + config.w3cApiKey + '"'
+            Authorization: 'W3C-API apikey="' + key + '"'
         }
     };
 
