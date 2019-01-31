@@ -68,7 +68,7 @@
   },
   "<id>": {
     "value": "<hash-token>",
-    "spec": "https://www.w3.org/TR/2017/CR-css-ui-3-20170302/"
+    "spec": "https://drafts.csswg.org/css-ui/#typedef-id"
   },
   "<left>": {
     "value": "<length> | auto",
