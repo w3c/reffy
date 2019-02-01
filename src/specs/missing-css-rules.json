@@ -66,6 +66,10 @@
     "value": "hsla( <hue> <percentage> <percentage> [ / <alpha-value> ]? )",
     "spec": "https://drafts.csswg.org/css-color/#funcdef-hsla"
   },
+  "<id>": {
+    "value": "<hash-token>",
+    "spec": "https://drafts.csswg.org/css-ui/#typedef-id"
+  },
   "<left>": {
     "value": "<length> | auto",
     "spec": "https://drafts.fxtf.org/css-masking-1/#typedef-clip-left"
@@ -102,6 +106,11 @@
     "value": "<ident-token>",
     "prose": "<ndashdigit-ident> is an <ident-token> whose value is an ASCII case-insensitive match for \"n-*\", where \"*\" is a series of one or more digits",
     "spec": "https://drafts.csswg.org/css-syntax-3/#typedef-ndashdigit-ident"
+  },
+  "<outline-line-style>": {
+    "value": "none | dotted | dashed | solid | double | groove | ridge | inset | outset",
+    "prose": "<outline-line-style> accepts the same values as <line-style> except that hidden is not a legal outline style",
+    "spec": "https://drafts.csswg.org/css-ui-4/#typedef-outline-line-style"
   },
   "<padding-width>": {
     "value": "<length> | <percentage>",
