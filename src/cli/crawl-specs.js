@@ -428,7 +428,13 @@ function getShortname(spec) {
   }
   const githubMatch = spec.url.match(/\/.*\.github\.io\/(?:webappsec-)?([^\/]+)\//);
   if (githubMatch) {
-    return githubMatch[1];
+    if (githubMatch[1] === 'ServiceWorker') {
+        // Exception to the rule for service workers ED
+        return 'service-workers';
+    }
+    else {
+        return githubMatch[1];
+    }
   }
   const cssDraftMatch = spec.url.match(/\/drafts\.(?:csswg|fxtf|css-houdini)\.org\/([^\/]*)\//);
   if (cssDraftMatch) {
