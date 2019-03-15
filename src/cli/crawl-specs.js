@@ -426,7 +426,7 @@ function getShortname(spec) {
   if (extensionMatch) {
     return extensionMatch[1] + '-extension';
   }
-  const githubMatch = spec.url.match(/\/.*\.github\.io\/([^\/]*)\//);
+  const githubMatch = spec.url.match(/\/.*\.github\.io\/(?:webappsec-)?([^\/]+)\//);
   if (githubMatch) {
     return githubMatch[1];
   }
