@@ -183,6 +183,7 @@ function parseIdlAstTree(jsNames, idlNames, idlExtendedNames, externalDependenci
         case "serializer":
         case "stringifier":
         case "const":
+        case "eof":
             break;
         default:
             console.error("Unhandled IDL type: " + def.type + " in " +JSON.stringify(def));
