@@ -426,9 +426,9 @@ function getShortname(spec) {
   if (extensionMatch) {
     return extensionMatch[1] + '-extension';
   }
-  const githubMatch = spec.url.match(/\/.*\.github\.io\/(webappsec-)?([^\/]+)\//);
+  const githubMatch = spec.url.match(/\/.*\.github\.io\/(?:webappsec-)?([^\/]+)\//);
   if (githubMatch) {
-    return githubMatch[2];
+    return githubMatch[1];
   }
   const cssDraftMatch = spec.url.match(/\/drafts\.(?:csswg|fxtf|css-houdini)\.org\/([^\/]*)\//);
   if (cssDraftMatch) {
