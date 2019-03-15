@@ -274,13 +274,17 @@ function completeWithShortName(spec) {
  *
  * @function
  * @param {Object} spec Spec description structure (only the URL is useful)
- * @param {String} key W3C Api key to use
+ * @param {String} key W3C Api key to use (note the function may be passed as
+ *   argument to a `map` call. When that happens, the second parameter is the
+ *   index of the element in the array (and gets ignored)
  * @return {Promise<Object>} The same structure, enriched with the URL of the editor's
  *   draft when one is found
  */
 function completeWithInfoFromW3CApi(spec, key) {
     var shortname = spec.shortname;
-    key = key || requireFromWorkingDirectory('config.json').w3cApiKey;
+    key = (key && (typeof spec === 'string')) ?
+        key :
+        requireFromWorkingDirectory('config.json').w3cApiKey;
     var options = {
         headers: {
             Authorization: 'W3C-API apikey="' + key + '"'
