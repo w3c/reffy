@@ -348,7 +348,7 @@ const tokenize = (value) => {
 };
 
 const parsePropDefValue = (value) => {
-  value = value.trim();
+  value = value.trim().replace(/‘/g, '\'').replace(/’/g, '\'');
   const tokens = tokenize(value);
   let parts = tokens.filter(x => x)
         .map(parseTerminals);
