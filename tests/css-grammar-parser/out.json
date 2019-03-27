@@ -321,5 +321,17 @@
         "name": "border-image-repeat"
       }
     ]
+  },
+  {
+    "anyOf": [
+      {
+        "type": "propertyref",
+        "name": "corner-shape"
+      },
+      {
+        "type": "propertyref",
+        "name": "border-radius"
+      }
+    ]
   }
 ]
