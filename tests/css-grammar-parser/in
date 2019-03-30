@@ -14,4 +14,3 @@ none | [ objects || [ spaces | [ leading-spaces || trailing-spaces ] ] || edges 
 <length-percentage>{1,2}
 [<number> | <percentage>]{1,4} && fill?
 <'border-image-source'> || <'border-image-slice'> [ / <'border-image-width'> | / <'border-image-width'>? / <'border-image-outset'> ]? || <'border-image-repeat'>
-<‘corner-shape’> || <‘border-radius’>
