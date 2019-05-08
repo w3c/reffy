@@ -1,7 +1,8 @@
 [
   {
     "type": "primitive",
-    "name": "integer"
+    "name": "integer",
+    "range": ["0", "10"]
   },
   {
     "oneOf": [
@@ -23,7 +24,8 @@
     "oneOf": [
     {
       "type": "primitive",
-      "name": "length"
+      "name": "length",
+      "range": ["-∞", "∞"]
     },
       {
         "type": "primitive",
