@@ -37,6 +37,8 @@ const primitives = new Map([
   ["position", {url: "https://drafts.csswg.org/css-values-4/#typedef-position"}]
 ]);
 
+const numericTypes = ["integer", "number", "percentage", "number-percentage", "length-percentage", "frequency-percentage", "angle-percentage", "time-percentage", "dimension", "length", "angle", "time", "frequency", "resolution"];
+
 const combinatorsMap = [['&&', 'allOf'],
                         ['||', 'anyOf'],
                         ['|', 'oneOf']];
@@ -157,6 +159,15 @@ const applyMultiplier = (multiplier, modifiee) => {
 
 const isMultiplier = s => typeof s === "string" &&  multipliersStarters.map(starter => s.startsWith(starter)).includes(true);
 
+const primitiveMatch = (s, p) => s.match(new RegExp("<(" + p + ")( +\\\[[^\\\]]*\\\])?>"));
+
+const parseBracketedRange = s => {
+  if (!s || !s.trim()) return undefined;
+  const range = s.trim().slice(1, s.length - 2).split(',').map(x => x.trim());
+  if (range.length != 2) throw new Error(`Unrecognized range descriptor ${s}`);
+  return range;
+};
+
 const parseTerminals = s => {
   let m;
   if ([...new Map(combinatorsMap).keys()].includes(s) || s === '[' || s.startsWith(']') || isMultiplier(s)) {
@@ -167,8 +178,10 @@ const parseTerminals = s => {
     return {type: "string", content: m[1]};
   } else if ((m = s.match(/^<\'([-_a-zA-Z][^\'>]*)\'>$/))) {
     return {type: "propertyref", name: m[1]};
-  } else if ([...primitives.keys()].map(p => "<" + p + ">").includes(s)) {
-    return {type: "primitive", name: s.slice(1, s.length -1)};
+  } else if ((m = [...primitives.keys()].find(p => primitiveMatch(s, p)))) {
+    // TODO: parse bracketed range notation
+    const [, name, range] = primitiveMatch(s, m);
+    return Object.assign({type: "primitive", name}, range ? {range: parseBracketedRange(range)} : {});
   } else if ((m = s.match(/^<[-_a-zA-Z]([^>]*)>$/))) {
     return {type: "valuespace", name: s.slice(1, s.length -1)};
   } else if ((m = s.match(/^[-_a-zA-Z][-_a-zA-Z0-9]*$/))) {
@@ -186,9 +199,13 @@ const tokenize = (value) => {
   while(i < value.length) {
     const c = value[i];
     if (c.match(/\s/)) {
-      if (currentToken) tokens.push(currentToken);
-      currentToken = '';
-      state = 'new';
+      if (state === 'labracket') { // bracketed range notation
+        currentToken += c;
+      } else {
+        if (currentToken) tokens.push(currentToken);
+        currentToken = '';
+        state = 'new';
+      }
     } else if (c === '<') {
       if (delimiterStates.includes(state)) {
         if (currentToken) tokens.push(currentToken);
@@ -235,6 +252,13 @@ const tokenize = (value) => {
         state = 'new';
       } else if (state === 'quote') {
         currentToken += c;
+      } else if (state === 'labracket' && c === '[') {
+        // bracketed range notation
+        state = 'bracketedrange';
+        currentToken += c;
+      } else if (state === 'bracketedrange' && c === ']') {
+        currentToken += c;
+        state = 'labracket';
       } else {
         throw new Error(`Unexpected ${c} in ${currentToken} while parsing ${value} in state ${state}`);
       }
@@ -265,7 +289,7 @@ const tokenize = (value) => {
         tokens.push(c);
         currentToken='';
         state = 'new';
-      } else if (state === 'quote' || state === 'curlybracket') {
+      } else if (state === 'quote' || state === 'curlybracket' || state === 'bracketedrange') {
         currentToken += c;
       } else {
         throw new Error(`Unexpected ${c} in ${currentToken} while parsing ${value} in state ${state}`);
