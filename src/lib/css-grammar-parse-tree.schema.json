@@ -6,7 +6,8 @@
       "properties": {
         "type": { "type": "string", "enum": ["primitive", "valuespace", "propertyref", "keyword" ] },
         "name": { "type": "string"},
-        "optional": { "type": "boolean" }
+        "optional": { "type": "boolean" },
+        "range": { "type": "array", "items": {"type": "string"} }
       },
       "additionalProperties": false,
       "required": ["type", "name"]
