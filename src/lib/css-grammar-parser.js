@@ -37,8 +37,6 @@ const primitives = new Map([
   ["position", {url: "https://drafts.csswg.org/css-values-4/#typedef-position"}]
 ]);
 
-const numericTypes = ["integer", "number", "percentage", "number-percentage", "length-percentage", "frequency-percentage", "angle-percentage", "time-percentage", "dimension", "length", "angle", "time", "frequency", "resolution"];
-
 const combinatorsMap = [['&&', 'allOf'],
                         ['||', 'anyOf'],
                         ['|', 'oneOf']];
