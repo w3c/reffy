@@ -1,6 +1,6 @@
-<integer>
+<integer [0,10]>
 left | right | center | justify
-<length> | <percentage>
+<length [-∞,∞]> | <percentage>
 <color> | invert
 none | underline || overline || line-through || blink
 [ <family-name> | <generic-family> ]#
