@@ -92,8 +92,9 @@ function linkExtractor(window) {
  *   repository when known.
  */
 function completeWithInfoFromSpecref(specs) {
-    return fetch('https://api.specref.org/reverse-lookup?urls=' +
-            specs.map(s => s.latest || s.url).join(','))
+    let specrefUrl = 'https://api.specref.org/reverse-lookup?urls=' +
+          specs.map(s => s.latest || s.url).join(',');
+    return fetch(specrefUrl)
         .then(r =>  r.json())
         .then(res => {
             specs.forEach(spec => {
@@ -110,7 +111,7 @@ function completeWithInfoFromSpecref(specs) {
             return specs;
         })
         .catch(err => {
-            console.warn('Specref returned an error', url, err);
+            console.warn('Specref returned an error', specrefUrl, err);
             return specs;
         });
 }
