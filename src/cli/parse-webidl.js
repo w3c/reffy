@@ -144,8 +144,8 @@ function parseIdlAstTree(jsNames, idlNames, idlExtendedNames, externalDependenci
             break;
         case "operation":
             if (def.stringifier) return;
-            parseType(def.idlType, idlNames, externalDependencies, contextName);
-            def.arguments.forEach(a => parseType(a.idlType,  idlNames, externalDependencies, contextName));
+            parseType(def.body.idlType, idlNames, externalDependencies, contextName);
+            def.body.arguments.forEach(a => parseType(a.idlType,  idlNames, externalDependencies, contextName));
             break;
         case "attribute":
         case "field":
@@ -225,8 +225,9 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, ex
             addDependency(def.inheritance, {}, idlNames._dependencies[def.name]);
         }
         idlNames[def.name] = def;
+        def.extAttrs = def.extAttrs || { items: []};
         var extendedAttributesHasReferences = ea => ["Exposed", "Global", "PrimaryGlobal"].includes(ea.name);
-        def.extAttrs.filter(extendedAttributesHasReferences).forEach(ea => {
+        def.extAttrs.items.filter(extendedAttributesHasReferences).forEach(ea => {
             var contexts = [];
             if (ea.name === "PrimaryGlobal") {
                 // We just found the primary global interface
@@ -256,24 +257,24 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, ex
                 });
             }
         });
-        if (def.extAttrs.some(ea => ea.name === "Constructor")) {
-            addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
-            def.extAttrs.filter(ea => ea.name === "Constructor").forEach(function(constructor) {
+        if (def.extAttrs.items.some(ea => ea.name === "Constructor")) {
+            addToJSContext(def.extAttrs.items, jsNames, def.name, "constructors");
+            def.extAttrs.items.filter(ea => ea.name === "Constructor").forEach(function(constructor) {
                 if (constructor.arguments) {
                     constructor.arguments.forEach(a => parseType(a.idlType, idlNames, externalDependencies, def.name));
                 }
             });
-        } else if (def.extAttrs.some(ea => ea.name === "NamedConstructor")) {
-            def.extAttrs.filter(ea => ea.name === "NamedConstructor").forEach(function(constructor) {
+        } else if (def.extAttrs.items.some(ea => ea.name === "NamedConstructor")) {
+            def.extAttrs.items.filter(ea => ea.name === "NamedConstructor").forEach(function(constructor) {
                 idlNames[constructor.rhs.value] = constructor;
-                addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
+                addToJSContext(def.extAttrs.items, jsNames, def.name, "constructors");
                 if (constructor.arguments) {
                     constructor.arguments.forEach(a => parseType(a.idlType, idlNames, externalDependencies, def.name));
                 }
             });
         } else if (def.type === "interface") {
-            if (!def.extAttrs.some(ea => ea.name === "NoInterfaceObject")) {
-                addToJSContext(def.extAttrs, jsNames, def.name, "functions");
+            if (!def.extAttrs.items.some(ea => ea.name === "NoInterfaceObject")) {
+                addToJSContext(def.extAttrs.items, jsNames, def.name, "functions");
             }
         }
     }
