@@ -162,6 +162,11 @@ function parseIdlAstTree(jsNames, idlNames, idlExtendedNames, externalDependenci
                 idlNames._dependencies[def.target] = [];
             }
             addDependency(def[def.type], {}, idlNames._dependencies[def.target]);
+            if (!idlExtendedNames[def.target]) {
+               idlExtendedNames[def.target] = [];
+            }
+            const mixin = {name: def.target, type: "interface", includes: def.includes};
+            idlExtendedNames[def.target].push(mixin);
             break;
         case "typedef":
             parseType(def.idlType, idlNames, externalDependencies);
