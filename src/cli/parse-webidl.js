@@ -221,8 +221,8 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, ex
             if (def.implements === 'window') {
                 idlNames._reallyDependsOnWindow = true;
             }
-            addDependency(def.inheritance, idlNames, externalDependencies);
-            addDependency(def.inheritance, {}, idlNames._dependencies[def.name]);
+            addDependency(def.inheritance.name, idlNames, externalDependencies);
+            addDependency(def.inheritance.name, {}, idlNames._dependencies[def.name]);
         }
         idlNames[def.name] = def;
         def.extAttrs = def.extAttrs || { items: []};
