@@ -302,7 +302,7 @@ function addToJSContext(eas, jsNames, name, type) {
         if (exposedEa.rhs.type === "identifier") {
             contexts = [exposedEa.rhs.value];
         } else {
-            contexts = exposedEa.rhs.value;
+            contexts = exposedEa.rhs.value.map(x => x.value);
         }
     }
     contexts.forEach(c => { if (!jsNames[type][c]) jsNames[type][c] = []; jsNames[type][c].push(name)});
