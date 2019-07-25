@@ -239,7 +239,7 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, ex
             }
             if ((ea.name === "Global" || ea.name === "PrimaryGlobal")
                 && ea.rhs && (ea.rhs.type === "identifier" || ea.rhs.type === "identifier-list")) {
-                const globalNames = ea.rhs.type === "identifier" ? [ea.rhs.value] : ea.rhs.value;
+                const globalNames = ea.rhs.type === "identifier" ? [ea.rhs.value] : ea.rhs.value.map(c => c.value);
                 globalNames.forEach(n => idlNames[n] = [def.name]);
                 // record ea.rhs.value as "known"
             } else { // Exposed
@@ -247,7 +247,7 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, ex
                     if (ea.rhs.type === "identifier") {
                         contexts = [ea.rhs.value];
                     } else {
-                        contexts = ea.rhs.value;
+                        contexts = ea.rhs.value.map(c => c.value);
                     }
                 }
                 contexts.forEach(c => {
@@ -301,7 +301,7 @@ function addToJSContext(eas, jsNames, name, type) {
         if (exposedEa.rhs.type === "identifier") {
             contexts = [exposedEa.rhs.value];
         } else {
-            contexts = exposedEa.rhs.value;
+            contexts = exposedEa.rhs.value.map(c => c.value);
         }
     }
     contexts.forEach(c => { if (!jsNames[type][c]) jsNames[type][c] = []; jsNames[type][c].push(name)});
