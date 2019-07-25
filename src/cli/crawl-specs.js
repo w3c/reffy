@@ -92,28 +92,41 @@ function linkExtractor(window) {
  *   repository when known.
  */
 function completeWithInfoFromSpecref(specs) {
-    let specrefUrl = 'https://api.specref.org/reverse-lookup?urls=' +
-          specs.map(s => s.latest || s.url).join(',');
-    return fetch(specrefUrl)
-        .then(r =>  r.json())
-        .then(res => {
-            specs.forEach(spec => {
-                let url = spec.latest || spec.url;
-                if (res[url]) {
-                    if (res[url].repository) {
-                        spec.repository = res[url].repository;
-                    }
-                    if (res[url].title && !spec.title) {
-                        spec.title = res[url].title;
-                    }
-                }
-            });
-            return specs;
+    function chunkArray(arr, len) {
+        let chunks = [];
+        let i = 0;
+        let n = arr.length;
+        while (i < n) {
+            chunks.push(arr.slice(i, i += len));
+        }
+        return chunks;
+    }
+
+    const chunks = chunkArray(specs, 20);
+    return Promise.all(
+        chunks.map(chunk => {
+            let specrefUrl = 'https://api.specref.org/reverse-lookup?urls=' +
+                  chunk.map(s => s.latest || s.url).join(',');
+            return fetch(specrefUrl)
+                .then(r =>  r.json())
+                .then(res => {
+                    chunk.forEach(spec => {
+                        let url = spec.latest || spec.url;
+                        if (res[url]) {
+                            if (res[url].repository) {
+                                spec.repository = res[url].repository;
+                            }
+                            if (res[url].title && !spec.title) {
+                                spec.title = res[url].title;
+                            }
+                        }
+                    });
+                })
+                .catch(err => {
+                    console.warn('Specref returned an error', specrefUrl, err);
+                });
         })
-        .catch(err => {
-            console.warn('Specref returned an error', specrefUrl, err);
-            return specs;
-        });
+    ).then(_ => specs);
 }
 
 
