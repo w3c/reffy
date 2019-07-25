@@ -100,28 +100,65 @@ function extractRespecIdl(doc) {
     const nonNormativeSelector =
         '.informative, .note, .issue, .example, .ednote, .practice';
 
+    // Helper function that trims individual lines in an IDL block,
+    // removing as much space as possible from the beginning of the page
+    // while preserving indentation. Rules followed:
+    // - Always trim the first line
+    // - Remove whitespaces from the end of each line
+    // - Replace lines that contain spaces with empty lines
+    // - Drop same number of leading whitespaces from all other lines
+    const trimIdlSpaces = idl => {
+        const lines = idl.trim().split('\n');
+        const toRemove = lines
+            .slice(1)
+            .filter(line => line.search(/\S/) > -1)
+            .reduce(
+                (min, line) => Math.min(min, line.search(/\S/)),
+                Number.MAX_VALUE);
+        return lines
+            .map(line => {
+                let firstRealChat = line.search(/\S/);
+                if (firstRealChat === -1) {
+                    return '';
+                }
+                else if (firstRealChat === 0) {
+                    return line.trimEnd();
+                }
+                else {
+                    return line.substring(toRemove).trimEnd();
+                }
+            })
+            .join('\n');
+    };
+
     return new Promise(resolve => {
         let idlEl = doc.querySelector('#idl-index pre') ||
             doc.querySelector('#chapter-idl pre');  // Used in SVG 2 draft
-        if (idlEl) {
-            resolve(idlEl.textContent);
-        }
-        else {
-            let idl = [
-                'pre.idl:not(.exclude):not(.extract)',
-                'pre:not(.exclude):not(.extract) > code.idl-code:not(.exclude):not(.extract)',
-                'pre:not(.exclude):not(.extract) > code.idl:not(.exclude):not(.extract)',
-                'div.idl-code:not(.exclude):not(.extract) > pre:not(.exclude):not(.extract)',
-                'pre.widl:not(.exclude):not(.extract)'
-            ]
-                .map(sel => [...doc.querySelectorAll(sel)])
-                .reduce((res, elements) => res.concat(elements), [])
-                .filter((el, idx, self) => self.indexOf(el) === idx)
-                .filter(el => !el.closest(nonNormativeSelector))
-                .map(el => el.textContent.trim())
-                .join('\n\n');
-            resolve(idl);
-        }
+
+        // TEMP (2019-07-25): Don't use the IDL index as long as we cannot run
+        // the latest version of ReSpec, because the pinned version fails to
+        // parse recent IDL constructs, see:
+        // https://github.com/tidoust/reffy/issues/134
+        // https://github.com/tidoust/reffy-reports/issues/34
+        /*if (idlEl && false) {
+            return resolve(idlEl.textContent);
+        }*/
+
+        let idl = [
+            'pre.idl:not(.exclude):not(.extract):not(#actual-idl-index)',
+            'pre:not(.exclude):not(.extract) > code.idl-code:not(.exclude):not(.extract)',
+            'pre:not(.exclude):not(.extract) > code.idl:not(.exclude):not(.extract)',
+            'div.idl-code:not(.exclude):not(.extract) > pre:not(.exclude):not(.extract)',
+            'pre.widl:not(.exclude):not(.extract)'
+        ]
+            .map(sel => [...doc.querySelectorAll(sel)])
+            .reduce((res, elements) => res.concat(elements), [])
+            .filter(el => el !== idlEl)
+            .filter((el, idx, self) => self.indexOf(el) === idx)
+            .filter(el => !el.closest(nonNormativeSelector))
+            .map(el => trimIdlSpaces(el.textContent))
+            .join('\n\n');
+        resolve(idl);
     });
 }
 
