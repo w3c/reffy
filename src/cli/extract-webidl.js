@@ -122,10 +122,10 @@ function extractRespecIdl(doc) {
                     return '';
                 }
                 else if (firstRealChat === 0) {
-                    return line.trimEnd();
+                    return line.replace(/\s+$/, '');
                 }
                 else {
-                    return line.substring(toRemove).trimEnd();
+                    return line.substring(toRemove).replace(/\s+$/, '');
                 }
             })
             .join('\n');
