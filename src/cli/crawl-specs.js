@@ -375,7 +375,7 @@ async function crawlList(speclist, crawlOptions, resultsPath) {
             // Process specs in chunks not to create too many child processes
             // at once
             return new Promise(resolve => {
-                const chunkSize = 10;
+                const chunkSize = 4;
                 let results = [];
                 let pos = 0;
                 let running = 0;

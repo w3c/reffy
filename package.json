@@ -64,7 +64,7 @@
     "w3c-tr-diff": "node reffy.js run w3c-tr diff",
     "w3c-tr-diffnew": "node reffy.js run w3c-tr diffnew",
     "whatwg": "node reffy.js run whatwg all",
-    "whatwg-crawl": "node reffy.js run whatwg crawl",
+    "whatwg-crawl": "node --max-old-space-size=8192 reffy.js run whatwg crawl",
     "whatwg-study": "node reffy.js run whatwg study",
     "whatwg-markdown": "node reffy.js run whatwg markdown",
     "whatwg-html": "node reffy.js run whatwg html",
