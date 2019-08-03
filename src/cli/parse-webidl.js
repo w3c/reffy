@@ -143,7 +143,7 @@ function parseIdlAstTree(jsNames, idlNames, idlExtendedNames, externalDependenci
             idlNames[def.name] = def;
             break;
         case "operation":
-            if (def.stringifier) return;
+            if (def.stringifier || (def.special && def.special === 'stringifier')) return;
             parseType(def.idlType, idlNames, externalDependencies, contextName);
             def.arguments.forEach(a => parseType(a.idlType,  idlNames, externalDependencies, contextName));
             break;
