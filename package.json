@@ -43,7 +43,7 @@
     "webidl2": "^23.3.0"
   },
   "devDependencies": {
-    "jasmine": "^2.4.1"
+    "jasmine": "^3.4.0"
   },
   "scripts": {
     "all": "node reffy.js run w3c all && node reffy.js run w3c-tr all && node reffy.js run whatwg all",
