@@ -21,7 +21,7 @@
       return {
         compare: (actual, expected) => {
           const res = {
-            pass: actual && actual.jsNames && actual.idlNames[expected],
+            pass: actual && actual.idlNames && actual.idlNames[expected],
           };
           if (res.pass) {
             res.message = 'Expected IDL structure not to export name "' + expected + '"';

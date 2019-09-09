@@ -1,13 +1,13 @@
 describe('The WebIDL parser exports all IDL names', () => {
-  var parse = require('../../parse-webidl').parse;
+  var parse = require('../../src/cli/parse-webidl').parse;
 
   it('exports named definitions', done => {
     parse(`
         interface testInterface {};
         dictionary testDict {};
-        enum testEnum {};
+        enum testEnum { "one" };
         callback testCallback = void ();
-        typedef void testTypedef;
+        typedef string testTypedef;
         callback interface testCallbackInterface {};
         `)
       .then(data => {
