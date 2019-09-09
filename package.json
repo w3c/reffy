@@ -38,7 +38,7 @@
     "commander": "^2.15.1",
     "fetch-filecache-for-crawling": "^3.0.2",
     "jsdom": "^11.10.0",
-    "mocha": "^5.2.0",
+    "mocha": "^6.2.0",
     "node-pandoc": "^0.3.0",
     "webidl2": "^23.3.0"
   },
