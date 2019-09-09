@@ -1,5 +1,5 @@
 describe('The WebIDL parser exports all IDL names', () => {
-  var parse = require('../../parse-webidl').parse;
+  var parse = require('../../src/cli/parse-webidl').parse;
 
   it('exposes interface on Window by default', done => {
     parse(`
