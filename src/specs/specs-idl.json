@@ -5,6 +5,8 @@
     "https://drafts.css-houdini.org/font-metrics-api/",
     "https://fetch.spec.whatwg.org/",
     "https://fullscreen.spec.whatwg.org/",
+    "https://immersive-web.github.io/webxr-ar-module/",
+    "https://immersive-web.github.io/webxr-gamepads-module/",
     "https://storage.spec.whatwg.org/",
     "https://url.spec.whatwg.org/",
     "https://w3c.github.io/media-capabilities/",
