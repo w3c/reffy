@@ -29,13 +29,13 @@ const perspectives = {
   'ed': {
     description: 'Crawls the latest Editor\'s Drafts',
     specs: 'specs-all.json',
-    refCrawl: 'https://tidoust.github.io/reffy-reports/whatwg/crawl.json'
+    refCrawl: 'https://tidoust.github.io/reffy-reports/ed/crawl.json'
   },
   'tr': {
     description: 'Crawls the latest published versions of specifications in /TR/ space instead of the latest Editor\'s Drafts',
     specs: 'specs-all.json',
     publishedVersion: true,
-    refCrawl: 'https://tidoust.github.io/reffy-reports/w3c-tr/crawl.json'
+    refCrawl: 'https://tidoust.github.io/reffy-reports/tr/crawl.json'
   }
 };
 
