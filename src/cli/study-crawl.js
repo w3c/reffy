@@ -26,7 +26,7 @@
  *
  * `node study-crawl.js [crawl report]`
  *
- * where `crawl reprort` is the name of the crawl report file to analyze.
+ * where `crawl report` is the name of the crawl report file to analyze.
  *
  * @module analyzer
  */
@@ -59,14 +59,13 @@ const byTitle = (a, b) => (a.title || '').toUpperCase().localeCompare((b.title |
  * @param {Object} spec The spec info to filter, typically the spec object
  *   contained in the results of a crawl.
  * @return {Object} A new spec object that only contains the URL, title, the
- *   URL that was crawled, and the specification's date.
+ *   URL that was crawled.
  */
 function filterSpecInfo(spec) {
     return {
         url: spec.url,
         title: spec.title,
-        crawled: spec.crawled,
-        date: spec.date
+        crawled: spec.crawled
     };
 }
 
