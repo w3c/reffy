@@ -23,22 +23,19 @@ const pandoc = require('node-pandoc');
 
 
 // List of possible perspectives and associated parameters
+// Note the "ed" perspective produces reports under "whatwg" for backward
+// compatilibity reason.
 const perspectives = {
-  'w3c': {
-    description: 'take a W3C-centric perspective, preferring W3C specifications to WHATWG specifications when both exist, and crawling latest Editor\'s Drafts of specifications',
-    specs: 'specs-w3c.json',
-    refCrawl: 'https://tidoust.github.io/reffy-reports/w3c/crawl.json'
+  'ed': {
+    description: 'Crawls the latest Editor\'s Drafts',
+    specs: 'specs-all.json',
+    refCrawl: 'https://tidoust.github.io/reffy-reports/whatwg/crawl.json'
   },
-  'w3c-tr': {
-    description: 'take a W3C-centric perspective, preferring W3C specifications to WHATWG specifications when both exist, but crawling the latest published versions of specifications in /TR/ space instead of the latest Editor\'s Drafts',
-    specs: 'specs-w3c.json',
+  'tr': {
+    description: 'Crawls the latest published versions of specifications in /TR/ space instead of the latest Editor\'s Drafts',
+    specs: 'specs-all.json',
     publishedVersion: true,
     refCrawl: 'https://tidoust.github.io/reffy-reports/w3c-tr/crawl.json'
-  },
-  'whatwg': {
-    description: 'take a WHATWG-centric perspective, preferring WHATWG specifications to W3C specifications when both exist.',
-    specs: 'specs-whatwg.json',
-    refCrawl: 'https://tidoust.github.io/reffy-reports/whatwg/crawl.json'
   }
 };
 
