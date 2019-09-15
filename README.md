@@ -27,7 +27,7 @@ To launch the crawler and the report study tool, follow these steps:
 
 1. Create a `config.json` file, initialized with `{ "w3cApiKey": [API key] }`, where `[API key]` is your API key.
 2. To produce a report using Editor's Drafts, run `reffy run ed`.
-3. To produce a report using latest published versions in `/TR/`, run `reffy run w3c-tr`.
+3. To produce a report using latest published versions in `/TR/`, run `reffy run tr`.
 
 Under the hoods, these commands run the following steps (and related commands) in turn:
 1. **Crawling**: Crawls a list of spec and outputs relevant information in a JSON structure in the specified folder. `crawl-specs src/specs/specs-all.json reports/ed [tr]`. Add `tr` to tell the crawler to load the latest published version of TR specifications instead of the latest Editor's Draft.
@@ -95,7 +95,7 @@ parse-references https://w3c.github.io/presentation-api/
 extract-webidl https://www.w3.org/TR/webrtc/
 extract-cssdfn https://www.w3.org/TR/css-fonts-4/
 parse-webidl https://fetch.spec.whatwg.org/
-check-specs https://www.w3.org/TR/webstorage/ reports/whatwg/crawl.json reports/study-webstorage.json
+check-specs https://www.w3.org/TR/webstorage/ reports/ed/crawl.json reports/study-webstorage.json
 ```
 
 ## Technical notes
