@@ -18,120 +18,10 @@
  * ReSpec.
  */
 
-const resourceLoader = require('jsdom/lib/jsdom/browser/resource-loader');
 const Attr = require('jsdom/lib/jsdom/living/generated/Attr').interface;
 const Element = require('jsdom/lib/jsdom/living/generated/Element').interface;
 const fetch = require('./fetch.js');
 const { Headers, Request, Response } = require('node-fetch');
-
-resourceLoader.download = function (url, options, callback) {
-  // Restrict resource loading to ReSpec and script resources that sit next
-  // to the spec under test, excluding scripts of WebIDL as well as the
-  // WHATWG annotate_spec script that JSDOM does not seem to like.
-  // Explicitly whitelist the "autolink" script of the shadow DOM spec which
-  // is needed to initialize respecConfig
-  // TEMP: Force use of previous version of Respec, see https://github.com/tidoust/reffy/issues/134
-  //const respecUrl = 'https://www.w3.org/Tools/respec/respec-w3c-common';
-  const respecUrl = 'https://raw.githubusercontent.com/w3c/respec/f17445a290e4619fda7e85afbd76f14390974114/builds/respec-w3c-common.js';
-  function getUrlToFetch() {
-    let referrer = options.referrer;
-    if (!referrer.endsWith('/')) {
-      referrer = referrer.substring(0, referrer.lastIndexOf('/') + 1);
-    }
-    if (/\/respec[\/\-]/i.test(url.path)) {
-      //console.log(`fetch ReSpec (force latest version)`);
-      return respecUrl;
-    }
-    else if (/\.[^\/\.]+$/.test(url.path) &&
-        !url.path.endsWith('.js') &&
-        !url.path.endsWith('.json')) {
-      //console.log(`fetch not needed for ${url.href} (not a JS/JSON file)`);
-      return null;
-    }
-    else if ((url.pathname === '/webcomponents/assets/scripts/autolink.js') ||
-        (url.href.startsWith(referrer) &&
-          !(/annotate_spec/i.test(url.pathname)) &&
-          !(/expanders/i.test(url.pathname)) &&
-          !(/bug-assist/i.test(url.pathname)) &&
-          !(/dfn/i.test(url.pathname)) &&
-          !(/section-links/i.test(url.pathname)) &&
-          !(/^\/webidl\//i.test(url.pathname)))) {
-      //console.log(`fetch useful script at ${url.href}`);
-      return url.href;
-    }
-    //console.log(`fetch not needed for ${url.href}`);
-    return null;
-  }
-
-  let urlToFetch = getUrlToFetch();
-  if (!urlToFetch) {
-    return callback(null, '');
-  }
-  fetch(urlToFetch, options)
-    .then(response => response.text())
-    .then(data => {
-      if (urlToFetch !== respecUrl) {
-          return data;
-      }
-
-      ////////////////////////////////////////////////////////////
-      // REALLY UGLY CODE WARNING
-      //
-      // Tweak Respec built code so that it can run in JSDOM.
-      //
-      // NB: Some of these lines will just break if Respec build
-      // produces slightly different code, e.g. if variables do
-      // not end up with the same name!
-      ////////////////////////////////////////////////////////////
-
-      // Remove core/highlight module because JSDOM does not yet
-      // support URL.createObjectURL
-      // https://github.com/jsdom/jsdom/issues/1721
-      // Remove core/list-sorter module because JSDOM does not yet
-      // support document.createRange
-      // https://github.com/jsdom/jsdom/blob/master/lib/jsdom/living/nodes/Document.webidl#L39
-      ["core/highlight", "core/list-sorter"]
-        .forEach(module => data = data.replace(
-          new RegExp('(define\\(\\s*"profile-w3c-common"\\s*,\\s*\\[[^\\]]+),\\s*"' + module + '"'),
-          '$1'));
-
-      // JSDOM's CSS parser does not quite like uncommon "@" rules
-      // so let's pretend they are just @media rules
-      // https://github.com/jsdom/jsdom/issues/2026
-      // (NB: this replacement is just for convenience, to avoid JSDOM reporting
-      // lengthy errors (including a full dump of the CSS) to stderr
-      data = data.replace(/@keyframes \S+? {/, '@media all {');
-      data = data.replace(/@supports \(.+?\) {/, '@media all {');
-
-      // Respec drops blank lines in Markdown, but marked.js actually
-      // needs them around <pre> tags, otherwise it produces really weird
-      // HTML (with <pre> and <p> intertwined). For some reason, this does
-      // not bother regular browsers. It does bother JSDOM though.
-      data = data.replace(/r\.createTextNode\("\\n"\)/, 'r.createTextNode("\\n\\n")');
-
-      // JSDOM does not support cloning of attributes yet, and polyfill
-      // only works for attributes that already belong to a document.
-      // HyperHTML needs to clone attributes that do not belong to the
-      // document, so let's intercept the call to `cloneNode` in HyperHTML
-      // and use `createAttributeNS` instead
-      // https://github.com/jsdom/jsdom/commit/acf0156b563b5e2ba606da36fd597e0a0b344f5a
-      data = data.replace(/p=r\.cloneNode\(!0\);/,
-          `p = null;
-          if (r.ownerDocument) {
-              p = r.cloneNode(true);
-          } else {
-              p = document.createAttributeNS(r.namespaceURI,r.name);
-              p.value = r.value;
-          }`);
-
-      return data;
-      ////////////////////////////////////////////////////////////
-      // END OF REALLY UGLY CODE WARNING
-      ////////////////////////////////////////////////////////////
-    })
-    .then(data => callback(null, data))
-    .catch(err => callback(err));
-};
 
 
 // JSDOM does not yet support innerText. Only used in Respec
@@ -160,52 +50,10 @@ if (!Element.prototype.innerText) {
 }
 
 
-// Not yet supported in JSDOM
-// https://github.com/jsdom/jsdom/issues/1890
-if (!Element.prototype.insertAdjacentElement) {
-  Element.prototype.insertAdjacentElement = function (position, element) {
-    switch (position.toLowerCase()) {
-      case 'beforebegin':
-        this.parentElement.insertBefore(element, this);
-        break;
-      case 'afterbegin':
-        if (this.firstChild) {
-          this.insertBefore(element, this.firstChild);
-        } else {
-          this.appendChild(element);
-        }
-        break;
-      case 'beforeend':
-        this.appendChild(element);
-        break;
-      case 'afterend':
-        this.parentElement.appendChild(element);
-        this.after(element);
-        break;
-    }
-    return element;
-  };
-}
-
-
-// Not yet supported in JSDOM
-// https://github.com/jsdom/jsdom/issues/1555
-if (!Element.prototype.closest) {
-  Element.prototype.closest = function (selector) {
-    var el = this;
-    if (!this.ownerDocument.documentElement.contains(el)) return null;
-    do {
-      if (el.matches(selector)) return el;
-      el = el.parentElement || el.parentNode;
-    } while (el !== null && el.nodeType === 1);
-    return null;
-  };
-}
-
-
 // Not yet supported in JSDOM for attributes
 // (but needed by HyperHTML)
 // https://github.com/jsdom/jsdom/commit/acf0156b563b5e2ba606da36fd597e0a0b344f5a
+// https://github.com/jsdom/jsdom/issues/1641
 if (!Attr.prototype.cloneNode) {
   Attr.prototype.cloneNode = function () {
     if (!this.ownerDocument) {
@@ -225,7 +73,121 @@ if (!Attr.prototype.cloneNode) {
 
 // That's it, JSDOM will now use our `download` function and all specs that
 // reference ReSpec will download the latest version (with our monkey patch).
-const { JSDOM } = require('jsdom');
+const { JSDOM, ResourceLoader } = require('jsdom');
+
+
+// Extends JSDOM's resource loader to monkey patch ReSpec and ignore requests
+// to scripts we know we don't need
+class ReffyResourceLoader extends ResourceLoader {
+  fetch(url, options) {
+    // Restrict resource loading to ReSpec and script resources that sit next
+    // to the spec under test, excluding scripts of WebIDL as well as the
+    // WHATWG annotate_spec script that JSDOM does not seem to like.
+    // Explicitly whitelist the "autolink" script of the shadow DOM spec which
+    // is needed to initialize respecConfig
+    // TEMP: Force use of previous version of Respec, see https://github.com/tidoust/reffy/issues/134
+    //const respecUrl = 'https://www.w3.org/Tools/respec/respec-w3c-common';
+    const respecUrl = 'https://raw.githubusercontent.com/w3c/respec/f17445a290e4619fda7e85afbd76f14390974114/builds/respec-w3c-common.js';
+    function getUrlToFetch() {
+      const oUrl = new URL(url);
+      let referrer = options.referrer;
+      if (!referrer.endsWith('/')) {
+        referrer = referrer.substring(0, referrer.lastIndexOf('/') + 1);
+      }
+      if (/\/respec[\/\-]/i.test(oUrl.pathname)) {
+        //console.log(`fetch ReSpec (force latest version)`);
+        return respecUrl;
+      }
+      else if (/\.[^\/\.]+$/.test(oUrl.pathname) &&
+          !oUrl.pathname.endsWith('.js') &&
+          !oUrl.pathname.endsWith('.json')) {
+        //console.log(`fetch not needed for ${oUrl.href} (not a JS/JSON file)`);
+        return null;
+      }
+      else if ((oUrl.pathname === '/webcomponents/assets/scripts/autolink.js') ||
+          ((oUrl.href.startsWith(referrer) || referrer.startsWith(oUrl.origin)) &&
+            !(/annotate_spec/i.test(oUrl.pathname)) &&
+            !(/expanders/i.test(oUrl.pathname)) &&
+            !(/bug-assist/i.test(oUrl.pathname)) &&
+            !(/dfn/i.test(oUrl.pathname)) &&
+            !(/section-links/i.test(oUrl.pathname)) &&
+            !(/^\/webidl\//i.test(oUrl.pathname)))) {
+        //console.log(`fetch useful script at ${oUrl.href}`);
+        return oUrl.href;
+      }
+      //console.log(`fetch not needed for ${oUrl.href}`, options.referrer);
+      return null;
+    }
+
+    let urlToFetch = getUrlToFetch();
+    if (!urlToFetch) {
+      return Promise.resolve(Buffer.from(''));
+    }
+    return fetch(urlToFetch, options)
+      .then(response => response.text())
+      .then(data => {
+        if (urlToFetch !== respecUrl) {
+            return Buffer.from(data);
+        }
+
+        ////////////////////////////////////////////////////////////
+        // REALLY UGLY CODE WARNING
+        //
+        // Tweak Respec built code so that it can run in JSDOM.
+        //
+        // NB: Some of these lines will just break if Respec build
+        // produces slightly different code, e.g. if variables do
+        // not end up with the same name!
+        ////////////////////////////////////////////////////////////
+
+        // Remove core/highlight module because JSDOM does not yet
+        // support URL.createObjectURL
+        // https://github.com/jsdom/jsdom/issues/1721
+        // Remove core/list-sorter module because JSDOM does not yet
+        // support document.createRange
+        // https://github.com/jsdom/jsdom/blob/master/lib/jsdom/living/nodes/Document.webidl#L39
+        ["core/highlight", "core/list-sorter"]
+          .forEach(module => data = data.replace(
+            new RegExp('(define\\(\\s*"profile-w3c-common"\\s*,\\s*\\[[^\\]]+),\\s*"' + module + '"'),
+            '$1'));
+
+        // JSDOM's CSS parser does not quite like uncommon "@" rules
+        // so let's pretend they are just @media rules
+        // https://github.com/jsdom/jsdom/issues/2026
+        // (NB: this replacement is just for convenience, to avoid JSDOM reporting
+        // lengthy errors (including a full dump of the CSS) to stderr
+        data = data.replace(/@keyframes \S+? {/, '@media all {');
+        data = data.replace(/@supports \(.+?\) {/, '@media all {');
+
+        // Respec drops blank lines in Markdown, but marked.js actually
+        // needs them around <pre> tags, otherwise it produces really weird
+        // HTML (with <pre> and <p> intertwined). For some reason, this does
+        // not bother regular browsers. It does bother JSDOM though.
+        data = data.replace(/r\.createTextNode\("\\n"\)/, 'r.createTextNode("\\n\\n")');
+
+        // JSDOM does not support cloning of attributes yet, and polyfill
+        // only works for attributes that already belong to a document.
+        // HyperHTML needs to clone attributes that do not belong to the
+        // document, so let's intercept the call to `cloneNode` in HyperHTML
+        // and use `createAttributeNS` instead
+        // https://github.com/jsdom/jsdom/commit/acf0156b563b5e2ba606da36fd597e0a0b344f5a
+        data = data.replace(/p=r\.cloneNode\(!0\);/,
+            `p = null;
+            if (r.ownerDocument) {
+                p = r.cloneNode(true);
+            } else {
+                p = document.createAttributeNS(r.namespaceURI,r.name);
+                p.value = r.value;
+            }`);
+
+        return Buffer.from(data);
+        ////////////////////////////////////////////////////////////
+        // END OF REALLY UGLY CODE WARNING
+        ////////////////////////////////////////////////////////////
+      });
+  }
+}
+
 
 // Window methods cannot be monkey-patched in the interface prototype, because
 // `this` is not always set to the Window object when these methods, probably
@@ -287,6 +249,10 @@ module.exports.JSDOM = function (html, options) {
       return beforeParse(window);
     }
   };
+
+  // Use our own resource loader
+  const resourceLoader = new ReffyResourceLoader();
+  options.resources = resourceLoader;
 
   return new JSDOM(html, options);
 };
