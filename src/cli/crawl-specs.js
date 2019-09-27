@@ -34,6 +34,7 @@ const canonicalizeURL = require('../lib/canonicalize-url').canonicalizeURL;
 const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
 const completeWithInfoFromW3CApi = require('../lib/util').completeWithInfoFromW3CApi;
 const completeWithShortName = require('../lib/util').completeWithShortName;
+const getDocumentAndGenerator = require('../lib/util').getDocumentAndGenerator;
 
 /**
  * Flattens an array
@@ -246,7 +247,8 @@ async function crawlSpec(spec, crawlOptions) {
                     });
                     return css;
                 }),
-            dom
+            dom,
+            getDocumentAndGenerator(dom)
         ]))
         .then(res => {
             const spec = res[0];
@@ -257,6 +259,7 @@ async function crawlSpec(spec, crawlOptions) {
                 (new Date(Date.parse(doc.lastModified))).toDateString());
 
             spec.title = res[1] ? res[1] : spec.title;
+            spec.generator = res[7].generator || 'unknown';
             spec.date = date;
             spec.links = res[2];
             spec.refs = res[3];
