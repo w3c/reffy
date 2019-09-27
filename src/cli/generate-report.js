@@ -711,6 +711,18 @@ function generateDependenciesReport(study) {
     let count = 0;
     const results = study.results;
 
+    const byNumberOfSpecsWithNormativeDep = (a, b) => {
+        let res = b.report.referencedBy.normative.length -
+                a.report.referencedBy.normative.length;
+        if (res === 0) {
+            return byTitle(a, b);
+        }
+        else {
+            return res;
+        }
+    };
+    const sorted = Array.from(results).sort(byNumberOfSpecsWithNormativeDep);
+    
     w('# Reffy dependencies report');
     w();
     w('Reffy is a spec exploration tool.' +
@@ -725,6 +737,15 @@ function generateDependenciesReport(study) {
         ' crawled and that could successfully be parsed. Other specifications that Reffy does' +
         ' not know anything about may reference specifications listed here.');
     w();
+    w('## Specs sorted by number of specs that normatively depend on them');
+    w();
+    sorted.forEach(spec => {
+        w(`- [${spec.title}](${spec.crawled}) - ${spec.report.referencedBy.normative.length}`);
+        //w(`- ${spec.title} - ${spec.crawled} - ${spec.report.referencedBy.normative.length}`);
+    });
+    w();
+    w();
+
     results.forEach(spec => {
         w('## ' + spec.title);
         w();
