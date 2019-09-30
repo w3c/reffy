@@ -36,6 +36,7 @@ const canonicalizesTo = require('../lib/canonicalize-url').canonicalizesTo;
 const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
 
 const array_concat = (a,b) => a.concat(b);
+const uniqueFilter = (item, idx, arr) => arr.indexOf(item) === idx;
 
 /**
  * Helper function that returns true when the given URL seems to target a real
@@ -84,16 +85,25 @@ function filterSpecInfo(spec) {
  */
 function studyCrawlResults(results, specsToInclude) {
     var knownIdlNames = results
-        .map(r => r.idl && r.idl.idlNames ? Object.keys(r.idl.idlNames).filter(n => (n !== '_dependencies') && (n !== '_reallyDependsOnWindow')) : [], [])
-        .reduce(array_concat);
+        .map(r => r.idl && r.idl.idlNames ? Object.keys(r.idl.idlNames) : [], [])
+        .reduce(array_concat)
+        .filter(uniqueFilter);
+    var knownGlobalNames = results
+        .map(r => r.idl && r.idl.globals ? Object.keys(r.idl.globals) : [], [])
+        .reduce(array_concat)
+        .filter(uniqueFilter);
     var idlNamesIndex = {};
     knownIdlNames.forEach(name => {
         idlNamesIndex[name] = results.filter(spec => {
-            return spec.idl &&
-                spec.idl.idlNames &&
-                spec.idl.idlNames[name];
+            return spec.idl && spec.idl.idlNames && spec.idl.idlNames[name];
         });
     });
+    knownGlobalNames.forEach(name => {
+        const specs = results.filter(spec => spec.idl && spec.idl.globals && spec.idl.globals[name]);
+        idlNamesIndex[name] = (idlNamesIndex[name] || []).concat(specs).filter(uniqueFilter);
+    });
+    knownIdlNames = knownIdlNames.concat(knownGlobalNames).filter(uniqueFilter);
+
 
     // TODO: we may end up with different variants of the WebIDL spec
     var WebIDLSpec = results.find(spec => (spec.shortname === 'WebIDL-1')) || {};
@@ -138,13 +148,12 @@ function studyCrawlResults(results, specsToInclude) {
             spec.refs = spec.refs || {};
             spec.links = spec.links || [];
             var idlDfns = spec.idl.idlNames ?
-                Object.keys(spec.idl.idlNames).filter(name => (name !== '_dependencies') && (name !== '_reallyDependsOnWindow')) : [];
+                Object.keys(spec.idl.idlNames) : [];
             var idlExtendedDfns = spec.idl.idlExtendedNames ?
                 Object.keys(spec.idl.idlExtendedNames) : [];
             var idlDeps = spec.idl.externalDependencies ?
                 spec.idl.externalDependencies : [];
-            var reallyDependsOnWindow = spec.idl.idlNames ?
-                spec.idl.idlNames._reallyDependsOnWindow : false;
+            var reallyDependsOnWindow = !!spec.idl.reallyDependsOnWindow;
 
             var report = {
                 // An error at this level means the spec could not be parsed at all

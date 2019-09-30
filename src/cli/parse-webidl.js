@@ -68,10 +68,31 @@ function parse(idl) {
     idl = normalizeWebIDL1to2(idl);
     return new Promise(function (resolve, reject) {
         var idlTree;
-        var jsNames = {constructors: {}, functions: {}, objects:{}};
-        var idlNames = {
-            // List of dependencies per interface
-            _dependencies: {},
+        var idlReport = {
+            // List of names available to global interfaces, either as
+            // objects that can be constructed or as objects that can be
+            // returned from functions
+            jsNames: {
+                constructors: {},
+                functions: {}
+            },
+
+            // List of IDL names defined in the IDL content, indexed by name
+            idlNames: {},
+
+            // List of partial IDL name definitions, indexed by name
+            idlExtendedNames: {},
+
+            // List of globals defined by the IDL content and the name of the
+            // underlying interfaces (e.g. { "Worker":
+            // ["DedicatedWorkerGlobalScope", "SharedWorkerGlobalScope"] })
+            globals: {},
+
+            // List of dependencies (both internal and external) per interface
+            dependencies: {},
+
+            // IDL names referenced by the IDL content but defined elsewhere
+            externalDependencies: [],
 
             // Flag set when the IDL really depends on "Window", meaning when
             // "Window" appears as a dependency elsewhere than in
@@ -81,26 +102,18 @@ function parse(idl) {
             // need to add a normative reference to HTML, but that is overkill
             // in practice so Reffy will only warn about the missing reference
             // when "Window" appears as a dependency in other statements)
-            _reallyDependsOnWindow: false
+            reallyDependsOnWindow: false
         };
-        var idlExtendedNames = {};
-        var externalDependencies = [];
         try {
             idlTree = WebIDL2.parse(idl);
         } catch (e) {
             return reject(e);
         }
-        idlTree.forEach(parseIdlAstTree(jsNames, idlNames, idlExtendedNames, externalDependencies));
-        externalDependencies = externalDependencies.filter(n => !idlNames[n]);
-        replaceFakePrimaryGlobal(jsNames.primaryGlobal, jsNames);
-
-        // TODO: consider outputting information about PrimaryGlobal and Global
-        // interfaces defined by the IDL as well.
-        if (jsNames.primaryGlobal) {
-            delete jsNames.primaryGlobal;
-        }
-
-        resolve({jsNames, idlNames, idlExtendedNames, externalDependencies});
+        idlTree.forEach(parseIdlAstTree(idlReport));
+        idlReport.externalDependencies = idlReport.externalDependencies
+            .filter(n => !idlReport.idlNames[n])
+            .filter(n => !idlReport.globals[n]);
+        resolve(idlReport);
     });
 }
 
@@ -115,21 +128,16 @@ function parse(idl) {
  *
  * @function
  * @private
- * @param {Object} jsNames The set of interfaces that are visible from the
- *   JavaScript code, per context, either through Constructors or because they
- *   are exposed by some function or object.
- * @param {Object} idlNames The set of interfaces and other constructs that the
- *   IDL content defines.
- * @param {Object} idlExtendedNames The set of interfaces that the
- *   IDL content extends, typically through "partial" definitions
- * @param {Array(String)} externalDependencies The set of IDL names that the IDL
- *   content makes use of and that it does not define
+ * @param {Object} idlReport The IDL report to fill out, see structure
+ *   definition in parse function
  * @param {String} contextName The current interface context, used to compute
  *   dependencies at the interface level
  * @return A function that can be applied to all nodes of an IDL AST tree and
  *   that fills up the above sets.
  */
-function parseIdlAstTree(jsNames, idlNames, idlExtendedNames, externalDependencies, contextName) {
+function parseIdlAstTree(idlReport, contextName) {
+    const { idlNames, idlExtendedNames, dependencies, externalDependencies } = idlReport;
+
     return function (def) {
         switch(def.type) {
         case "namespace":
@@ -137,31 +145,34 @@ function parseIdlAstTree(jsNames, idlNames, idlExtendedNames, externalDependenci
         case "interface mixin":
         case "dictionary":
         case "callback interface":
-            parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, externalDependencies);
+            parseInterfaceOrDictionary(def, idlReport);
             break;
         case "enum":
             idlNames[def.name] = def;
             break;
         case "operation":
             if (def.stringifier || (def.special && def.special === 'stringifier')) return;
-            parseType(def.idlType, idlNames, externalDependencies, contextName);
-            def.arguments.forEach(a => parseType(a.idlType,  idlNames, externalDependencies, contextName));
+            parseType(def.idlType, idlReport, contextName);
+            def.arguments.forEach(a => parseType(a.idlType, idlReport, contextName));
             break;
         case "attribute":
         case "field":
-            parseType(def.idlType, idlNames, externalDependencies, contextName);
-          break;
+            parseType(def.idlType, idlReport, contextName);
+            break;
+        case 'constructor':
+            def.arguments.forEach(a => parseType(a.idlType, idlReport, contextName));
+            break;
         case "includes":
         case "implements":
-            parseType(def.target, idlNames, externalDependencies);
-            parseType(def[def.type], idlNames, externalDependencies);
+            parseType(def.target, idlReport);
+            parseType(def[def.type], idlReport);
             if (def[def.type] === 'window') {
-                idlNames._reallyDependsOnWindow = true;
+                idlReport.reallyDependsOnWindow = true;
             }
-            if (!idlNames._dependencies[def.target]) {
-                idlNames._dependencies[def.target] = [];
+            if (!dependencies[def.target]) {
+                dependencies[def.target] = [];
             }
-            addDependency(def[def.type], {}, idlNames._dependencies[def.target]);
+            addDependency(def[def.type], {}, dependencies[def.target]);
             if (!idlExtendedNames[def.target]) {
                idlExtendedNames[def.target] = [];
             }
@@ -169,12 +180,12 @@ function parseIdlAstTree(jsNames, idlNames, idlExtendedNames, externalDependenci
             idlExtendedNames[def.target].push(mixin);
             break;
         case "typedef":
-            parseType(def.idlType, idlNames, externalDependencies);
+            parseType(def.idlType, idlReport);
             idlNames[def.name] = def;
             break;
         case "callback":
             idlNames[def.name] = def;
-            def.arguments.forEach(a => parseType(a.idlType,  idlNames, externalDependencies));
+            def.arguments.forEach(a => parseType(a.idlType, idlReport));
             break;
         case "iterable":
         case "setlike":
@@ -183,7 +194,7 @@ function parseIdlAstTree(jsNames, idlNames, idlExtendedNames, externalDependenci
             if (!Array.isArray(type)) {
                 type = [def.idlType];
             }
-            type.forEach(a => parseType(a, idlNames, externalDependencies, contextName));
+            type.forEach(a => parseType(a, idlReport, contextName));
             break;
         case "serializer":
         case "stringifier":
@@ -208,9 +219,11 @@ function parseIdlAstTree(jsNames, idlNames, idlExtendedNames, externalDependenci
  * @return {void} The function updates the contents of its parameters and does
  *   not return anything
  */
-function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, externalDependencies) {
-    if (!idlNames._dependencies[def.name]) {
-        idlNames._dependencies[def.name] = [];
+function parseInterfaceOrDictionary(def, idlReport) {
+    const { idlNames, idlExtendedNames, globals, jsNames, dependencies, externalDependencies } = idlReport;
+
+    if (!dependencies[def.name]) {
+        dependencies[def.name] = [];
     }
     if (def.partial) {
         if (!idlExtendedNames[def.name]) {
@@ -218,71 +231,70 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, ex
         }
         idlExtendedNames[def.name].push(def);
         if (def.name === 'window') {
-            idlNames._reallyDependsOnWindow = true;
+            idlReport.reallyDependsOnWindow = true;
         }
         addDependency(def.name, idlNames, externalDependencies);
-    } else {
-        if (def.inheritance) {
-            if (def.implements === 'window') {
-                idlNames._reallyDependsOnWindow = true;
-            }
-            addDependency(def.inheritance, idlNames, externalDependencies);
-            addDependency(def.inheritance, {}, idlNames._dependencies[def.name]);
-        }
+    }
+    else {
         idlNames[def.name] = def;
-        var extendedAttributesHasReferences = ea => ["Exposed", "Global", "PrimaryGlobal"].includes(ea.name);
-        def.extAttrs.filter(extendedAttributesHasReferences).forEach(ea => {
-            var contexts = [];
-            if (ea.name === "PrimaryGlobal") {
-                // We just found the primary global interface
-                if (ea.rhs && (ea.rhs.type === "identifier")) {
-                    jsNames.primaryGlobal = ea.rhs.value;
-                }
-                else {
-                    jsNames.primaryGlobal = def.name;
-                }
+    }
+    if (def.inheritance) {
+        if (def.implements === 'window') {
+            idlReport.reallyDependsOnWindow = true;
+        }
+        addDependency(def.inheritance, idlNames, externalDependencies);
+        addDependency(def.inheritance, {}, dependencies[def.name]);
+    }
+
+    const globalEA = def.extAttrs.find(ea => ea.name === "Global");
+    if (globalEA) {
+        const globalNames = (globalEA.rhs ?
+            ((globalEA.rhs.type === "identifier") ? [globalEA.rhs.value] : globalEA.rhs.value.map(c => c.value)) :
+            [def.name]);
+        globalNames.forEach(name => {
+            if (!globals[name]) {
+                globals[name] = [];
             }
-            if ((ea.name === "Global" || ea.name === "PrimaryGlobal")
-                && ea.rhs && (ea.rhs.type === "identifier" || ea.rhs.type === "identifier-list")) {
-                const globalNames = ea.rhs.type === "identifier" ? [ea.rhs.value] : ea.rhs.value.map(c => c.value);
-                globalNames.forEach(n => idlNames[n] = [def.name]);
-                // record ea.rhs.value as "known"
-            } else { // Exposed
-                if (ea.rhs) {
-                    if (ea.rhs.type === "identifier") {
-                        contexts = [ea.rhs.value];
-                    } else {
-                        contexts = ea.rhs.value.map(c => c.value);
-                    }
-                }
-                contexts.forEach(c => {
-                    addDependency(c, idlNames, externalDependencies);
-                    addDependency(c, {}, idlNames._dependencies[def.name], def.name);
-                });
+            globals[name].push(def.name);
+        });
+    }
+
+    const exposedEA = def.extAttrs.find(ea => ea.name === "Exposed");
+    if (exposedEA && exposedEA.rhs) {
+        var contexts = [];
+        if (exposedEA.rhs.type === "identifier") {
+            contexts = [exposedEA.rhs.value];
+        } else {
+            contexts = exposedEA.rhs.value.map(c => c.value);
+        }
+        contexts.forEach(c => {
+            addDependency(c, idlNames, externalDependencies);
+            addDependency(c, {}, dependencies[def.name], def.name);
+        });
+    }
+    if (def.extAttrs.some(ea => ea.name === "Constructor")) {
+        addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
+        def.extAttrs.filter(ea => ea.name === "Constructor").forEach(function(constructor) {
+            if (constructor.arguments) {
+                constructor.arguments.forEach(a => parseType(a.idlType, idlReport, def.name));
             }
         });
-        if (def.extAttrs.some(ea => ea.name === "Constructor")) {
+    } else if (def.extAttrs.some(ea => ea.name === "NamedConstructor")) {
+        def.extAttrs.filter(ea => ea.name === "NamedConstructor").forEach(function(constructor) {
+            idlNames[constructor.rhs.value] = constructor;
             addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
-            def.extAttrs.filter(ea => ea.name === "Constructor").forEach(function(constructor) {
-                if (constructor.arguments) {
-                    constructor.arguments.forEach(a => parseType(a.idlType, idlNames, externalDependencies, def.name));
-                }
-            });
-        } else if (def.extAttrs.some(ea => ea.name === "NamedConstructor")) {
-            def.extAttrs.filter(ea => ea.name === "NamedConstructor").forEach(function(constructor) {
-                idlNames[constructor.rhs.value] = constructor;
-                addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
-                if (constructor.arguments) {
-                    constructor.arguments.forEach(a => parseType(a.idlType, idlNames, externalDependencies, def.name));
-                }
-            });
-        } else if (def.type === "interface") {
-            if (!def.extAttrs.some(ea => ea.name === "NoInterfaceObject")) {
-                addToJSContext(def.extAttrs, jsNames, def.name, "functions");
+            if (constructor.arguments) {
+                constructor.arguments.forEach(a => parseType(a.idlType, idlReport, def.name));
             }
+        });
+    } else if (def.members.find(member => member.type === 'constructor')) {
+        addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
+    } else if (def.type === "interface") {
+        if (!def.extAttrs.some(ea => ea.name === "NoInterfaceObject")) {
+            addToJSContext(def.extAttrs, jsNames, def.name, "functions");
         }
     }
-    def.members.forEach(parseIdlAstTree(jsNames, idlNames, idlExtendedNames, externalDependencies, def.name));
+    def.members.forEach(parseIdlAstTree(idlReport, def.name));
 }
 
 
@@ -299,7 +311,7 @@ function parseInterfaceOrDictionary(def, jsNames, idlNames, idlExtendedNames, ex
  * @return {void} The function updates jsNames
  */
 function addToJSContext(eas, jsNames, name, type) {
-    var contexts = ["[PrimaryGlobal]"];
+    var contexts = [];
     var exposed = eas && eas.some(ea => ea.name === "Exposed");
     if (exposed) {
         var exposedEa = eas.find(ea => ea.name === "Exposed");
@@ -322,7 +334,7 @@ function addToJSContext(eas, jsNames, name, type) {
  * @see parseIdlAstTree for other parameters
  * @return {void} The function updates externalDependencies
  */
-function parseType(idltype, idlNames, externalDependencies, contextName) {
+function parseType(idltype, idlReport, contextName) {
     // For some reasons, webidl2 sometimes returns the name of the IDL type
     // instead of an IDL construct for array constructs. For example:
     //  Constructor(DOMString[] urls) interface toto;
@@ -332,11 +344,11 @@ function parseType(idltype, idlNames, externalDependencies, contextName) {
         idltype = { idlType: 'DOMString' };
     }
     if (idltype.union || (idltype.generic && Array.isArray(idltype.idlType))) {
-        idltype.idlType.forEach(t => parseType(t, idlNames, externalDependencies, contextName));
+        idltype.idlType.forEach(t => parseType(t, idlReport, contextName));
         return;
     }
     if (idltype.sequence || idltype.array || idltype.generic) {
-        parseType(idltype.idlType, idlNames, externalDependencies, contextName);
+        parseType(idltype.idlType, idlReport, contextName);
         return;
     }
     var wellKnownTypes = ["void", "any", "boolean", "byte", "octet", "short", "unsigned short", "long", "unsigned long", "long long", "unsigned long long", "float", "unrestricted float", "double", "unrestricted double", "DOMString", "ByteString", "USVString", "object",
@@ -344,11 +356,11 @@ function parseType(idltype, idlNames, externalDependencies, contextName) {
                           "ArrayBufferView", "BufferSource", "DOMTimeStamp", "Function", "VoidFunction"];
     if (wellKnownTypes.indexOf(idltype.idlType) === -1) {
         if (idltype.idlType === 'window') {
-            idlNames._reallyDependsOnWindow = true;
+            idlReport.reallyDependsOnWindow = true;
         }
-        addDependency(idltype.idlType, idlNames, externalDependencies);
+        addDependency(idltype.idlType, idlReport.idlNames, idlReport.externalDependencies);
         if (contextName) {
-            addDependency(idltype.idlType, {}, idlNames._dependencies[contextName]);
+            addDependency(idltype.idlType, {}, idlReport.dependencies[contextName]);
         }
     }
 }
@@ -383,46 +395,6 @@ function addDependency(name, idlNames, externalDependencies) {
         (externalDependencies.indexOf(name) === -1)) {
         externalDependencies.push(name);
     }
-}
-
-
-/**
- * Merge IDL names defined with an [Exposed] extended attribute that points to
- * the primary global interface and those that are defined with no [Exposed]
- * keyword
- *
- * NB: In the absence of an interface defined with the [PrimaryGlobal] extended
- * attribute, the function assumes that the IDL content is to be understood in
- * a Web context and thus that the primary global interface is called "Window".
- *
- * @function
- * @private
- * @param {String} primaryGlobal The name of the primary global interface,
- *   meaning the one defined with a [PrimaryGlobal] extended attribute, if any.
- * @param {Object} jsNames The set of interfaces that are visible from the
- *   JavaScript code, per context, either through Constructors or because they
- *   are exposed by some function or object.
- * @return {Object} The updated set of interfaces, where interfaces that were
- *   initially attached to a pseudo '[PrimaryGlobal]' name are now attached to
- *   the actual primary global interface. Note the object is updated in place.
- */
-function replaceFakePrimaryGlobal(primaryGlobal, jsNames) {
-    const defaultPrimaryGlobal = '[PrimaryGlobal]';
-    primaryGlobal = primaryGlobal || 'Window';
-    Object.keys(jsNames).forEach(key => {
-        const contexts = jsNames[key];
-        if (key === 'primaryGlobal') {
-            return;
-        }
-        if (contexts[primaryGlobal] || contexts[defaultPrimaryGlobal]) {
-            contexts[primaryGlobal] = (contexts[primaryGlobal] || [])
-                .concat(contexts[defaultPrimaryGlobal] || []);
-            if (contexts[defaultPrimaryGlobal]) {
-                delete contexts[defaultPrimaryGlobal];
-            }
-        }
-    });
-    return jsNames;
 }
 
 
