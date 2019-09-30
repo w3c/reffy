@@ -83,6 +83,19 @@ function linkExtractor(window) {
 }
 
 
+function exportsExtractor(window) {
+    const exportedTerms = {};
+    [...window.document.querySelectorAll('[data-export]')].forEach(el => {
+        const id = el.getAttribute('id');
+        if (!id) {
+            return;
+        }
+        exportedTerms[id] = el.getAttribute('data-lt') || el.getAttribute('data-title') || el.innerText;
+    });
+    return exportedTerms;
+}
+
+
 /**
  * Retrieve the repository for each spec from Specref
  *
@@ -246,11 +259,12 @@ async function crawlSpec(spec, crawlOptions) {
                     });
                     return css;
                 }),
+            exportsExtractor(dom),
             dom
         ]))
         .then(res => {
             const spec = res[0];
-            const doc = res[6].document;
+            const doc = res[7].document;
             const statusAndDateElement = doc.querySelector('.head h2');
             const date = (statusAndDateElement ?
                 statusAndDateElement.textContent.split(/\s+/).slice(-3).join(' ') :
@@ -262,7 +276,8 @@ async function crawlSpec(spec, crawlOptions) {
             spec.refs = res[3];
             spec.idl = res[4];
             spec.css = res[5];
-            res[6].close();
+            spec.exports = res[6];
+            res[7].close();
             return spec;
         })
         .catch(err => {
