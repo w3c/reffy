@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "chai": "^4.1.2",
-    "commander": "^3.0.1",
+    "commander": "^4.0.0",
     "fetch-filecache-for-crawling": "^3.0.2",
     "jsdom": "^15.1.1",
     "mocha": "^6.2.0",
