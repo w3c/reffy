@@ -8,6 +8,7 @@ const fetch = require('./fetch');
 const specEquivalents = require('../specs/spec-equivalents.json');
 const canonicalizeURL = require('./canonicalize-url').canonicalizeURL;
 const { JSDOM } = require('./jsdom-monkeypatch');
+const writeRespecDocument = require("respec/tools/respecDocWriter").fetchAndWrite;
 
 
 /**
@@ -62,40 +63,15 @@ async function loadSpecificationFromHtml(spec, counter) {
     // node.js run forever.
     html = html.replace(/system\.addLoadEvent\(setupPage\);/, '');
 
-    let window = await new Promise((resolve, reject) => {
-        // Drop Byte-Order-Mark character if needed, it bugs JSDOM
-        if (html.charCodeAt(0) === 0xFEFF) {
-            html = html.substring(1);
-        }
-        new JSDOM(html, {
-            url: responseUrl,
-            resources: 'usable',
-            runScripts: 'dangerously',
-            beforeParse(window) {
-                // Wait until the generation of Respec documents is over
-                window.addEventListener('load', function () {
-                    let usesRespec = (window.respecConfig || window.eval('typeof respecConfig !== "undefined"')) &&
-                        window.document.head.querySelector("script[src*='respec']");
-                    let resolveWhenReady = _ => {
-                        if (window.document.respecIsReady) {
-                            window.document.respecIsReady
-                                .then(_=> resolve(window))
-                                .catch(reject);
-                        }
-                        else if (usesRespec) {
-                            setTimeout(resolveWhenReady, 100);
-                        }
-                        else {
-                            resolve(window);
-                        }
-                    }
-                    resolveWhenReady();
-                });
-            }
-        });
+    // Drop Byte-Order-Mark character if needed, it bugs JSDOM
+    if (html.charCodeAt(0) === 0xFEFF) {
+        html = html.substring(1);
+    }
+    let {window} = new JSDOM(html, {
+        url: responseUrl,
+        runScripts: 'dangerously'
     });
-
-    let doc = window.document;
+    const doc = window.document;
 
     // Handle <meta http-equiv="refresh"> redirection
     // Note that we'll assume that the number in "content" is correct
@@ -150,6 +126,25 @@ async function loadSpecificationFromHtml(spec, counter) {
             doc.body.appendChild(section);
         });
     }
+
+    // If spec is a ReSpec source spec, we need to generate it. This cannot be
+    // done using JSDOM because it is not powerful enough to run ReSpec, so
+    // we'll need to go through respecDocWriter (which runs Puppeteer in the
+    // background). Unfortunately, that means another network fetch is needed
+    if (doc.querySelector('script[src*=respec]')) {
+        // Make sure that all timers stop running on the spec that was loaded
+        // (typically, the Touch Events spec uses "setInterval" to detect when
+        // Respec is done, which never stops because Respec did not run)
+        window.close();
+        window = await writeRespecDocument(url, '', {}, 200000).then(html => {
+            const {window} = new JSDOM(html, {
+                url: responseUrl,
+                runScripts: 'dangerously'
+            });
+            return window;
+        });
+    }
+
     return window;
 }
 
@@ -227,8 +222,10 @@ function getDocumentAndGenerator(window) {
         var generator = window.document.querySelector('meta[name="generator"]');
         if (generator && generator.content.match(/bikeshed/i)) {
             resolve({doc, generator: 'bikeshed'});
-        } else if ((doc.body.id === 'respecDocument') ||
-                window.respecConfig || window.eval('typeof respecConfig !== "undefined"')) {
+        } else if ((generator && generator.content.match(/respec/i)) ||
+                (doc.body.id === 'respecDocument') ||
+                window.respecConfig ||
+                window.eval('typeof respecConfig !== "undefined"')) {
             resolve({doc, generator: 'respec'});
         } else if (doc.getElementById('anolis-references')) {
             resolve({doc, generator: 'anolis'});
