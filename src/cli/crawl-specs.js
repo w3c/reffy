@@ -251,11 +251,17 @@ async function crawlSpec(spec, crawlOptions) {
         .then(res => {
             const spec = res[0];
             const doc = res[6].document;
-            const statusAndDateElement = doc.querySelector('.head h2');
-            const date = (statusAndDateElement ?
-                statusAndDateElement.textContent.split(/\s+/).slice(-3).join(' ') :
-                (new Date(Date.parse(doc.lastModified))).toDateString());
-
+            const dateEl = doc.querySelector('.head time');
+            const statusAndDate = [...doc.querySelectorAll('.head h2')]
+                .map(el => el.textContent).join(' ').trim();
+            const lastModified = new Date(Date.parse(doc.lastModified));
+            const date = dateEl ? dateEl.textContent.trim() :
+                (statusAndDate ? statusAndDate.split(/\s+/).slice(-3).join(' ') :
+                [
+                    lastModified.toLocaleDateString('en-US', { day: 'numeric' }),
+                    lastModified.toLocaleDateString('en-US', { month: 'long' }),
+                    lastModified.toLocaleDateString('en-US', { year: 'numeric' })
+                ].join(' '));
             spec.title = res[1] ? res[1] : spec.title;
             spec.date = date;
             spec.links = res[2];
