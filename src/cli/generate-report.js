@@ -242,6 +242,11 @@ function generateReportPerSpec(study) {
             if (!report.noIdlContent && report.noRefToWebIDL) {
                 w('- Spec uses WebIDL but does not reference it normatively');
             }
+            if (report.unknownExposedNames &&
+                (report.unknownExposedNames.length > 0)) {
+                w('- Unknown [Exposed] names used: ' +
+                    report.unknownExposedNames.map(name => '`' + name + '`').join(', '));
+            }
             if (report.unknownIdlNames &&
                 (report.unknownIdlNames.length > 0)) {
                 w('- Unknown WebIDL names used: ' +
@@ -521,9 +526,41 @@ function generateReportPerIssue(study) {
 
 
     count = 0;
-    w('## List of WebIDL names not defined in the specifications crawled');
+    w('## List of [Exposed] names not defined in the specifications crawled');
     w();
     var idlNames = {};
+    results.forEach(spec => {
+        if (!spec.report.unknownExposedNames ||
+            (spec.report.unknownExposedNames.length === 0)) {
+            return;
+        }
+        spec.report.unknownExposedNames.forEach(name => {
+            if (!idlNames[name]) {
+                idlNames[name] = [];
+            }
+            idlNames[name].push(spec);
+        });
+    });
+    Object.keys(idlNames).sort().forEach(name => {
+        count += 1;
+        w('- `' + name + '` used in ' +
+            idlNames[name].map(ref => ('[' + ref.title + '](' + ref.crawled + ')')).join(', '));
+    });
+    w();
+    w('=> ' + count + ' [Exposed] name' + ((count > 1) ? 's' : '') + ' found');
+    if (count > 0) {
+        w();
+        w('Please keep in mind that Reffy only knows about IDL terms defined in the' +
+            ' specifications that were crawled **and** that do not have invalid IDL content.');
+    }
+    w();
+    w();
+
+
+    count = 0;
+    w('## List of WebIDL names not defined in the specifications crawled');
+    w();
+    idlNames = {};
     results.forEach(spec => {
         if (!spec.report.unknownIdlNames ||
             (spec.report.unknownIdlNames.length === 0)) {
@@ -761,6 +798,7 @@ function generateDiffReport(study, refStudy, options) {
         let ref = resultsRef.find(s => s.url === spec.url) || {
             missing: true,
             report: {
+                unknownExposedNames: [],
                 unknownIdlNames: [],
                 redefinedIdlNames: [],
                 missingWebIdlRef: [],
@@ -805,6 +843,7 @@ function generateDiffReport(study, refStudy, options) {
             hasUnexpectedCssDefinitions: getSimpleDiff('hasUnexpectedCssDefinitions'),
             hasInvalidIdl: getSimpleDiff('hasInvalidIdl'),
             hasObsoleteIdl: getSimpleDiff('hasObsoleteIdl'),
+            unknownExposedNames: getArrayDiff('unknownExposedNames'),
             unknownIdlNames: getArrayDiff('unknownIdlNames'),
             redefinedIdlNames: getArrayDiff('redefinedIdlNames', 'name'),
             missingWebIdlRef: getArrayDiff('missingWebIdlRef', 'name'),
@@ -932,6 +971,7 @@ function generateDiffReport(study, refStudy, options) {
             { title: 'Invalid WebIDL content found', prop: 'hasInvalidIdl', diff: 'simple' },
             { title: 'Obsolete WebIDL constructs found', prop: 'hasObsoleteIdl', diff: 'simple' },
             { title: 'Spec does not reference WebIDL normatively', prop: 'noRefToWebIDL', diff: 'simple' },
+            { title: 'Unknown [Exposed] names used', prop: 'unknownExposedNames', diff: 'array' },
             { title: 'Unknown WebIDL names used', prop: 'unknownIdlNames', diff: 'array' },
             { title: 'WebIDL names also defined elsewhere', prop: 'redefinedIdlNames', diff: 'array', key: 'name' },
             { title: 'Missing references for WebIDL names', prop: 'missingWebIdlRef', diff: 'array', key: 'name' },

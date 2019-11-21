@@ -88,21 +88,16 @@ function parse(idl) {
             // ["DedicatedWorkerGlobalScope", "SharedWorkerGlobalScope"] })
             globals: {},
 
+            // List of globals on which interfaces are defined, along with the
+            // name of the underlying interfaces (e.g. { "Window":
+            // ["ServiceWorker", "ServiceWorkerRegistration", ...]})
+            exposed: {},
+
             // List of dependencies (both internal and external) per interface
             dependencies: {},
 
             // IDL names referenced by the IDL content but defined elsewhere
-            externalDependencies: [],
-
-            // Flag set when the IDL really depends on "Window", meaning when
-            // "Window" appears as a dependency elsewhere than in
-            // "Exposed=Window" statements.
-            // (This is being tracked because "Window" is considered to be an
-            // exception to the rule: in theory, "Exposed=Window" triggers the
-            // need to add a normative reference to HTML, but that is overkill
-            // in practice so Reffy will only warn about the missing reference
-            // when "Window" appears as a dependency in other statements)
-            reallyDependsOnWindow: false
+            externalDependencies: []
         };
         try {
             idlTree = WebIDL2.parse(idl);
@@ -111,8 +106,7 @@ function parse(idl) {
         }
         idlTree.forEach(parseIdlAstTree(idlReport));
         idlReport.externalDependencies = idlReport.externalDependencies
-            .filter(n => !idlReport.idlNames[n])
-            .filter(n => !idlReport.globals[n]);
+            .filter(n => !idlReport.idlNames[n]);
         resolve(idlReport);
     });
 }
@@ -166,9 +160,6 @@ function parseIdlAstTree(idlReport, contextName) {
         case "implements":
             parseType(def.target, idlReport);
             parseType(def[def.type], idlReport);
-            if (def[def.type] === 'window') {
-                idlReport.reallyDependsOnWindow = true;
-            }
             if (!dependencies[def.target]) {
                 dependencies[def.target] = [];
             }
@@ -220,7 +211,7 @@ function parseIdlAstTree(idlReport, contextName) {
  *   not return anything
  */
 function parseInterfaceOrDictionary(def, idlReport) {
-    const { idlNames, idlExtendedNames, globals, jsNames, dependencies, externalDependencies } = idlReport;
+    const { idlNames, idlExtendedNames, globals, exposed, jsNames, dependencies, externalDependencies } = idlReport;
 
     if (!dependencies[def.name]) {
         dependencies[def.name] = [];
@@ -230,27 +221,20 @@ function parseInterfaceOrDictionary(def, idlReport) {
             idlExtendedNames[def.name] = [];
         }
         idlExtendedNames[def.name].push(def);
-        if (def.name === 'window') {
-            idlReport.reallyDependsOnWindow = true;
-        }
         addDependency(def.name, idlNames, externalDependencies);
     }
     else {
         idlNames[def.name] = def;
     }
     if (def.inheritance) {
-        if (def.implements === 'window') {
-            idlReport.reallyDependsOnWindow = true;
-        }
         addDependency(def.inheritance, idlNames, externalDependencies);
         addDependency(def.inheritance, {}, dependencies[def.name]);
     }
 
     const globalEA = def.extAttrs.find(ea => ea.name === "Global");
-    if (globalEA) {
-        const globalNames = (globalEA.rhs ?
-            ((globalEA.rhs.type === "identifier") ? [globalEA.rhs.value] : globalEA.rhs.value.map(c => c.value)) :
-            [def.name]);
+    if (globalEA && globalEA.rhs) {
+        const globalNames = (globalEA.rhs.type === "identifier") ?
+            [globalEA.rhs.value] : globalEA.rhs.value.map(c => c.value);
         globalNames.forEach(name => {
             if (!globals[name]) {
                 globals[name] = [];
@@ -261,15 +245,13 @@ function parseInterfaceOrDictionary(def, idlReport) {
 
     const exposedEA = def.extAttrs.find(ea => ea.name === "Exposed");
     if (exposedEA && exposedEA.rhs) {
-        var contexts = [];
-        if (exposedEA.rhs.type === "identifier") {
-            contexts = [exposedEA.rhs.value];
-        } else {
-            contexts = exposedEA.rhs.value.map(c => c.value);
-        }
-        contexts.forEach(c => {
-            addDependency(c, idlNames, externalDependencies);
-            addDependency(c, {}, dependencies[def.name], def.name);
+        const exposedNames = (exposedEA.rhs.type === "identifier") ?
+            [exposedEA.rhs.value] : exposedEA.rhs.value.map(c => c.value);
+        exposedNames.forEach(name => {
+            if (!exposed[name]) {
+                exposed[name] = [];
+            }
+            exposed[name].push(def.name);
         });
     }
     if (def.extAttrs.some(ea => ea.name === "Constructor")) {
@@ -355,9 +337,6 @@ function parseType(idltype, idlReport, contextName) {
                           "RegExp", "Error", "DOMException", "ArrayBuffer", "DataView", "Int8Array", "Int16Array", "Int32Array", "Uint8Array", "Uint16Array", "Uint32Array", "Uint8ClampedArray", "Float32Array", "Float64Array",
                           "ArrayBufferView", "BufferSource", "DOMTimeStamp", "Function", "VoidFunction"];
     if (wellKnownTypes.indexOf(idltype.idlType) === -1) {
-        if (idltype.idlType === 'window') {
-            idlReport.reallyDependsOnWindow = true;
-        }
         addDependency(idltype.idlType, idlReport.idlNames, idlReport.externalDependencies);
         if (contextName) {
             addDependency(idltype.idlType, {}, idlReport.dependencies[contextName]);
