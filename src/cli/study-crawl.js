@@ -98,12 +98,6 @@ function studyCrawlResults(results, specsToInclude) {
             return spec.idl && spec.idl.idlNames && spec.idl.idlNames[name];
         });
     });
-    knownGlobalNames.forEach(name => {
-        const specs = results.filter(spec => spec.idl && spec.idl.globals && spec.idl.globals[name]);
-        idlNamesIndex[name] = (idlNamesIndex[name] || []).concat(specs).filter(uniqueFilter);
-    });
-    knownIdlNames = knownIdlNames.concat(knownGlobalNames).filter(uniqueFilter);
-
 
     // TODO: we may end up with different variants of the WebIDL spec
     var WebIDLSpec = results.find(spec => (spec.shortname === 'WebIDL-1')) || {};
@@ -153,7 +147,7 @@ function studyCrawlResults(results, specsToInclude) {
                 Object.keys(spec.idl.idlExtendedNames) : [];
             var idlDeps = spec.idl.externalDependencies ?
                 spec.idl.externalDependencies : [];
-            var reallyDependsOnWindow = !!spec.idl.reallyDependsOnWindow;
+            var exposed = spec.idl.exposed ? Object.keys(spec.idl.exposed) : [];
 
             var report = {
                 // An error at this level means the spec could not be parsed at all
@@ -207,6 +201,13 @@ function studyCrawlResults(results, specsToInclude) {
                     ((Object.keys(spec.css.properties || {}).length > 0) ||
                         (Object.keys(spec.css.descriptors || {}).length > 0)),
 
+                // List of Exposed names used in the spec that we know nothing
+                // about because we cannot find a matching "Global" name in
+                // any other spec
+                unknownExposedNames: exposed
+                    .filter(name => knownGlobalNames.indexOf(name) === -1)
+                    .sort(),
+
                 // List of IDL names used in the spec that we know nothing about
                 // (for instance because of some typo or because the term is
                 // defined in a spec that has not been crawled or that could
@@ -237,7 +238,6 @@ function studyCrawlResults(results, specsToInclude) {
                 // an exception to the rule, and ignored.
                 missingWebIdlRef: idlDeps
                     .filter(name => knownIdlNames.indexOf(name) !== -1)
-                    .filter(name => reallyDependsOnWindow || (name !== 'Window'))
                     .map(name => {
                         var refs = idlNamesIndex[name].map(filterSpecInfo);
                         var ref = null;
