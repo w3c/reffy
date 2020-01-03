@@ -15,7 +15,7 @@ describe('The WebIDL parser understands Global/Exposed attributes', () => {
       .then(done);
   });
 
-  it('detects a simple global definition and references to it', done => {
+  xit('detects a simple global definition and references to it', done => {
     parse(`
         [Global]
         interface primaryInterface {};
