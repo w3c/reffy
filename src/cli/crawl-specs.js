@@ -381,26 +381,29 @@ async function crawlList(speclist, crawlOptions, resultsPath) {
             // Process specs in chunks not to create too many child processes
             // at once
             return new Promise(resolve => {
-                const chunkSize = 4;
+                const chunkSize = Math.min(4, list.length);
                 let results = [];
                 let pos = 0;
                 let running = 0;
 
                 // Process the next spec in the list
                 // and report where all specs have been run
-                async function crawlOneMoreSpec(result) {
+                async function crawlOneMoreSpec() {
                     if (pos < list.length) {
                         running += 1;
-                        crawlSpecInChildProcess(list[pos], crawlOptions)
-                            .then(result => {
-                                if (!result.crawled) {
-                                    result.crawled = result.latest;
-                                }
-                                results.push(result);
-                                running -= 1;
-                                crawlOneMoreSpec();
-                            });
+                        let result;
+                        if (true) {
+                            result = await crawlSpec(list[pos], crawlOptions);
+                        } else {
+                            result = await crawlSpecInChildProcess(list[pos], crawlOptions);
+                        }
+                        if (!result.crawled) {
+                            result.crawled = result.latest;
+                        }
+                        results.push(result);
+                        running -= 1;
                         pos += 1;
+                        crawlOneMoreSpec();
                     }
                     else if (running === 0) {
                         // No more spec to crawl, and no more running spec
