@@ -158,9 +158,13 @@ function extractRespecIdl(doc) {
             .filter(el => !el.closest(nonNormativeSelector))
             .map(el => el.cloneNode(true))
             .map(el => {
+                const header = el.querySelector('.idlHeader');
+                if (header) {
+                    header.remove();
+                }
                 const tests = el.querySelector('details.respec-tests-details');
                 if (tests) {
-                    el.removeChild(tests);
+                    tests.remove();
                 }
                 return el;
             })
