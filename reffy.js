@@ -55,7 +55,7 @@ program
   .version(version)
   .command('run <perspective> [action]')
   .description('run a new crawl and study from the given perspective')
-  .action((perspective, action) => {
+  .action(async (perspective, action) => {
     command = 'run';
     if (!(perspective in perspectives)) {
       return program.help();
@@ -153,15 +153,10 @@ program
       }
     });
 
-    return promise.then(_ => console.log('-- THE END -- '))
-      .catch(err => {
-        console.error('-- ERROR CAUGHT --');
-        console.error(err);
-        process.exit(1);
-      });
+    return promise;
   });
 
-program.on('--help', function(){
+program.on('--help', function() {
   console.log('');
   console.log('  Possible perspectives:');
   console.log('');
@@ -178,7 +173,23 @@ program.on('--help', function(){
   console.log('');
 });
 
-program.parse(process.argv);
-if (!command) {
-  return program.help();
+program.on('command:*', function () {
+  console.error('Invalid command: %s.\n', program.args.join(' '));
+  program.outputHelp();
+  process.exit(1);
+});
+
+if (!process.argv.slice(2).length) {
+  console.error('Cannot run program without arguments.\n');
+  program.outputHelp();
+  process.exit(1);
 }
+
+program
+  .parseAsync(process.argv)
+  .then(_ => console.log('-- THE END -- '))
+  .catch(err => {
+    console.error('-- ERROR CAUGHT --');
+    console.error(err);
+    process.exit(1);
+  });
