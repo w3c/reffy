@@ -378,29 +378,37 @@ async function crawlList(speclist, crawlOptions, resultsPath) {
 
     return createInitialSpecDescriptions(speclist)
         .then(list => {
-            // Process specs in chunks not to create too many child processes
-            // at once
+            // In debug mode, specs are processed one by one within the current
+            // process. In normal mode, specs are processed in chunks in child
+            // processes.
             return new Promise(resolve => {
-                const chunkSize = 4;
+                const chunkSize = Math.min((crawlOptions.debug ? 1 : 4), list.length);
                 let results = [];
                 let pos = 0;
                 let running = 0;
 
-                // Process the next spec in the list
-                // and report where all specs have been run
-                async function crawlOneMoreSpec(result) {
+                // Process the next spec in the list, in the current process if
+                // we're in debug mode, in a child process otherwise, and report
+                // when all specs have been crawled
+                async function crawlOneMoreSpec() {
                     if (pos < list.length) {
                         running += 1;
-                        crawlSpecInChildProcess(list[pos], crawlOptions)
-                            .then(result => {
-                                if (!result.crawled) {
-                                    result.crawled = result.latest;
-                                }
-                                results.push(result);
-                                running -= 1;
-                                crawlOneMoreSpec();
-                            });
+                        let result;
+                        if (crawlOptions.debug) {
+                            console.log(`Crawling ${list[pos].url}...`);
+                            result = await crawlSpec(list[pos], crawlOptions);
+                            console.log(`Crawling ${list[pos].url}... done`);
+                        }
+                        else {
+                            result = await crawlSpecInChildProcess(list[pos], crawlOptions);
+                        }
+                        if (!result.crawled) {
+                            result.crawled = result.latest;
+                        }
+                        results.push(result);
+                        running -= 1;
                         pos += 1;
+                        crawlOneMoreSpec();
                     }
                     else if (running === 0) {
                         // No more spec to crawl, and no more running spec
@@ -685,7 +693,8 @@ if (require.main === module) {
     var speclistPath = process.argv[2];
     var resultsPath = process.argv[3];
     var crawlOptions = {
-        publishedVersion: (process.argv[4] === 'tr')
+        publishedVersion: (process.argv[4] === 'tr'),
+        debug: (process.argv[4] === 'debug') || (process.argv[5] === 'debug')
     };
 
     if (speclistPath === '--child') {

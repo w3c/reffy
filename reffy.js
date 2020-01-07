@@ -53,9 +53,13 @@ const possibleActions = {
 let command = null; 
 program
   .version(version)
+  .option('-d, --debug', 'run crawl in debug mode (single process, one spec at a time)');
+
+program
   .command('run <perspective> [action]')
   .description('run a new crawl and study from the given perspective')
-  .action(async (perspective, action) => {
+  .option('-d, --debug', 'run crawl in debug mode (single process, one spec at a time)')
+  .action(async (perspective, action, cmdObj) => {
     command = 'run';
     if (!(perspective in perspectives)) {
       return program.help();
@@ -64,6 +68,7 @@ program
       return program.help();
     }
 
+    let debug = cmdObj.debug || program.debug;
     let specsfile = perspectives[perspective].specs;
     let publishedVersion = perspectives[perspective].publishedVersion;
     let refCrawl = perspectives[perspective].refCrawl;
@@ -84,7 +89,7 @@ program
           .then(_ => crawlFile(
             path.resolve(__dirname, 'src', 'specs', specsfile),
             reportFolder,
-            { publishedVersion }));
+            { publishedVersion, debug }));
         break;
 
       case 'study':
@@ -170,6 +175,11 @@ program.on('--help', function() {
   Object.keys(possibleActions).forEach(action => {
     console.log('    ' + action + ': ' + possibleActions[action]);
   });
+  console.log('');
+
+  console.log('  Possible options:');
+  console.log('');
+  console.log('    -d, --debug: run crawl in debug mode (single process, one spec at a time)');
   console.log('');
 });
 
