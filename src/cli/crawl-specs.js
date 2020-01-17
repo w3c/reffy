@@ -558,21 +558,28 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
 
     // Helper function that returns true when the given spec is is the latest
     // level of that spec in the crawl for the given type of content
-    // ("css" or "idl")
+    // ("css" or "idl"). Note the code handles the special case of the CSS2
+    // and CSS22 specs, and assumes that URLs that don't end with a level
+    // number are at level 1 (this does not work for CSS specs whose URLs still
+    // follow the old `css3-` pattern, but we're only interested in comparing
+    // with more recent levels in that case, so it does not matter)
     const isLatestLevel = (spec, flag) => {
-        if (!spec.url.match(/-\d\/$/)) {
-            // Handle special CSS 2.1 / CSS 2.2 spec which does not
-            // follow the same naming conventions as other CSS specs
-            return !spec.url.match(/CSS2\/$/i) ||
-                !data.find(s => s.url.match(/CSS22\/$/i));
-        }
-        let level = spec.url.match(/-(\d)\/$/)[1];
-        let moreRecent = data.find(s =>
-            s.flags[flag] &&
-            (getShortname(s) === getShortname(spec)) &&
-            s.url.match(/-\d\/$/) &&
-            (s.url.match(/-(\d)\/$/)[1] > level));
-        return !moreRecent;
+        const getLevel = spec =>
+            (spec.url.match(/-\d+\/$/) ?
+            parseInt(spec.url.match(/-(\d+)\/$/)[1], 10) :
+            (spec.url.match(/CSS22\/$/i) ? 2 : 1));
+        const shortname = getShortname(spec);
+        const level = getLevel(spec);
+        const candidates = data.filter(s => s.flags[flag] &&
+            (getShortname(s) === shortname) && (getLevel(s) >= level));
+
+        // Note the list of candidates for this shortname includes the spec
+        // itself. It is the latest level if there is no other candidate at
+        // a strictly greater level, and if the spec under consideration is
+        // the first element in the list (for the hopefully rare case where
+        // we have two candidate specs that are at the same level)
+        return !candidates.find(s => getLevel(s) > level) &&
+            (candidates[0] === spec);
     };
 
     // Save IDL dumps for the latest level of a spec to the idl folder
