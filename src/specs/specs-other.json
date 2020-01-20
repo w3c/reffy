@@ -1,8 +1,24 @@
 [
   "https://streams.spec.whatwg.org/",
+  "https://w3c.github.io/accname/",
+  "https://w3c.github.io/core-aam/",
   "https://w3c.github.io/editing/contentEditable.html",
+  "https://w3c.github.io/editing/execCommand.html",
+  "https://webassembly.github.io/spec/",
+  "https://wicg.github.io/origin-policy/",
+  "https://wicg.github.io/priority-hints/",
+  "https://wicg.github.io/web-share-target/",
+  "https://www.w3.org/TR/clear-site-data/",
   "https://www.w3.org/TR/mixed-content/",
+  "https://www.w3.org/TR/network-error-logging/",
+  "https://www.w3.org/TR/payment-method-id/",
+  "https://www.w3.org/TR/payment-method-manifest/",
   "https://www.w3.org/TR/preload/",
+  "https://www.w3.org/TR/resource-hints/",
+  "https://www.w3.org/TR/timing-entrytypes-registry/",
+  "https://www.w3.org/TR/trace-context/",
   "https://www.w3.org/TR/uievents-code/",
-  "https://www.w3.org/TR/uievents-key/"
+  "https://www.w3.org/TR/uievents-key/",
+  "https://www.w3.org/TR/upgrade-insecure-requests/",
+  "https://www.w3.org/TR/webrtc-svc/"
 ]
