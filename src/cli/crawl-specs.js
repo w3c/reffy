@@ -34,6 +34,7 @@ const canonicalizeURL = require('../lib/canonicalize-url').canonicalizeURL;
 const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
 const completeWithInfoFromW3CApi = require('../lib/util').completeWithInfoFromW3CApi;
 const completeWithShortName = require('../lib/util').completeWithShortName;
+const getShortname = require('../lib/util').getShortname;
 
 /**
  * Flattens an array
@@ -426,50 +427,6 @@ async function crawlList(speclist, crawlOptions, resultsPath) {
 }
 
 
-function getShortname(spec) {
-  if (spec.shortname) {
-    // do not include versionning, see also:
-    // https://github.com/foolip/day-to-day/blob/d336df7d08d57204a68877ec51866992ea78e7a2/build/specs.js#L176
-    if (spec.shortname.startsWith('css3')) {
-      if (spec.shortname === 'css3-background') {
-        return 'css-backgrounds'; // plural
-      }
-      else {
-        return spec.shortname.replace('css3', 'css');
-      }
-    }
-    else {
-      return spec.shortname.replace(/-?[\d\.]*$/, '');
-    }
-  }
-  const whatwgMatch = spec.url.match(/\/\/(.*)\.spec\.whatwg\.org\/$/);
-  if (whatwgMatch) {
-    return whatwgMatch[1];
-  }
-  const khronosMatch = spec.url.match(/https:\/\/www\.khronos\.org\/registry\/webgl\/specs\/latest\/([12])\.0\/$/);
-  if (khronosMatch) {
-    return "webgl" + khronosMatch[1];
-  }
-  const extensionMatch = spec.url.match(/\/.*\.github\.io\/([^\/]*)\/extension\.html$/);
-  if (extensionMatch) {
-    return extensionMatch[1] + '-extension';
-  }
-  const githubMatch = spec.url.match(/\/.*\.github\.io\/(?:webappsec-)?([^\/]+)\//);
-  if (githubMatch) {
-    if (githubMatch[1] === 'ServiceWorker') {
-        // Exception to the rule for service workers ED
-        return 'service-workers';
-    }
-    else {
-        return githubMatch[1];
-    }
-  }
-  const cssDraftMatch = spec.url.match(/\/drafts\.(?:csswg|fxtf|css-houdini)\.org\/([^\/]*)\//);
-  if (cssDraftMatch) {
-    return cssDraftMatch[1].replace(/-[\d\.]*$/, '');
-  }
-  return spec.url.replace(/[^-a-z0-9]/g, '');
-}
 
 /**
  * Append the resulting data to the given file.
