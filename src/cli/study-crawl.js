@@ -136,7 +136,6 @@ function studyCrawlResults(results, specsToInclude) {
                 (spec.url && toInclude.url && (spec.url === toInclude.url)) ||
                 (spec.html && toInclude.html && (spec.html === toInclude.html))))
         .map(spec => {
-            spec.flags = spec.flags || {};
             spec.idl = spec.idl || {};
             spec.css = spec.css || {};
             spec.refs = spec.refs || {};
@@ -161,22 +160,12 @@ function studyCrawlResults(results, specsToInclude) {
                 // Whether the spec normatively references the WebIDL spec
                 // (all specs that define IDL content should)
                 noRefToWebIDL: (spec !== WebIDLSpec) &&
-                    spec.flags.idl &&
+                    // TODO: doesn't work because `saveIdl` deletes `spec.idl.idl`.
+                    spec.idl.idl &&
                     (!spec.refs.normative || !spec.refs.normative.find(ref =>
                         ref.name.match(/^WebIDL/i) ||
                             (ref.url === WebIDLSpec.url) ||
                             (ref.url === WebIDLSpec.latest))),
-
-                // For specs that should have IDL, whether the crawler managed
-                // to find IDL content in the spec
-                noIdlContent: spec.flags.idl &&
-                    ((Object.keys(spec.idl).length === 0) ||
-                        (!spec.idl.idlNames && !spec.idl.message) ||
-                        ((idlDfns.length === 0) && (idlExtendedDfns.length === 0) && !spec.idl.message)),
-
-                // For specs that should not define any IDL, whether the
-                // crawler extracted IDL content from the spec
-                hasUnexpectedIdl: !spec.flags.idl && (idlDfns.length > 0),
 
                 // Whether the spec has invalid IDL content
                 // (the crawler cannot do much when IDL content is invalid, it
@@ -188,18 +177,6 @@ function studyCrawlResults(results, specsToInclude) {
                 // WebIDL Level 1 but no longer are, typically "[]" instead of
                 // "FrozenArray"
                 hasObsoleteIdl: spec.idl.hasObsoleteIdl,
-
-                // For specs that should contain CSS definitions, whether the
-                // crawler managed to find some in the spec
-                noCssDefinitions: spec.flags.css &&
-                    (Object.keys(spec.css.properties || {}).length === 0) &&
-                    (Object.keys(spec.css.descriptors || {}).length === 0),
-
-                // For specs that should not contains CSS definitions, whether
-                // the crawled managed to extract some
-                hasUnexpectedCssDefinitions: !spec.flags.css &&
-                    ((Object.keys(spec.css.properties || {}).length > 0) ||
-                        (Object.keys(spec.css.descriptors || {}).length > 0)),
 
                 // List of Exposed names used in the spec that we know nothing
                 // about because we cannot find a matching "Global" name in
@@ -316,12 +293,8 @@ function studyCrawlResults(results, specsToInclude) {
             // A spec is OK if it does not contain anything "suspicious".
             report.ok = !report.error &&
                 !report.noNormativeRefs &&
-                !report.noIdlContent &&
-                !report.hasUnexpectedIdl &&
                 !report.hasInvalidIdl &&
                 !report.hasObsoleteIdl &&
-                !report.noCssDefinitions &&
-                !report.hasUnexpectedCssDefinitions &&
                 !report.noRefToWebIDL &&
                 (!report.unknownIdlNames || (report.unknownIdlNames.length === 0)) &&
                 (!report.redefinedIdlNames || (report.redefinedIdlNames.length === 0)) &&
