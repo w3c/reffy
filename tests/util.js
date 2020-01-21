@@ -45,10 +45,9 @@ describe('getShortname', () => {
     assert.equal(getShortname({ url: 'https://w3c.github.io/cool-spec-2/' }), 'cool-spec-2');
   });
 
-  it('github.io extensions.html', () => {
+  it('github.io extension specs', () => {
     assert.equal(getShortname({ url: 'https://w3c.github.io/cool/extension.html' }), 'cool-extension');
-    // plural "extensions" not handled:
-    assert.equal(getShortname({ url: 'https://w3c.github.io/cool/extensions.html' }), 'cool');
+    assert.equal(getShortname({ url: 'https://w3c.github.io/cool/extensions.html' }), 'cool-extensions');
   });
 
   it('drafts.*.org', () => {
