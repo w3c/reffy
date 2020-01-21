@@ -391,6 +391,14 @@ function getShortname(spec) {
     if (cssDraftMatch) {
         return cssDraftMatch[1].replace(/-[\d\.]*$/, '');
     }
+    const svgDraftMatch = spec.url.match(/\/svgwg\.org\/svg2-draft\//);
+    if (svgDraftMatch) {
+        return 'SVG';
+    }
+    const svgSpecMatch = spec.url.match(/\/svgwg\.org\/specs\/([^\/]+)\//);
+    if (svgSpecMatch) {
+        return 'svg-' + svgSpecMatch[1];
+    }
     return spec.url.replace(/[^-a-z0-9]/g, '');
 }
 

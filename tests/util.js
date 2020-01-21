@@ -60,6 +60,13 @@ describe('getShortname', () => {
     assert.equal(getShortname({ url: 'https://drafts.css-houdini.org/worklets-3/' }), 'worklets');
   });
 
+  it('svgwg.org', () => {
+    assert.equal(getShortname({ url: 'https://svgwg.org/svg2-draft/' }), 'SVG');
+    assert.equal(getShortname({ url: 'https://svgwg.org/svg2-draft/single-page.html' }), 'SVG');
+    assert.equal(getShortname({ url: 'https://svgwg.org/specs/animations/' }), 'svg-animations');
+    assert.equal(getShortname({ url: 'https://svgwg.org/specs/strokes/' }), 'svg-strokes');
+  });
+
   it('shortname takes precedence over url', () => {
     assert.equal(getShortname({
       shortname: 'webrtc',
