@@ -393,22 +393,23 @@ async function crawlList(speclist, crawlOptions, resultsPath) {
                 // when all specs have been crawled
                 async function crawlOneMoreSpec() {
                     if (pos < list.length) {
+                        let spec = list[pos];
+                        pos += 1;
                         running += 1;
                         let result;
                         if (crawlOptions.debug) {
-                            console.log(`Crawling ${list[pos].url}...`);
-                            result = await crawlSpec(list[pos], crawlOptions);
-                            console.log(`Crawling ${list[pos].url}... done`);
+                            console.log(`Crawling ${spec.url}...`);
+                            result = await crawlSpec(spec, crawlOptions);
+                            console.log(`Crawling ${spec.url}... done`);
                         }
                         else {
-                            result = await crawlSpecInChildProcess(list[pos], crawlOptions);
+                            result = await crawlSpecInChildProcess(spec, crawlOptions);
                         }
                         if (!result.crawled) {
                             result.crawled = result.latest;
                         }
                         results.push(result);
                         running -= 1;
-                        pos += 1;
                         crawlOneMoreSpec();
                     }
                     else if (running === 0) {
