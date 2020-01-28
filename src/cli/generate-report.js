@@ -70,19 +70,12 @@ function writeCrawlInfo(spec, withHeader, w) {
     }
     w();
 
-    let crawledVersion = 'Initial URL';
     let crawledUrl = spec.crawled || spec.latest;
-    if ((crawledUrl === spec.datedUrl) || (crawledUrl === spec.latest)) {
-        crawledVersion = 'Latest published version';
+    w('- Initial URL: [' + spec.url + '](' + spec.url + ')');
+    w('- Crawled URL: [' + crawledUrl + '](' + crawledUrl + ')');
+    if (spec.date) {
+        w('- Crawled version: ' + spec.date);
     }
-    else if (crawledUrl === spec.edDraft) {
-        crawledVersion = 'Editor\'s Draft';
-    }
-    else if (crawledUrl.indexOf('spec.whatwg.org') !== -1) {
-        crawledVersion = 'Living Standard';
-    }
-    w('- Crawled version: [' + crawledVersion + '](' + crawledUrl + ')' +
-        (spec.date ? ' (' + spec.date + ')' : ''));
     if (spec.edDraft) {
         w('- Editor\'s Draft: [' + spec.edDraft + '](' + spec.edDraft + ')');
     }
@@ -909,19 +902,10 @@ function generateDiffReport(study, refStudy, options) {
 
         w('## ' + spec.title);
         w();
-        w('- URL: [' + spec.url + '](' + spec.url + ')');
-        let crawledVersion = 'Initial URL';
+
         let crawledUrl = spec.crawled || spec.latest;
-        if ((crawledUrl === spec.datedUrl) || (crawledUrl === spec.latest)) {
-            crawledVersion = 'Latest published version';
-        }
-        else if (crawledUrl === spec.edDraft) {
-            crawledVersion = 'Editor\'s Draft';
-        }
-        else if (crawledUrl.indexOf('spec.whatwg.org') !== -1) {
-            crawledVersion = 'Living Standard';
-        }
-        w('- Crawled version: [' + crawledVersion + '](' + crawledUrl + ')');
+        w('- Initial URL: [' + spec.url + '](' + spec.url + ')');
+        w('- Crawled URL: [' + crawledUrl + '](' + crawledUrl + ')');
         if (spec.edDraft && (spec.edDraft !== crawledUrl)) {
             w('- Editor\'s Draft: [' + spec.edDraft + '](' + spec.edDraft + ')');
         }

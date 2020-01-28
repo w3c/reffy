@@ -192,63 +192,67 @@ async function crawlSpec(spec, crawlOptions) {
         return spec;
     }
     return loadSpecification({ html: spec.html, url: spec.crawled })
-        .then(dom => Promise.all([
-            spec,
-            titleExtractor(dom),
-            linkExtractor(dom),
-            refParser.extract(dom).catch(err => {
-                console.error(spec.crawled, err);
-                return err;
-            }),
-            webidlExtractor.extract(dom)
-                .then(idl =>
-                    Promise.all([
-                        idl,
-                        webidlParser.parse(idl),
-                        webidlParser.hasObsoleteIdl(idl)
-                    ])
-                    .then(([idl, parsedIdl, hasObsoletedIdl]) => {
-                        parsedIdl.hasObsoleteIdl = hasObsoletedIdl;
-                        parsedIdl.idl = idl;
-                        return parsedIdl;
-                    })
-                    .catch(err => {
-                        // IDL content is invalid and cannot be parsed.
-                        // Let's return the error, along with the raw IDL
-                        // content so that it may be saved to a file.
-                        console.error(spec.crawled, err);
-                        err.idl = idl;
-                        return err;
-                    })),
-            cssDfnExtractor.extract(dom)
-                .then(css => {
-                    Object.keys(css.properties || {}).forEach(prop => {
-                        try {
-                            css.properties[prop].parsedValue = cssDfnParser.parsePropDefValue(css.properties[prop].value || css.properties[prop].newValues);
-                        } catch (e) {
-                            css.properties[prop].valueParseError = e.message;
-                        }
-                    });
-                    Object.keys(css.descriptors || {}).forEach(desc => {
-                        try {
-                            css.descriptors[desc].parsedValue = cssDfnParser.parsePropDefValue(css.descriptors[desc].value);
-                        } catch (e) {
-                            css.descriptors[desc].valueParseError = e.message;
-                        }
-                    });
-                    Object.keys(css.valuespaces || {}).forEach(vs => {
-                        if (css.valuespaces[vs].value) {
-                            try {
-                                css.valuespaces[vs].parsedValue = cssDfnParser.parsePropDefValue(css.valuespaces[vs].value);
-                            } catch (e) {
-                                css.valuespaces[vs].valueParseError = e.message;
-                            }
-                        }
-                    });
-                    return css;
+        .then(loaded => {
+            spec.crawled = loaded.url;
+            let dom = loaded.window;
+            return Promise.all([
+                spec,
+                titleExtractor(dom),
+                linkExtractor(dom),
+                refParser.extract(dom).catch(err => {
+                    console.error(spec.crawled, err);
+                    return err;
                 }),
-            dom
-        ]))
+                webidlExtractor.extract(dom)
+                    .then(idl =>
+                        Promise.all([
+                            idl,
+                            webidlParser.parse(idl),
+                            webidlParser.hasObsoleteIdl(idl)
+                        ])
+                        .then(([idl, parsedIdl, hasObsoletedIdl]) => {
+                            parsedIdl.hasObsoleteIdl = hasObsoletedIdl;
+                            parsedIdl.idl = idl;
+                            return parsedIdl;
+                        })
+                        .catch(err => {
+                            // IDL content is invalid and cannot be parsed.
+                            // Let's return the error, along with the raw IDL
+                            // content so that it may be saved to a file.
+                            console.error(spec.crawled, err);
+                            err.idl = idl;
+                            return err;
+                        })),
+                cssDfnExtractor.extract(dom)
+                    .then(css => {
+                        Object.keys(css.properties || {}).forEach(prop => {
+                            try {
+                                css.properties[prop].parsedValue = cssDfnParser.parsePropDefValue(css.properties[prop].value || css.properties[prop].newValues);
+                            } catch (e) {
+                                css.properties[prop].valueParseError = e.message;
+                            }
+                        });
+                        Object.keys(css.descriptors || {}).forEach(desc => {
+                            try {
+                                css.descriptors[desc].parsedValue = cssDfnParser.parsePropDefValue(css.descriptors[desc].value);
+                            } catch (e) {
+                                css.descriptors[desc].valueParseError = e.message;
+                            }
+                        });
+                        Object.keys(css.valuespaces || {}).forEach(vs => {
+                            if (css.valuespaces[vs].value) {
+                                try {
+                                    css.valuespaces[vs].parsedValue = cssDfnParser.parsePropDefValue(css.valuespaces[vs].value);
+                                } catch (e) {
+                                    css.valuespaces[vs].valueParseError = e.message;
+                                }
+                            }
+                        });
+                        return css;
+                    }),
+                dom
+            ])
+        })
         .then(res => {
             const spec = res[0];
             const doc = res[6].document;
