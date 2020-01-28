@@ -99,7 +99,7 @@ async function loadSpecificationFromHtml(spec, counter) {
             let singlePage = URL.resolve(doc.baseURI, link.getAttribute('href'));
             if ((singlePage === url) || (singlePage === responseUrl)) {
                 // We're already looking at the single page version
-                return window;
+                return { url: responseUrl, window };
             }
             else {
                 return loadSpecificationFromUrl(singlePage, counter + 1);
@@ -121,7 +121,7 @@ async function loadSpecificationFromHtml(spec, counter) {
             pages.map(page => loadSpecificationFromUrl(page)));
         subWindows.map(subWindow => {
             const section = doc.createElement('section');
-            [...subWindow.document.body.children].forEach(
+            [...subWindow.window.document.body.children].forEach(
                 child => section.appendChild(child));
             doc.body.appendChild(section);
         });
@@ -145,7 +145,7 @@ async function loadSpecificationFromHtml(spec, counter) {
         });
     }
 
-    return window;
+    return { url: responseUrl, window };
 }
 
 
@@ -197,7 +197,7 @@ function loadSpecification(spec) {
 
 function urlOrDom(input) {
     if (typeof input === "string") {
-        return loadSpecification(input);
+        return loadSpecification(input).then(loaded => loaded.window);
     } else {
         return Promise.resolve(input);
     }
