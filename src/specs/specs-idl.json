@@ -9,8 +9,6 @@
     "https://fetch.spec.whatwg.org/",
     "https://fullscreen.spec.whatwg.org/",
     "https://html.spec.whatwg.org/",
-    "https://immersive-web.github.io/webxr-ar-module/",
-    "https://immersive-web.github.io/webxr-gamepads-module/",
     "https://notifications.spec.whatwg.org/",
     "https://storage.spec.whatwg.org/",
     "https://svgwg.org/specs/animations/",
@@ -24,7 +22,6 @@
     "https://w3c.github.io/ServiceWorker/",
     "https://w3c.github.io/webappsec-feature-policy/",
     "https://w3c.github.io/web-nfc/",
-    "https://w3c.github.io/web-share/",
     "https://webbluetoothcg.github.io/web-bluetooth/",
     "https://wicg.github.io/background-fetch/",
     "https://wicg.github.io/badging/",
@@ -146,6 +143,7 @@
     "https://www.w3.org/TR/wasm-js-api-1/",
     "https://www.w3.org/TR/wasm-web-api-1/",
     "https://www.w3.org/TR/web-animations-1/",
+    "https://www.w3.org/TR/web-share/",
     "https://www.w3.org/TR/webaudio/",
     "https://www.w3.org/TR/webauthn-1/",
     "https://www.w3.org/TR/WebCryptoAPI/",
@@ -159,6 +157,8 @@
     "https://www.w3.org/TR/webrtc/",
     "https://www.w3.org/TR/webvtt1/",
     "https://www.w3.org/TR/webxr/",
+    "https://www.w3.org/TR/webxr-ar-module/",
+    "https://www.w3.org/TR/webxr-gamepads-module/",
     "https://www.w3.org/TR/worklets-1/",
     "https://xhr.spec.whatwg.org/"
 ]
