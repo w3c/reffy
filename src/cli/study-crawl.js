@@ -171,8 +171,8 @@ function studyCrawlResults(results, specsToInclude) {
                 // to find IDL content in the spec
                 noIdlContent: spec.flags.idl &&
                     ((Object.keys(spec.idl).length === 0) ||
-                        (!spec.idl.idlNames && !spec.idl.message) ||
-                        ((idlDfns.length === 0) && (idlExtendedDfns.length === 0) && !spec.idl.message)),
+                        (!spec.idl.idlNames && !spec.idl.bareMessage) ||
+                        ((idlDfns.length === 0) && (idlExtendedDfns.length === 0) && !spec.idl.bareMessage)),
 
                 // For specs that should not define any IDL, whether the
                 // crawler extracted IDL content from the spec
@@ -182,7 +182,7 @@ function studyCrawlResults(results, specsToInclude) {
                 // (the crawler cannot do much when IDL content is invalid, it
                 // cannot tell what IDL definitions and references the spec
                 // contains in particular)
-                hasInvalidIdl: !!(!spec.idl.idlNames && spec.idl.message),
+                hasInvalidIdl: !!(!spec.idl.idlNames && spec.idl.bareMessage),
 
                 // Whether the spec uses IDL constructs that were valid in
                 // WebIDL Level 1 but no longer are, typically "[]" instead of
