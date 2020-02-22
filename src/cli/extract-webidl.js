@@ -57,7 +57,7 @@ function extract(url) {
  * @function
  * @private
  * @param {Document} doc
- * @return {Promise} The promise to get a dump of the IDL definitions
+ * @return {string} A dump of the IDL definitions
  */
 function extractBikeshedIdl(doc) {
     var idlHeading = doc.getElementById('idl-index');
@@ -86,7 +86,7 @@ function extractBikeshedIdl(doc) {
  * @function
  * @private
  * @param {Document} doc
- * @return {Promise} The promise to get a dump of the IDL definitions
+ * @return {string} A dump of the IDL definitions
  */
 function extractRespecIdl(doc) {
     // IDL filter voluntarily similar to that defined in Respec to exclude
