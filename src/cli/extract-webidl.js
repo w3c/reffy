@@ -37,9 +37,7 @@ function extract(url) {
             else if (doc.title.startsWith('Web IDL')) {
                 // IDL content in the Web IDL are... examples,
                 // not real definitions
-                return new Promise(resolve => {
-                    resolve('');
-                });
+                return '';
             }
             else {
                 // Most non-ReSpec specs still follow the ReSpec conventions
@@ -62,21 +60,19 @@ function extract(url) {
  * @return {Promise} The promise to get a dump of the IDL definitions
  */
 function extractBikeshedIdl(doc) {
-    return new Promise((resolve, reject) => {
-        var idlHeading = doc.getElementById('idl-index');
-        if (idlHeading) {
-            var nextEl = idlHeading.nextElementSibling;
-            if (nextEl) {
-                return resolve(nextEl.textContent);
-            }
-            reject(new Error("Could not find IDL in IDL index"));
+    var idlHeading = doc.getElementById('idl-index');
+    if (idlHeading) {
+        var nextEl = idlHeading.nextElementSibling;
+        if (nextEl) {
+            return nextEl.textContent;
         }
-        else {
-            // the document may have been generated with "omit idl-index"
-            // in which case, we try the simple way
-            extractRespecIdl(doc).then(resolve);
-        }
-    });
+        throw new Error("Could not find IDL in IDL index");
+    }
+    else {
+        // the document may have been generated with "omit idl-index"
+        // in which case, we try the simple way
+        return extractRespecIdl(doc);
+    }
 }
 
 
@@ -131,47 +127,45 @@ function extractRespecIdl(doc) {
             .join('\n');
     };
 
-    return new Promise(resolve => {
-        let idlEl = doc.querySelector('#idl-index pre') ||
-            doc.querySelector('#chapter-idl pre');  // Used in SVG 2 draft
+    let idlEl = doc.querySelector('#idl-index pre') ||
+        doc.querySelector('#chapter-idl pre');  // Used in SVG 2 draft
 
-        // TEMP (2019-07-25): Don't use the IDL index as long as we cannot run
-        // the latest version of ReSpec, because the pinned version fails to
-        // parse recent IDL constructs, see:
-        // https://github.com/tidoust/reffy/issues/134
-        // https://github.com/tidoust/reffy-reports/issues/34
-        /*if (idlEl && false) {
-            return resolve(idlEl.textContent);
-        }*/
+    // TEMP (2019-07-25): Don't use the IDL index as long as we cannot run
+    // the latest version of ReSpec, because the pinned version fails to
+    // parse recent IDL constructs, see:
+    // https://github.com/tidoust/reffy/issues/134
+    // https://github.com/tidoust/reffy-reports/issues/34
+    /*if (idlEl && false) {
+        return resolve(idlEl.textContent);
+    }*/
 
-        let idl = [
-            'pre.idl:not(.exclude):not(.extract):not(#actual-idl-index)',
-            'pre:not(.exclude):not(.extract) > code.idl-code:not(.exclude):not(.extract)',
-            'pre:not(.exclude):not(.extract) > code.idl:not(.exclude):not(.extract)',
-            'div.idl-code:not(.exclude):not(.extract) > pre:not(.exclude):not(.extract)',
-            'pre.widl:not(.exclude):not(.extract)'
-        ]
-            .map(sel => [...doc.querySelectorAll(sel)])
-            .reduce((res, elements) => res.concat(elements), [])
-            .filter(el => el !== idlEl)
-            .filter((el, idx, self) => self.indexOf(el) === idx)
-            .filter(el => !el.closest(nonNormativeSelector))
-            .map(el => el.cloneNode(true))
-            .map(el => {
-                const header = el.querySelector('.idlHeader');
-                if (header) {
-                    header.remove();
-                }
-                const tests = el.querySelector('details.respec-tests-details');
-                if (tests) {
-                    tests.remove();
-                }
-                return el;
-            })
-            .map(el => trimIdlSpaces(el.textContent))
-            .join('\n\n');
-        resolve(idl);
-    });
+    let idl = [
+        'pre.idl:not(.exclude):not(.extract):not(#actual-idl-index)',
+        'pre:not(.exclude):not(.extract) > code.idl-code:not(.exclude):not(.extract)',
+        'pre:not(.exclude):not(.extract) > code.idl:not(.exclude):not(.extract)',
+        'div.idl-code:not(.exclude):not(.extract) > pre:not(.exclude):not(.extract)',
+        'pre.widl:not(.exclude):not(.extract)'
+    ]
+        .map(sel => [...doc.querySelectorAll(sel)])
+        .reduce((res, elements) => res.concat(elements), [])
+        .filter(el => el !== idlEl)
+        .filter((el, idx, self) => self.indexOf(el) === idx)
+        .filter(el => !el.closest(nonNormativeSelector))
+        .map(el => el.cloneNode(true))
+        .map(el => {
+            const header = el.querySelector('.idlHeader');
+            if (header) {
+                header.remove();
+            }
+            const tests = el.querySelector('details.respec-tests-details');
+            if (tests) {
+                tests.remove();
+            }
+            return el;
+        })
+        .map(el => trimIdlSpaces(el.textContent))
+        .join('\n\n');
+    return idl;
 }
 
 
