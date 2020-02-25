@@ -31,8 +31,8 @@
  * @module analyzer
  */
 
-const canonicalizeURL = require('../lib/canonicalize-url').canonicalizeURL;
-const canonicalizesTo = require('../lib/canonicalize-url').canonicalizesTo;
+const canonicalizeUrl = require('../../builds/canonicalize-url').canonicalizeUrl;
+const canonicalizesTo = require('../../builds/canonicalize-url').canonicalizesTo;
 const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
 
 const array_concat = (a,b) => a.concat(b);
@@ -259,7 +259,7 @@ function studyCrawlResults(results, specsToInclude) {
                     .filter(matchSpecUrl)
                     .filter(l => {
                         // Filter out "good" and "inconsistent" references
-                        let canon = canonicalizeURL(l, useEquivalents);
+                        let canon = canonicalizeUrl(l, useEquivalents);
                         let refs = (spec.refs.normative || []).concat(spec.refs.informative || []);
                         return !refs.find(r => canonicalizesTo(r.url, canon, useEquivalents));
                     })
@@ -279,8 +279,8 @@ function studyCrawlResults(results, specsToInclude) {
                 inconsistentRef: spec.links
                     .filter(matchSpecUrl)
                     .map(l => {
-                        let canonSimple = canonicalizeURL(l);
-                        let canon = canonicalizeURL(l, useEquivalents);
+                        let canonSimple = canonicalizeUrl(l);
+                        let canon = canonicalizeUrl(l, useEquivalents);
                         let refs = (spec.refs.normative || []).concat(spec.refs.informative || []);
 
                         // Filter out "good" references
