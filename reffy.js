@@ -197,7 +197,10 @@ if (!process.argv.slice(2).length) {
 
 program
   .parseAsync(process.argv)
-  .then(_ => console.log('-- THE END -- '))
+  .then(_ => {
+    console.log('-- THE END -- ');
+    process.exit(0);
+  })
   .catch(err => {
     console.error('-- ERROR CAUGHT --');
     console.error(err);

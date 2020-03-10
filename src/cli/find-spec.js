@@ -15,11 +15,9 @@
 
 const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
 const blacklist = require("../specs/blacklist.json");
-const {JSDOM} = require("jsdom");
-const fetch = require('../lib/util').fetch;
 const completeWithShortName = require('../lib/util').completeWithShortName;
 const completeWithInfoFromW3CApi = require('../lib/util').completeWithInfoFromW3CApi;
-
+const processSpecification = require('../lib/util').processSpecification;
 const canonicalize = require('../lib/canonicalize-url').canonicalizeURL;
 
 /**
@@ -29,13 +27,14 @@ const canonicalize = require('../lib/canonicalize-url').canonicalizeURL;
  * @function
  * @private
  */
-const extractLinks = (url, selector) =>
-    JSDOM.fromURL(url).then(dom =>
-        [...dom.window.document.querySelectorAll(selector)]
-            .map(a => Object.assign({
-                title: a.textContent.replace(/\s+/g, ' ').trim(),
-                url: canonicalize(a.href, {datedToLatest: true})
-            })));
+async function extractLinks(source, url, selector) {
+    const result = await processSpecification(url,
+        sel => [...document.querySelectorAll(sel)].map(a => Object.assign({
+            title: a.textContent.replace(/\s+/g, ' ').trim(),
+            url: window.reffy.canonicalizeUrl(a.href, {datedToLatest: true})
+        })), [selector]);
+    return result.map(a => Object.assign({ source }, a));
+}
 
 
 /**
@@ -48,9 +47,17 @@ const extractLinks = (url, selector) =>
  */
 const filterLinks = (list, known) =>
     list.filter((u, i) =>
-            (known.indexOf(u.url) === -1) && // Not in the list of known specs
-            (list.findIndex(s => s.url === u.url) === i))
+            // Not in the list of known specs
+            (known.indexOf(u.url) === -1) &&
+
+            // and not a level draft if we know the version without level
+            (known.indexOf(u.url.replace(/-?[\d\.]*\/$/, '/')) === -1) &&
+
+            // and not a level-less draft if we know about one level
+            !known.find(url => u.url === url.replace(/-?[\d\.]*\/$/, '/')) &&
+
             // and first time we see that new spec
+            (list.findIndex(s => s.url === u.url) === i))
         .filter(u => {
             // Only keep CSS ED when we don't have the TR URL
             let shortname = u.url.match(/(?:csswg|fxtf|css-houdini)\.org\/([^\/]*)/);
@@ -82,13 +89,13 @@ const filterNotes = list => Promise.all(
  * have in our report, and that we have no a priori reason to ignore.
  */
 const findNewSpecs = (knownSpecs) => Promise.all([
-    /*extractLinks("https://platform.html5.org/", "#contentCols dd a:first-child"),
-    extractLinks("https://www.w3.org/standards/techs/js", "td h4 a:not([href*=NOTE])"),*/
-    extractLinks("https://www.w3.org/standards/techs/css", "td h4 a:not([href*=NOTE])"),
-    extractLinks("https://www.w3.org/Style/CSS/specs", "h2 a[href]"),
-    extractLinks("https://drafts.csswg.org/", "#spec_table td:first-child a[href]"),
-    extractLinks("https://drafts.fxtf.org/", "#spec_table td:first-child a[href]"),
-    extractLinks("https://drafts.css-houdini.org/", "#spec_table td:first-child a[href]")
+    extractLinks("platform.html5.org", "https://platform.html5.org/", "#contentCols dd a:first-child"),
+    extractLinks("W3C TR (JS)", "https://www.w3.org/standards/techs/js", "td h4 a:not([href*=NOTE])"),
+    extractLinks("W3C TR (CSS)", "https://www.w3.org/standards/techs/css", "td h4 a:not([href*=NOTE])"),
+    extractLinks("W3C CSS", "https://www.w3.org/Style/CSS/specs", "h2 a[href]"),
+    extractLinks("CSS drafts", "https://drafts.csswg.org/", "#spec_table td:first-child a[href]"),
+    extractLinks("FXTF drafts", "https://drafts.fxtf.org/", "#spec_table td:first-child a[href]"),
+    extractLinks("Houdini drafts", "https://drafts.css-houdini.org/", "#spec_table td:first-child a[href]")
 ])
     .then(lists => lists.reduce((a, b) => a.concat(b)))
     .then(filterNotes)
@@ -140,7 +147,7 @@ if (require.main === module) {
     let knownSpecs = specsInReport.concat(blacklist);
 
     findNewSpecs(knownSpecs).then(list => {
-        console.log(JSON.stringify(list.map(s => s.url), null, 2));
+        console.log(JSON.stringify(list.map(s => Object.assign({ source: s.source, url: s.url, title: s.title })), null, 2));
         console.log(`=> ${list.length} new specs found`);
     });
 }

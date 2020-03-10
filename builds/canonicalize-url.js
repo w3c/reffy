@@ -1,3 +1,8 @@
+/* File generated with rollup.js, do not edit directly! See source code in src/browserlib */
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
 /**
  * Return a canonicalized version of the given URL.
  *
@@ -8,7 +13,7 @@
  * to canonicalize dated W3C URLs to the Latest version, and to use a list of
  * equivalent URLs (that the crawler typically generates).
  */
-module.exports.canonicalizeURL = (url, options) => {
+function canonicalizeUrl(url, options) {
     options = options || {};
 
     let canon = url.replace(/^http:/, 'https:')
@@ -35,17 +40,20 @@ module.exports.canonicalizeURL = (url, options) => {
     else {
         return (equivalentUrls ? equivalentUrls : canon);
     }
-};
+}
 
 
-module.exports.canonicalizesTo = (url, refUrl, options) => {
+function canonicalizesTo(url, refUrl, options) {
     let newOptions = {
         datedToLatest: (options ? options.datedToLatest : false),
         equivalents: (options ? options.equivalents : null),
         returnAlternatives: true
     };
-    let canon = module.exports.canonicalizeURL(url, newOptions);
+    let canon = canonicalizeUrl(url, newOptions);
     return Array.isArray(refUrl) ?
         refUrl.some(u => canon.includes(u)) :
         canon.includes(refUrl);
-};
+}
+
+exports.canonicalizeUrl = canonicalizeUrl;
+exports.canonicalizesTo = canonicalizesTo;
