@@ -111,10 +111,6 @@ async function createInitialSpecDescriptions(list) {
         if ((typeof spec !== 'string') && spec.html) {
             res.html = spec.html;
         }
-        res.flags = {
-            css: !!spec.css,
-            idl: !!spec.idl
-        };
         return res;
     }
 
@@ -396,13 +392,13 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
 
     // Save IDL dumps for the latest level of a spec to the idl folder
     await Promise.all(data
-        .filter(spec => spec.flags.idl && spec.idl && spec.idl.idl)
+        .filter(spec => spec.idl && spec.idl.idl)
         .filter(spec => isLatestLevel(spec, 'idl'))
         .map(saveIdl));
 
     // Save CSS dumps for the latest level of a spec to the css folder
     await Promise.all(data
-        .filter(spec => spec.flags.css && spec.css && (
+        .filter(spec => spec.css && (
             (Object.keys(spec.css.properties || {}).length > 0) ||
             (Object.keys(spec.css.descriptors || {}).length > 0) ||
             (Object.keys(spec.css.valuespaces || {}).length > 0)))
@@ -451,16 +447,8 @@ function assembleListOfSpec(filename, nested) {
         .map(u => (typeof u === 'string') ? Object.assign({ url: u }) : u)
         .map(u => u.file ? assembleListOfSpec(path.resolve(path.dirname(filename), u.file), true) : u);
     crawlInfo.list = flatten(crawlInfo.list);
-    if (filename.match(/-css/)) {
-        crawlInfo.list.forEach(u => u.css = true);
-    }
-    if (filename.match(/-idl/)) {
-        crawlInfo.list.forEach(u => u.idl = true);
-    }
-    crawlInfo.list = crawlInfo.list.filter((u, i) => {
-        let first = crawlInfo.list.find(s => s.url === u.url);
-        first.css = first.css || u.css;
-        first.idl = first.idl || u.idl;
+    crawlInfo.list = crawlInfo.list.filter(u => {
+        const first = crawlInfo.list.find(s => s.url === u.url);
         return first === u;
     });
     return (nested ? crawlInfo.list : crawlInfo);
