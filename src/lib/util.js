@@ -248,7 +248,7 @@ async function processSpecification(spec, callback, args, counter) {
         let multiPagesRules = {
             'https://www.w3.org/TR/CSS2/': '.quick.toc .tocxref',
             'https://www.w3.org/TR/CSS22/': '#toc .tocxref',
-            'https://drafts.csswg.org/css2/': '.quick.toc .tocxref'
+            'https://drafts.csswg.org/css2/': '#toc .tocline1 > .tocxref'
         };
         if (multiPagesRules[page.url()]) {
             let urls = await page.$$eval(multiPagesRules[page.url()], links =>
