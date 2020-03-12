@@ -381,7 +381,8 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
             (spec.url.match(/CSS22\/$/i) ? 2 : 1));
         const shortname = getShortname(spec);
         const level = getLevel(spec);
-        const candidates = data.filter(s => (getShortname(s) === shortname) &&
+        const candidates = data.filter(s => !s.flags.delta &&
+            (getShortname(s) === shortname) &&
             (getLevel(s) >= level));
 
         // Note the list of candidates for this shortname includes the spec
