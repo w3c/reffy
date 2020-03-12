@@ -111,6 +111,9 @@ async function createInitialSpecDescriptions(list) {
         if ((typeof spec !== 'string') && spec.html) {
             res.html = spec.html;
         }
+        res.flags = {
+            delta: !!spec.delta
+        };
         return res;
     }
 
@@ -371,15 +374,15 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
     // number are at level 1 (this does not work for CSS specs whose URLs still
     // follow the old `css3-` pattern, but we're only interested in comparing
     // with more recent levels in that case, so it does not matter)
-    const isLatestLevel = (spec, flag) => {
+    const isLatestLevel = spec => {
         const getLevel = spec =>
             (spec.url.match(/-\d+\/$/) ?
             parseInt(spec.url.match(/-(\d+)\/$/)[1], 10) :
             (spec.url.match(/CSS22\/$/i) ? 2 : 1));
         const shortname = getShortname(spec);
         const level = getLevel(spec);
-        const candidates = data.filter(s => s.flags[flag] &&
-            (getShortname(s) === shortname) && (getLevel(s) >= level));
+        const candidates = data.filter(s => (getShortname(s) === shortname) &&
+            (getLevel(s) >= level));
 
         // Note the list of candidates for this shortname includes the spec
         // itself. It is the latest level if there is no other candidate at
@@ -392,17 +395,19 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
 
     // Save IDL dumps for the latest level of a spec to the idl folder
     await Promise.all(data
+        .filter(spec => !spec.flags.delta)
         .filter(spec => spec.idl && spec.idl.idl)
-        .filter(spec => isLatestLevel(spec, 'idl'))
+        .filter(spec => isLatestLevel(spec))
         .map(saveIdl));
 
     // Save CSS dumps for the latest level of a spec to the css folder
     await Promise.all(data
+        .filter(spec => !spec.flags.delta)
         .filter(spec => spec.css && (
             (Object.keys(spec.css.properties || {}).length > 0) ||
             (Object.keys(spec.css.descriptors || {}).length > 0) ||
             (Object.keys(spec.css.valuespaces || {}).length > 0)))
-        .filter(spec => isLatestLevel(spec, 'css'))
+        .filter(spec => isLatestLevel(spec))
         .map(saveCss));
 
     // Save all results to the crawl.json file
@@ -447,6 +452,9 @@ function assembleListOfSpec(filename, nested) {
         .map(u => (typeof u === 'string') ? Object.assign({ url: u }) : u)
         .map(u => u.file ? assembleListOfSpec(path.resolve(path.dirname(filename), u.file), true) : u);
     crawlInfo.list = flatten(crawlInfo.list);
+    if (filename.match(/-delta/)) {
+        crawlInfo.list.forEach(u => u.delta = true);
+    }
     crawlInfo.list = crawlInfo.list.filter(u => {
         const first = crawlInfo.list.find(s => s.url === u.url);
         return first === u;

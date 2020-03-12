@@ -160,8 +160,7 @@ function studyCrawlResults(results, specsToInclude) {
                 // Whether the spec normatively references the WebIDL spec
                 // (all specs that define IDL content should)
                 noRefToWebIDL: (spec !== WebIDLSpec) &&
-                    // TODO: doesn't work because `saveIdl` deletes `spec.idl.idl`.
-                    spec.idl.idl &&
+                    (spec.idl.bareMessage || (idlDfns.length > 0) || (idlExtendedDfns.length > 0)) &&
                     (!spec.refs.normative || !spec.refs.normative.find(ref =>
                         ref.name.match(/^WebIDL/i) ||
                             (ref.url === WebIDLSpec.url) ||
