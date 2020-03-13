@@ -497,11 +497,50 @@ function getShortname(spec) {
 }
 
 
+/**
+ * Returns true when the given spec is is the latest level of that spec in the
+ * given list of specifications. Note the code handles the special case of the
+ * CSS2 and CSS22 specs, and assumes that URLs that don't end with a level
+ * number are at level 1 (this does not work for CSS specs whose URLs still
+ * follow the old `css3-` pattern, but we're only interested in comparing
+ * with more recent levels in that case, so it does not matter)
+ *
+ * The function ignores delta specs, which are never considered to be the last
+ * level.
+ *
+ * @function
+ * @public
+ * @param {Object} spec Spec to check
+ * @param {Array(Object)} list List of specs (may include the spec to check)
+ * @return {Boolean} true if the spec is the latest level to consider.
+ */
+function isLatestLevel(spec, list) {
+    const getLevel = spec =>
+        (spec.url.match(/-\d+\/$/) ?
+            parseInt(spec.url.match(/-(\d+)\/$/)[1], 10) :
+            (spec.url.match(/CSS22\/$/i) ? 2 : 1));
+    const shortname = getShortname(spec);
+    const level = getLevel(spec);
+    const candidates = list.filter(s => !s.flags.delta &&
+        (getShortname(s) === shortname) &&
+        (getLevel(s) >= level));
+
+    // Note the list of candidates for this shortname includes the spec
+    // itself. It is the latest level if there is no other candidate at
+    // a strictly greater level, and if the spec under consideration is
+    // the first element in the list (for the hopefully rare case where
+    // we have two candidate specs that are at the same level)
+    return !candidates.find(s => getLevel(s) > level) &&
+        (candidates[0] === spec);
+}
+
+
 module.exports = {
     fetch,
     requireFromWorkingDirectory,
     processSpecification,
     completeWithShortName,
     completeWithInfoFromW3CApi,
-    getShortname
+    getShortname,
+    isLatestLevel
 };

@@ -34,6 +34,7 @@
 const canonicalizeUrl = require('../../builds/canonicalize-url').canonicalizeUrl;
 const canonicalizesTo = require('../../builds/canonicalize-url').canonicalizesTo;
 const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
+const isLatestLevel = require('../lib/util').isLatestLevel;
 
 const array_concat = (a,b) => a.concat(b);
 const uniqueFilter = (item, idx, arr) => arr.indexOf(item) === idx;
@@ -94,9 +95,11 @@ function studyCrawlResults(results, specsToInclude) {
         .filter(uniqueFilter);
     var idlNamesIndex = {};
     knownIdlNames.forEach(name => {
-        idlNamesIndex[name] = results.filter(spec => {
+        let list = results.filter(spec => {
             return spec.idl && spec.idl.idlNames && spec.idl.idlNames[name];
         });
+        list = list.filter(spec => isLatestLevel(spec, list));
+        idlNamesIndex[name] = list;
     });
 
     // TODO: we may end up with different variants of the WebIDL spec
