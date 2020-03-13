@@ -29,7 +29,7 @@ const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDir
 const completeWithInfoFromW3CApi = require('../lib/util').completeWithInfoFromW3CApi;
 const completeWithShortName = require('../lib/util').completeWithShortName;
 const getShortname = require('../lib/util').getShortname;
-const isLatestLevel = require('../lib/util').isLatestLevel;
+const isLatestLevelThatPasses = require('../lib/util').isLatestLevelThatPasses;
 const processSpecification = require('../lib/util').processSpecification;
 
 /**
@@ -371,20 +371,22 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
     };
 
     // Save IDL dumps for the latest level of a spec to the idl folder
+    function defineIDLContent(spec) {
+        return spec.idl && spec.idl.idl;
+    }
     await Promise.all(data
-        .filter(spec => !spec.flags.delta)
-        .filter(spec => spec.idl && spec.idl.idl)
-        .filter(spec => isLatestLevel(spec, data))
+        .filter(spec => isLatestLevelThatPasses(spec, data, defineIDLContent))
         .map(saveIdl));
 
     // Save CSS dumps for the latest level of a spec to the css folder
-    await Promise.all(data
-        .filter(spec => !spec.flags.delta)
-        .filter(spec => spec.css && (
+    function defineCSSContent(spec) {
+        return spec.css && (
             (Object.keys(spec.css.properties || {}).length > 0) ||
             (Object.keys(spec.css.descriptors || {}).length > 0) ||
-            (Object.keys(spec.css.valuespaces || {}).length > 0)))
-        .filter(spec => isLatestLevel(spec, data))
+            (Object.keys(spec.css.valuespaces || {}).length > 0));
+    }
+    await Promise.all(data
+        .filter(spec => isLatestLevelThatPasses(spec, data, defineCSSContent))
         .map(saveCss));
 
     // Save all results to the crawl.json file
@@ -426,12 +428,13 @@ function assembleListOfSpec(filename, nested) {
         crawlInfo = { list: crawlInfo };
     }
     crawlInfo.list = crawlInfo.list
-        .map(u => (typeof u === 'string') ? Object.assign({ url: u }) : u)
         .map(u => u.file ? assembleListOfSpec(path.resolve(path.dirname(filename), u.file), true) : u);
     crawlInfo.list = flatten(crawlInfo.list);
-    crawlInfo.list = crawlInfo.list.filter(u => {
-        const first = crawlInfo.list.find(s => s.url === u.url);
-        return first === u;
+    crawlInfo.list = crawlInfo.list.filter((u, uidx) => {
+        const url = ((typeof u === 'string') ? u.split(' ')[0] : u.url);
+        const firstIndex = crawlInfo.list.findIndex(s =>
+            ((typeof s === 'string') ? s.split(' ')[0] : s.url) === url);
+        return firstIndex === uidx;
     });
     return (nested ? crawlInfo.list : crawlInfo);
 }

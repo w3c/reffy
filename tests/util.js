@@ -1,6 +1,6 @@
 const { assert } = require('chai');
 
-const { getShortname } = require('../src/lib/util');
+const { getShortname, isLatestLevelThatPasses } = require('../src/lib/util');
 
 describe('getShortname', () => {
   it('/TR/ URLs not handled', () => {
@@ -71,5 +71,103 @@ describe('getShortname', () => {
       shortname: 'webrtc',
       url: 'https://w3c.github.io/webrtc-pc/'
     }), 'webrtc');
+  });
+});
+
+
+describe('isLatestLevelThatPasses', () => {
+  function getSpecAtLevel(level, flags) {
+    flags = flags || {};
+    return {
+      shortname: 'spec' + (level ? '-' + level : ''),
+      url: 'https://www.w3.org/TR/spec' + (level ? '-' + level : '') + '/',
+      flags
+    };
+  }
+  function getOtherSpecAtLevel(level, flags) {
+    flags = flags || {};
+    return {
+      shortname: 'other' + (level ? '-' + level : ''),
+      url: 'https://www.w3.org/TR/other' + (level ? '-' + level : '') + '/',
+      flags
+    };
+  }
+
+  it('returns true if spec without level passes the predicate', () => {
+    const spec = getSpecAtLevel(0);
+    const list = [spec];
+    assert.isTrue(isLatestLevelThatPasses(spec, list, _ => true));
+  });
+
+  it('returns true if spec without level and no predicate', () => {
+    const spec = getSpecAtLevel(0);
+    const list = [spec];
+    assert.isTrue(isLatestLevelThatPasses(spec, list));
+  });
+
+  it('returns false if spec does not pass the predicate', () => {
+    const spec = getSpecAtLevel(0);
+    const list = [spec];
+    assert.isFalse(isLatestLevelThatPasses(spec, list, _ => false));
+  });
+
+  it('returns true if spec is the latest level', () => {
+    const spec = getSpecAtLevel(2);
+    const list = [spec, getSpecAtLevel(1)];
+    assert.isTrue(isLatestLevelThatPasses(spec, list));
+  });
+
+  it('returns false if spec is not the latest level', () => {
+    const spec = getSpecAtLevel(1);
+    const list = [spec, getSpecAtLevel(2)];
+    assert.isFalse(isLatestLevelThatPasses(spec, list));
+  });
+
+  it('returns true if greater level has another shortname', () => {
+    const spec = getSpecAtLevel(1);
+    const list = [spec, getOtherSpecAtLevel(2)];
+    assert.isTrue(isLatestLevelThatPasses(spec, list));
+  });
+
+  it('returns true if delta spec is alone', () => {
+    const spec = getSpecAtLevel(0, { delta: true });
+    const list = [spec];
+    assert.isTrue(isLatestLevelThatPasses(spec, list));
+  });
+
+  it('returns true if delta spec is the only one with that name', () => {
+    const spec = getSpecAtLevel(0, { delta: true });
+    const list = [spec, getOtherSpecAtLevel(1)];
+    assert.isTrue(isLatestLevelThatPasses(spec, list));
+  });
+
+  it('returns true if greater level is a delta spec', () => {
+    const spec = getSpecAtLevel(1);
+    const list = [spec, getSpecAtLevel(2, { delta: true })];
+    assert.isTrue(isLatestLevelThatPasses(spec, list));
+  });
+
+  it('returns false if delta spec and full spec at the same level exists', () => {
+    const spec = getSpecAtLevel(1, { delta: true });
+    const list = [spec, getSpecAtLevel(1)];
+    assert.isFalse(isLatestLevelThatPasses(spec, list));
+  });
+
+  it('returns true if greater level does not pass predicate', () => {
+    const spec = getSpecAtLevel(1);
+    const list = [spec, getSpecAtLevel(2)];
+    assert.isTrue(isLatestLevelThatPasses(spec, list, s => s === spec));
+  });
+
+  it('returns true if first spec at that level', () => {
+    const spec = getSpecAtLevel(1);
+    const list = [spec, getSpecAtLevel(1)];
+    assert.isTrue(isLatestLevelThatPasses(spec, list));
+  });
+
+  it('returns false if not the first spec at that level', () => {
+    const spec = getSpecAtLevel(1);
+    const list = [getSpecAtLevel(1), spec];
+    assert.isFalse(isLatestLevelThatPasses(spec, list));
   });
 });

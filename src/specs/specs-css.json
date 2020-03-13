@@ -1,5 +1,4 @@
 [
-  "https://compat.spec.whatwg.org/",
   "https://drafts.css-houdini.org/box-tree-api/",
   "https://drafts.css-houdini.org/css-typed-om-2/ delta",
   "https://drafts.css-houdini.org/font-metrics-api/",
@@ -25,7 +24,6 @@
   "https://drafts.fxtf.org/filter-effects-2/ delta",
   "https://quirks.spec.whatwg.org/",
   "https://www.w3.org/TR/compositing-1/",
-  "https://www.w3.org/TR/cssom-view-1/",
   "https://www.w3.org/TR/css-align-3/",
   "https://www.w3.org/TR/css-animations-1/",
   "https://www.w3.org/TR/css-animation-worklet-1/",
