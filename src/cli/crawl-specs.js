@@ -29,6 +29,7 @@ const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDir
 const completeWithInfoFromW3CApi = require('../lib/util').completeWithInfoFromW3CApi;
 const completeWithShortName = require('../lib/util').completeWithShortName;
 const getShortname = require('../lib/util').getShortname;
+const isLatestLevelThatPasses = require('../lib/util').isLatestLevelThatPasses;
 const processSpecification = require('../lib/util').processSpecification;
 
 /**
@@ -106,14 +107,15 @@ function completeWithInfoFromSpecref(specs) {
 async function createInitialSpecDescriptions(list) {
     function createSpecObject(spec) {
         let res = {
-            url: (typeof spec === 'string') ? spec : (spec.url || 'about:blank')
+            url: (typeof spec === 'string') ? spec.split(' ')[0] : (spec.url || 'about:blank')
         };
         if ((typeof spec !== 'string') && spec.html) {
             res.html = spec.html;
         }
         res.flags = {
-            css: !!spec.css,
-            idl: !!spec.idl
+            delta: (typeof spec === 'string') ?
+                spec.split(' ').includes('delta') :
+                !!spec.delta
         };
         return res;
     }
@@ -368,45 +370,23 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
             }));
     };
 
-    // Helper function that returns true when the given spec is is the latest
-    // level of that spec in the crawl for the given type of content
-    // ("css" or "idl"). Note the code handles the special case of the CSS2
-    // and CSS22 specs, and assumes that URLs that don't end with a level
-    // number are at level 1 (this does not work for CSS specs whose URLs still
-    // follow the old `css3-` pattern, but we're only interested in comparing
-    // with more recent levels in that case, so it does not matter)
-    const isLatestLevel = (spec, flag) => {
-        const getLevel = spec =>
-            (spec.url.match(/-\d+\/$/) ?
-            parseInt(spec.url.match(/-(\d+)\/$/)[1], 10) :
-            (spec.url.match(/CSS22\/$/i) ? 2 : 1));
-        const shortname = getShortname(spec);
-        const level = getLevel(spec);
-        const candidates = data.filter(s => s.flags[flag] &&
-            (getShortname(s) === shortname) && (getLevel(s) >= level));
-
-        // Note the list of candidates for this shortname includes the spec
-        // itself. It is the latest level if there is no other candidate at
-        // a strictly greater level, and if the spec under consideration is
-        // the first element in the list (for the hopefully rare case where
-        // we have two candidate specs that are at the same level)
-        return !candidates.find(s => getLevel(s) > level) &&
-            (candidates[0] === spec);
-    };
-
     // Save IDL dumps for the latest level of a spec to the idl folder
+    function defineIDLContent(spec) {
+        return spec.idl && spec.idl.idl;
+    }
     await Promise.all(data
-        .filter(spec => spec.flags.idl && spec.idl && spec.idl.idl)
-        .filter(spec => isLatestLevel(spec, 'idl'))
+        .filter(spec => isLatestLevelThatPasses(spec, data, defineIDLContent))
         .map(saveIdl));
 
     // Save CSS dumps for the latest level of a spec to the css folder
-    await Promise.all(data
-        .filter(spec => spec.flags.css && spec.css && (
+    function defineCSSContent(spec) {
+        return spec.css && (
             (Object.keys(spec.css.properties || {}).length > 0) ||
             (Object.keys(spec.css.descriptors || {}).length > 0) ||
-            (Object.keys(spec.css.valuespaces || {}).length > 0)))
-        .filter(spec => isLatestLevel(spec, 'css'))
+            (Object.keys(spec.css.valuespaces || {}).length > 0));
+    }
+    await Promise.all(data
+        .filter(spec => isLatestLevelThatPasses(spec, data, defineCSSContent))
         .map(saveCss));
 
     // Save all results to the crawl.json file
@@ -448,20 +428,13 @@ function assembleListOfSpec(filename, nested) {
         crawlInfo = { list: crawlInfo };
     }
     crawlInfo.list = crawlInfo.list
-        .map(u => (typeof u === 'string') ? Object.assign({ url: u }) : u)
         .map(u => u.file ? assembleListOfSpec(path.resolve(path.dirname(filename), u.file), true) : u);
     crawlInfo.list = flatten(crawlInfo.list);
-    if (filename.match(/-css/)) {
-        crawlInfo.list.forEach(u => u.css = true);
-    }
-    if (filename.match(/-idl/)) {
-        crawlInfo.list.forEach(u => u.idl = true);
-    }
-    crawlInfo.list = crawlInfo.list.filter((u, i) => {
-        let first = crawlInfo.list.find(s => s.url === u.url);
-        first.css = first.css || u.css;
-        first.idl = first.idl || u.idl;
-        return first === u;
+    crawlInfo.list = crawlInfo.list.filter((u, uidx) => {
+        const url = ((typeof u === 'string') ? u.split(' ')[0] : u.url);
+        const firstIndex = crawlInfo.list.findIndex(s =>
+            ((typeof s === 'string') ? s.split(' ')[0] : s.url) === url);
+        return firstIndex === uidx;
     });
     return (nested ? crawlInfo.list : crawlInfo);
 }

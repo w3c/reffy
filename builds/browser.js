@@ -545,6 +545,9 @@
       var ref = {};
       ref.name = dt.textContent.replace(/[\[\] \n]/g, '');
       var desc = nextTag(dt, "dd");
+      if (!desc || !ref.name) {
+        return;
+      }
       ref.url = desc.querySelector("a[href]") ? desc.querySelector("a[href]").href : "";
       if (options.filterInformative &&
           desc.textContent.match(/non-normative/i)) {

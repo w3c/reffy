@@ -248,7 +248,7 @@ async function processSpecification(spec, callback, args, counter) {
         let multiPagesRules = {
             'https://www.w3.org/TR/CSS2/': '.quick.toc .tocxref',
             'https://www.w3.org/TR/CSS22/': '#toc .tocxref',
-            'https://drafts.csswg.org/css2/': '.quick.toc .tocxref'
+            'https://drafts.csswg.org/css2/': '#toc .tocline1 > .tocxref'
         };
         if (multiPagesRules[page.url()]) {
             let urls = await page.$$eval(multiPagesRules[page.url()], links =>
@@ -497,11 +497,59 @@ function getShortname(spec) {
 }
 
 
+/**
+ * Returns true when the given spec is the latest "fullest" level of that spec
+ * in the given list of specs that passes the given predicate.
+ *
+ * "Fullest" means "not a delta spec, unless that is the only level that passes
+ * the predicate".
+ *
+ * Note that the code handles the special case of the CSS2 and CSS22 specs, and
+ * assumes that URLs that don't end with a level number are at level 1 (this
+ * does not work for CSS specs whose URLs still follow the old `css3-` pattern,
+ * but we're only interested in comparing with more recent levels in that case,
+ * so it does not matter).
+ *
+ * @function
+ * @public
+ * @param {Object} spec Spec to check
+ * @param {Array(Object)} list List of specs (must include the spec to check)
+ * @param {function} predicate Predicate function that the spec must pass. Must
+ *   be a function that takes a spec as argument and returns a boolean.
+ * @return {Boolean} true if the spec is the latest "fullest" level in the list
+ *   that passes the predicate.
+ */
+function isLatestLevelThatPasses(spec, list, predicate) {
+    predicate = predicate || (_ => true);
+    const getLevel = spec =>
+        (spec.url.match(/-\d+\/$/) ?
+            parseInt(spec.url.match(/-(\d+)\/$/)[1], 10) :
+            (spec.url.match(/CSS22\/$/i) ? 2 : 1));
+    const shortname = getShortname(spec);
+    const level = getLevel(spec);
+    const candidates = list.filter(s => predicate(s) &&
+        ((s === spec) ||
+        (!s.flags.delta &&
+            (getShortname(s) === shortname) &&
+            (getLevel(s) >= level))));
+
+    // Note the list of candidates for this shortname includes the spec
+    // itself. It is the latest level if there is no other candidate at
+    // a strictly greater level, and if the spec under consideration is
+    // the first element in the list (for the hopefully rare case where
+    // we have two candidate specs that are at the same level)
+    return !candidates.find(s => getLevel(s) > level) &&
+        !(spec.flags.delta && candidates.find(s => getLevel(s) === level && (s !== spec) && !s.flags.delta)) &&
+        (candidates[0] === spec);
+}
+
+
 module.exports = {
     fetch,
     requireFromWorkingDirectory,
     processSpecification,
     completeWithShortName,
     completeWithInfoFromW3CApi,
-    getShortname
+    getShortname,
+    isLatestLevelThatPasses
 };
