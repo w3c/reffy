@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "abortcontroller-polyfill": "^1.4.0",
-    "commander": "^4.0.1",
+    "commander": "^5.0.0",
     "fetch-filecache-for-crawling": "^4.0.2",
     "node-pandoc": "^0.3.0",
     "puppeteer": "^2.1.1",
