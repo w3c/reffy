@@ -447,7 +447,7 @@
    *
    * Each definition returned by the function will have the following properties:
    * - id: The local ID in the DOM. Should be unique within a spec page.
-   * - name: The text of the definition.
+   * - href: The absolute URL to the definition.
    * - linkingText: List of linking phrases for references.
    * - localLinkingText: List of linking phrases for local references only.
    * - type: The definition type. One of the values in
