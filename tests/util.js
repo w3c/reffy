@@ -18,8 +18,7 @@ describe('getShortname', () => {
 
   it('whatwg.org', () => {
     assert.equal(getShortname({ url: 'https://html.spec.whatwg.org/' }), 'html');
-    // multipage HTML spec is not handled correctly:
-    assert.equal(getShortname({ url: 'https://html.spec.whatwg.org/multipage/' }), 'httpshtmlspecwhatwgorgmultipage');
+    assert.equal(getShortname({ url: 'https://html.spec.whatwg.org/multipage/' }), 'html');
     assert.equal(getShortname({ url: 'https://xhr.spec.whatwg.org/' }), 'xhr');
     // idea.whatwg.org not handled:
     assert.equal(getShortname({ url: 'https://great.idea.whatwg.org/' }), 'httpsgreatideawhatwgorg');

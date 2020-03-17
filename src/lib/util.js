@@ -209,7 +209,7 @@ async function processSpecification(spec, callback, args, counter) {
         // handle "redirection" through JS or meta refresh (which would not
         // have time to run if we used "load").
         const options = {
-            timeout: 60000,
+            timeout: 120000,
             waitUntil: 'networkidle0'
         };
 
@@ -221,34 +221,16 @@ async function processSpecification(spec, callback, args, counter) {
             await page.goto(spec.url, options);
         }
 
-        // If the spec is a multi-page spec and contains a "Single page" link,
-        // extract the URL of the single page and load it instead
-        const singlePageUrl = await page.$$eval('body .head dl a[href]', links => {
-            const link = links.find(link => {
-                const text = (link.textContent || '').toLowerCase();
-                return text.includes('single page') ||
-                    text.includes('single file') ||
-                    text.includes('single-page') ||
-                    text.includes('one-page');
-            });
-            if (link) {
-                const url = new URL(link.getAttribute('href'), document.baseURI);
-                return url.href;
-            }
-            else {
-                return null;
-            }
-        });
-        if (singlePageUrl && (singlePageUrl !== spec.url) && (singlePageUrl !== page.url())) {
-            return processSpecification(singlePageUrl, callback, args, counter + 1);
-        }
-
         // Handle remaining multi-page specs manually, merging all subpages
         // into the main page to create a single-page spec.
+        // TODO: Move this logic to browser-specs
         let multiPagesRules = {
+            'https://html.spec.whatwg.org/multipage/': '#contents + ol > li > a',
             'https://www.w3.org/TR/CSS2/': '.quick.toc .tocxref',
             'https://www.w3.org/TR/CSS22/': '#toc .tocxref',
-            'https://drafts.csswg.org/css2/': '#toc .tocline1 > .tocxref'
+            'https://drafts.csswg.org/css2/': '#toc .tocline1 > .tocxref',
+            'https://www.w3.org/TR/SVG2/': '#toc > ol > li > a',
+            'https://svgwg.org/svg2-draft/': '#toc > ol > li > a',
         };
         if (multiPagesRules[page.url()]) {
             let urls = await page.$$eval(multiPagesRules[page.url()], links =>
@@ -263,12 +245,13 @@ async function processSpecification(spec, callback, args, counter) {
                 const html = await subPage.evaluate(() => { return document.body.innerHTML; });
                 await subCdp.detach();
                 await subPage.close();
-                pages.push(html);
+                pages.push({ url, html });
             }
             await page.evaluate(pages => {
-                for (const html of pages) {
+                for (const subPage of pages) {
                     const section = document.createElement('section');
-                    section.innerHTML = html;
+                    section.setAttribute('data-reffy-page', subPage.url)
+                    section.innerHTML = subPage.html;
                     document.body.appendChild(section);
                 }
             }, pages);
@@ -459,7 +442,7 @@ function getShortname(spec) {
             return spec.shortname.replace(/-?[\d\.]*$/, '');
         }
     }
-    const whatwgMatch = spec.url.match(/\/\/(.*)\.spec\.whatwg\.org\/$/);
+    const whatwgMatch = spec.url.match(/\/\/(.*)\.spec\.whatwg\.org\//);
     if (whatwgMatch) {
         return whatwgMatch[1];
     }
