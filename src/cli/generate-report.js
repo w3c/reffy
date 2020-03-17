@@ -70,19 +70,12 @@ function writeCrawlInfo(spec, withHeader, w) {
     }
     w();
 
-    let crawledVersion = 'Initial URL';
     let crawledUrl = spec.crawled || spec.latest;
-    if ((crawledUrl === spec.datedUrl) || (crawledUrl === spec.latest)) {
-        crawledVersion = 'Latest published version';
+    w('- Initial URL: [' + spec.url + '](' + spec.url + ')');
+    w('- Crawled URL: [' + crawledUrl + '](' + crawledUrl + ')');
+    if (spec.date) {
+        w('- Crawled version: ' + spec.date);
     }
-    else if (crawledUrl === spec.edDraft) {
-        crawledVersion = 'Editor\'s Draft';
-    }
-    else if (crawledUrl.indexOf('spec.whatwg.org') !== -1) {
-        crawledVersion = 'Living Standard';
-    }
-    w('- Crawled version: [' + crawledVersion + '](' + crawledUrl + ')' +
-        (spec.date ? ' (' + spec.date + ')' : ''));
     if (spec.edDraft) {
         w('- Editor\'s Draft: [' + spec.edDraft + '](' + spec.edDraft + ')');
     }
@@ -221,26 +214,19 @@ function generateReportPerSpec(study) {
             if (report.noNormativeRefs) {
                 w('- No normative references found');
             }
-            if (report.noIdlContent) {
-                w('- No WebIDL definitions found');
-            }
-            if (report.noCssDefinitions) {
-                w('- No CSS definitions found');
-            }
-            if (report.hasUnexpectedIdl) {
-                w('- Unexpected WebIDL definitions found')
-            }
-            if (report.hasUnexpectedCssDefinitions) {
-                w('- Unexpected CSS definitions found')
-            }
             if (report.hasInvalidIdl) {
                 w('- Invalid WebIDL content found');
             }
             if (report.hasObsoleteIdl) {
                 w('- Obsolete WebIDL constructs found');
             }
-            if (!report.noIdlContent && report.noRefToWebIDL) {
+            if (report.noRefToWebIDL) {
                 w('- Spec uses WebIDL but does not reference it normatively');
+            }
+            if (report.unknownExposedNames &&
+                (report.unknownExposedNames.length > 0)) {
+                w('- Unknown [Exposed] names used: ' +
+                    report.unknownExposedNames.map(name => '`' + name + '`').join(', '));
             }
             if (report.unknownIdlNames &&
                 (report.unknownIdlNames.length > 0)) {
@@ -381,86 +367,6 @@ function generateReportPerIssue(study) {
     w();
 
     count = 0;
-    w('## Specifications without WebIDL definitions');
-    w();
-    results
-        .filter(spec => spec.report.noIdlContent)
-        .forEach(spec => {
-            count += 1;
-            w('- [' + spec.title + '](' + spec.crawled + ')');
-        });
-    w();
-    w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
-    if (count > 0) {
-        w();
-        w('Reffy was expecting to find IDL content in the specifications ' + 
-            ' listed here but could not extract any.');
-    }
-    w();
-    w();
-
-
-    count = 0;
-    w('## Specifications without CSS definitions');
-    w();
-    results
-        .filter(spec => spec.report.noCssDefinitions)
-        .forEach(spec => {
-            count += 1;
-            w('- [' + spec.title + '](' + spec.crawled + ')');
-        });
-    w();
-    w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
-    if (count > 0) {
-        w();
-        w('Reffy was expecting to find CSS definitions in the specifications ' + 
-            ' listed here but could not extract any.');
-    }
-    w();
-    w();
-
-    count = 0;
-    w('## Specifications with unexpected WebIDL definitions');
-    w();
-    results
-        .filter(spec => spec.report.hasUnexpectedIdl)
-        .forEach(spec => {
-            count += 1;
-            w('- [' + spec.title + '](' + spec.crawled + ')');
-        });
-    w();
-    w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
-    if (count > 0) {
-        w();
-        w('Reffy was not expecting to find IDL content in the specifications' +
-            ' listed here but it did. Note that Reffy cannot deal with' +
-            ' specifications that define IDL content and exist at different' +
-            ' levels: only one level is flagged as defining the IDL. Other' +
-            ' levels will incorrectly appear in this list as a consequence.');
-    }
-    w();
-    w();
-
-    count = 0;
-    w('## Specifications with unexpected CSS definitions');
-    w();
-    results
-        .filter(spec => spec.report.hasUnexpectedCssDefinitions)
-        .forEach(spec => {
-            count += 1;
-            w('- [' + spec.title + '](' + spec.crawled + ')');
-        });
-    w();
-    w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
-    if (count > 0) {
-        w();
-        w('Reffy was not expecting to find CSS definitions in the' +
-            ' specifications listed here but it did.');
-    }
-    w();
-    w();
-
-    count = 0;
     w('## List of specifications with invalid WebIDL content');
     w();
     results
@@ -502,7 +408,7 @@ function generateReportPerIssue(study) {
     w('## Specifications that use WebIDL but do not reference the WebIDL spec');
     w();
     results.forEach(spec => {
-        if (!spec.report.noIdlContent && spec.report.noRefToWebIDL) {
+        if (spec.report.noRefToWebIDL) {
             count += 1;
             w('- [' + spec.title + '](' + spec.crawled + ')');
         }
@@ -521,9 +427,41 @@ function generateReportPerIssue(study) {
 
 
     count = 0;
-    w('## List of WebIDL names not defined in the specifications crawled');
+    w('## List of [Exposed] names not defined in the specifications crawled');
     w();
     var idlNames = {};
+    results.forEach(spec => {
+        if (!spec.report.unknownExposedNames ||
+            (spec.report.unknownExposedNames.length === 0)) {
+            return;
+        }
+        spec.report.unknownExposedNames.forEach(name => {
+            if (!idlNames[name]) {
+                idlNames[name] = [];
+            }
+            idlNames[name].push(spec);
+        });
+    });
+    Object.keys(idlNames).sort().forEach(name => {
+        count += 1;
+        w('- `' + name + '` used in ' +
+            idlNames[name].map(ref => ('[' + ref.title + '](' + ref.crawled + ')')).join(', '));
+    });
+    w();
+    w('=> ' + count + ' [Exposed] name' + ((count > 1) ? 's' : '') + ' found');
+    if (count > 0) {
+        w();
+        w('Please keep in mind that Reffy only knows about IDL terms defined in the' +
+            ' specifications that were crawled **and** that do not have invalid IDL content.');
+    }
+    w();
+    w();
+
+
+    count = 0;
+    w('## List of WebIDL names not defined in the specifications crawled');
+    w();
+    idlNames = {};
     results.forEach(spec => {
         if (!spec.report.unknownIdlNames ||
             (spec.report.unknownIdlNames.length === 0)) {
@@ -761,6 +699,7 @@ function generateDiffReport(study, refStudy, options) {
         let ref = resultsRef.find(s => s.url === spec.url) || {
             missing: true,
             report: {
+                unknownExposedNames: [],
                 unknownIdlNames: [],
                 redefinedIdlNames: [],
                 missingWebIdlRef: [],
@@ -799,12 +738,9 @@ function generateDiffReport(study, refStudy, options) {
             noEdDraft: getSimpleDiff('noEdDraft'),
             noNormativeRefs: getSimpleDiff('noNormativeRefs'),
             noRefToWebIDL: getSimpleDiff('noRefToWebIDL'),
-            noIdlContent: getSimpleDiff('noIdlContent'),
-            noCssDefinitions: getSimpleDiff('noCssDefinitions'),
-            hasUnexpectedIdl: getSimpleDiff('hasUnexpectedIdl'),
-            hasUnexpectedCssDefinitions: getSimpleDiff('hasUnexpectedCssDefinitions'),
             hasInvalidIdl: getSimpleDiff('hasInvalidIdl'),
             hasObsoleteIdl: getSimpleDiff('hasObsoleteIdl'),
+            unknownExposedNames: getArrayDiff('unknownExposedNames'),
             unknownIdlNames: getArrayDiff('unknownIdlNames'),
             redefinedIdlNames: getArrayDiff('redefinedIdlNames', 'name'),
             missingWebIdlRef: getArrayDiff('missingWebIdlRef', 'name'),
@@ -870,19 +806,10 @@ function generateDiffReport(study, refStudy, options) {
 
         w('## ' + spec.title);
         w();
-        w('- URL: [' + spec.url + '](' + spec.url + ')');
-        let crawledVersion = 'Initial URL';
+
         let crawledUrl = spec.crawled || spec.latest;
-        if ((crawledUrl === spec.datedUrl) || (crawledUrl === spec.latest)) {
-            crawledVersion = 'Latest published version';
-        }
-        else if (crawledUrl === spec.edDraft) {
-            crawledVersion = 'Editor\'s Draft';
-        }
-        else if (crawledUrl.indexOf('spec.whatwg.org') !== -1) {
-            crawledVersion = 'Living Standard';
-        }
-        w('- Crawled version: [' + crawledVersion + '](' + crawledUrl + ')');
+        w('- Initial URL: [' + spec.url + '](' + spec.url + ')');
+        w('- Crawled URL: [' + crawledUrl + '](' + crawledUrl + ')');
         if (spec.edDraft && (spec.edDraft !== crawledUrl)) {
             w('- Editor\'s Draft: [' + spec.edDraft + '](' + spec.edDraft + ')');
         }
@@ -925,13 +852,10 @@ function generateDiffReport(study, refStudy, options) {
             { title: 'Spec could not be rendered', prop: 'error', diff: 'simple' },
             { title: 'Link to an Editor\'s Draft not found', prop: 'noEdDraft', diff: 'simple' },
             { title: 'No normative references found', prop: 'noNormativeRefs', diff: 'simple' },
-            { title: 'No WebIDL definitions found', prop: 'noIdlContent', diff: 'simple' },
-            { title: 'No CSS definitions found', prop: 'noCssDefinitions', diff: 'simple' },
-            { title: 'Unexpected WebIDL definitions found', prop: 'hasUnexpectedIdl', diff: 'simple' },
-            { title: 'Unexpected CSS definitions found', prop: 'hasUnexpectedCssDefinitions', diff: 'simple' },
             { title: 'Invalid WebIDL content found', prop: 'hasInvalidIdl', diff: 'simple' },
             { title: 'Obsolete WebIDL constructs found', prop: 'hasObsoleteIdl', diff: 'simple' },
             { title: 'Spec does not reference WebIDL normatively', prop: 'noRefToWebIDL', diff: 'simple' },
+            { title: 'Unknown [Exposed] names used', prop: 'unknownExposedNames', diff: 'array' },
             { title: 'Unknown WebIDL names used', prop: 'unknownIdlNames', diff: 'array' },
             { title: 'WebIDL names also defined elsewhere', prop: 'redefinedIdlNames', diff: 'array', key: 'name' },
             { title: 'Missing references for WebIDL names', prop: 'missingWebIdlRef', diff: 'array', key: 'name' },

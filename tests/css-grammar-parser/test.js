@@ -2,7 +2,7 @@ const css = require("../../src/lib/css-grammar-parser");
 const fs = require("fs");
 const expect = require('chai').expect;
 
-const propDefs = fs.readFileSync("tests/css-grammar-parser/in", "utf-8").split("\n");
+const propDefs = fs.readFileSync("tests/css-grammar-parser/in", "utf-8").split("\n").map(def => def.trim());
 const propDefsOut = JSON.parse(fs.readFileSync("tests/css-grammar-parser/out.json", "utf-8"));
 
 const results = propDefs.map(css.parsePropDefValue);

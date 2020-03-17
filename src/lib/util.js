@@ -2,12 +2,14 @@
  * A bunch of utility functions common to multiple scripts
  */
 
+const fs = require('fs').promises;
 const path = require('path');
-const URL = require('url');
+const puppeteer = require('puppeteer');
+const crypto = require('crypto');
+const { AbortController } = require('abortcontroller-polyfill/dist/cjs-ponyfill');
 const fetch = require('./fetch');
 const specEquivalents = require('../specs/spec-equivalents.json');
-const canonicalizeURL = require('./canonicalize-url').canonicalizeURL;
-const { JSDOM } = require('./jsdom-monkeypatch');
+const canonicalizeUrl = require('../../builds/canonicalize-url').canonicalizeUrl;
 
 
 /**
@@ -35,207 +37,296 @@ function requireFromWorkingDirectory(filename) {
 
 
 /**
- * Load the given HTML.
+ * Load and process the given specification.
+ *
+ * The method automatically exposes Reffy's library functions in a window.reffy
+ * namespace (see src/browserlib/reffy.js) so that the callback function can
+ * call them directly. Additional callback arguments that would need to be
+ * passed to the browser context can be provided through the "args" parameter.
+ *
+ * A crawl will typically fetch and render hundreds of specs, triggering a lot
+ * of network requests. Given that some of these requests (e.g. those on images)
+ * are of no interest for the processing, that it is wasteful to fetch the same
+ * resource again and again during a crawl, and that it is useful to have an
+ * offline mode for debugging purpose, the method will intercept network
+ * requests made by the browser, fail those that don't seem needed, and serve
+ * requests on resources that have already been fetched from a local file cache
+ * (the "cacheRefresh" setting in "config.json" allows to adjust this behavior).
+ *
+ * This triggers a few hiccups and needs for workarounds though:
+ * - Puppeteer's page.setRequestInterception does not play nicely with workers
+ * (which Respec typically uses) for the time being, so code uses the Chrome
+ * DevTools Protocol (CDP) directly, see:
+ * https://github.com/puppeteer/puppeteer/issues/4208
+ * - Tampering with network requests means that the loaded page gets
+ * automatically flagged as "non secure". That's mostly fine but means that
+ * "window.crypto.subtle" is not available and Respec needs that to generate
+ * hashes. The code re-creates that method manually.
+ * - A few specs send HTTP requests that return "streams". This does not work
+ * well with Puppeteer's "networkidle0" option (to detect when a spec is mostly
+ * done loading), and that does not work with a file cache approach either.
+ * These requests get intercepted.
+ *
+ * A couple of additional notes:
+ * - Requests to CSS stylesheets are not intercepted because Respec dynamically
+ * loads a few CSS resources, and intercepting them could perhaps impact the
+ * rest of the generation.
+ * - SVG images are not intercepted because a couple of specs have a PNG
+ * fallback mechanism that, when interception is on, make the browser spin
+ * forever, see discussion in: https://github.com/w3c/accelerometer/pull/55
+ *
+ * Strictly speaking, intercepting request is only needed to be able to use the
+ * "networkidle0" option. The whole interception logic could be dropped (and
+ * "networkidle2" could be used instead) if it proves too unstable.
  *
  * @function
  * @public
- * @param {Object} spec The spec to load. Must contain an "html" property with
- *   the HTML contents to load. May also contain an "url" property with the URL
- *   of the document (defaults to "about:blank"), and a "responseUrl" property
- *   with the final URL of the document (which may differ from the initial URL
- *   in case there were redirects and which defaults to the value of the "url"
- *   property)
- * @param {Number} counter Optional loop counter parameter to detect infinite
- *   loop. The parameter is mostly meant to be an internal parameter, set and
- *   incremented between calls when dealing with redirections. There should be
- *   no need to set that parameter when calling that function externally.
- * @return {Promise} The promise to get a window object once the spec has
- *   been loaded with jsdom.
+ * @param {Object|String} spec The spec to load. Must either be a URL string or
+ *   an object with a "url" property. If the object contains an "html" property,
+ *   the HTML content is loaded instead.
+ * @param {function} callback Processing function that will be evaluated in the
+ *   browser context where the spec gets loaded
+ * @param {Arrays} args List of arguments to pass to the callback function.
+ * @param {Number} counter Counter used to detect infinite loops in cases where
+ *   the first URL leads to another
+ * @return {Promise} The promise to get the results of the processing function
  */
-async function loadSpecificationFromHtml(spec, counter) {
-    let url = spec.url || 'about:blank';
-    let responseUrl = spec.responseUrl || url;
-    let html = spec.html || '';
-    counter = counter || 0;
-
-    // Prevent execution of Shepherd script in CSS specs that makes
-    // node.js run forever.
-    html = html.replace(/system\.addLoadEvent\(setupPage\);/, '');
-
-    let window = await new Promise((resolve, reject) => {
-        // Drop Byte-Order-Mark character if needed, it bugs JSDOM
-        if (html.charCodeAt(0) === 0xFEFF) {
-            html = html.substring(1);
-        }
-        new JSDOM(html, {
-            url: responseUrl,
-            resources: 'usable',
-            runScripts: 'dangerously',
-            beforeParse(window) {
-                // Wait until the generation of Respec documents is over
-                window.addEventListener('load', function () {
-                    let usesRespec = (window.respecConfig || window.eval('typeof respecConfig !== "undefined"')) &&
-                        window.document.head.querySelector("script[src*='respec']");
-                    let resolveWhenReady = _ => {
-                        if (window.document.respecIsReady) {
-                            window.document.respecIsReady
-                                .then(_=> resolve(window))
-                                .catch(reject);
-                        }
-                        else if (usesRespec) {
-                            setTimeout(resolveWhenReady, 100);
-                        }
-                        else {
-                            resolve(window);
-                        }
-                    }
-                    resolveWhenReady();
-                });
-            }
-        });
-    });
-
-    let doc = window.document;
-
-    // Handle <meta http-equiv="refresh"> redirection
-    // Note that we'll assume that the number in "content" is correct
-    let metaRefresh = doc.querySelector('meta[http-equiv="refresh"]');
-    if (metaRefresh) {
-        let redirectUrl = (metaRefresh.getAttribute('content') || '').split(';')[1];
-        redirectUrl = redirectUrl.trim().replace(/url=/i, '');
-        if (redirectUrl) {
-            redirectUrl = URL.resolve(doc.baseURI, redirectUrl);
-            if ((redirectUrl !== url) && (redirectUrl !== responseUrl)) {
-                return loadSpecificationFromUrl(redirectUrl, counter + 1);
-            }
-        }
-    }
-
-    // Handle links to single page in multi-page specs
-    const links = doc.querySelectorAll('body .head dl a[href]');
-    for (let i = 0 ; i < links.length; i++) {
-        let link = links[i];
-        let text = (link.textContent || '').toLowerCase();
-        if (text.includes('single page') ||
-            text.includes('single file') ||
-            text.includes('single-page') ||
-            text.includes('one-page')) {
-            let singlePage = URL.resolve(doc.baseURI, link.getAttribute('href'));
-            if ((singlePage === url) || (singlePage === responseUrl)) {
-                // We're already looking at the single page version
-                return window;
-            }
-            else {
-                return loadSpecificationFromUrl(singlePage, counter + 1);
-            }
-        }
-    }
-
-    // Handle remaining multi-page specs manually, merging all subpages
-    // into the main page to create a single-page spec.
-    let multiPagesRules = {
-        'https://www.w3.org/TR/CSS2/': '.quick.toc .tocxref',
-        'https://www.w3.org/TR/CSS22/': '#toc .tocxref',
-        'https://drafts.csswg.org/css2/': '.quick.toc .tocxref'
-    };
-    if (multiPagesRules[spec.url]) {
-        const pages = [...doc.querySelectorAll(multiPagesRules[spec.url])]
-            .map(link => URL.resolve(doc.baseURI, link.getAttribute('href')));
-        const subWindows = await Promise.all(
-            pages.map(page => loadSpecificationFromUrl(page)));
-        subWindows.map(subWindow => {
-            const section = doc.createElement('section');
-            [...subWindow.document.body.children].forEach(
-                child => section.appendChild(child));
-            doc.body.appendChild(section);
-        });
-    }
-    return window;
-}
-
-
-/**
- * Load the specification at the given URL.
- *
- * @function
- * @public
- * @param {String} url The URL of the specification to load
- * @param {Number} counter Optional loop counter parameter to detect infinite
- *   loop. The parameter is mostly meant to be an internal parameter, set and
- *   incremented between calls when dealing with redirections. There should be
- *   no need to set that parameter when calling that function externally.
- * @return {Promise} The promise to get a window object once the spec has
- *   been loaded with jsdom.
- */
-function loadSpecificationFromUrl(url, counter) {
+async function processSpecification(spec, callback, args, counter) {
+    spec = (typeof spec === 'string') ? { url: spec } : spec;
+    callback = callback || function () {};
+    args = args || [];
     counter = counter || 0;
     if (counter >= 5) {
-        return new Promise((resolve, reject) => {
-            reject(new Error('Infinite loop detected'));
-        });
+        throw new Error('Infinite loop detected');
     }
-    return fetch(url)
-        .then(response => response.text().then(html => {
-            return { url, html, responseUrl: response.url };
-        }))
-        .then(spec => loadSpecificationFromHtml(spec, counter));
-}
 
+    // Create browser instance (one per specification. Switch "headless" to
+    // "false" (and commenting out the call to "browser.close()") is typically
+    // useful when something goes wrong to access dev tools and debug)
+    const browser = await puppeteer.launch({ headless: true });
 
-/**
- * Load the given specification.
- *
- * @function
- * @public
- * @param {String|Object} spec The URL of the specification to load or an object
- *   with an "html" key that contains the HTML to load (and an optional "url"
- *   key to force the URL in the loaded DOM)
- * @return {Promise} The promise to get a window object once the spec has
- *   been loaded with jsdom.
- */
-function loadSpecification(spec) {
-    spec = (typeof spec === 'string') ? { url: spec } : spec;
-    return (spec.html ?
-        loadSpecificationFromHtml(spec) :
-        loadSpecificationFromUrl(spec.url));
-}
+    // Create an abort controller for network requests directly handled by the
+    // Node.js code (and not by Puppeteer)
+    const abortController = new AbortController();
 
-function urlOrDom(input) {
-    if (typeof input === "string") {
-        return loadSpecification(input);
-    } else {
-        return Promise.resolve(input);
-    }
-}
+    // Inner function that returns a network interception method suitable for
+    // a given CDP session.
+    function interceptRequest(cdp) {
+        return async function ({ requestId, request }) {
+            try {
+                if ((request.method !== 'GET') ||
+                    (!request.url.startsWith('http:') && !request.url.startsWith('https:'))) {
+                    await cdp.send('Fetch.continueRequest', { requestId });
+                    return;
+                }
 
-/**
- * Given a "window" object loaded with jsdom, retrieve the document along
- * with the name of the well-known generator that was used, if known.
- *
- * Note that the function expects the generation of documents generated
- * on-the-fly to have already happened
- *
- * @function
- * @public
- * @param {Window} window
- * @return {Promise} The promise to get a document ready for extraction and
- *   the name of the generator (or null if generator is unknown).
- */
-function getDocumentAndGenerator(window) {
-    return new Promise(function (resolve, reject) {
-        var doc = window.document;
-        var generator = window.document.querySelector('meta[name="generator"]');
-        if (generator && generator.content.match(/bikeshed/i)) {
-            resolve({doc, generator: 'bikeshed'});
-        } else if ((doc.body.id === 'respecDocument') ||
-                window.respecConfig || window.eval('typeof respecConfig !== "undefined"')) {
-            resolve({doc, generator: 'respec'});
-        } else if (doc.getElementById('anolis-references')) {
-            resolve({doc, generator: 'anolis'});
-        } else {
-            resolve({doc});
+                // Abort network requests to common image formats
+                if (/\.(gif|ico|jpg|jpeg|png)$/i.test(request.url)) {
+                    await cdp.send('Fetch.failRequest', { requestId, errorReason: 'Failed' });
+                    return;
+                }
+
+                // Abort network requests that return a "stream", they won't
+                // play well with Puppeteer's "networkidle0" option, and our
+                // custom "fetch" function does not handle streams in any case
+                if (request.url.startsWith('https://drafts.csswg.org/api/drafts/') ||
+                    request.url.startsWith('https://drafts.css-houdini.org/api/drafts/') ||
+                    request.url.startsWith('https://drafts.fxtf.org/api/drafts/') ||
+                    request.url.startsWith('https://api.csswg.org/shepherd/')) {
+                    await cdp.send('Fetch.failRequest', { requestId, errorReason: 'Failed' });
+                    return;
+                }
+
+                // console.log(`intercept ${request.url}`);
+                let response = await fetch(request.url, { signal: abortController.signal });
+                let body = await response.buffer();
+
+                // console.log(`intercept ${request.url} - done`);
+                await cdp.send('Fetch.fulfillRequest', {
+                    requestId,
+                    responseCode: response.status,
+                    responseHeaders: Object.keys(response.headers.raw()).map(header => {
+                        return {
+                            name: header,
+                            value: response.headers.raw()[header].join(',')
+                        };
+                    }),
+                    body: body.toString('base64')
+                });
+            }
+            catch (err) {
+                if (abortController.signal.aborted) {
+                    // All is normal, processing was over, page and CDP session
+                    // have been closed, and network requests have been aborted
+                    // console.log(`intercept ${request.url} - aborted`);
+                    return;
+                }
+
+                // Fetch from file cache failed somehow, report a warning
+                // and let Puppeteer handle the request as fallback
+                console.warn(`Fall back to regular network request for ${request.url}`, err);
+                try {
+                    await cdp.send('Fetch.continueRequest', { requestId });
+                }
+                catch (err) {
+                    if (!abortController.signal.aborted) {
+                        console.warn(`Fall back to regular network request for ${request.url} failed`, err);
+                    }
+                }
+            }
         }
-    });
+    }
+
+    try {
+        const page = await browser.newPage();
+
+        // Intercept all network requests to use our own version of "fetch"
+        // that makes use of the local file cache.
+        const cdp = await page.target().createCDPSession();
+        await cdp.send('Fetch.enable');
+        cdp.on('Fetch.requestPaused', interceptRequest(cdp));
+
+        // Quick and dirty workaround to re-create the "window.crypto.digest"
+        // function that Respec needs (context is seen as unsecure because we're
+        // tampering with network requests)
+        await page.exposeFunction('hashdigest', (algorithm, buffer) => {
+            return crypto.createHash(algorithm).update(Buffer.from(Object.values(buffer))).digest();
+        });
+        await page.evaluateOnNewDocument(() => {
+            window.crypto.subtle = {
+                digest: function (algorithm, buffer) {
+                    const res = window.hashdigest('sha1', buffer);
+                    return res.then(buf => {
+                        return Uint8Array.from(buf.data);
+                    });
+                }
+            };
+        });
+
+        // Common loading option to give the browser enough time to load large
+        // specs, and to consider navigation done when there haven't been
+        // network connections in the past 500ms. This should be enough to
+        // handle "redirection" through JS or meta refresh (which would not
+        // have time to run if we used "load").
+        const options = {
+            timeout: 60000,
+            waitUntil: 'networkidle0'
+        };
+
+        // Load the page
+        if (spec.html) {
+            await page.setContent(spec.html, options);
+        }
+        else {
+            await page.goto(spec.url, options);
+        }
+
+        // If the spec is a multi-page spec and contains a "Single page" link,
+        // extract the URL of the single page and load it instead
+        const singlePageUrl = await page.$$eval('body .head dl a[href]', links => {
+            const link = links.find(link => {
+                const text = (link.textContent || '').toLowerCase();
+                return text.includes('single page') ||
+                    text.includes('single file') ||
+                    text.includes('single-page') ||
+                    text.includes('one-page');
+            });
+            if (link) {
+                const url = new URL(link.getAttribute('href'), document.baseURI);
+                return url.href;
+            }
+            else {
+                return null;
+            }
+        });
+        if (singlePageUrl && (singlePageUrl !== spec.url) && (singlePageUrl !== page.url())) {
+            return processSpecification(singlePageUrl, callback, args, counter + 1);
+        }
+
+        // Handle remaining multi-page specs manually, merging all subpages
+        // into the main page to create a single-page spec.
+        let multiPagesRules = {
+            'https://www.w3.org/TR/CSS2/': '.quick.toc .tocxref',
+            'https://www.w3.org/TR/CSS22/': '#toc .tocxref',
+            'https://drafts.csswg.org/css2/': '#toc .tocline1 > .tocxref'
+        };
+        if (multiPagesRules[page.url()]) {
+            let urls = await page.$$eval(multiPagesRules[page.url()], links =>
+                links.map(link => (new URL(link.getAttribute('href'), link.ownerDocument.baseURI)).toString()));
+            const pages = [];
+            for (const url of urls) {
+                const subPage = await browser.newPage();
+                const subCdp = await page.target().createCDPSession();
+                await subCdp.send('Fetch.enable');
+                subCdp.on('Fetch.requestPaused', interceptRequest(subCdp));
+                await subPage.goto(url, options);
+                const html = await subPage.evaluate(() => { return document.body.innerHTML; });
+                await subCdp.detach();
+                await subPage.close();
+                pages.push(html);
+            }
+            await page.evaluate(pages => {
+                for (const html of pages) {
+                    const section = document.createElement('section');
+                    section.innerHTML = html;
+                    document.body.appendChild(section);
+                }
+            }, pages);
+        }
+
+        // Wait until the generation of the spec is completely over
+        await page.evaluate(async () => {
+            const usesRespec = (window.respecConfig || window.eval('typeof respecConfig !== "undefined"')) &&
+                window.document.head.querySelector("script[src*='respec']");
+
+            function sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            async function isReady(counter) {
+                counter = counter || 0;
+                if (counter > 60) {
+                    throw new Error('Respec generation took too long');
+                }
+                if (window.document.respecIsReady) {
+                    await window.document.respecIsReady;
+                }
+                else if (usesRespec) {
+                    await sleep(1000);
+                    await isReady();
+                }
+            }
+
+            await isReady();
+        });
+
+
+        // Expose additional functions defined in src/browserlib/ to the
+        // browser context, under a window.reffy namespace, so that processing
+        // script may call them
+        await page.addScriptTag({
+            path: path.resolve(__dirname, '../../builds/browser.js')
+        });
+
+        // Run the callback method in the browser context
+        const results = await page.evaluate(callback, ...args);
+
+        // Close CDP session and page
+        // Note that gets done no matter what when browser.close() gets called.
+        await cdp.detach();
+        await page.close();
+
+        return results;
+    }
+    finally {
+        // Pending network requests may still be in the queue, flag the page
+        // as closed not to send commands on a CDP session that's no longer
+        // attached to anything
+        abortController.abort();
+
+        // Kill the browser instance
+        await browser.close();
+    }
 }
 
 
@@ -316,8 +407,8 @@ function completeWithInfoFromW3CApi(spec, key) {
         .then(s => fetch(s._links['version-history'].href + '?embed=1', options))
         .then(r => r.json())
         .then(s => {
-            const versions = s._embedded['version-history'].map(prop("uri")).map(canonicalizeURL);
-            const editors = s._embedded['version-history'].map(prop("editor-draft")).filter(u => !!u).map(canonicalizeURL);
+            const versions = s._embedded['version-history'].map(prop("uri")).map(canonicalizeUrl);
+            const editors = s._embedded['version-history'].map(prop("editor-draft")).filter(u => !!u).map(canonicalizeUrl);
             const latestVersion = s._embedded['version-history'][0];
             spec.title = latestVersion.title;
             if (!spec.latest) spec.latest = latestVersion.shortlink;
@@ -343,10 +434,122 @@ function completeWithInfoFromW3CApi(spec, key) {
         });
 }
 
-module.exports.fetch = fetch;
-module.exports.requireFromWorkingDirectory = requireFromWorkingDirectory;
-module.exports.loadSpecification = loadSpecification;
-module.exports.urlOrDom = urlOrDom;
-module.exports.getDocumentAndGenerator = getDocumentAndGenerator;
-module.exports.completeWithShortName = completeWithShortName;
-module.exports.completeWithInfoFromW3CApi = completeWithInfoFromW3CApi;
+/**
+ * Get the "shortname" identifier for a specification.
+ *
+ * @function
+ * @private
+ * @param {Object} spec The specification object with a `url` key and optionally
+ *   a `shortname` key previously extracted by `completeWithShortName`.
+ * @return {String} a short identifier suitable for use in URLs and filenames.
+ */
+function getShortname(spec) {
+    if (spec.shortname) {
+        // do not include versionning, see also:
+        // https://github.com/foolip/day-to-day/blob/d336df7d08d57204a68877ec51866992ea78e7a2/build/specs.js#L176
+        if (spec.shortname.startsWith('css3')) {
+            if (spec.shortname === 'css3-background') {
+                return 'css-backgrounds'; // plural
+            }
+            else {
+                return spec.shortname.replace('css3', 'css');
+            }
+        }
+        else {
+            return spec.shortname.replace(/-?[\d\.]*$/, '');
+        }
+    }
+    const whatwgMatch = spec.url.match(/\/\/(.*)\.spec\.whatwg\.org\/$/);
+    if (whatwgMatch) {
+        return whatwgMatch[1];
+    }
+    const khronosMatch = spec.url.match(/https:\/\/www\.khronos\.org\/registry\/webgl\/specs\/latest\/([12])\.0\/$/);
+    if (khronosMatch) {
+        return "webgl" + khronosMatch[1];
+    }
+    const extensionMatch = spec.url.match(/\/.*\.github\.io\/([^\/]*)\/(extensions?)\.html$/);
+    if (extensionMatch) {
+        return extensionMatch[1] + '-' + extensionMatch[2];
+    }
+    const githubMatch = spec.url.match(/\/.*\.github\.io\/(?:webappsec-)?([^\/]+)\//);
+    if (githubMatch) {
+        if (githubMatch[1] === 'ServiceWorker') {
+            // Exception to the rule for service workers ED
+            return 'service-workers';
+        }
+        else {
+            return githubMatch[1];
+        }
+    }
+    const cssDraftMatch = spec.url.match(/\/drafts\.(?:csswg|fxtf|css-houdini)\.org\/([^\/]*)\//);
+    if (cssDraftMatch) {
+        return cssDraftMatch[1].replace(/-[\d\.]*$/, '');
+    }
+    const svgDraftMatch = spec.url.match(/\/svgwg\.org\/svg2-draft\//);
+    if (svgDraftMatch) {
+        return 'SVG';
+    }
+    const svgSpecMatch = spec.url.match(/\/svgwg\.org\/specs\/([^\/]+)\//);
+    if (svgSpecMatch) {
+        return 'svg-' + svgSpecMatch[1];
+    }
+    return spec.url.replace(/[^-a-z0-9]/g, '');
+}
+
+
+/**
+ * Returns true when the given spec is the latest "fullest" level of that spec
+ * in the given list of specs that passes the given predicate.
+ *
+ * "Fullest" means "not a delta spec, unless that is the only level that passes
+ * the predicate".
+ *
+ * Note that the code handles the special case of the CSS2 and CSS22 specs, and
+ * assumes that URLs that don't end with a level number are at level 1 (this
+ * does not work for CSS specs whose URLs still follow the old `css3-` pattern,
+ * but we're only interested in comparing with more recent levels in that case,
+ * so it does not matter).
+ *
+ * @function
+ * @public
+ * @param {Object} spec Spec to check
+ * @param {Array(Object)} list List of specs (must include the spec to check)
+ * @param {function} predicate Predicate function that the spec must pass. Must
+ *   be a function that takes a spec as argument and returns a boolean.
+ * @return {Boolean} true if the spec is the latest "fullest" level in the list
+ *   that passes the predicate.
+ */
+function isLatestLevelThatPasses(spec, list, predicate) {
+    predicate = predicate || (_ => true);
+    const getLevel = spec =>
+        (spec.url.match(/-\d+\/$/) ?
+            parseInt(spec.url.match(/-(\d+)\/$/)[1], 10) :
+            (spec.url.match(/CSS22\/$/i) ? 2 : 1));
+    const shortname = getShortname(spec);
+    const level = getLevel(spec);
+    const candidates = list.filter(s => predicate(s) &&
+        ((s === spec) ||
+        (!s.flags.delta &&
+            (getShortname(s) === shortname) &&
+            (getLevel(s) >= level))));
+
+    // Note the list of candidates for this shortname includes the spec
+    // itself. It is the latest level if there is no other candidate at
+    // a strictly greater level, and if the spec under consideration is
+    // the first element in the list (for the hopefully rare case where
+    // we have two candidate specs that are at the same level)
+    return !candidates.find(s => getLevel(s) > level) &&
+        !(spec.flags.delta && candidates.find(s => getLevel(s) === level && (s !== spec) && !s.flags.delta)) &&
+        (candidates[0] === spec);
+}
+
+
+module.exports = {
+    fetch,
+    requireFromWorkingDirectory,
+    processSpecification,
+    completeWithShortName,
+    completeWithInfoFromW3CApi,
+    getShortname,
+    isLatestLevelThatPasses
+};

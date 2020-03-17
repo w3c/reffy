@@ -53,9 +53,13 @@ const possibleActions = {
 let command = null; 
 program
   .version(version)
+  .option('-d, --debug', 'run crawl in debug mode (single process, one spec at a time)');
+
+program
   .command('run <perspective> [action]')
   .description('run a new crawl and study from the given perspective')
-  .action((perspective, action) => {
+  .option('-d, --debug', 'run crawl in debug mode (single process, one spec at a time)')
+  .action(async (perspective, action, cmdObj) => {
     command = 'run';
     if (!(perspective in perspectives)) {
       return program.help();
@@ -64,6 +68,7 @@ program
       return program.help();
     }
 
+    let debug = cmdObj.debug || program.debug;
     let specsfile = perspectives[perspective].specs;
     let publishedVersion = perspectives[perspective].publishedVersion;
     let refCrawl = perspectives[perspective].refCrawl;
@@ -84,7 +89,7 @@ program
           .then(_ => crawlFile(
             path.resolve(__dirname, 'src', 'specs', specsfile),
             reportFolder,
-            { publishedVersion }));
+            { publishedVersion, debug }));
         break;
 
       case 'study':
@@ -153,15 +158,10 @@ program
       }
     });
 
-    return promise.then(_ => console.log('-- THE END -- '))
-      .catch(err => {
-        console.error('-- ERROR CAUGHT --');
-        console.error(err);
-        process.exit(1);
-      });
+    return promise;
   });
 
-program.on('--help', function(){
+program.on('--help', function() {
   console.log('');
   console.log('  Possible perspectives:');
   console.log('');
@@ -176,9 +176,33 @@ program.on('--help', function(){
     console.log('    ' + action + ': ' + possibleActions[action]);
   });
   console.log('');
+
+  console.log('  Possible options:');
+  console.log('');
+  console.log('    -d, --debug: run crawl in debug mode (single process, one spec at a time)');
+  console.log('');
 });
 
-program.parse(process.argv);
-if (!command) {
-  return program.help();
+program.on('command:*', function () {
+  console.error('Invalid command: %s.\n', program.args.join(' '));
+  program.outputHelp();
+  process.exit(1);
+});
+
+if (!process.argv.slice(2).length) {
+  console.error('Cannot run program without arguments.\n');
+  program.outputHelp();
+  process.exit(1);
 }
+
+program
+  .parseAsync(process.argv)
+  .then(_ => {
+    console.log('-- THE END -- ');
+    process.exit(0);
+  })
+  .catch(err => {
+    console.error('-- ERROR CAUGHT --');
+    console.error(err);
+    process.exit(1);
+  });

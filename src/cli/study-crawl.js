@@ -31,9 +31,10 @@
  * @module analyzer
  */
 
-const canonicalizeURL = require('../lib/canonicalize-url').canonicalizeURL;
-const canonicalizesTo = require('../lib/canonicalize-url').canonicalizesTo;
+const canonicalizeUrl = require('../../builds/canonicalize-url').canonicalizeUrl;
+const canonicalizesTo = require('../../builds/canonicalize-url').canonicalizesTo;
 const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
+const isLatestLevelThatPasses = require('../lib/util').isLatestLevelThatPasses;
 
 const array_concat = (a,b) => a.concat(b);
 const uniqueFilter = (item, idx, arr) => arr.indexOf(item) === idx;
@@ -93,17 +94,10 @@ function studyCrawlResults(results, specsToInclude) {
         .reduce(array_concat)
         .filter(uniqueFilter);
     var idlNamesIndex = {};
-    knownIdlNames.forEach(name => {
-        idlNamesIndex[name] = results.filter(spec => {
-            return spec.idl && spec.idl.idlNames && spec.idl.idlNames[name];
-        });
-    });
-    knownGlobalNames.forEach(name => {
-        const specs = results.filter(spec => spec.idl && spec.idl.globals && spec.idl.globals[name]);
-        idlNamesIndex[name] = (idlNamesIndex[name] || []).concat(specs).filter(uniqueFilter);
-    });
-    knownIdlNames = knownIdlNames.concat(knownGlobalNames).filter(uniqueFilter);
-
+    knownIdlNames.forEach(name =>
+        idlNamesIndex[name] = results.filter(spec =>
+            isLatestLevelThatPasses(spec, results, s =>
+                s.idl && s.idl.idlNames && s.idl.idlNames[name])));
 
     // TODO: we may end up with different variants of the WebIDL spec
     var WebIDLSpec = results.find(spec => (spec.shortname === 'WebIDL-1')) || {};
@@ -142,7 +136,6 @@ function studyCrawlResults(results, specsToInclude) {
                 (spec.url && toInclude.url && (spec.url === toInclude.url)) ||
                 (spec.html && toInclude.html && (spec.html === toInclude.html))))
         .map(spec => {
-            spec.flags = spec.flags || {};
             spec.idl = spec.idl || {};
             spec.css = spec.css || {};
             spec.refs = spec.refs || {};
@@ -153,7 +146,7 @@ function studyCrawlResults(results, specsToInclude) {
                 Object.keys(spec.idl.idlExtendedNames) : [];
             var idlDeps = spec.idl.externalDependencies ?
                 spec.idl.externalDependencies : [];
-            var reallyDependsOnWindow = !!spec.idl.reallyDependsOnWindow;
+            var exposed = spec.idl.exposed ? Object.keys(spec.idl.exposed) : [];
 
             var report = {
                 // An error at this level means the spec could not be parsed at all
@@ -167,45 +160,29 @@ function studyCrawlResults(results, specsToInclude) {
                 // Whether the spec normatively references the WebIDL spec
                 // (all specs that define IDL content should)
                 noRefToWebIDL: (spec !== WebIDLSpec) &&
-                    spec.flags.idl &&
+                    (spec.idl.bareMessage || (idlDfns.length > 0) || (idlExtendedDfns.length > 0)) &&
                     (!spec.refs.normative || !spec.refs.normative.find(ref =>
                         ref.name.match(/^WebIDL/i) ||
                             (ref.url === WebIDLSpec.url) ||
                             (ref.url === WebIDLSpec.latest))),
 
-                // For specs that should have IDL, whether the crawler managed
-                // to find IDL content in the spec
-                noIdlContent: spec.flags.idl &&
-                    ((Object.keys(spec.idl).length === 0) ||
-                        (!spec.idl.idlNames && !spec.idl.message) ||
-                        ((idlDfns.length === 0) && (idlExtendedDfns.length === 0) && !spec.idl.message)),
-
-                // For specs that should not define any IDL, whether the
-                // crawler extracted IDL content from the spec
-                hasUnexpectedIdl: !spec.flags.idl && (idlDfns.length > 0),
-
                 // Whether the spec has invalid IDL content
                 // (the crawler cannot do much when IDL content is invalid, it
                 // cannot tell what IDL definitions and references the spec
                 // contains in particular)
-                hasInvalidIdl: !!(!spec.idl.idlNames && spec.idl.message),
+                hasInvalidIdl: !!(!spec.idl.idlNames && spec.idl.bareMessage),
 
                 // Whether the spec uses IDL constructs that were valid in
                 // WebIDL Level 1 but no longer are, typically "[]" instead of
                 // "FrozenArray"
                 hasObsoleteIdl: spec.idl.hasObsoleteIdl,
 
-                // For specs that should contain CSS definitions, whether the
-                // crawler managed to find some in the spec
-                noCssDefinitions: spec.flags.css &&
-                    (Object.keys(spec.css.properties || {}).length === 0) &&
-                    (Object.keys(spec.css.descriptors || {}).length === 0),
-
-                // For specs that should not contains CSS definitions, whether
-                // the crawled managed to extract some
-                hasUnexpectedCssDefinitions: !spec.flags.css &&
-                    ((Object.keys(spec.css.properties || {}).length > 0) ||
-                        (Object.keys(spec.css.descriptors || {}).length > 0)),
+                // List of Exposed names used in the spec that we know nothing
+                // about because we cannot find a matching "Global" name in
+                // any other spec
+                unknownExposedNames: exposed
+                    .filter(name => knownGlobalNames.indexOf(name) === -1)
+                    .sort(),
 
                 // List of IDL names used in the spec that we know nothing about
                 // (for instance because of some typo or because the term is
@@ -237,7 +214,6 @@ function studyCrawlResults(results, specsToInclude) {
                 // an exception to the rule, and ignored.
                 missingWebIdlRef: idlDeps
                     .filter(name => knownIdlNames.indexOf(name) !== -1)
-                    .filter(name => reallyDependsOnWindow || (name !== 'Window'))
                     .map(name => {
                         var refs = idlNamesIndex[name].map(filterSpecInfo);
                         var ref = null;
@@ -259,7 +235,7 @@ function studyCrawlResults(results, specsToInclude) {
                     .filter(matchSpecUrl)
                     .filter(l => {
                         // Filter out "good" and "inconsistent" references
-                        let canon = canonicalizeURL(l, useEquivalents);
+                        let canon = canonicalizeUrl(l, useEquivalents);
                         let refs = (spec.refs.normative || []).concat(spec.refs.informative || []);
                         return !refs.find(r => canonicalizesTo(r.url, canon, useEquivalents));
                     })
@@ -279,8 +255,8 @@ function studyCrawlResults(results, specsToInclude) {
                 inconsistentRef: spec.links
                     .filter(matchSpecUrl)
                     .map(l => {
-                        let canonSimple = canonicalizeURL(l);
-                        let canon = canonicalizeURL(l, useEquivalents);
+                        let canonSimple = canonicalizeUrl(l);
+                        let canon = canonicalizeUrl(l, useEquivalents);
                         let refs = (spec.refs.normative || []).concat(spec.refs.informative || []);
 
                         // Filter out "good" references
@@ -316,12 +292,8 @@ function studyCrawlResults(results, specsToInclude) {
             // A spec is OK if it does not contain anything "suspicious".
             report.ok = !report.error &&
                 !report.noNormativeRefs &&
-                !report.noIdlContent &&
-                !report.hasUnexpectedIdl &&
                 !report.hasInvalidIdl &&
                 !report.hasObsoleteIdl &&
-                !report.noCssDefinitions &&
-                !report.hasUnexpectedCssDefinitions &&
                 !report.noRefToWebIDL &&
                 (!report.unknownIdlNames || (report.unknownIdlNames.length === 0)) &&
                 (!report.redefinedIdlNames || (report.redefinedIdlNames.length === 0)) &&

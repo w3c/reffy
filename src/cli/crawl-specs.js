@@ -22,18 +22,15 @@
 
 const fs = require('fs');
 const path = require('path');
-const { fork } = require('child_process');
-const refParser = require('./parse-references');
-const webidlExtractor = require('./extract-webidl');
-const cssDfnExtractor = require('./extract-cssdfn');
-const loadSpecification = require('../lib/util').loadSpecification;
 const webidlParser = require('./parse-webidl');
 const cssDfnParser = require('../lib/css-grammar-parser');
 const fetch = require('../lib/util').fetch;
-const canonicalizeURL = require('../lib/canonicalize-url').canonicalizeURL;
 const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
 const completeWithInfoFromW3CApi = require('../lib/util').completeWithInfoFromW3CApi;
 const completeWithShortName = require('../lib/util').completeWithShortName;
+const getShortname = require('../lib/util').getShortname;
+const isLatestLevelThatPasses = require('../lib/util').isLatestLevelThatPasses;
+const processSpecification = require('../lib/util').processSpecification;
 
 /**
  * Flattens an array
@@ -47,53 +44,6 @@ const flatten = arr => arr.reduce(
  * Compares specs for ordering by URL
  */
 const byURL = (a, b) => a.url.localeCompare(b.url);
-
-
-/**
- * Extracts the title of the loaded document
- */
-function titleExtractor(window) {
-    var title = window.document.querySelector("title");
-    if (window.location.href === 'https://html.spec.whatwg.org/multipage/workers.html') {
-        // Web Worker ED is a page of the HTML Living Standard.
-        // Report the appropriate title (crawler will still be confused because
-        // it won't find any normative references at the end of this page)
-        return 'Web Workers';
-    }
-    else if (title) {
-        return title.textContent.trim();
-    }
-    else {
-        return '[No title found for ' + window.location.href + ']';
-    }
-}
-
-/**
- * Extract and canonicalize absolute links of the document
- * FIXME: ⚠ Modify the DOM
-*/
-function linkExtractor(window) {
-    // Ignore links from the "head" section, which either link to
-    // self, the GitHub repo, the implementation report, and other
-    // documents that don't need to appear in the list of references.
-    [...window.document.querySelectorAll('.head a[href]')].forEach(n => n.href='');
-    const links = new Set([...window.document.querySelectorAll('a[href^=http]')]
-        .map(n => canonicalizeURL(n.href)));
-    return [...links];
-}
-
-
-function exportsExtractor(window) {
-    const exportedTerms = {};
-    [...window.document.querySelectorAll('[data-export]')].forEach(el => {
-        const id = el.getAttribute('id');
-        if (!id) {
-            return;
-        }
-        exportedTerms[id] = el.getAttribute('data-lt') || el.getAttribute('data-title') || el.innerText;
-    });
-    return exportedTerms;
-}
 
 
 /**
@@ -157,14 +107,15 @@ function completeWithInfoFromSpecref(specs) {
 async function createInitialSpecDescriptions(list) {
     function createSpecObject(spec) {
         let res = {
-            url: (typeof spec === 'string') ? spec : (spec.url || 'about:blank')
+            url: (typeof spec === 'string') ? spec.split(' ')[0] : (spec.url || 'about:blank')
         };
         if ((typeof spec !== 'string') && spec.html) {
             res.html = spec.html;
         }
         res.flags = {
-            css: !!spec.css,
-            idl: !!spec.idl
+            delta: (typeof spec === 'string') ?
+                spec.split(' ').includes('delta') :
+                !!spec.delta
         };
         return res;
     }
@@ -203,88 +154,78 @@ async function crawlSpec(spec, crawlOptions) {
     if (spec.error) {
         return spec;
     }
-    return loadSpecification({ html: spec.html, url: spec.crawled })
-        .then(dom => Promise.all([
-            spec,
-            titleExtractor(dom),
-            linkExtractor(dom),
-            refParser.extract(dom).catch(err => {
-                console.error(spec.crawled, err);
-                return err;
-            }),
-            webidlExtractor.extract(dom)
-                .then(idl =>
-                    Promise.all([
-                        idl,
-                        webidlParser.parse(idl),
-                        webidlParser.hasObsoleteIdl(idl)
-                    ])
-                    .then(([idl, parsedIdl, hasObsoletedIdl]) => {
-                        parsedIdl.hasObsoleteIdl = hasObsoletedIdl;
-                        parsedIdl.idl = idl;
-                        return parsedIdl;
-                    })
-                    .catch(err => {
-                        // IDL content is invalid and cannot be parsed.
-                        // Let's return the error, along with the raw IDL
-                        // content so that it may be saved to a file.
-                        console.error(spec.crawled, err);
-                        err.idl = idl;
-                        return err;
-                    })),
-            cssDfnExtractor.extract(dom)
-                .then(css => {
-                    Object.keys(css.properties || {}).forEach(prop => {
-                        try {
-                            css.properties[prop].parsedValue = cssDfnParser.parsePropDefValue(css.properties[prop].value || css.properties[prop].newValues);
-                        } catch (e) {
-                            css.properties[prop].valueParseError = e.message;
-                        }
-                    });
-                    Object.keys(css.descriptors || {}).forEach(desc => {
-                        try {
-                            css.descriptors[desc].parsedValue = cssDfnParser.parsePropDefValue(css.descriptors[desc].value);
-                        } catch (e) {
-                            css.descriptors[desc].valueParseError = e.message;
-                        }
-                    });
-                    Object.keys(css.valuespaces || {}).forEach(vs => {
-                        if (css.valuespaces[vs].value) {
-                            try {
-                                css.valuespaces[vs].parsedValue = cssDfnParser.parsePropDefValue(css.valuespaces[vs].value);
-                            } catch (e) {
-                                css.valuespaces[vs].valueParseError = e.message;
-                            }
-                        }
-                    });
-                    return css;
-                }),
-            exportsExtractor(dom),
-            dom
-        ]))
-        .then(res => {
-            const spec = res[0];
-            const doc = res[7].document;
-            const statusAndDateElement = doc.querySelector('.head h2');
-            const date = (statusAndDateElement ?
-                statusAndDateElement.textContent.split(/\s+/).slice(-3).join(' ') :
-                (new Date(Date.parse(doc.lastModified))).toDateString());
 
-            spec.title = res[1] ? res[1] : spec.title;
-            spec.date = date;
-            spec.links = res[2];
-            spec.refs = res[3];
-            spec.idl = res[4];
-            spec.css = res[5];
-            spec.exports = res[6];
-            res[7].close();
-            return spec;
-        })
-        .catch(err => {
-            spec.title = spec.title || '[Could not be determined, see error]';
-            spec.error = err.toString() + (err.stack ? ' ' + err.stack : '');
-            return spec;
+    try {
+        const result = await processSpecification(spec.crawled, () => {
+            return {
+                crawled: window.location.toString(),
+                title: window.reffy.getTitle(),
+                date: window.reffy.getLastModifiedDate(),
+                links: window.reffy.extractLinks(),
+                refs: window.reffy.extractReferences(),
+                idl: window.reffy.extractWebIdl(),
+                css: window.reffy.extractCSS(),
+            };
         });
+
+        // Parse the extracted WebIdl content
+        try {
+            const parsedIdl = await webidlParser.parse(result.idl);
+            parsedIdl.hasObsoleteIdl = webidlParser.hasObsoleteIdl(result.idl);
+            parsedIdl.idl = result.idl;
+            result.idl = parsedIdl;
+        }
+        catch (err) {
+            // IDL content is invalid and cannot be parsed.
+            // Let's return the error, along with the raw IDL
+            // content so that it may be saved to a file.
+            err.idl = result.idl;
+            result.idl = err;
+        }
+
+        // Parse extracted CSS definitions
+        Object.keys(result.css.properties || {}).forEach(prop => {
+            try {
+                result.css.properties[prop].parsedValue = cssDfnParser.parsePropDefValue(
+                    result.css.properties[prop].value || result.css.properties[prop].newValues);
+            } catch (e) {
+                result.css.properties[prop].valueParseError = e.message;
+            }
+        });
+        Object.keys(result.css.descriptors || {}).forEach(desc => {
+            try {
+                result.css.descriptors[desc].parsedValue = cssDfnParser.parsePropDefValue(
+                    result.css.descriptors[desc].value);
+            } catch (e) {
+                result.css.descriptors[desc].valueParseError = e.message;
+            }
+        });
+        Object.keys(result.css.valuespaces || {}).forEach(vs => {
+            if (result.css.valuespaces[vs].value) {
+                try {
+                    result.css.valuespaces[vs].parsedValue = cssDfnParser.parsePropDefValue(
+                        result.css.valuespaces[vs].value);
+                } catch (e) {
+                    result.css.valuespaces[vs].valueParseError = e.message;
+                }
+            }
+        });
+
+        // Copy results back into initial spec object
+        spec.crawled = result.crawled;
+        spec.title = result.title ? result.title : spec.title;
+        spec.date = result.date;
+        spec.links = result.links;
+        spec.refs = result.refs;
+        spec.idl = result.idl;
+        spec.css = result.css;
+    }
+    catch (err) {
+        spec.title = spec.title || '[Could not be determined, see error]';
+        spec.error = err.toString() + (err.stack ? ' ' + err.stack : '');
+    }
+
+    return spec;
 }
 
 
@@ -301,176 +242,48 @@ async function crawlSpec(spec, crawlOptions) {
 async function crawlList(speclist, crawlOptions, resultsPath) {
     crawlOptions = crawlOptions || {};
 
-    async function crawlSpecInChildProcess(spec) {
-        return new Promise(resolve => {
-            let resolved = false;
-            let timeout = null;
-
-            function reportSuccess(result) {
-                if (resolved) {
-                    console.warn('Got a second resolution for crawl in a child process');
-                    return;
-                }
-                resolved = true;
-                clearTimeout(timeout);
-                resolve(result);
-            }
-
-            function reportError(err) {
-                if (resolved) {
-                    console.warn('Got a second error for crawl in a child process');
-                    return;
-                }
-                resolved = true;
-                resolve(Object.assign(spec, {
-                    error: err.toString() + (err.stack ? ' ' + err.stack : '')
-                }));
-            }
-
-            // Spawn a child process
-            // NB: passing the spec URL is useless but gives useful info when
-            // looking at processes during debugging in the task manager
-            // NB: all fetch requests are processed by the parent process,
-            // see fetch.js for details
-            let child = fork(path.join(__dirname, 'crawl-specs.js'), [
-                    '--child', spec.url, (crawlOptions.publishedVersion ? 'tr' : 'ed')
-                ]);
-            child.on('message', msg => {
-                if (resolved) {
-                    return;
-                }
-                if (msg.type === 'result') {
-                    reportSuccess(msg.result);
-                }
-                else if (msg.cmd === 'fetch') {
-                    fetch(msg.url, msg.options)
-                        .then(_ => {
-                            if (resolved) {
-                                return;
-                            }
-                            child.send({
-                                type: 'fetch',
-                                reqId: msg.reqId
-                            });
-                        })
-                        .catch(err => {
-                            if (resolved) {
-                                return;
-                            }
-                            child.send({
-                                type: 'fetch',
-                                reqId: msg.reqId,
-                                err: err.toString()
-                            })
-                        });
-                }
-            });
-            child.once('exit', code => {
-                clearTimeout(timeout);
-                if (code && (code !== 0)) {
-                    reportError(new Error(`Crawl exited with code ${code}`));
-                }
-                else if (!resolved) {
-                    reportError(new Error(`Crawl exited without sending result`));
-                }
-            });
-
-            timeout = setTimeout(_ => {
-                console.warn(spec.url, 'Crawl timeout');
-                reportError(new Error('Crawl took too long'));
-                child.kill();
-            }, 90000);
-
-            child.send(spec);
+    const list = await createInitialSpecDescriptions(speclist);
+    const listAndPromise = list.map(spec => {
+        let resolve = null;
+        let reject = null;
+        let readyToCrawl = new Promise((resolveFunction, rejectFunction) => {
+            resolve = resolveFunction;
+            reject = rejectFunction;
         });
+        return { spec, readyToCrawl, resolve, reject };
+    });
+
+    // In debug mode, specs are processed one by one. In normal mode,
+    // specs are processing in chunks
+    const chunkSize = Math.min((crawlOptions.debug ? 1 : 4), list.length);
+
+    let pos = 0;
+    function flagNextSpecAsReadyToCrawl() {
+        if (pos < listAndPromise.length) {
+            listAndPromise[pos].resolve();
+            pos += 1;
+        }
+    }
+    for (let i = 0; i < chunkSize; i++) {
+        flagNextSpecAsReadyToCrawl();
     }
 
-    return createInitialSpecDescriptions(speclist)
-        .then(list => {
-            // Process specs in chunks not to create too many child processes
-            // at once
-            return new Promise(resolve => {
-                const chunkSize = 4;
-                let results = [];
-                let pos = 0;
-                let running = 0;
+    const nbStr = '' + listAndPromise.length;
+    async function crawlSpecAndPromise(specAndPromise, idx) {
+        await specAndPromise.readyToCrawl;
+        const spec = specAndPromise.spec;
+        const logCounter = ('' + (idx + 1)).padStart(nbStr.length, ' ') + '/' + nbStr;
+        console.log(`${logCounter} - ${spec.url} - crawling`);
+        const result = await crawlSpec(spec, crawlOptions);
+        console.log(`${logCounter} - ${spec.url} - done`);
+        flagNextSpecAsReadyToCrawl();
+        return result;
+    }
 
-                // Process the next spec in the list
-                // and report where all specs have been run
-                async function crawlOneMoreSpec(result) {
-                    if (pos < list.length) {
-                        running += 1;
-                        crawlSpecInChildProcess(list[pos], crawlOptions)
-                            .then(result => {
-                                if (!result.crawled) {
-                                    result.crawled = result.latest;
-                                }
-                                results.push(result);
-                                running -= 1;
-                                crawlOneMoreSpec();
-                            });
-                        pos += 1;
-                    }
-                    else if (running === 0) {
-                        // No more spec to crawl, and no more running spec
-                        running = -1;
-                        resolve(results);
-                    }
-                }
-
-                // Process the first chunk
-                for (let i = 0; i < chunkSize; i += 1) {
-                    crawlOneMoreSpec();
-                }
-            });
-        });
+    const results = await Promise.all(listAndPromise.map(crawlSpecAndPromise));
+    return results;
 }
 
-
-function getShortname(spec) {
-  if (spec.shortname) {
-    // do not include versionning, see also:
-    // https://github.com/foolip/day-to-day/blob/d336df7d08d57204a68877ec51866992ea78e7a2/build/specs.js#L176
-    if (spec.shortname.startsWith('css3')) {
-      if (spec.shortname === 'css3-background') {
-        return 'css-backgrounds'; // plural
-      }
-      else {
-        return spec.shortname.replace('css3', 'css');
-      }
-    }
-    else {
-      return spec.shortname.replace(/-?[\d\.]*$/, '');
-    }
-  }
-  const whatwgMatch = spec.url.match(/\/\/(.*)\.spec\.whatwg\.org\/$/);
-  if (whatwgMatch) {
-    return whatwgMatch[1];
-  }
-  const khronosMatch = spec.url.match(/https:\/\/www\.khronos\.org\/registry\/webgl\/specs\/latest\/([12])\.0\/$/);
-  if (khronosMatch) {
-    return "webgl" + khronosMatch[1];
-  }
-  const extensionMatch = spec.url.match(/\/.*\.github\.io\/([^\/]*)\/extension\.html$/);
-  if (extensionMatch) {
-    return extensionMatch[1] + '-extension';
-  }
-  const githubMatch = spec.url.match(/\/.*\.github\.io\/(?:webappsec-)?([^\/]+)\//);
-  if (githubMatch) {
-    if (githubMatch[1] === 'ServiceWorker') {
-        // Exception to the rule for service workers ED
-        return 'service-workers';
-    }
-    else {
-        return githubMatch[1];
-    }
-  }
-  const cssDraftMatch = spec.url.match(/\/drafts\.(?:csswg|fxtf|css-houdini)\.org\/([^\/]*)\//);
-  if (cssDraftMatch) {
-    return cssDraftMatch[1].replace(/-[\d\.]*$/, '');
-  }
-  return spec.url.replace(/[^-a-z0-9]/g, '');
-}
 
 /**
  * Append the resulting data to the given file.
@@ -557,38 +370,23 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
             }));
     };
 
-    // Helper function that returns true when the given spec is is the latest
-    // level of that spec in the crawl for the given type of content
-    // ("css" or "idl")
-    const isLatestLevel = (spec, flag) => {
-        if (!spec.url.match(/-\d\/$/)) {
-            // Handle special CSS 2.1 / CSS 2.2 spec which does not
-            // follow the same naming conventions as other CSS specs
-            return !spec.url.match(/CSS2\/$/i) ||
-                !data.find(s => s.url.match(/CSS22\/$/i));
-        }
-        let level = spec.url.match(/-(\d)\/$/)[1];
-        let moreRecent = data.find(s =>
-            s.flags[flag] &&
-            (getShortname(s) === getShortname(spec)) &&
-            s.url.match(/-\d\/$/) &&
-            (s.url.match(/-(\d)\/$/)[1] > level));
-        return !moreRecent;
-    };
-
     // Save IDL dumps for the latest level of a spec to the idl folder
+    function defineIDLContent(spec) {
+        return spec.idl && spec.idl.idl;
+    }
     await Promise.all(data
-        .filter(spec => spec.flags.idl && spec.idl && spec.idl.idl)
-        .filter(spec => isLatestLevel(spec, 'idl'))
+        .filter(spec => isLatestLevelThatPasses(spec, data, defineIDLContent))
         .map(saveIdl));
 
     // Save CSS dumps for the latest level of a spec to the css folder
-    await Promise.all(data
-        .filter(spec => spec.flags.css && spec.css && (
+    function defineCSSContent(spec) {
+        return spec.css && (
             (Object.keys(spec.css.properties || {}).length > 0) ||
             (Object.keys(spec.css.descriptors || {}).length > 0) ||
-            (Object.keys(spec.css.valuespaces || {}).length > 0)))
-        .filter(spec => isLatestLevel(spec, 'css'))
+            (Object.keys(spec.css.valuespaces || {}).length > 0));
+    }
+    await Promise.all(data
+        .filter(spec => isLatestLevelThatPasses(spec, data, defineCSSContent))
         .map(saveCss));
 
     // Save all results to the crawl.json file
@@ -630,20 +428,13 @@ function assembleListOfSpec(filename, nested) {
         crawlInfo = { list: crawlInfo };
     }
     crawlInfo.list = crawlInfo.list
-        .map(u => (typeof u === 'string') ? Object.assign({ url: u }) : u)
         .map(u => u.file ? assembleListOfSpec(path.resolve(path.dirname(filename), u.file), true) : u);
     crawlInfo.list = flatten(crawlInfo.list);
-    if (filename.match(/-css/)) {
-        crawlInfo.list.forEach(u => u.css = true);
-    }
-    if (filename.match(/-idl/)) {
-        crawlInfo.list.forEach(u => u.idl = true);
-    }
-    crawlInfo.list = crawlInfo.list.filter((u, i) => {
-        let first = crawlInfo.list.find(s => s.url === u.url);
-        first.css = first.css || u.css;
-        first.idl = first.idl || u.idl;
-        return first === u;
+    crawlInfo.list = crawlInfo.list.filter((u, uidx) => {
+        const url = ((typeof u === 'string') ? u.split(' ')[0] : u.url);
+        const firstIndex = crawlInfo.list.findIndex(s =>
+            ((typeof s === 'string') ? s.split(' ')[0] : s.url) === url);
+        return firstIndex === uidx;
     });
     return (nested ? crawlInfo.list : crawlInfo);
 }
@@ -694,27 +485,18 @@ if (require.main === module) {
     var speclistPath = process.argv[2];
     var resultsPath = process.argv[3];
     var crawlOptions = {
-        publishedVersion: (process.argv[4] === 'tr')
+        publishedVersion: (process.argv[4] === 'tr'),
+        debug: (process.argv[4] === 'debug') || (process.argv[5] === 'debug')
     };
 
-    if (speclistPath === '--child') {
-        // Program run as child process of a parent crawl, wait for the spec
-        // info and send the result using message passing
-        process.once('message', spec =>
-            crawlSpec(spec, crawlOptions)
-                .then(result => {
-                    process.send({ type: 'result', result });
-                    process.removeAllListeners('message');
-                }));
-    }
-    else {
-        // Process the file and crawl specifications it contains
-        crawlFile(speclistPath, resultsPath, crawlOptions)
-            .then(data => {
-                console.log('finished');
-            })
-            .catch(err => {
-                console.error(err);
-            });
-    }
+    // Process the file and crawl specifications it contains
+    crawlFile(speclistPath, resultsPath, crawlOptions)
+        .then(data => {
+            console.log('finished');
+            process.exit(0);
+        })
+        .catch(err => {
+            console.error(err);
+            process.exit(1);
+        });
 }

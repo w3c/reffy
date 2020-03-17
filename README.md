@@ -115,13 +115,13 @@ It should be possible to crawl specs other than CSS and JS specs, but note Reffy
 Given the URL of a spec, the crawler basically goes through the following steps:
 
 1. If the URL looks like `http(s)://www.w3.org/TR/[something]`, the crawler extracts the shortname of the specification, and sends a couple of requests to the W3C API to retrieve the URL of the Editor's Draft, or the URL of the latest published version if the URL of the Editor's Draft could not be found. This new URL replaces the given one.
-2. Fetch the URL. Note Reffy uses a network cache on the local filesystem, and sends conditional HTTP requests if the URL is already in that cache
-3. Render the response with jsdom, which should create a `Window` object.
-4. If the document contains a "head" section that includes a link whose label looks like "single page", go back to step 2 and load the target of that link instead. This makes the crawler load the single page version of multi-page specifications such as HTML5.
-5. If the document uses ReSpec, let ReSpec run in JSDOM and process the generated HTML.
+2. Load the URL through Puppeteer.
+3. If the document contains a "head" section that includes a link whose label looks like "single page", go back to step 2 and load the target of that link instead. This makes the crawler load the single page version of multi-page specifications such as HTML5.
+4. If the document is a multi-page spec without a "single page" version, load the individual subpage and add their content to the bottom of the first page to create a single page version.
+5. If the document uses ReSpec, let ReSpec finish its generation work.
 6. Run internal tools on the generated document to build the relevant information.
 
-The crawler processes 10 specifications at a time. Network and parsing errors should be reported in the crawl results.
+The crawler processes 4 specifications at a time. Network and parsing errors should be reported in the crawl results.
 
 ### Config parameters
 
@@ -137,9 +137,7 @@ Optional parameters:
 Some rules or exceptions to the rule are hardcoded. In particular:
 
 * The URL of some of the Editor's Drafts returned by the W3C API can be invalid, or a document that when loaded redirects to another. The list is hardcoded in the `completeWithInfoFromW3CApi`method in `src/cli/crawl-specs.js`. The crawler loads the latest published version for these specs.
-* Some specs cannot be loaded with jsdom for the time being, typically some specs that use ReSpec's markdown format. This should hopefully be fixed soon. The list is hardcoded in the `completeWithInfoFromW3CApi`method in `src/cli/crawl-specs.js`.
-* Some specs load external scripts that may not run properly in jsdom. Such scripts are ignored. See details in `download` function in `src/lib/jsdom-monkeypatch.js`.
-* The heuristics used to find the "single page" link are defined in the `loadSpecificationFromHtml` function in `util.js`. They may need to be extended to support other cases.
+* The heuristics used to find the "single page" link are defined in the `processSpecification` function in `util.js`. They may need to be extended to support other cases.
 * For each spec, the crawler reports a list of URLs which may be considered as equivalent for the purpose of referencing. This list typically includes the initial shortname URL for W3C specs, the dated URL of the latest published version of the spec, and the URL of the Editor's Draft. For a couple of specs, it also includes links to previous or alternate "versions" of the spec. For instance, the versions of the HTML5.1 spec include the HTML5 W3C Recommendation and the WHATWG HTML Living Standard. The study tool uses that information when it checks the list of references to find missing ones. Ideally, the W3C API would return up-to-date information such as "supercedes" to clarify the relationship between versions of the same spec. The mapping is hardcoded in `addKnownVersions` in `src/lib/util.js`.
 
 ## Contributing
