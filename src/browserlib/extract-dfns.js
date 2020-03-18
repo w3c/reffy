@@ -12,6 +12,8 @@
  * - for: The list of namespaces for the definition
  * - exported: true when definition can be referenced by other specifications,
  *     false when it should be viewed as a local definition only.
+ * - informative: true when definition appears in an informative section,
+ *     false if it is normative
  *
  * @function
  * @public
@@ -69,6 +71,15 @@ export default function () {
       exported: el.hasAttribute('data-export') ||
         (!el.hasAttribute('data-noexport') &&
           el.hasAttribute('data-dfn-type') &&
-          el.getAttribute('data-dfn-type') !== 'dfn')
+          el.getAttribute('data-dfn-type') !== 'dfn'),
+
+      // Whether the term is defined in a normative/informative section,
+      // provided the wrapping section follows usual patterns:
+      // https://github.com/w3c/respec/blob/develop/src/core/utils.js#L69
+      // https://tabatkins.github.io/bikeshed/#metadata-informative-classes
+      informative: !!el.closest([
+        '.informative', '.note', '.issue', '.example', '.ednote', '.practice',
+        '.introductory', '.non-normative'
+      ].join(','))
     }));
 }

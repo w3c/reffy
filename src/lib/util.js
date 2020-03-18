@@ -111,7 +111,7 @@ async function processSpecification(spec, callback, args, counter) {
 
     // Inner function that returns a network interception method suitable for
     // a given CDP session.
-    function interceptRequest(cdp) {
+    function interceptRequest(cdp, controller) {
         return async function ({ requestId, request }) {
             try {
                 if ((request.method !== 'GET') ||
@@ -138,7 +138,7 @@ async function processSpecification(spec, callback, args, counter) {
                 }
 
                 // console.log(`intercept ${request.url}`);
-                let response = await fetch(request.url, { signal: abortController.signal });
+                let response = await fetch(request.url, { signal: controller.signal });
                 let body = await response.buffer();
 
                 // console.log(`intercept ${request.url} - done`);
@@ -155,7 +155,7 @@ async function processSpecification(spec, callback, args, counter) {
                 });
             }
             catch (err) {
-                if (abortController.signal.aborted) {
+                if (controller.signal.aborted) {
                     // All is normal, processing was over, page and CDP session
                     // have been closed, and network requests have been aborted
                     // console.log(`intercept ${request.url} - aborted`);
@@ -169,7 +169,7 @@ async function processSpecification(spec, callback, args, counter) {
                     await cdp.send('Fetch.continueRequest', { requestId });
                 }
                 catch (err) {
-                    if (!abortController.signal.aborted) {
+                    if (!controller.signal.aborted) {
                         console.warn(`Fall back to regular network request for ${request.url} failed`, err);
                     }
                 }
@@ -184,7 +184,7 @@ async function processSpecification(spec, callback, args, counter) {
         // that makes use of the local file cache.
         const cdp = await page.target().createCDPSession();
         await cdp.send('Fetch.enable');
-        cdp.on('Fetch.requestPaused', interceptRequest(cdp));
+        cdp.on('Fetch.requestPaused', interceptRequest(cdp, abortController));
 
         // Quick and dirty workaround to re-create the "window.crypto.digest"
         // function that Respec needs (context is seen as unsecure because we're
@@ -223,34 +223,50 @@ async function processSpecification(spec, callback, args, counter) {
 
         // Handle remaining multi-page specs manually, merging all subpages
         // into the main page to create a single-page spec.
-        // TODO: Move this logic to browser-specs
+        // TODO: Move the page extraction logic to browser-specs
         let multiPagesRules = {
-            'https://html.spec.whatwg.org/multipage/': '#contents + ol > li > a',
-            'https://www.w3.org/TR/CSS2/': '.quick.toc .tocxref',
-            'https://www.w3.org/TR/CSS22/': '#toc .tocxref',
-            'https://drafts.csswg.org/css2/': '#toc .tocline1 > .tocxref',
-            'https://www.w3.org/TR/SVG2/': '#toc > ol > li > a',
-            'https://svgwg.org/svg2-draft/': '#toc > ol > li > a',
+            'https://html.spec.whatwg.org/multipage/': '#contents + .toc a[href]',
+            'https://www.w3.org/TR/CSS2/': '.quick.toc a[href]',
+            'https://www.w3.org/TR/CSS22/': '#toc a[href]',
+            'https://drafts.csswg.org/css2/': '#toc a[href]',
+            'https://www.w3.org/TR/SVG2/': '#toc a[href]',
+            'https://svgwg.org/svg2-draft/': '#toc a[href]',
         };
         if (multiPagesRules[page.url()]) {
-            let urls = await page.$$eval(multiPagesRules[page.url()], links =>
-                links.map(link => (new URL(link.getAttribute('href'), link.ownerDocument.baseURI)).toString()));
+            // Extract URLs that appear in the TOC and drop duplicates
+            const tocUrls = await page.$$eval(multiPagesRules[page.url()],
+                links => links.map(link =>
+                    (new URL(link.getAttribute('href'), link.ownerDocument.baseURI)).toString()));
+            const pageUrls = tocUrls
+                .map(url => url.split('#')[0])
+                .filter(url => !!url)
+                .filter((url, idx, list) => list.findIndex(u => u === url) === idx);
             const pages = [];
-            for (const url of urls) {
+            for (const url of pageUrls) {
+                const subAbort = new AbortController();
                 const subPage = await browser.newPage();
                 const subCdp = await page.target().createCDPSession();
                 await subCdp.send('Fetch.enable');
-                subCdp.on('Fetch.requestPaused', interceptRequest(subCdp));
-                await subPage.goto(url, options);
-                const html = await subPage.evaluate(() => { return document.body.innerHTML; });
-                await subCdp.detach();
-                await subPage.close();
-                pages.push({ url, html });
+                subCdp.on('Fetch.requestPaused', interceptRequest(subCdp, subAbort));
+                try {
+                    await subPage.goto(url, options);
+                    const html = await subPage.evaluate(() => {
+                        return document.body.outerHTML
+                            .replace(/<body/, '<section')
+                            .replace(/<\/body/, '</section');
+                    });
+                    pages.push({ url, html });
+                }
+                finally {
+                    subAbort.abort();
+                    await subCdp.detach();
+                    await subPage.close();
+                }
             }
             await page.evaluate(pages => {
                 for (const subPage of pages) {
                     const section = document.createElement('section');
-                    section.setAttribute('data-reffy-page', subPage.url)
+                    section.setAttribute('data-reffy-page', subPage.url);
                     section.innerHTML = subPage.html;
                     document.body.appendChild(section);
                 }
@@ -294,6 +310,11 @@ async function processSpecification(spec, callback, args, counter) {
         // Run the callback method in the browser context
         const results = await page.evaluate(callback, ...args);
 
+        // Pending network requests may still be in the queue, flag the page
+        // as closed not to send commands on a CDP session that's no longer
+        // attached to anything
+        abortController.abort();
+
         // Close CDP session and page
         // Note that gets done no matter what when browser.close() gets called.
         await cdp.detach();
@@ -302,9 +323,7 @@ async function processSpecification(spec, callback, args, counter) {
         return results;
     }
     finally {
-        // Pending network requests may still be in the queue, flag the page
-        // as closed not to send commands on a CDP session that's no longer
-        // attached to anything
+        // Signal abortion again (in case an exception was thrown)
         abortController.abort();
 
         // Kill the browser instance

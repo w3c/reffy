@@ -316,9 +316,8 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
             if (err.code !== 'EEXIST') {
                 throw err;
             }
-            return subfolder;
         }
-
+        return subfolder;
     }
     const idlFolder = await getSubfolder('idl');
     const cssFolder = await getSubfolder('css');

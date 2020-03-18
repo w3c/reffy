@@ -122,10 +122,12 @@
   function extractRespecIdl() {
       // IDL filter voluntarily similar to that defined in Respec to exclude
       // IDL defined with an `exclude` class:
-      // https://github.com/w3c/respec/blob/develop/src/core/webidl-index.js#L34
-      // https://github.com/w3c/respec/blob/develop/src/core/utils.js#L100
-      const nonNormativeSelector =
-          '.informative, .note, .issue, .example, .ednote, .practice';
+      // https://github.com/w3c/respec/blob/develop/src/core/utils.js#L69
+      // https://tabatkins.github.io/bikeshed/#metadata-informative-classes
+      const nonNormativeSelector = [
+          '.informative', '.note', '.issue', '.example', '.ednote', '.practice',
+          '.introductory', '.non-normative'
+      ].join(',');
 
       // Helper function that trims individual lines in an IDL block,
       // removing as much space as possible from the beginning of the page
@@ -158,17 +160,9 @@
               .join('\n');
       };
 
+      // Detect the IDL index appendix if there's one (to exclude it)
       const idlEl = document.querySelector('#idl-index pre') ||
-          document.querySelector('#chapter-idl pre');  // Used in SVG 2 draft
-
-      // TEMP (2019-07-25): Don't use the IDL index as long as we cannot run
-      // the latest version of ReSpec, because the pinned version fails to
-      // parse recent IDL constructs, see:
-      // https://github.com/tidoust/reffy/issues/134
-      // https://github.com/tidoust/reffy-reports/issues/34
-      /*if (idlEl && false) {
-          return idlEl.textContent;
-      }*/
+          document.querySelector('.chapter-idl pre'); // SVG 2 draft
 
       let idl = [
           'pre.idl:not(.exclude):not(.extract):not(#actual-idl-index)',
@@ -455,6 +449,8 @@
    * - for: The list of namespaces for the definition
    * - exported: true when definition can be referenced by other specifications,
    *     false when it should be viewed as a local definition only.
+   * - informative: true when definition appears in an informative section,
+   *     false if it is normative
    *
    * @function
    * @public
@@ -512,7 +508,16 @@
         exported: el.hasAttribute('data-export') ||
           (!el.hasAttribute('data-noexport') &&
             el.hasAttribute('data-dfn-type') &&
-            el.getAttribute('data-dfn-type') !== 'dfn')
+            el.getAttribute('data-dfn-type') !== 'dfn'),
+
+        // Whether the term is defined in a normative/informative section,
+        // provided the wrapping section follows usual patterns:
+        // https://github.com/w3c/respec/blob/develop/src/core/utils.js#L69
+        // https://tabatkins.github.io/bikeshed/#metadata-informative-classes
+        informative: !!el.closest([
+          '.informative', '.note', '.issue', '.example', '.ednote', '.practice',
+          '.introductory', '.non-normative'
+        ].join(','))
       }));
   }
 
