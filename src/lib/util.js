@@ -237,10 +237,8 @@ async function processSpecification(spec, callback, args, counter) {
             const tocUrls = await page.$$eval(multiPagesRules[page.url()],
                 links => links.map(link =>
                     (new URL(link.getAttribute('href'), link.ownerDocument.baseURI)).toString()));
-            const pageUrls = tocUrls
-                .map(url => url.split('#')[0])
-                .filter(url => !!url)
-                .filter((url, idx, list) => list.findIndex(u => u === url) === idx);
+            const pageUrls = new Set(
+                tocUrls.map(url => url.split('#')[0]).filter(url => !!url));
             const pages = [];
             for (const url of pageUrls) {
                 const subAbort = new AbortController();
