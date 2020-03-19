@@ -447,8 +447,8 @@
    * - type: The definition type. One of the values in
    *     https://tabatkins.github.io/bikeshed/#dfn-types
    * - for: The list of namespaces for the definition
-   * - exported: true when definition can be referenced by other specifications,
-   *     false when it should be viewed as a local definition only.
+   * - access: "public" when definition can be referenced by other specifications,
+   *     "private" when it should be viewed as a local definition.
    * - informative: true when definition appears in an informative section,
    *     false if it is normative
    *
@@ -503,12 +503,13 @@
           el.getAttribute('data-dfn-for').split(/,(?![^\(]*\))/).map(s => s.trim()) :
           [],
 
-        // Definition is exported if explictly marked as such or if export has not
-        // been explicitly disallowed and its type is not "dfn"
-        exported: el.hasAttribute('data-export') ||
-          (!el.hasAttribute('data-noexport') &&
-            el.hasAttribute('data-dfn-type') &&
-            el.getAttribute('data-dfn-type') !== 'dfn'),
+        // Definition is public if explictly marked as exportable or if export has
+        // not been explicitly disallowed and its type is not "dfn"
+        access: (el.hasAttribute('data-export') ||
+            (!el.hasAttribute('data-noexport') &&
+              el.hasAttribute('data-dfn-type') &&
+              el.getAttribute('data-dfn-type') !== 'dfn')) ?
+          'public' : 'private',
 
         // Whether the term is defined in a normative/informative section,
         // provided the wrapping section follows usual patterns:
