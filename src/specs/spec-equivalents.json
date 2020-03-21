@@ -10,7 +10,7 @@
     "https://www.w3.org/TR/workers/": [
         "https://html.spec.whatwg.org/"
     ],
-    "https://html.spec.whatwg.org/": [
+    "https://html.spec.whatwg.org/multipage/": [
         "https://w3c.github.io/html/",
         "https://www.w3.org/TR/html/",
         "https://www.w3.org/TR/html5/",
