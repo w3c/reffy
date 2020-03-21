@@ -380,14 +380,8 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
             dfns: spec.dfns
         };
         try {
-            // Note spec.shortname is actually the shortname with the version.
-            // If set, we'll use that directly because "getShortname" would
-            // strip that version number. Otherwise, we can call "getShortname"
-            // as it will actually not strip the version number
-            // (the getShortname logic is confusing, this will get fixed when
-            // switching over to browser-specs)
             await fs.promises.writeFile(
-                path.join(dfnsFolder, (spec.shortname || getShortname(spec)) + '.json'),
+                path.join(dfnsFolder, getShortname(spec, { keepLevel: true }) + '.json'),
                 JSON.stringify(dfns, null, 2));
         }
         catch (err) {

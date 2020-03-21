@@ -228,6 +228,7 @@ async function processSpecification(spec, callback, args, counter) {
             'https://html.spec.whatwg.org/multipage/': '#contents + .toc a[href]',
             'https://www.w3.org/TR/CSS2/': '.quick.toc a[href]',
             'https://www.w3.org/TR/CSS22/': '#toc a[href]',
+            'http://dev.w3.org/csswg/css2/': '#toc a[href]',
             'https://drafts.csswg.org/css2/': '#toc a[href]',
             'https://www.w3.org/TR/SVG2/': '#toc a[href]',
             'https://svgwg.org/svg2-draft/': '#toc a[href]',
@@ -441,13 +442,15 @@ function completeWithInfoFromW3CApi(spec, key) {
  * @private
  * @param {Object} spec The specification object with a `url` key and optionally
  *   a `shortname` key previously extracted by `completeWithShortName`.
+ * @param {Object} options Options. Set "keepLevel" property to true to keep the
+ *   level in the returned name for TR and CSS specs.
  * @return {String} a short identifier suitable for use in URLs and filenames.
  */
-function getShortname(spec) {
+function getShortname(spec, options) {
+    options = options || {};
     if (spec.shortname) {
-        // do not include versionning, see also:
-        // https://github.com/foolip/day-to-day/blob/d336df7d08d57204a68877ec51866992ea78e7a2/build/specs.js#L176
         if (spec.shortname.startsWith('css3')) {
+            // Handle old CSS names and exception
             if (spec.shortname === 'css3-background') {
                 return 'css-backgrounds'; // plural
             }
@@ -455,7 +458,12 @@ function getShortname(spec) {
                 return spec.shortname.replace('css3', 'css');
             }
         }
+        else if (options.keepLevel) {
+            return spec.shortname;
+        }
         else {
+            // do not include versionning, see also:
+            // https://github.com/foolip/day-to-day/blob/d336df7d08d57204a68877ec51866992ea78e7a2/build/specs.js#L176
             return spec.shortname.replace(/-?[\d\.]*$/, '');
         }
     }
@@ -483,7 +491,12 @@ function getShortname(spec) {
     }
     const cssDraftMatch = spec.url.match(/\/drafts\.(?:csswg|fxtf|css-houdini)\.org\/([^\/]*)\//);
     if (cssDraftMatch) {
-        return cssDraftMatch[1].replace(/-[\d\.]*$/, '');
+        if (options.keepLevel) {
+            return cssDraftMatch[1];
+        }
+        else {
+            return cssDraftMatch[1].replace(/-[\d\.]*$/, '');
+        }
     }
     const svgDraftMatch = spec.url.match(/\/svgwg\.org\/svg2-draft\//);
     if (svgDraftMatch) {
