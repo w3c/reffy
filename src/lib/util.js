@@ -293,7 +293,7 @@ async function processSpecification(spec, callback, args, counter) {
                 }
                 else if (usesRespec) {
                     await sleep(1000);
-                    await isReady();
+                    await isReady(counter + 1);
                 }
             }
 
