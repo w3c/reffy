@@ -3,6 +3,7 @@ config.json
 .cache
 reports/tr/crawl.json
 reports/tr/css
+reports/tr/dfns
 reports/tr/idl
 reports/tr/index.md
 reports/tr/index.html
@@ -14,6 +15,7 @@ reports/tr/diffnew.md
 reports/tr/idl
 reports/ed/crawl.json
 reports/ed/css
+reports/ed/dfns
 reports/ed/index.md
 reports/ed/index.html
 reports/ed/perissue.md

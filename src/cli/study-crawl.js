@@ -218,8 +218,11 @@ function studyCrawlResults(results, specsToInclude) {
                         var refs = idlNamesIndex[name].map(filterSpecInfo);
                         var ref = null;
                         if (spec.refs && spec.refs.normative) {
-                            ref = refs.find(s => !!spec.refs.normative.find(r =>
-                                canonicalizesTo(r.url, s.url, useEquivalents)));
+                            ref = refs.find(s => {
+                                const canon = canonicalizeUrl(s.url, useEquivalents);
+                                return !!spec.refs.normative.find(r =>
+                                    canonicalizesTo(r.url, canon, useEquivalents));
+                            });
                         }
                         return (ref ? null : {
                             name,

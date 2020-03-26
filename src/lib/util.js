@@ -111,7 +111,7 @@ async function processSpecification(spec, callback, args, counter) {
 
     // Inner function that returns a network interception method suitable for
     // a given CDP session.
-    function interceptRequest(cdp) {
+    function interceptRequest(cdp, controller) {
         return async function ({ requestId, request }) {
             try {
                 if ((request.method !== 'GET') ||
@@ -138,7 +138,7 @@ async function processSpecification(spec, callback, args, counter) {
                 }
 
                 // console.log(`intercept ${request.url}`);
-                let response = await fetch(request.url, { signal: abortController.signal });
+                let response = await fetch(request.url, { signal: controller.signal });
                 let body = await response.buffer();
 
                 // console.log(`intercept ${request.url} - done`);
@@ -155,7 +155,7 @@ async function processSpecification(spec, callback, args, counter) {
                 });
             }
             catch (err) {
-                if (abortController.signal.aborted) {
+                if (controller.signal.aborted) {
                     // All is normal, processing was over, page and CDP session
                     // have been closed, and network requests have been aborted
                     // console.log(`intercept ${request.url} - aborted`);
@@ -169,7 +169,7 @@ async function processSpecification(spec, callback, args, counter) {
                     await cdp.send('Fetch.continueRequest', { requestId });
                 }
                 catch (err) {
-                    if (!abortController.signal.aborted) {
+                    if (!controller.signal.aborted) {
                         console.warn(`Fall back to regular network request for ${request.url} failed`, err);
                     }
                 }
@@ -184,7 +184,7 @@ async function processSpecification(spec, callback, args, counter) {
         // that makes use of the local file cache.
         const cdp = await page.target().createCDPSession();
         await cdp.send('Fetch.enable');
-        cdp.on('Fetch.requestPaused', interceptRequest(cdp));
+        cdp.on('Fetch.requestPaused', interceptRequest(cdp, abortController));
 
         // Quick and dirty workaround to re-create the "window.crypto.digest"
         // function that Respec needs (context is seen as unsecure because we're
@@ -209,7 +209,7 @@ async function processSpecification(spec, callback, args, counter) {
         // handle "redirection" through JS or meta refresh (which would not
         // have time to run if we used "load").
         const options = {
-            timeout: 60000,
+            timeout: 120000,
             waitUntil: 'networkidle0'
         };
 
@@ -221,54 +221,52 @@ async function processSpecification(spec, callback, args, counter) {
             await page.goto(spec.url, options);
         }
 
-        // If the spec is a multi-page spec and contains a "Single page" link,
-        // extract the URL of the single page and load it instead
-        const singlePageUrl = await page.$$eval('body .head dl a[href]', links => {
-            const link = links.find(link => {
-                const text = (link.textContent || '').toLowerCase();
-                return text.includes('single page') ||
-                    text.includes('single file') ||
-                    text.includes('single-page') ||
-                    text.includes('one-page');
-            });
-            if (link) {
-                const url = new URL(link.getAttribute('href'), document.baseURI);
-                return url.href;
-            }
-            else {
-                return null;
-            }
-        });
-        if (singlePageUrl && (singlePageUrl !== spec.url) && (singlePageUrl !== page.url())) {
-            return processSpecification(singlePageUrl, callback, args, counter + 1);
-        }
-
         // Handle remaining multi-page specs manually, merging all subpages
         // into the main page to create a single-page spec.
+        // TODO: Move the page extraction logic to browser-specs
         let multiPagesRules = {
-            'https://www.w3.org/TR/CSS2/': '.quick.toc .tocxref',
-            'https://www.w3.org/TR/CSS22/': '#toc .tocxref',
-            'https://drafts.csswg.org/css2/': '#toc .tocline1 > .tocxref'
+            'https://html.spec.whatwg.org/multipage/': '#contents + .toc a[href]',
+            'https://www.w3.org/TR/CSS2/': '.quick.toc a[href]',
+            'https://www.w3.org/TR/CSS22/': '#toc a[href]',
+            'http://dev.w3.org/csswg/css2/': '#toc a[href]',
+            'https://drafts.csswg.org/css2/': '#toc a[href]',
+            'https://www.w3.org/TR/SVG2/': '#toc a[href]',
+            'https://svgwg.org/svg2-draft/': '#toc a[href]',
         };
         if (multiPagesRules[page.url()]) {
-            let urls = await page.$$eval(multiPagesRules[page.url()], links =>
-                links.map(link => (new URL(link.getAttribute('href'), link.ownerDocument.baseURI)).toString()));
+            // Extract URLs that appear in the TOC and drop duplicates
+            const tocUrls = await page.$$eval(multiPagesRules[page.url()],
+                links => links.map(link =>
+                    (new URL(link.getAttribute('href'), link.ownerDocument.baseURI)).toString()));
+            const pageUrls = new Set(
+                tocUrls.map(url => url.split('#')[0]).filter(url => !!url));
             const pages = [];
-            for (const url of urls) {
+            for (const url of pageUrls) {
+                const subAbort = new AbortController();
                 const subPage = await browser.newPage();
                 const subCdp = await page.target().createCDPSession();
                 await subCdp.send('Fetch.enable');
-                subCdp.on('Fetch.requestPaused', interceptRequest(subCdp));
-                await subPage.goto(url, options);
-                const html = await subPage.evaluate(() => { return document.body.innerHTML; });
-                await subCdp.detach();
-                await subPage.close();
-                pages.push(html);
+                subCdp.on('Fetch.requestPaused', interceptRequest(subCdp, subAbort));
+                try {
+                    await subPage.goto(url, options);
+                    const html = await subPage.evaluate(() => {
+                        return document.body.outerHTML
+                            .replace(/<body/, '<section')
+                            .replace(/<\/body/, '</section');
+                    });
+                    pages.push({ url, html });
+                }
+                finally {
+                    subAbort.abort();
+                    await subCdp.detach();
+                    await subPage.close();
+                }
             }
             await page.evaluate(pages => {
-                for (const html of pages) {
+                for (const subPage of pages) {
                     const section = document.createElement('section');
-                    section.innerHTML = html;
+                    section.setAttribute('data-reffy-page', subPage.url);
+                    section.innerHTML = subPage.html;
                     document.body.appendChild(section);
                 }
             }, pages);
@@ -311,6 +309,11 @@ async function processSpecification(spec, callback, args, counter) {
         // Run the callback method in the browser context
         const results = await page.evaluate(callback, ...args);
 
+        // Pending network requests may still be in the queue, flag the page
+        // as closed not to send commands on a CDP session that's no longer
+        // attached to anything
+        abortController.abort();
+
         // Close CDP session and page
         // Note that gets done no matter what when browser.close() gets called.
         await cdp.detach();
@@ -319,9 +322,7 @@ async function processSpecification(spec, callback, args, counter) {
         return results;
     }
     finally {
-        // Pending network requests may still be in the queue, flag the page
-        // as closed not to send commands on a CDP session that's no longer
-        // attached to anything
+        // Signal abortion again (in case an exception was thrown)
         abortController.abort();
 
         // Kill the browser instance
@@ -441,13 +442,15 @@ function completeWithInfoFromW3CApi(spec, key) {
  * @private
  * @param {Object} spec The specification object with a `url` key and optionally
  *   a `shortname` key previously extracted by `completeWithShortName`.
+ * @param {Object} options Options. Set "keepLevel" property to true to keep the
+ *   level in the returned name for TR and CSS specs.
  * @return {String} a short identifier suitable for use in URLs and filenames.
  */
-function getShortname(spec) {
+function getShortname(spec, options) {
+    options = options || {};
     if (spec.shortname) {
-        // do not include versionning, see also:
-        // https://github.com/foolip/day-to-day/blob/d336df7d08d57204a68877ec51866992ea78e7a2/build/specs.js#L176
         if (spec.shortname.startsWith('css3')) {
+            // Handle old CSS names and exception
             if (spec.shortname === 'css3-background') {
                 return 'css-backgrounds'; // plural
             }
@@ -455,11 +458,16 @@ function getShortname(spec) {
                 return spec.shortname.replace('css3', 'css');
             }
         }
+        else if (options.keepLevel) {
+            return spec.shortname;
+        }
         else {
+            // do not include versionning, see also:
+            // https://github.com/foolip/day-to-day/blob/d336df7d08d57204a68877ec51866992ea78e7a2/build/specs.js#L176
             return spec.shortname.replace(/-?[\d\.]*$/, '');
         }
     }
-    const whatwgMatch = spec.url.match(/\/\/(.*)\.spec\.whatwg\.org\/$/);
+    const whatwgMatch = spec.url.match(/\/\/(.*)\.spec\.whatwg\.org\//);
     if (whatwgMatch) {
         return whatwgMatch[1];
     }
@@ -483,7 +491,12 @@ function getShortname(spec) {
     }
     const cssDraftMatch = spec.url.match(/\/drafts\.(?:csswg|fxtf|css-houdini)\.org\/([^\/]*)\//);
     if (cssDraftMatch) {
-        return cssDraftMatch[1].replace(/-[\d\.]*$/, '');
+        if (options.keepLevel) {
+            return cssDraftMatch[1];
+        }
+        else {
+            return cssDraftMatch[1].replace(/-[\d\.]*$/, '');
+        }
     }
     const svgDraftMatch = spec.url.match(/\/svgwg\.org\/svg2-draft\//);
     if (svgDraftMatch) {

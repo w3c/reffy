@@ -18,8 +18,7 @@ describe('getShortname', () => {
 
   it('whatwg.org', () => {
     assert.equal(getShortname({ url: 'https://html.spec.whatwg.org/' }), 'html');
-    // multipage HTML spec is not handled correctly:
-    assert.equal(getShortname({ url: 'https://html.spec.whatwg.org/multipage/' }), 'httpshtmlspecwhatwgorgmultipage');
+    assert.equal(getShortname({ url: 'https://html.spec.whatwg.org/multipage/' }), 'html');
     assert.equal(getShortname({ url: 'https://xhr.spec.whatwg.org/' }), 'xhr');
     // idea.whatwg.org not handled:
     assert.equal(getShortname({ url: 'https://great.idea.whatwg.org/' }), 'httpsgreatideawhatwgorg');
@@ -71,6 +70,14 @@ describe('getShortname', () => {
       shortname: 'webrtc',
       url: 'https://w3c.github.io/webrtc-pc/'
     }), 'webrtc');
+  });
+
+  it('keeps level when requested', () => {
+    assert.equal(getShortname({ shortname: 'css-cake-1' }, { keepLevel: true }), 'css-cake-1');
+    assert.equal(getShortname({ shortname: 'xslt5' }, { keepLevel: true }), 'xslt5');
+    assert.equal(getShortname({ url: 'https://drafts.csswg.org/scroll-animations-1/' }, { keepLevel: true }), 'scroll-animations-1');
+    assert.equal(getShortname({ url: 'https://drafts.fxtf.org/compositing-2/' }, { keepLevel: true }), 'compositing-2');
+    assert.equal(getShortname({ url: 'https://drafts.css-houdini.org/worklets-3/' }, { keepLevel: true }), 'worklets-3');
   });
 });
 

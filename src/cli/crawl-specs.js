@@ -162,6 +162,7 @@ async function crawlSpec(spec, crawlOptions) {
                 title: window.reffy.getTitle(),
                 date: window.reffy.getLastModifiedDate(),
                 links: window.reffy.extractLinks(),
+                dfns: window.reffy.extractDefinitions(),
                 refs: window.reffy.extractReferences(),
                 idl: window.reffy.extractWebIdl(),
                 css: window.reffy.extractCSS(),
@@ -219,6 +220,7 @@ async function crawlSpec(spec, crawlOptions) {
         spec.refs = result.refs;
         spec.idl = result.idl;
         spec.css = result.css;
+        spec.dfns = result.dfns;
     }
     catch (err) {
         spec.title = spec.title || '[Could not be determined, see error]';
@@ -305,23 +307,23 @@ async function crawlList(speclist, crawlOptions, resultsPath) {
  * @return {Promise<void>} The promise to have saved the data
  */
 async function saveResults(crawlInfo, crawlOptions, data, folder) {
-    const idlFolder = await new Promise((resolve, reject) => {
-        let idlFolder = path.join(folder, 'idl');
-        fs.mkdir(idlFolder, (err => {
-            if (err && (err.code !== 'EEXIST')) return reject(err);
-            return resolve(idlFolder);
-        }));
-    });
+    async function getSubfolder(name) {
+        let subfolder = path.join(folder, name);
+        try {
+            await fs.promises.mkdir(subfolder);
+        }
+        catch (err) {
+            if (err.code !== 'EEXIST') {
+                throw err;
+            }
+        }
+        return subfolder;
+    }
+    const idlFolder = await getSubfolder('idl');
+    const cssFolder = await getSubfolder('css');
+    const dfnsFolder = await getSubfolder('dfns');
 
-    const cssFolder = await new Promise((resolve, reject) => {
-        let cssFolder = path.join(folder, 'css');
-        fs.mkdir(cssFolder, (err => {
-            if (err && (err.code !== 'EEXIST')) return reject(err);
-            return resolve(cssFolder);
-        }));
-    });
-
-    const saveIdl = async spec => {
+    async function saveIdl(spec) {
         let idlHeader = `
             // GENERATED CONTENT - DO NOT EDIT
             // Content was automatically extracted by Reffy into reffy-reports
@@ -334,26 +336,25 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
             .trim();
         idl = idlHeader + idl + '\n';
         delete spec.idl.idl;
-        await new Promise(resolve => fs.writeFile(
-            path.join(idlFolder, getShortname(spec) + '.idl'),
-            idl,
-            err => {
-                if (err) console.log(err);
-                return resolve();
-            }));
+        try {
+            await fs.promises.writeFile(
+                path.join(idlFolder, getShortname(spec) + '.idl'), idl);
+        }
+        catch (err) {
+            console.log(err);
+        }
     };
 
-    const saveCss = async spec => {
+    async function saveCss(spec) {
         // There are no comments in JSON, so include the spec title+URL as the
         // first property instead.
-        let css = {
+        const css = Object.assign({
             spec: {
                 title: spec.title,
                 url: spec.crawled
             }
-        };
-        Object.assign(css, spec.css);
-        let json = JSON.stringify(css, (key, val) => {
+        }, spec.css);
+        const json = JSON.stringify(css, (key, val) => {
             if ((key === 'parsedValue') || (key === 'valueParseError')) {
                 return undefined;
             }
@@ -361,14 +362,32 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
                 return val;
             }
         }, 2) + '\n';
-        await new Promise(resolve => fs.writeFile(
-            path.join(cssFolder, getShortname(spec) + '.json'),
-            json,
-            err => {
-                if (err) console.log(err);
-                return resolve();
-            }));
+        try {
+            await fs.promises.writeFile(
+                path.join(cssFolder, getShortname(spec) + '.json'), json);
+        }
+        catch (err) {
+            console.log(err);
+        }
     };
+
+    async function saveDfns(spec) {
+        const dfns = {
+            spec: {
+                title: spec.title,
+                url: spec.crawled
+            },
+            dfns: spec.dfns
+        };
+        try {
+            await fs.promises.writeFile(
+                path.join(dfnsFolder, getShortname(spec, { keepLevel: true }) + '.json'),
+                JSON.stringify(dfns, null, 2));
+        }
+        catch (err) {
+            console.log(err);
+        }
+    }
 
     // Save IDL dumps for the latest level of a spec to the idl folder
     function defineIDLContent(spec) {
@@ -388,6 +407,11 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
     await Promise.all(data
         .filter(spec => isLatestLevelThatPasses(spec, data, defineCSSContent))
         .map(saveCss));
+
+    // Save definitions for all specs
+    await Promise.all(data
+        .filter(spec => spec.dfns && spec.dfns.length > 0)
+        .map(saveDfns));
 
     // Save all results to the crawl.json file
     let reportFilename = path.join(folder, 'crawl.json');
