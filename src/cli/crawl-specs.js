@@ -139,14 +139,9 @@ async function createInitialSpecDescriptions(list) {
  */
 async function crawlSpec(spec, crawlOptions) {
     spec.title = spec.title || (spec.shortname ? spec.shortname : spec.url);
-    var bogusEditorDraft = ['webmessaging', 'eventsource', 'webstorage', 'progress-events'];
-    var unparseableEditorDraft = [];
-    spec.crawled = ((
-            crawlOptions.publishedVersion ||
-            bogusEditorDraft.includes(spec.shortname) ||
-            unparseableEditorDraft.includes(spec.shortname)) ?
+    spec.crawled = crawlOptions.publishedVersion ?
         spec.datedUrl || spec.latest || spec.url :
-        spec.edDraft || spec.url);
+        spec.edDraft || spec.url;
     spec.date = "";
     spec.links = [];
     spec.refs = {};
@@ -165,7 +160,7 @@ async function crawlSpec(spec, crawlOptions) {
                 dfns: window.reffy.extractDefinitions(),
                 refs: window.reffy.extractReferences(),
                 idl: window.reffy.extractWebIdl(),
-                css: window.reffy.extractCSS(),
+                css: window.reffy.extractCSS()
             };
         });
 

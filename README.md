@@ -132,13 +132,6 @@ Optional parameters:
 * `cacheRefresh`: set this flag to `never` to tell the crawler to use the cache entry for a URL directly, instead of sending a conditional HTTP request to check whether the entry is still valid. This parameter is typically useful when developing Reffy's code to work offline.
 * `resetCache`: set this flag to `true` to tell the crawler to reset the contents of the local cache when it starts.
 
-### Hardcoded rules
-
-Some rules or exceptions to the rule are hardcoded. In particular:
-
-* The URL of some of the Editor's Drafts returned by the W3C API can be invalid, or a document that when loaded redirects to another. The list is hardcoded in the `completeWithInfoFromW3CApi`method in `src/cli/crawl-specs.js`. The crawler loads the latest published version for these specs.
-* The heuristics used to find the "single page" link are defined in the `processSpecification` function in `util.js`. They may need to be extended to support other cases.
-* For each spec, the crawler reports a list of URLs which may be considered as equivalent for the purpose of referencing. This list typically includes the initial shortname URL for W3C specs, the dated URL of the latest published version of the spec, and the URL of the Editor's Draft. For a couple of specs, it also includes links to previous or alternate "versions" of the spec. For instance, the versions of the HTML5.1 spec include the HTML5 W3C Recommendation and the WHATWG HTML Living Standard. The study tool uses that information when it checks the list of references to find missing ones. Ideally, the W3C API would return up-to-date information such as "supercedes" to clarify the relationship between versions of the same spec. The mapping is hardcoded in `addKnownVersions` in `src/lib/util.js`.
 
 ## Contributing
 
