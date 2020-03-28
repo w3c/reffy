@@ -221,25 +221,17 @@ async function processSpecification(spec, callback, args, counter) {
             await page.goto(spec.url, options);
         }
 
-        // Handle remaining multi-page specs manually, merging all subpages
-        // into the main page to create a single-page spec.
-        // TODO: Move the page extraction logic to browser-specs
-        let multiPagesRules = {
-            'https://html.spec.whatwg.org/multipage/': '#contents + .toc a[href]',
-            'https://www.w3.org/TR/CSS2/': '.quick.toc a[href]',
-            'https://www.w3.org/TR/CSS22/': '#toc a[href]',
-            'http://dev.w3.org/csswg/css2/': '#toc a[href]',
-            'https://drafts.csswg.org/css2/': '#toc a[href]',
-            'https://www.w3.org/TR/SVG2/': '#toc a[href]',
-            'https://svgwg.org/svg2-draft/': '#toc a[href]',
-        };
-        if (multiPagesRules[page.url()]) {
-            // Extract URLs that appear in the TOC and drop duplicates
-            const tocUrls = await page.$$eval(multiPagesRules[page.url()],
-                links => links.map(link =>
-                    (new URL(link.getAttribute('href'), link.ownerDocument.baseURI)).toString()));
-            const pageUrls = new Set(
-                tocUrls.map(url => url.split('#')[0]).filter(url => !!url));
+        // Handle multi-page specs
+        const pageUrls = await page.evaluate(() => {
+            const allPages = [...document.querySelectorAll('.toc a[href]')]
+                .map(link => link.href)
+                .map(url => url.split('#')[0])
+                .filter(url => url !== window.location.href);
+            const pageSet = new Set(allPages);
+            return [...pageSet];
+        });
+
+        if (pageUrls.length > 0) {
             const pages = [];
             for (const url of pageUrls) {
                 const subAbort = new AbortController();
