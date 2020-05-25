@@ -16,7 +16,7 @@ const program = require('commander');
 const version = require('./package.json').version;
 const fs = require('fs');
 const path = require('path');
-const crawlFile = require('./src/cli/crawl-specs.js').crawlFile;
+const crawlSpecs = require('./src/cli/crawl-specs.js').crawlSpecs;
 const studyCrawl = require('./src/cli/study-crawl.js').studyCrawl;
 const generateReport = require('./src/cli/generate-report.js').generateReport;
 const pandoc = require('node-pandoc');
@@ -28,12 +28,10 @@ const pandoc = require('node-pandoc');
 const perspectives = {
   'ed': {
     description: 'Crawls the latest Editor\'s Drafts',
-    specs: 'specs-all.json',
     refCrawl: 'https://tidoust.github.io/reffy-reports/ed/crawl.json'
   },
   'tr': {
     description: 'Crawls the latest published versions of specifications in /TR/ space instead of the latest Editor\'s Drafts',
-    specs: 'specs-all.json',
     publishedVersion: true,
     refCrawl: 'https://tidoust.github.io/reffy-reports/tr/crawl.json'
   }
@@ -69,7 +67,6 @@ program
     }
 
     let debug = cmdObj.debug || program.debug;
-    let specsfile = perspectives[perspective].specs;
     let publishedVersion = perspectives[perspective].publishedVersion;
     let refCrawl = perspectives[perspective].refCrawl;
     let reportFolder = perspectives[perspective].reportFolder ||
@@ -86,8 +83,7 @@ program
       switch (action) {
       case 'crawl':
         promise = promise
-          .then(_ => crawlFile(
-            path.resolve(__dirname, 'src', 'specs', specsfile),
+          .then(_ => crawlSpecs(
             reportFolder,
             { publishedVersion, debug }));
         break;

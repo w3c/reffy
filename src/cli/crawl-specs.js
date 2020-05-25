@@ -11,24 +11,30 @@
  *
  * `node crawl-specs.js [listfile] [crawl folder] [option]`
  *
- * where `listfile` is the name of a JSON file that contains the list of URLs to
- * crawl, `crawl folder` is the name of the folder where the crawl report will
- * be created, and `option` is an optional parameter that can be set to `tr` to
- * tell the crawler to crawl the published version of W3C specifications
+ * where `listfile` is the name of a JSON file that contains the list of specs
+ * to crawl, `crawl folder` is the name of the folder where the crawl report
+ * will be created, and `option` is an optional parameter that can be set to
+ * `tr` to tell the crawler to crawl the published version of W3C specifications
  * instead of the Editor's Draft.
+ *
+ * The JSON file that contains the list of specs to crawl must be an array whose
+ * individual items are either:
+ * 1. a string that gets interpreted as the URL or the shortname of the spec to
+ * crawl. The spec must exist in w3c/browser-specs
+ * 2. an object that follows the w3c/browser-specs model:
+ * https://github.com/w3c/browser-specs#spec-object
  *
  * @module crawler
  */
 
 const fs = require('fs');
 const path = require('path');
+const specs = require('browser-specs');
 const webidlParser = require('./parse-webidl');
 const cssDfnParser = require('../lib/css-grammar-parser');
 const fetch = require('../lib/util').fetch;
 const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
-const completeWithInfoFromW3CApi = require('../lib/util').completeWithInfoFromW3CApi;
-const completeWithShortName = require('../lib/util').completeWithShortName;
-const getShortname = require('../lib/util').getShortname;
+const completeWithAlternativeUrls = require('../lib/util').completeWithAlternativeUrls;
 const isLatestLevelThatPasses = require('../lib/util').isLatestLevelThatPasses;
 const processSpecification = require('../lib/util').processSpecification;
 
@@ -47,88 +53,6 @@ const byURL = (a, b) => a.url.localeCompare(b.url);
 
 
 /**
- * Retrieve the repository for each spec from Specref
- *
- * @function
- * @param {Array} specs The list of specs to enrich
- * @return {Promise<Array>} The same structure, enriched with the URL of the
- *   repository when known.
- */
-function completeWithInfoFromSpecref(specs) {
-    function chunkArray(arr, len) {
-        let chunks = [];
-        let i = 0;
-        let n = arr.length;
-        while (i < n) {
-            chunks.push(arr.slice(i, i += len));
-        }
-        return chunks;
-    }
-
-    const chunks = chunkArray(specs, 20);
-    return Promise.all(
-        chunks.map(chunk => {
-            let specrefUrl = 'https://api.specref.org/reverse-lookup?urls=' +
-                  chunk.map(s => s.latest || s.url).join(',');
-            return fetch(specrefUrl)
-                .then(r =>  r.json())
-                .then(res => {
-                    chunk.forEach(spec => {
-                        let url = spec.latest || spec.url;
-                        if (res[url]) {
-                            if (res[url].repository) {
-                                spec.repository = res[url].repository;
-                            }
-                            if (res[url].title && !spec.title) {
-                                spec.title = res[url].title;
-                            }
-                        }
-                    });
-                })
-                .catch(err => {
-                    console.warn('Specref returned an error', specrefUrl, err);
-                });
-        })
-    ).then(_ => specs);
-}
-
-
-/**
- * Given a list of URLs, create a list of specification descriptions
- *
- * The description will include the URL of the spec, its shortname if possible,
- * the URL of the latest version, and the title of the spec for W3C specs
- *
- * @function
- * @param {Array(String)} list The list of specification URLs
- * @return {Promise<Array(Object)} The promise to get a list of spec
- *  descriptions.
- */
-async function createInitialSpecDescriptions(list) {
-    function createSpecObject(spec) {
-        let res = {
-            url: (typeof spec === 'string') ? spec.split(' ')[0] : (spec.url || 'about:blank')
-        };
-        if ((typeof spec !== 'string') && spec.html) {
-            res.html = spec.html;
-        }
-        res.flags = {
-            delta: (typeof spec === 'string') ?
-                spec.split(' ').includes('delta') :
-                !!spec.delta
-        };
-        return res;
-    }
-
-    return Promise.all(
-        list.map(createSpecObject)
-            .map(completeWithShortName)
-            .map(completeWithInfoFromW3CApi))
-        .then(completeWithInfoFromSpecref);
-}
-
-
-/**
  * Load and parse the given spec.
  *
  * @function
@@ -138,10 +62,9 @@ async function createInitialSpecDescriptions(list) {
  * @return {Promise<Object>} The promise to get a spec object with crawl info
  */
 async function crawlSpec(spec, crawlOptions) {
-    spec.title = spec.title || (spec.shortname ? spec.shortname : spec.url);
     spec.crawled = crawlOptions.publishedVersion ?
-        spec.datedUrl || spec.latest || spec.url :
-        spec.edDraft || spec.url;
+        (spec.release ? spec.release.url : spec.nightly.url) :
+        spec.nightly.url;
     spec.date = "";
     spec.links = [];
     spec.refs = {};
@@ -239,7 +162,7 @@ async function crawlSpec(spec, crawlOptions) {
 async function crawlList(speclist, crawlOptions, resultsPath) {
     crawlOptions = crawlOptions || {};
 
-    const list = await createInitialSpecDescriptions(speclist);
+    const list = speclist.map(completeWithAlternativeUrls);
     const listAndPromise = list.map(spec => {
         let resolve = null;
         let reject = null;
@@ -294,14 +217,12 @@ async function crawlList(speclist, crawlOptions, resultsPath) {
  * latest level.
  *
  * @function
- * @param {Object} crawlInfo Crawl information structure, contains the title
- *   and the list of specs to crawl
  * @param {Object} crawlOptions Crawl options
  * @param {Array(Object)} data The list of specification structures to save
  * @param {String} folder The path to the report folder
  * @return {Promise<void>} The promise to have saved the data
  */
-async function saveResults(crawlInfo, crawlOptions, data, folder) {
+async function saveResults(crawlOptions, data, folder) {
     async function getSubfolder(name) {
         let subfolder = path.join(folder, name);
         try {
@@ -333,7 +254,7 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
         delete spec.idl.idl;
         try {
             await fs.promises.writeFile(
-                path.join(idlFolder, getShortname(spec) + '.idl'), idl);
+                path.join(idlFolder, spec.series.shortname + '.idl'), idl);
         }
         catch (err) {
             console.log(err);
@@ -359,7 +280,7 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
         }, 2) + '\n';
         try {
             await fs.promises.writeFile(
-                path.join(cssFolder, getShortname(spec) + '.json'), json);
+                path.join(cssFolder, spec.series.shortname + '.json'), json);
         }
         catch (err) {
             console.log(err);
@@ -376,7 +297,7 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
         };
         try {
             await fs.promises.writeFile(
-                path.join(dfnsFolder, getShortname(spec, { keepLevel: true }) + '.json'),
+                path.join(dfnsFolder, spec.shortname + '.json'),
                 JSON.stringify(dfns, null, 2));
         }
         catch (err) {
@@ -420,10 +341,7 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
             } catch (e) {}
 
             filedata.type = filedata.type || 'crawl';
-            filedata.title = crawlInfo.title || 'Reffy crawl';
-            if (crawlInfo.description) {
-                filedata.description = crawlInfo.description;
-            }
+            filedata.title = 'Reffy crawl';
             filedata.date = filedata.date || (new Date()).toJSON();
             filedata.options = crawlOptions;
             filedata.stats = {};
@@ -441,43 +359,18 @@ async function saveResults(crawlInfo, crawlOptions, data, folder) {
 }
 
 
-function assembleListOfSpec(filename, nested) {
-    let crawlInfo = requireFromWorkingDirectory(filename);
-    if (Array.isArray(crawlInfo)) {
-        crawlInfo = { list: crawlInfo };
-    }
-    crawlInfo.list = crawlInfo.list
-        .map(u => u.file ? assembleListOfSpec(path.resolve(path.dirname(filename), u.file), true) : u);
-    crawlInfo.list = flatten(crawlInfo.list);
-    crawlInfo.list = crawlInfo.list.filter((u, uidx) => {
-        const url = ((typeof u === 'string') ? u.split(' ')[0] : u.url);
-        const firstIndex = crawlInfo.list.findIndex(s =>
-            ((typeof s === 'string') ? s.split(' ')[0] : s.url) === url);
-        return firstIndex === uidx;
-    });
-    return (nested ? crawlInfo.list : crawlInfo);
-}
-
-
 /**
  * Crawls the specifications listed in the given JSON file and generates a
  * crawl report in the given folder.
  *
  * @function
- * @param {String} speclistPath JSON file that contains the specifications to parse
  * @param {String} resultsPath Folder that is to contain the crawl report
  * @param {Object} options Crawl options
  * @return {Promise<void>} The promise that the crawl will have been made
  */
-function crawlFile(speclistPath, resultsPath, options) {
-    if (!speclistPath || !resultsPath) {
+function crawlSpecs(resultsPath, options) {
+    if (!resultsPath) {
         return Promise.reject('Required folder parameter missing');
-    }
-    let crawlInfo;
-    try {
-        crawlInfo = assembleListOfSpec(speclistPath);
-    } catch (err) {
-        return Promise.reject('Impossible to read ' + speclistPath + ': ' + err);
     }
     try {
         fs.writeFileSync(path.join(resultsPath, 'crawl.json'), '');
@@ -485,31 +378,44 @@ function crawlFile(speclistPath, resultsPath, options) {
         return Promise.reject('Impossible to write to ' + resultsPath + ': ' + err);
     }
 
-    return crawlList(crawlInfo.list, options, resultsPath)
-        .then(results => saveResults(crawlInfo, options, results, resultsPath));
+    function prepareListOfSpecs(list) {
+        return list
+            .map(spec => (typeof spec === 'string') ?
+                specs.find(s => s.url === spec || s.shortname === spec) :
+                spec)
+            .filter(spec => !!spec);
+    }
+
+    const requestedList = (options && options.specFile) ?
+        prepareListOfSpecs(requireFromWorkingDirectory(options.specFile)) :
+        specs;
+
+    return crawlList(requestedList, options, resultsPath)
+        .then(results => saveResults(options, results, resultsPath));
 }
 
 
 /**************************************************
-Export the crawlList method for use as module
+Export methods for use as module
 **************************************************/
 module.exports.crawlList = crawlList;
-module.exports.crawlFile = crawlFile;
+module.exports.crawlSpecs = crawlSpecs;
 
 
 /**************************************************
 Code run if the code is run as a stand-alone module
 **************************************************/
 if (require.main === module) {
-    var speclistPath = process.argv[2];
-    var resultsPath = process.argv[3];
+    var resultsPath = (process.argv[2] && process.argv[2].endsWith('.json')) ?
+            process.argv[3] : process.argv[2];
     var crawlOptions = {
-        publishedVersion: (process.argv[4] === 'tr'),
-        debug: (process.argv[4] === 'debug') || (process.argv[5] === 'debug')
+        specFile: process.argv.find(arg => arg.endsWith('.json')),
+        publishedVersion: !!process.argv.find(arg => arg === 'tr'),
+        debug: !!process.argv.find(arg => arg === 'debug')
     };
 
     // Process the file and crawl specifications it contains
-    crawlFile(speclistPath, resultsPath, crawlOptions)
+    crawlSpecs(resultsPath, crawlOptions)
         .then(data => {
             console.log('finished');
             process.exit(0);
