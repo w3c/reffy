@@ -366,7 +366,7 @@ function completeWithShortName(spec) {
  */
 function completeWithInfoFromW3CApi(spec, key) {
     var shortname = spec.shortname;
-    key = (key && (typeof spec === 'string')) ?
+    key = (key && (typeof key === 'string')) ?
         key :
         requireFromWorkingDirectory('config.json').w3cApiKey;
     var options = {
