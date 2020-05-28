@@ -26,7 +26,6 @@
     "crawl-specs": "./src/cli/crawl-specs.js",
     "extract-webidl": "./src/cli/extract-webidl.js",
     "extract-cssdfn": "./src/cli/extract-cssdfn.js",
-    "find-spec": "./src/cli/find-spec.js",
     "generate-report": "./src/cli/generate-report.js",
     "merge-crawl-results": "./src/cli/merge-crawl-results.js",
     "parse-references": "./src/cli/parse-references.js",
@@ -35,6 +34,7 @@
   },
   "dependencies": {
     "abortcontroller-polyfill": "^1.4.0",
+    "browser-specs": "^1.2.0",
     "commander": "^5.0.0",
     "fetch-filecache-for-crawling": "^4.0.2",
     "node-pandoc": "^0.3.0",

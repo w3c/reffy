@@ -10,7 +10,6 @@ See [published reports](https://tidoust.github.io/reffy-reports/) for daily huma
 ### Pre-requisites
 
 - To install Reffy, you need [Node.js](https://nodejs.org/en/).
-- If you want to run the crawler, you need a [W3C account](https://www.w3.org/accounts/request) and an [API key](https://www.w3.org/users/myprofile/apikeys).
 - If you want to generate HTML reports, you need to install [Pandoc](http://pandoc.org/).
 
 ### Installation
@@ -25,12 +24,11 @@ This should install Reffy's command-line interface tools to Node.js path.
 
 To launch the crawler and the report study tool, follow these steps:
 
-1. Create a `config.json` file, initialized with `{ "w3cApiKey": [API key] }`, where `[API key]` is your API key.
-2. To produce a report using Editor's Drafts, run `reffy run ed`.
-3. To produce a report using latest published versions in `/TR/`, run `reffy run tr`.
+1. To produce a report using Editor's Drafts, run `reffy run ed`.
+2. To produce a report using latest published versions in `/TR/`, run `reffy run tr`.
 
 Under the hoods, these commands run the following steps (and related commands) in turn:
-1. **Crawling**: Crawls a list of spec and outputs relevant information in a JSON structure in the specified folder. `crawl-specs src/specs/specs-all.json reports/ed [tr]`. Add `tr` to tell the crawler to load the latest published version of TR specifications instead of the latest Editor's Draft.
+1. **Crawling**: Crawls a list of spec and outputs relevant information in a JSON structure in the specified folder. `crawl-specs reports/ed [tr]`. Add `tr` to tell the crawler to load the latest published version of TR specifications instead of the latest Editor's Draft.
 2. **Analysis**: Analyses the result of the crawling step, and produces a study report. `study-crawl reports/ed/crawl.json [url]`. When the `url` parameter is given, the resulting analysis will only contain the results for the spec at that URL (multiple URLs may be given as a comma-separated value list without spaces). You will probably want to redirect the output to a file, e.g. using `study-crawl reports/ed/crawl.json > reports/ed/study.json`.
 3. **Markdown report generation**: Produces a human-readable report in Markdown format out of the report returned by the analysis step, or directly out of results of the crawling step. `generate-report reports/ed/study.json [perspec|dep]`. By default, the tool generates a report per anomaly, pass `perspec` to create a report per specification and `dep` to generate a dependencies report. You will probably want to redirect the output to a file, e.g. using `generate-report reports/ed/study.json > reports/ed/index.md`.
 4. **Conversion to HTML**: Takes the Markdown analysis per specification and prepares an HTML report with expandable sections. `pandoc reports/ed/index.md -f markdown -t html5 --section-divs -s --template report-template.html -o reports/ed/index.html` (where `report.md` is the Markdown report)
@@ -81,8 +79,6 @@ The **WebIDL parser** takes the URL of a spec as input and generates a JSON stru
 
 The **CSS definitions extractor** takes the URL of a spec as input and outputs the CSS definitions found in the spec in a JSON structure. To run the extractor: `extract-cssdfn [url]`
 
-The **Spec finder** takes a JSON crawl report as input and checks a couple of sites that list Web specifications to detect new specifications that are not yet part of the crawl. To run the spec finder: `find-spec results.json`
-
 The **crawl results merger** merges a new JSON crawl report into a reference one. This tool is typically useful to replace the crawl results of a given specification with the results of a new run of the crawler on that specification. To run the crawl results merger: `merge-crawl-results [new crawl report] [reference crawl report] [crawl report to create]`
 
 The **spec checker** takes the URL of a spec, a reference crawl report and the name of the study report to create as inputs. It crawls and studies the given spec against the reference crawl report. Essentially, it applies the **crawler**, the **merger** and the **study** tool in order, to produces the anomalies report for the given spec. Note the URL can check multiple specs at once, provided the URLs are passed as a comma-separated value list without spaces. To run the spec checker: `check-specs [url] [reference crawl report] [study report to create]`
@@ -106,28 +102,23 @@ Reffy should be able to parse most of the W3C/WHATWG specifications that define 
 
 ### List of specs to crawl
 
-The recommended list appears in `src/specs/specs-all.json`, which references common lists in `src/specs/specs-idl.json`, `src/specs/specs-css.json`, and `src/specs/specs-other.json`. These lists were built out of the [JavaScript APIs](http://www.w3.org/TR/#tr_Javascript_APIs) *TR* bucket, semi-manually completed to create a more comprehensive list. If you think a spec is missing, please create an issue or create a pull request.
-
-It should be possible to crawl specs other than CSS and JS specs, but note Reffy has not yet been tested with other types of specs, and would need to be adjusted to return "interesting" information. Feel free to try out other specs and report any issue!
+Reffy crawls specs defined in [w3c/browser-specs](https://github.com/w3c/browser-specs/). If you believe a spec is missing, please check the [Spec selection criteria](https://github.com/w3c/browser-specs/#spec-selection-criteria) and create an issue (or prepare a pull request) against the [w3c/browser-specs](https://github.com/w3c/browser-specs/) repository.
 
 ### Crawling a spec
 
-Given the URL of a spec, the crawler basically goes through the following steps:
+Given some spec info, the crawler basically goes through the following steps:
 
-1. If the URL looks like `http(s)://www.w3.org/TR/[something]`, the crawler extracts the shortname of the specification, and sends a couple of requests to the W3C API to retrieve the URL of the Editor's Draft, or the URL of the latest published version if the URL of the Editor's Draft could not be found. This new URL replaces the given one.
-2. Load the URL through Puppeteer.
-3. If the document contains a "head" section that includes a link whose label looks like "single page", go back to step 2 and load the target of that link instead. This makes the crawler load the single page version of multi-page specifications such as HTML5.
-4. If the document is a multi-page spec without a "single page" version, load the individual subpage and add their content to the bottom of the first page to create a single page version.
-5. If the document uses ReSpec, let ReSpec finish its generation work.
-6. Run internal tools on the generated document to build the relevant information.
+1. Load the URL through Puppeteer.
+2. If the document contains a "head" section that includes a link whose label looks like "single page", go back to step 2 and load the target of that link instead. This makes the crawler load the single page version of multi-page specifications such as HTML5.
+3. If the document is a multi-page spec without a "single page" version, load the individual subpage and add their content to the bottom of the first page to create a single page version.
+4. If the document uses ReSpec, let ReSpec finish its generation work.
+5. Run internal tools on the generated document to build the relevant information.
 
 The crawler processes 4 specifications at a time. Network and parsing errors should be reported in the crawl results.
 
 ### Config parameters
 
-The crawler reads parameters from the `config.json` file. To be able to interact with the W3C API, that file must contain a `w3cApiKey` entry whose value is a valid W3C API Key.
-
-Optional parameters:
+The crawler reads parameters from the `config.json` file. Optional parameters:
 
 * `cacheRefresh`: set this flag to `never` to tell the crawler to use the cache entry for a URL directly, instead of sending a conditional HTTP request to check whether the entry is still valid. This parameter is typically useful when developing Reffy's code to work offline.
 * `resetCache`: set this flag to `true` to tell the crawler to reset the contents of the local cache when it starts.

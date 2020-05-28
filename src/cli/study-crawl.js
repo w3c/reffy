@@ -164,7 +164,7 @@ function studyCrawlResults(results, specsToInclude) {
                     (!spec.refs.normative || !spec.refs.normative.find(ref =>
                         ref.name.match(/^WebIDL/i) ||
                             (ref.url === WebIDLSpec.url) ||
-                            (ref.url === WebIDLSpec.latest))),
+                            (WebIDLSpec.nightly && (ref.url === WebIDLSpec.nightly.url)))),
 
                 // Whether the spec has invalid IDL content
                 // (the crawler cannot do much when IDL content is invalid, it
@@ -285,11 +285,7 @@ function studyCrawlResults(results, specsToInclude) {
                             canonicalizesTo(r.url, spec.url, useEquivalents) ||
                             canonicalizesTo(r.url, spec.versions, useEquivalents)))
                         .map(filterSpecInfo)
-                },
-
-                // Warn when a W3C spec does not link to an Editor's Draft
-                noEdDraft: spec.url.match(/www.w3.org\/TR\//) &&
-                    !spec.edDraft
+                }
             };
 
             // A spec is OK if it does not contain anything "suspicious".
@@ -302,19 +298,15 @@ function studyCrawlResults(results, specsToInclude) {
                 (!report.redefinedIdlNames || (report.redefinedIdlNames.length === 0)) &&
                 (!report.missingWebIdlRef || (report.missingWebIdlRef.length === 0)) &&
                 (report.missingLinkRef.length === 0) &&
-                (report.inconsistentRef.length === 0) &&
-                !report.noEdDraft;
+                (report.inconsistentRef.length === 0);
             var res = {
                 title: spec.title || spec.url,
                 shortname: spec.shortname,
                 date: spec.date,
                 url: spec.url,
-                latest: spec.latest,
-                datedUrl: spec.datedUrl,
-                datedStatus: spec.datedStatus,
-                edDraft: spec.edDraft,
+                release: spec.release,
+                nightly: spec.nightly,
                 crawled: spec.crawled,
-                repository: spec.repository,
                 report
             };
             return res;

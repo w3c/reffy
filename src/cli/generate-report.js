@@ -76,14 +76,11 @@ function writeCrawlInfo(spec, withHeader, w) {
     if (spec.date) {
         w('- Crawled version: ' + spec.date);
     }
-    if (spec.edDraft) {
-        w('- Editor\'s Draft: [' + spec.edDraft + '](' + spec.edDraft + ')');
+    if (spec.nightly) {
+        w('- Editor\'s Draft: [' + spec.nightly.url + '](' + spec.nightly.url + ')');
     }
-    if (spec.latest) {
-        w('- Latest published version: [' + spec.latest + '](' + spec.latest + ')');
-    }
-    if (spec.datedUrl && spec.datedStatus) {
-        w('- Latest published status: [' + spec.datedStatus + '](' + spec.datedUrl + ')');
+    if (spec.release) {
+        w('- Latest published version: [' + spec.release.url + '](' + spec.release.url + ')');
     }
     if (spec.repository) {
         let githubcom = spec.repository.match(/^https:\/\/github.com\/([^\/]*)\/([^\/]*)/);
@@ -208,9 +205,6 @@ function generateReportPerSpec(study) {
                 ' report.');
         }
         else {
-            if (report.noEdDraft) {
-                w('- Link to an Editor\'s Draft not found');
-            }
             if (report.noNormativeRefs) {
                 w('- No normative references found');
             }
@@ -322,28 +316,6 @@ function generateReportPerIssue(study) {
         // Remove specs that could not be parsed from the rest of the report
         results = results.filter(spec => !spec.report.error);
     }
-
-
-    count = 0;
-    w('## Specifications that do not link to an Editor\'s Draft');
-    w();
-    results
-        .filter(spec => spec.report.noEdDraft)
-        .forEach(spec => {
-            count += 1;
-            w('- [' + spec.title + '](' + spec.crawled + ')');
-        });
-    w();
-    w('=> ' + count + ' specification' + ((count > 1) ? 's' : '') + ' found');
-    if (count > 0) {
-        w();
-        w('It is good practice to link to Editor\'s Draft for W3C specifications ' +
-            'even for specifications published as Recommendations. Reffy (or ' +
-            'rather the W3C API) could not find a link to an Editor\'s Draft ' +
-            'for the specifications mentioned above.');
-    }
-    w();
-    w();
 
 
     count = 0;
@@ -735,7 +707,6 @@ function generateDiffReport(study, refStudy, options) {
             } : null,
             ok: getSimpleDiff('ok'),
             error: getSimpleDiff('error'),
-            noEdDraft: getSimpleDiff('noEdDraft'),
             noNormativeRefs: getSimpleDiff('noNormativeRefs'),
             noRefToWebIDL: getSimpleDiff('noRefToWebIDL'),
             hasInvalidIdl: getSimpleDiff('hasInvalidIdl'),
@@ -753,11 +724,8 @@ function generateDiffReport(study, refStudy, options) {
             shortname: spec.shortname,
             date: spec.date,
             url: spec.url,
-            latest: spec.latest,
-            datedUrl: spec.datedUrl,
-            datedStatus: spec.datedStatus,
-            edDraft: spec.edDraft,
-            crawled: spec.crawled,
+            release: spec.release,
+            nightly: spec.nightly,
             repository: spec.repository,
             isNewSpec: ref.missing,
             hasDiff: Object.keys(diff).some(key => diff[key] !== null),
@@ -775,10 +743,8 @@ function generateDiffReport(study, refStudy, options) {
                     shortname: spec.shortname,
                     date: spec.date,
                     url: spec.url,
-                    latest: spec.latest,
-                    datedUrl: spec.datedUrl,
-                    datedStatus: spec.datedStatus,
-                    edDraft: spec.edDraft,
+                    release: spec.release,
+                    nightly: spec.nightly,
                     crawled: spec.crawled,
                     repository: spec.repository,
                     isUnknownSpec: true,
@@ -810,8 +776,8 @@ function generateDiffReport(study, refStudy, options) {
         let crawledUrl = spec.crawled || spec.latest;
         w('- Initial URL: [' + spec.url + '](' + spec.url + ')');
         w('- Crawled URL: [' + crawledUrl + '](' + crawledUrl + ')');
-        if (spec.edDraft && (spec.edDraft !== crawledUrl)) {
-            w('- Editor\'s Draft: [' + spec.edDraft + '](' + spec.edDraft + ')');
+        if (spec.nightly && (spec.nightly.url !== crawledUrl)) {
+            w('- Editor\'s Draft: [' + spec.nightly.url + '](' + spec.nightly.url + ')');
         }
         if (spec.repository) {
             let githubcom = spec.repository.match(/^https:\/\/github.com\/([^\/]*)\/([^\/]*)/);
@@ -850,7 +816,6 @@ function generateDiffReport(study, refStudy, options) {
             { title: 'Spec title', prop: 'title', diff: 'simple' },
             { title: 'Spec is OK', prop: 'ok', diff: 'simple' },
             { title: 'Spec could not be rendered', prop: 'error', diff: 'simple' },
-            { title: 'Link to an Editor\'s Draft not found', prop: 'noEdDraft', diff: 'simple' },
             { title: 'No normative references found', prop: 'noNormativeRefs', diff: 'simple' },
             { title: 'Invalid WebIDL content found', prop: 'hasInvalidIdl', diff: 'simple' },
             { title: 'Obsolete WebIDL constructs found', prop: 'hasObsoleteIdl', diff: 'simple' },

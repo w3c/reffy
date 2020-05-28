@@ -9,7 +9,6 @@ const crypto = require('crypto');
 const { AbortController } = require('abortcontroller-polyfill/dist/cjs-ponyfill');
 const fetch = require('./fetch');
 const specEquivalents = require('../specs/spec-equivalents.json');
-const canonicalizeUrl = require('../../builds/canonicalize-url').canonicalizeUrl;
 
 
 /**
@@ -137,11 +136,11 @@ async function processSpecification(spec, callback, args, counter) {
                     return;
                 }
 
-                // console.log(`intercept ${request.url}`);
+                //console.log(`intercept ${request.url}`);
                 let response = await fetch(request.url, { signal: controller.signal });
                 let body = await response.buffer();
 
-                // console.log(`intercept ${request.url} - done`);
+                //console.log(`intercept ${request.url} - done`);
                 await cdp.send('Fetch.fulfillRequest', {
                     requestId,
                     responseCode: response.status,
@@ -324,181 +323,33 @@ async function processSpecification(spec, callback, args, counter) {
 
 
 /**
- * Complete the given spec object with the W3C shortname for that specification
- * if it exists
+ * Enrich the spec description with alternative URLs (versions and equivalents)
  *
- * @function
- * @private
- * @param {Object} spec The specification object to enrich
- * @return {Object} same object completed with a "shortname" key
- */
-function completeWithShortName(spec) {
-    if (!spec.url.match(/www.w3.org\/TR\//)) {
-        return spec;
-    }
-    if (spec.url.match(/TR\/[0-9]+\//)) {
-        // dated version
-        var statusShortname = spec.url.split('/')[5];
-        spec.shortname = statusShortname.split('-').slice(1, -1).join('-');
-        return spec;
-    }
-    spec.shortname = spec.url.split('/')[4];
-    return spec;
-}
-
-
-/**
- * Enrich the spec description based on information returned by the W3C API.
- *
- * Information typically includes the title of the spec, the link to the
- * Editor's Draft, to the latest published version, and the history of
- * published versions.
- *
- * For non W3C spec, the function basically returns the same object.
+ * TODO: The list used to contain published versions of TR specs retrieved from
+ * the W3C API. They are useful to improve the relevance of reported anomalies.
  *
  * @function
  * @param {Object} spec Spec description structure (only the URL is useful)
- * @param {String} key W3C Api key to use (note the function may be passed as
- *   argument to a `map` call. When that happens, the second parameter is the
- *   index of the element in the array (and gets ignored)
- * @return {Promise<Object>} The same structure, enriched with the URL of the editor's
+ * @return {Object} The same structure, enriched with the URL of the editor's
  *   draft when one is found
  */
-function completeWithInfoFromW3CApi(spec, key) {
-    var shortname = spec.shortname;
-    key = (key && (typeof key === 'string')) ?
-        key :
-        requireFromWorkingDirectory('config.json').w3cApiKey;
-    var options = {
-        headers: {
-            Authorization: 'W3C-API apikey="' + key + '"'
-        }
-    };
-
-    // Note the mapping between some of the specs (e.g. HTML5.1 and HTML5)
-    // is hardcoded below. In an ideal world, it would be easy to get that
-    // info from the W3C API.
+function completeWithAlternativeUrls(spec) {
     spec.versions = new Set();
-    function addKnownVersions() {
-        spec.versions.add(spec.url);
-        if (spec.latest && (spec.latest !== spec.url)) {
-            spec.versions.add(spec.latest);
-        }
-        if (spec.edDraft && (spec.edDraft !== spec.url)) {
-            spec.versions.add(spec.edDraft);
-        }
-        if (specEquivalents[spec.url]) spec.versions = new Set([...spec.versions, ...specEquivalents[spec.url]]);
+    spec.versions.add(spec.url);
+    if (spec.release) {
+        spec.versions.add(spec.release.url);
     }
-
-    if (!shortname) {
-        addKnownVersions();
-        spec.versions = [...spec.versions];
-        return spec;
+    if (spec.nightly) {
+        spec.versions.add(spec.nightly.url);
     }
-    return fetch('https://api.w3.org/specifications/' + shortname, options)
-        .then(r =>  r.json())
-        .then(s => fetch(s._links['version-history'].href + '?embed=1', options))
-        .then(r => r.json())
-        .then(s => {
-            const versions = s._embedded['version-history'].map(prop("uri")).map(canonicalizeUrl);
-            const editors = s._embedded['version-history'].map(prop("editor-draft")).filter(u => !!u).map(canonicalizeUrl);
-            const latestVersion = s._embedded['version-history'][0];
-            spec.title = latestVersion.title;
-            if (!spec.latest) spec.latest = latestVersion.shortlink;
-            if (latestVersion.uri) {
-                spec.datedUrl = latestVersion.uri;
-                spec.datedStatus = latestVersion.status;
-            }
-            spec.informative =
-                !latestVersion['rec-track'] || latestVersion.informative;
-            if (latestVersion['editor-draft']) spec.edDraft = latestVersion['editor-draft'];
-            spec.versions = new Set([...spec.versions, ...versions, ...editors]);
-            return spec;
-        })
-        .catch(e => {
-            spec.error = e.toString() + (e.stack ? ' ' + e.stack : '');
-            spec.latest = 'https://www.w3.org/TR/' + shortname;
-            return spec;
-        })
-        .then(spec => {
-            addKnownVersions();
-            spec.versions = [...spec.versions];
-            return spec;
-        });
-}
-
-/**
- * Get the "shortname" identifier for a specification.
- *
- * @function
- * @private
- * @param {Object} spec The specification object with a `url` key and optionally
- *   a `shortname` key previously extracted by `completeWithShortName`.
- * @param {Object} options Options. Set "keepLevel" property to true to keep the
- *   level in the returned name for TR and CSS specs.
- * @return {String} a short identifier suitable for use in URLs and filenames.
- */
-function getShortname(spec, options) {
-    options = options || {};
-    if (spec.shortname) {
-        if (spec.shortname.startsWith('css3')) {
-            // Handle old CSS names and exception
-            if (spec.shortname === 'css3-background') {
-                return 'css-backgrounds'; // plural
-            }
-            else {
-                return spec.shortname.replace('css3', 'css');
-            }
-        }
-        else if (options.keepLevel) {
-            return spec.shortname;
-        }
-        else {
-            // do not include versionning, see also:
-            // https://github.com/foolip/day-to-day/blob/d336df7d08d57204a68877ec51866992ea78e7a2/build/specs.js#L176
-            return spec.shortname.replace(/-?[\d\.]*$/, '');
-        }
+    if (specEquivalents[spec.url]) {
+        spec.versions = new Set([
+            ...spec.versions,
+            ...specEquivalents[spec.url]
+        ]);
     }
-    const whatwgMatch = spec.url.match(/\/\/(.*)\.spec\.whatwg\.org\//);
-    if (whatwgMatch) {
-        return whatwgMatch[1];
-    }
-    const khronosMatch = spec.url.match(/https:\/\/www\.khronos\.org\/registry\/webgl\/specs\/latest\/([12])\.0\/$/);
-    if (khronosMatch) {
-        return "webgl" + khronosMatch[1];
-    }
-    const extensionMatch = spec.url.match(/\/.*\.github\.io\/([^\/]*)\/(extensions?)\.html$/);
-    if (extensionMatch) {
-        return extensionMatch[1] + '-' + extensionMatch[2];
-    }
-    const githubMatch = spec.url.match(/\/.*\.github\.io\/(?:webappsec-)?([^\/]+)\//);
-    if (githubMatch) {
-        if (githubMatch[1] === 'ServiceWorker') {
-            // Exception to the rule for service workers ED
-            return 'service-workers';
-        }
-        else {
-            return githubMatch[1];
-        }
-    }
-    const cssDraftMatch = spec.url.match(/\/drafts\.(?:csswg|fxtf|css-houdini)\.org\/([^\/]*)\//);
-    if (cssDraftMatch) {
-        if (options.keepLevel) {
-            return cssDraftMatch[1];
-        }
-        else {
-            return cssDraftMatch[1].replace(/-[\d\.]*$/, '');
-        }
-    }
-    const svgDraftMatch = spec.url.match(/\/svgwg\.org\/svg2-draft\//);
-    if (svgDraftMatch) {
-        return 'SVG';
-    }
-    const svgSpecMatch = spec.url.match(/\/svgwg\.org\/specs\/([^\/]+)\//);
-    if (svgSpecMatch) {
-        return 'svg-' + svgSpecMatch[1];
-    }
-    return spec.url.replace(/[^-a-z0-9]/g, '');
+    spec.versions = [...spec.versions];
+    return spec;
 }
 
 
@@ -508,12 +359,6 @@ function getShortname(spec, options) {
  *
  * "Fullest" means "not a delta spec, unless that is the only level that passes
  * the predicate".
- *
- * Note that the code handles the special case of the CSS2 and CSS22 specs, and
- * assumes that URLs that don't end with a level number are at level 1 (this
- * does not work for CSS specs whose URLs still follow the old `css3-` pattern,
- * but we're only interested in comparing with more recent levels in that case,
- * so it does not matter).
  *
  * @function
  * @public
@@ -526,26 +371,31 @@ function getShortname(spec, options) {
  */
 function isLatestLevelThatPasses(spec, list, predicate) {
     predicate = predicate || (_ => true);
-    const getLevel = spec =>
-        (spec.url.match(/-\d+\/$/) ?
-            parseInt(spec.url.match(/-(\d+)\/$/)[1], 10) :
-            (spec.url.match(/CSS22\/$/i) ? 2 : 1));
-    const shortname = getShortname(spec);
-    const level = getLevel(spec);
-    const candidates = list.filter(s => predicate(s) &&
-        ((s === spec) ||
-        (!s.flags.delta &&
-            (getShortname(s) === shortname) &&
-            (getLevel(s) >= level))));
-
-    // Note the list of candidates for this shortname includes the spec
-    // itself. It is the latest level if there is no other candidate at
-    // a strictly greater level, and if the spec under consideration is
-    // the first element in the list (for the hopefully rare case where
-    // we have two candidate specs that are at the same level)
-    return !candidates.find(s => getLevel(s) > level) &&
-        !(spec.flags.delta && candidates.find(s => getLevel(s) === level && (s !== spec) && !s.flags.delta)) &&
-        (candidates[0] === spec);
+    if (!predicate(spec)) {
+        return false;
+    }
+    if (spec.seriesComposition === 'delta') {
+        while (spec.seriesPrevious) {
+            spec = list.find(s => s.shortname === spec.seriesPrevious);
+            if (!spec) {
+                break;
+            }
+            if ((spec.seriesComposition === 'full') && predicate(spec)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    while (spec.seriesNext) {
+        if (!spec) {
+            break;
+        }
+        spec = list.find(s => s.shortname === spec.seriesNext);
+        if ((spec.seriesComposition === 'full') && predicate(spec)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 
@@ -553,8 +403,6 @@ module.exports = {
     fetch,
     requireFromWorkingDirectory,
     processSpecification,
-    completeWithShortName,
-    completeWithInfoFromW3CApi,
-    getShortname,
+    completeWithAlternativeUrls,
     isLatestLevelThatPasses
 };
