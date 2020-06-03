@@ -38,9 +38,6 @@
               window.eval('typeof respecConfig !== "undefined"')) {
           return 'respec';
       }
-      else if (document.getElementById('anolis-references')) {
-          return 'anolis';
-      }
       else {
           return null;
       }
@@ -533,7 +530,7 @@
    * - The function throws when no references could be found
    *
    * @function
-   * @public 
+   * @public
    * @return {Object} An object with a "normative" and/or an "informative"
    *   property that list references as they appear in the "References".
    */
@@ -571,13 +568,7 @@
           normative: "#normative-references > dl",
           informative: "#informative-references > dl"
         }
-      },
-      anolis: {
-        generator: "Anolis",
-        listSelector: {
-          normative: "#anolis-references > dl"
-        }
-      },
+      }
     };
 
     return (generator ? extractionRules[generator] : null);

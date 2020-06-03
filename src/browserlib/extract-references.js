@@ -12,7 +12,7 @@ import getGenerator from './get-generator.js';
  * - The function throws when no references could be found
  *
  * @function
- * @public 
+ * @public
  * @return {Object} An object with a "normative" and/or an "informative"
  *   property that list references as they appear in the "References".
  */
@@ -50,13 +50,7 @@ function getExtractionRules(generator) {
         normative: "#normative-references > dl",
         informative: "#informative-references > dl"
       }
-    },
-    anolis: {
-      generator: "Anolis",
-      listSelector: {
-        normative: "#anolis-references > dl"
-      }
-    },
+    }
   };
 
   return (generator ? extractionRules[generator] : null);
