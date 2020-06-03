@@ -78,6 +78,7 @@ async function crawlSpec(spec, crawlOptions) {
             return {
                 crawled: window.location.toString(),
                 title: window.reffy.getTitle(),
+                generator: window.reffy.getGenerator(),
                 date: window.reffy.getLastModifiedDate(),
                 links: window.reffy.extractLinks(),
                 dfns: window.reffy.extractDefinitions(),
@@ -133,6 +134,7 @@ async function crawlSpec(spec, crawlOptions) {
         // Copy results back into initial spec object
         spec.crawled = result.crawled;
         spec.title = result.title ? result.title : spec.title;
+        spec.generator = result.generator;
         spec.date = result.date;
         spec.links = result.links;
         spec.refs = result.refs;
