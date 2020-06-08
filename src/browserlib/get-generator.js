@@ -21,9 +21,6 @@ export default function () {
             window.eval('typeof respecConfig !== "undefined"')) {
         return 'respec';
     }
-    else if (document.getElementById('anolis-references')) {
-        return 'anolis';
-    }
     else {
         return null;
     }
