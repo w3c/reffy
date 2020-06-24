@@ -463,6 +463,10 @@
       'h6[id][data-dfn-type]'
     ].join(',');
 
+    function normalize(str) {
+      return str.trim().replace(/\s+/g, ' ');
+    }
+
     return [...document.querySelectorAll(definitionsSelector)]
       .map(el => Object.assign({
         // ID is the id attribute
@@ -482,12 +486,12 @@
         // Linking text is given by the data-lt attribute if present, or it is the
         // textual content
         linkingText: el.hasAttribute('data-lt') ?
-          el.getAttribute('data-lt').split('|').map(s => s.trim()) :
-          [el.textContent.trim()],
+          el.getAttribute('data-lt').split('|').map(normalize) :
+          [normalize(el.textContent)],
 
         // Additional linking text can be defined for local references
         localLinkingText: el.getAttribute('data-local-lt') ?
-          el.getAttribute('data-local-lt').split('|').map(s => s.trim()) :
+          el.getAttribute('data-local-lt').split('|').map(normalize) :
           [],
 
         // Link type must be specified, or it is "dfn"
@@ -497,7 +501,7 @@
         // purely comma-separated due to function parameters. For instance,
         // attribute value may be "method(foo,bar), method()"
         for: el.getAttribute('data-dfn-for') ?
-          el.getAttribute('data-dfn-for').split(/,(?![^\(]*\))/).map(s => s.trim()) :
+          el.getAttribute('data-dfn-for').split(/,(?![^\(]*\))/).map(normalize) :
           [],
 
         // Definition is public if explictly marked as exportable or if export has
