@@ -297,6 +297,11 @@ async function processSpecification(spec, callback, args, counter) {
             path: path.resolve(__dirname, '../../builds/browser.js')
         });
 
+        // Import WebIDL2, needed to parse definitions out of the HTML spec
+        await page.addScriptTag({
+            path: path.resolve(__dirname, '../../node_modules/webidl2/dist/webidl2.js')
+        });
+
         // Run the callback method in the browser context
         const results = await page.evaluate(callback, ...args);
 
