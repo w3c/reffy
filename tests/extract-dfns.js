@@ -15,52 +15,52 @@ const baseDfn = {
 const tests = [
   {title: "parses a simple <dfn>",
    html: "<dfn id='foo'>Foo</dfn>",
-   dfns: [{}]
+   changesToBaseDfn: [{}]
   },
   {title: "normalizes whitespace and trims text in a simple <dfn>",
    html: "<dfn id='foo'>Foo\n    \n</dfn>",
-   dfns: [{}]
+   changesToBaseDfn: [{}]
   },
 
   {title: "ignores a <dfn> without an id",
    html: "<dfn>Foo</dfn>",
-   dfns: []
+   changesToBaseDfn: []
   },
   {title: "marks as public a <dfn data-export>",
    html: "<dfn id=foo data-export>Foo</dfn>",
-   dfns: [{access: 'public'}]
+   changesToBaseDfn: [{access: 'public'}]
   },
   {title: "marks as public a <dfn data-dfn-type='interface'>",
    html: "<dfn id=foo data-dfn-type=interface>Foo</dfn>",
-   dfns: [{access: 'public', type: 'interface'}]
+   changesToBaseDfn: [{access: 'public', type: 'interface'}]
   },
   {title: "marks as private a <dfn data-noexport data-dfn-type='interface'>",
    html: "<dfn id=foo data-noexport data-dfn-type=interface>Foo</dfn>",
-   dfns: [{type: 'interface'}]
+   changesToBaseDfn: [{type: 'interface'}]
   },
   {title: "detects informative definitions",
    html: "<div class=informative><dfn id=foo>Foo</dfn></div>",
-   dfns: [{informative: true}]
+   changesToBaseDfn: [{informative: true}]
   },
   {title: "associates a definition to a namespace",
    html: "<dfn data-dfn-for='Bar,Baz' id=foo>Foo</dfn>",
-   dfns: [{for:['Bar', 'Baz']}]
+   changesToBaseDfn: [{for:['Bar', 'Baz']}]
   },
   {title: "considers definitions in headings",
    html: "<h2 data-dfn-type=dfn id=foo>Foo</h2>",
-   dfns: [{}]
+   changesToBaseDfn: [{}]
   },
   {title: "ignores elements that aren't <dfn> and headings",
    html: "<span data-dfn-type=dfn id=foo>Foo</span>",
-   dfns: []
+   changesToBaseDfn: []
   },
   {title: "ignores headings without a data-dfn-type",
    html: "<h2 id=foo>Foo</h2>",
-   dfns: []
+   changesToBaseDfn: []
   },
   {title: "includes data-lt in its list of linking text",
    html: "<dfn data-lt='foo \n   |\nbar' id=foo>Foo</dfn>",
-   dfns: [{linkingText: ["foo", "bar"]}]
+   changesToBaseDfn: [{linkingText: ["foo", "bar"]}]
   },
 ];
 
@@ -87,7 +87,7 @@ describe("Test definition extraction", () => {
   });
 
   tests.forEach(t => {
-    it(t.title, async () => assertExtractedDefinition(browser, t.html, t.dfns));
+    it(t.title, async () => assertExtractedDefinition(browser, t.html, t.changesToBaseDfn));
   });
 
 
