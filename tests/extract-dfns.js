@@ -17,7 +17,7 @@ const tests = [
    html: "<dfn id='foo'>Foo</dfn>",
    dfns: [{}]
   },
-  {title: "normalize whitespace and trims text in a simple <dfn>",
+  {title: "normalizes whitespace and trims text in a simple <dfn>",
    html: "<dfn id='foo'>Foo\n    \n</dfn>",
    dfns: [{}]
   },
