@@ -179,16 +179,16 @@ function preProcessHTML() {
   function fromIdToTypeAndFor(containerid, id) {
     // deals with exceptions to how containerid / id are expected to be parsed
     if (id) {
-    [containerid, id] = {
-      "history-scroll": ["history", "scrollrestoration"],
-      // overloads
-      "document-open" : ["document", "open"],
-      "dedicatedworkerglobalscope-postmessage": ["dedicatedworkerglobalscope", "postmessage"],
-      "messageport-postmessage": ["messageport", "postmessage"],
-      "window-postmessage": ["window", "postmessage"],
-      "worker-postmessage": ["worker", "postmessage"],
-      "context-2d-settransform": ["context-2d", "settransform"]
-    }[containerid] || [containerid, id];
+      [containerid, id] = {
+        "history-scroll": ["history", "scrollrestoration"],
+        // overloads
+        "document-open" : ["document", "open"],
+        "dedicatedworkerglobalscope-postmessage": ["dedicatedworkerglobalscope", "postmessage"],
+        "messageport-postmessage": ["messageport", "postmessage"],
+        "window-postmessage": ["window", "postmessage"],
+        "worker-postmessage": ["worker", "postmessage"],
+        "context-2d-settransform": ["context-2d", "settransform"]
+      }[containerid] || [containerid, id];
     }
 
 
@@ -205,14 +205,14 @@ function preProcessHTML() {
       "navigator": "Navigator"
     };
     const fullId = containerid + "-" + id;
-    if (exceptions[fullId]|| fromIdToIdl(containerid)) {
+    if (exceptions[fullId] || fromIdToIdl(containerid)) {
       let names = (exceptions[fullId] ? exceptions[fullId] : fromIdToIdl(containerid)).split(",");
       interfaces = idlInterfaces.filter(i => names.includes(i.name));
     }
     if (Object.keys(mixins).includes(containerid)) {
-    // some container id are split across several mixins, lets find out which
+    // some container ids are split across several mixins, let's find out which
       const candidateInterfaceNames = [mixins[containerid]].concat(idlTree.filter(inc => inc.type === "includes" && inc.target === mixins[containerid]).map(inc => inc.includes));
-      interfaces =  candidateInterfaceNames.map(name => idlInterfaces.filter(iface => iface.name === name)).flat().filter(iface => iface && iface.members && iface.members.find(member => member.name.toLowerCase() === id));
+      interfaces = candidateInterfaceNames.map(name => idlInterfaces.filter(iface => iface.name === name)).flat().filter(iface => iface && iface.members && iface.members.find(member => member.name.toLowerCase() === id));
     }
 
     if (interfaces.length) {
@@ -222,7 +222,7 @@ function preProcessHTML() {
         type = "dfn";
         // dom-head-profile, intentionally omitted from IDL fragment
         if (id === "profile" && containerid === "head") {
-          return {type: "attribute", _for:"HTMLHeadElement"};
+          return {type: "attribute", _for: "HTMLHeadElement"};
         }
         relevantInterfaces = interfaces.filter(iface => iface.members.find(member => member.name && member.name.toLowerCase() === id));
         if (relevantInterfaces.length) {
@@ -233,14 +233,16 @@ function preProcessHTML() {
       return {type, _for: [... new Set(relevantInterfaces.map(iface => iface.name))].join(",")};
     }
 
-    const enumName = id => { switch(id) {
+    const enumName = id => {
+      switch(id) {
       case "context-2d-direction": return "CanvasDirection";
       case "context-2d-fillrule": return "CanvasFillRule";
       case "context-2d-imagesmoothingquality": return "ImageSmoothingQuality";
       case "context-2d-textalign": return "CanvasTextAlign";
       case "context-2d-textbaseline": return "CanvasTextBaseline";
-    }
-                           };
+      }
+    };
+
     let _enum = idlTree.find(i => i.type === "enum" && (i.name.toLowerCase() === containerid || enumName(containerid) === i.name));
     // TODO check the value is defined
     if (_enum) return {type: "enum-value", _for: _enum.name};
@@ -252,19 +254,19 @@ function preProcessHTML() {
     // Ideally, get this fixed upstream
     switch(containerid) {
       // not an enum, but a well-defined DOMString
-    case "datatransfer-dropeffect": return {type: "dfn", _for:"DataTransfer.dropEffect"};
+    case "datatransfer-dropeffect": return {type: "dfn", _for: "DataTransfer.dropEffect"};
       // not an enum, but a well-defined DOMString
-    case "datatransfer-effectallowed": return {type: "dfn", _for:"DataTransfer.effectAllowed"};
-    case "document-nameditem": return {type: "dfn", _for:"Document"};
+    case "datatransfer-effectallowed": return {type: "dfn", _for: "DataTransfer.effectAllowed"};
+    case "document-nameditem": return {type: "dfn", _for: "Document"};
       // mode of the value attribute of the inputelement
     case "input-value":
     case "input-value-default":
-      return {type: "dfn", _for:"HTMLInputElement.value"};
+      return {type: "dfn", _for: "HTMLInputElement.value"};
       // not an enum, but a well-defined DOMString
-    case "texttrack-kind": return {type: "dfn", _for:"TextTrack.kind"};
+    case "texttrack-kind": return {type: "dfn", _for: "TextTrack.kind"};
       // dom-tree-accessors
-    case "tree": return { type:"dfn", _for:""};
-    case "window-nameditem": return {type: "dfn", _for:"Window"};
+    case "tree": return { type:"dfn", _for: ""};
+    case "window-nameditem": return {type: "dfn", _for: "Window"};
     }
 
     //throw "Cannot match " + containerid + " to a known IDL name (" + id + ")";
@@ -393,7 +395,16 @@ function preProcessHTML() {
       }
 
       if ((m = el.id.match(/^dom-([^-]+)$/) || el.id.match(/^dom-([^-]+)-[0-9]+$/) || el.id.match(/^dom-([^-]+)-constructor$/))) {
-        const globalscopes = ["Window", "WindowOrWorkerGlobalScope", "HTMLElement", "WindowSessionStorage", "WorkerGlobalScope", "WindowLocalStorage", "HTMLOrSVGElement", "ElementContentEditable"]
+        const globalscopes = [
+          "ElementContentEditable",
+          "HTMLElement",
+          "HTMLOrSVGElement",
+          "Window",
+          "WindowLocalStorage",
+          "WindowOrWorkerGlobalScope",
+          "WindowSessionStorage",
+          "WorkerGlobalScope"
+        ];
         const name = el.textContent.split('(')[0];
         if (el.textContent.match(/\(/)) {
           // e.g. print(), Audio(src)

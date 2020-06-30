@@ -92,7 +92,7 @@ const tests = [
    html: "<h2 id=foo>Foo</h2>",
    changesToBaseDfn: []
   },
-  {title: "includes data-lt in its list of linking text",
+  {title: "uses text in data-lt as linking text",
    html: "<dfn data-lt='foo \n   |\nbar' id=foo>Foo</dfn>",
    changesToBaseDfn: [{linkingText: ["foo", "bar"]}]
   },
