@@ -331,11 +331,6 @@ async function assertExtractedDefinition(browser, html, dfns, spec) {
   await page.addScriptTag({
     path: path.resolve(__dirname, '../builds/browser.js')
   });
-  if (spec === "html") { // we need to parse WebIDL to match names in the HTML Spec
-    await page.addScriptTag({
-      path: path.resolve(__dirname, '../node_modules/webidl2/dist/webidl2.js')
-    });
-  }
 
   const extractedDfns = await page.evaluate(async () => {
     return reffy.extractDefinitions(spec);

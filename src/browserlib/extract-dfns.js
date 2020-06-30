@@ -1,3 +1,5 @@
+import extractWebIdl from './extract-webidl.js';
+import {parse} from "../../node_modules/webidl2/index.js";
 /**
  * Extract definitions in the spec that follow the "Definitions data model":
  * https://tabatkins.github.io/bikeshed/#dfn-contract
@@ -104,8 +106,8 @@ export default function (spec) {
 
 function preProcessHTML() {
   // We need to extract the list of possible interfaces by parsing the WebIDL of the spec first
-  const idl = window.reffy.extractWebIdl();
-  const idlTree = WebIDL2.parse(idl);
+  const idl = extractWebIdl();
+  const idlTree = parse(idl);
   const idlInterfaces = idlTree.filter(item => item.type === "interface" || item.type === "interface mixin");
 
   function fromIdToElement(id) {
