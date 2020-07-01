@@ -2818,15 +2818,21 @@ for more information.`;
         "navigator": "Navigator"
       };
       const fullId = containerid + "-" + id;
-      if (exceptions[fullId] || fromIdToIdl(containerid)) {
-        let names = (exceptions[fullId] ? exceptions[fullId] : fromIdToIdl(containerid)).split(",");
+      if (exceptions[fullId]) {
+        let names = exceptions[fullId].split(",");
         interfaces = idlInterfaces.filter(i => names.includes(i.name));
+      } else {
+        if (fromIdToIdl(containerid)) {
+          let names = fromIdToIdl(containerid).split(",");
+          interfaces = idlInterfaces.filter(i => names.includes(i.name));
+        }
+        if (Object.keys(mixins).includes(containerid)) {
+          // some container ids are split across several mixins, let's find out which
+          const candidateInterfaceNames = [mixins[containerid]].concat(idlTree.filter(inc => inc.type === "includes" && inc.target === mixins[containerid]).map(inc => inc.includes));
+          interfaces = candidateInterfaceNames.map(name => idlInterfaces.filter(iface => iface.name === name)).flat().filter(iface => iface && iface.members && iface.members.find(member => member.name.toLowerCase() === id));
+        }
       }
-      if (Object.keys(mixins).includes(containerid)) {
-      // some container ids are split across several mixins, let's find out which
-        const candidateInterfaceNames = [mixins[containerid]].concat(idlTree.filter(inc => inc.type === "includes" && inc.target === mixins[containerid]).map(inc => inc.includes));
-        interfaces = candidateInterfaceNames.map(name => idlInterfaces.filter(iface => iface.name === name)).flat().filter(iface => iface && iface.members && iface.members.find(member => member.name.toLowerCase() === id));
-      }
+
 
       if (interfaces.length) {
         let type = "attribute";
