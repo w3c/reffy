@@ -2709,9 +2709,13 @@ for more information.`;
       'h5[id][data-dfn-type]:not([data-lt=""])',
       'h6[id][data-dfn-type]:not([data-lt=""])'
     ].join(',');
-
-    if (spec === "html") {
+    switch (spec) {
+    case "html":
       preProcessHTML();
+      break;
+    case "SVG2":
+      preProcessSVG2();
+      break;
     }
 
     return [...document.querySelectorAll(definitionsSelector)]
@@ -3098,6 +3102,84 @@ for more information.`;
         }
 
       });
+  }
+
+  function preProcessSVG2() {
+    const idl = extractWebIdl();
+    const idlTree = parse(idl);
+    const idlInterfaces = idlTree.filter(item => item.type === "interface" || item.type === "interface mixin");
+
+    // the only element definition not properly marked up in the SVG spec
+    const linkHeading = document.getElementById("LinkElement");
+    if (linkHeading && !linkHeading.dataset.dfnType) {
+      linkHeading.dataset.dfnType = "element";
+      linkHeading.dataset.lt = "link";
+    }
+
+    [...document.querySelectorAll(".attrdef dfn[id]:not([data-dfn-type]):not([data-skip])")]
+      .forEach(el => {
+        el.dataset.dfnType = "element-attr";
+        const attrDesc = document.querySelector('[data-reffy-page$="attindex.html"] th span.attr-name a[href$="#' + el.id + '"]');
+        if (attrDesc) {
+            el.dataset.dfnFor = attrDesc.closest('tr').querySelector('td').textContent;
+        } else {
+          console.error("Could not find description for " + el.textContent);
+        }
+      });
+    [...document.querySelectorAll("dt[id] > .adef, dt[id] > .property")].forEach(el => {
+      const dt = el.parentNode;
+      const newdt = document.createElement("dt");
+      const dfn = document.createElement("dfn");
+      dfn.id = dt.id;
+      dfn.dataset.dfnType = el.classList.contains("adef") ? "element-attr" : "property";
+      const indexPage = el.classList.contains("adef") ? "attindex.html" : "propidx.html";
+      const attrDesc = document.querySelector('[data-reffy-page$="' + indexPage + '"] th a[href$="#' + dfn.id + '"]');
+      if (attrDesc) {
+        // TODO: this doesn't deal with grouping of elements, e.g. "text content elements"
+        dfn.dataset.dfnFor = [...attrDesc.closest('tr').querySelectorAll('span.element-name a')].map (n => n.textContent).join(',');
+      } else {
+        console.error("Could not find description for " + el.textContent + "/" + dfn.id);
+      }
+      dfn.textContent = el.textContent;
+      newdt.appendChild(dfn);
+      dt.replaceWith(newdt);
+    });
+    [...document.querySelectorAll('b[id^="__svg__"]')].forEach(el => {
+      const [,, containername, membername] = el.id.split('__');
+      if (containername && membername) {
+        let container = idlTree.find(i => i.name === containername);
+        if (container) {
+          let member = container.members.find(m => m.name === membername);
+          if (member) {
+            const dfn = document.createElement("dfn");
+            dfn.id = el.id;
+            dfn.textContent = el.textContent;
+            dfn.dataset.dfnFor = containername;
+            dfn.dataset.dfnType = member.type === "operation" ? "method" : member.type;
+            el.replaceWith(dfn);
+          }
+        }
+      }
+    });
+    [...document.querySelectorAll('h3[id^="Interface"]:not([data-dfn-type])')].forEach(el => {
+      const name = el.id.slice("Interface".length);
+      if (idlTree.find(i => i.name === name && i.type === "interface")) {
+        el.dataset.dfnType = "interface";
+        el.dataset.lt = name;
+      }
+    });
+    [...document.querySelectorAll('b[id]:not([data-dfn-type])')].forEach(el => {
+      const name = el.textContent;
+      const idlItem = idlTree.find(i => i.name === name) ;
+      if (idlItem) {
+        const dfn = document.createElement("dfn");
+        dfn.id = el.id;
+        dfn.dataset.dfnType = idlItem.type;
+        dfn.textContent = el.textContent;
+        el.replaceWith(dfn);
+      }
+    });
+
   }
 
   /**
