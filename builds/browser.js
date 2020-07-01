@@ -2887,11 +2887,11 @@ for more information.`;
     }
 
     const headingSelector = [
-      'h2[id$="-element"]:not([data-dfn-type]) dfn:not([id])',
-      'h3[id$="-element"]:not([data-dfn-type]) dfn:not([id])',
-      'h4[id$="-element"]:not([data-dfn-type]) dfn:not([id])',
-      'h5[id$="-element"]:not([data-dfn-type]) dfn:not([id])',
-      'h6[id$="-element"]:not([data-dfn-type]) dfn:not([id])'
+      'h2[id]:not([data-dfn-type]) dfn:not([id])',
+      'h3[id]:not([data-dfn-type]) dfn:not([id])',
+      'h4[id]:not([data-dfn-type]) dfn:not([id])',
+      'h5[id]:not([data-dfn-type]) dfn:not([id])',
+      'h6[id]:not([data-dfn-type]) dfn:not([id])'
     ].join(',');
 
     // we copy the id on the dfn when it is set on the surrounding heading

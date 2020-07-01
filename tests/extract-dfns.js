@@ -140,6 +140,12 @@ const tests = [
            linkingText: ["html"]}],
    spec: "html"
   },
+  {title: "handles HTML spec conventions of definitions in headings",
+   html: '<h6 id="parsing-main-inselect"><span class="secno">12.2.6.4.16</span> The "<dfn>in select</dfn>" insertion mode<a href="#parsing-main-inselect" class="self-link"></a></h6>',
+   changesToBaseDfn: [{id: "parsing-main-inselect",
+           linkingText: ["in select"]}],
+   spec: "html"
+  },
   {title: "handles HTML spec convention for defining element interfaces",
    html: '<pre><code class="idl">interface <dfn id="htmlhrelement"><c- g="">HTMLHRElement</c-></dfn> {};</code></pre>',
    changesToBaseDfn: [{id: "htmlhrelement",
