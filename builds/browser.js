@@ -2897,18 +2897,21 @@ for more information.`;
     }
 
     const headingSelector = [
-      'h2[id$="-element"]:not([data-dfn-type]) dfn:not([id])',
-      'h3[id$="-element"]:not([data-dfn-type]) dfn:not([id])',
-      'h4[id$="-element"]:not([data-dfn-type]) dfn:not([id])',
-      'h5[id$="-element"]:not([data-dfn-type]) dfn:not([id])',
-      'h6[id$="-element"]:not([data-dfn-type]) dfn:not([id])'
+      'h2[id]:not([data-dfn-type]) dfn:not([data-dfn-type])',
+      'h3[id]:not([data-dfn-type]) dfn:not([data-dfn-type])',
+      'h4[id]:not([data-dfn-type]) dfn:not([data-dfn-type])',
+      'h5[id]:not([data-dfn-type]) dfn:not([data-dfn-type])',
+      'h6[id]:not([data-dfn-type]) dfn:not([data-dfn-type])'
     ].join(',');
 
     // we copy the id on the dfn when it is set on the surrounding heading
     [...document.querySelectorAll(headingSelector)]
       .forEach(el => {
-        el.id = el.closest("h2, h3, h4, h5, h6").id;
-        if (el.id.match(/^the-([^-]*)-element$/)) {
+        const headingId = el.closest("h2, h3, h4, h5, h6").id;
+        if (!el.id) {
+          el.id = headingId;
+        }
+        if (headingId.match(/^the-([^-]*)-element$/)) {
           el.dataset.dfnType = 'element';
         }
       });
