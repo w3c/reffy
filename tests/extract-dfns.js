@@ -407,7 +407,7 @@ const tests = [
     spec: "SVG2"
   },
   {
-    title: "identifes the link element definition in SVG2 spec",
+    title: "identifies the link element definition in SVG2 spec",
     html: `<h2 id="LinkElement" class="heading">6.3. External style sheets: the effect of the HTML <span class="element-name">‘link’</span> element<a class="self-link" href="#LinkElement"></a></h2>`,
     changesToBaseDfn: [{
       id: "LinkElement",
@@ -418,31 +418,31 @@ const tests = [
     spec: "SVG2"
   },
   {
-    title: "identifes attributes defined with class adef in SVG2 spec",
+    title: "identifies attributes defined with class adef in SVG2 spec",
     html: `<dt id="PatternElementPatternUnitsAttribute"><span class="adef">patternUnits</span></dt>`,
     changesToBaseDfn: [{
       id: "PatternElementPatternUnitsAttribute",
       linkingText: ["patternUnits"],
       type: "element-attr",
-      "for": ["pattern"],
+      for: ["pattern"],
       access: "public"
     }],
     spec: "SVG2"
   },
   {
-    title: "identifes properties defined with class propdef in SVG2 spec",
+    title: "identifies properties defined with class propdef in SVG2 spec",
     html: `<dt id="StopOpacityProperty">‘<span class="propdef-title property">stop-opacity</span>’</dt>`,
     changesToBaseDfn: [{
       id: "StopOpacityProperty",
       linkingText: ["stop-opacity"],
       type: "property",
-      "for": ["stop"],
+      for: ["stop"],
       access: "public"
     }],
     spec: "SVG2"
   },
   {
-    title: "identifes IDL attributes and methods defined in SVG2 spec",
+    title: "identifies IDL attributes and methods defined in SVG2 spec",
     html: `<p>The <b id="__svg__SVGNameList__length">length</b> IDL attribute
 represents the length of the list, and on getting simply return
 the length of the list.</p>
@@ -453,20 +453,20 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       id: "__svg__SVGNameList__length",
       linkingText: ["length"],
       type: "attribute",
-      "for": ["SVGNameList"],
+      for: ["SVGNameList"],
       access: "public"
     },
                        {
       id: "__svg__SVGNameList__initialize",
       linkingText: ["initialize"],
       type: "method",
-      "for": ["SVGNameList"],
+      for: ["SVGNameList"],
       access: "public"
     }],
     spec: "SVG2"
   },
   {
-    title: "identified IDL interfaces in headings of the SVG2 spec",
+    title: "identifies IDL interfaces in headings of the SVG2 spec",
     html: `<h3 id="InterfaceSVGAnimatedLengthList" class="heading">4.6.10. Interface SVGAnimatedLengthList<a class="self-link" href="#InterfaceSVGAnimatedLengthList"></a></h3>`,
     changesToBaseDfn: [{
       id: "InterfaceSVGAnimatedLengthList",
