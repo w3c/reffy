@@ -66,6 +66,6 @@
     "ed-html": "node reffy.js run ed html",
     "ed-diff": "node reffy.js run ed diff",
     "ed-diffnew": "node reffy.js run ed diffnew",
-    "test": "jasmine && mocha --recursive tests/"
+    "test": "npm run build && jasmine && mocha --recursive tests/"
   }
 }
