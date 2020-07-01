@@ -26,6 +26,9 @@ interface Window {
 interface CustomElementRegistry {
   Promise&lt;void> whenDefined(DOMString name);
 };
+interface HTMLMediaElement : HTMLElement {
+  CanPlayTypeResult canPlayType(DOMString type);
+};
 interface Navigator {
 };
 Navigator includes NavigatorID;
@@ -291,6 +294,16 @@ const tests = [
             type: "attribute",
             linkingText: ["onchecking"],
             for: ['ApplicationCache']}],
+    spec: "html"
+  },
+  {
+    title: "handles exceptions to HTML spec convention for method attributions",
+    html: '<dfn id="dom-navigator-canplaytype"><code>canPlayType(<var>type</var>)</code></dfn>',
+    changesToBaseDfn: [{id: "dom-navigator-canplaytype",
+            access: "public",
+            type: "method",
+            linkingText: ["canPlayType(type)"],
+            for: ['HTMLMediaElement']}],
     spec: "html"
   },
   {
