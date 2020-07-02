@@ -139,7 +139,7 @@ function studyCrawlResults(results, specsToInclude) {
             spec.idl = spec.idl || {};
             spec.css = spec.css || {};
             spec.refs = spec.refs || {};
-            spec.links = spec.links || [];
+            spec.links = spec.links || {};
             var idlDfns = spec.idl.idlNames ?
                 Object.keys(spec.idl.idlNames) : [];
             var idlExtendedDfns = spec.idl.idlExtendedNames ?
@@ -234,7 +234,7 @@ function studyCrawlResults(results, specsToInclude) {
                 // Links to external specifications within the body of the spec
                 // that do not have a corresponding entry in the references
                 // (all links to external specs should have a companion ref)
-                missingLinkRef: spec.links
+                missingLinkRef: Object.keys(spec.links)
                     .filter(matchSpecUrl)
                     .filter(l => {
                         // Filter out "good" and "inconsistent" references
@@ -255,7 +255,7 @@ function studyCrawlResults(results, specsToInclude) {
                 // which the reference uses a different URL, e.g. because the
                 // link targets the Editor's Draft, whereas the reference
                 // targets the latest published version
-                inconsistentRef: spec.links
+                inconsistentRef: Object.keys(spec.links)
                     .filter(matchSpecUrl)
                     .map(l => {
                         let canonSimple = canonicalizeUrl(l);
