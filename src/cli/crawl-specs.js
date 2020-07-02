@@ -66,7 +66,7 @@ async function crawlSpec(spec, crawlOptions) {
         (spec.release ? spec.release.url : spec.nightly.url) :
         spec.nightly.url;
     spec.date = "";
-    spec.links = [];
+    spec.links = {};
     spec.refs = {};
     spec.idl = {};
     if (spec.error) {
