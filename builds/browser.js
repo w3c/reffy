@@ -3342,17 +3342,30 @@ for more information.`;
   }
 
   /**
-   * Extract and canonicalize absolute links of the document
+   * Extract and canonicalize absolute links of the document and their fragments
    * FIXME: ⚠ Modify the DOM
   */
   function extractLinks () {
     // Ignore links from the "head" section, which either link to
     // self, the GitHub repo, the implementation report, and other
     // documents that don't need to appear in the list of references.
+    const links = {};
     [...document.querySelectorAll('.head a[href]')].forEach(n => n.href = '');
-    const links = new Set([...document.querySelectorAll('a[href^=http]')]
-      .map(n => canonicalizeUrl(n.href)));
-    return [...links];
+    document.querySelectorAll('a[href^=http]').forEach(n => {
+      const url = canonicalizeUrl(n.href);
+      if (!links[url]) {
+        links[url] = new Set();
+      }
+      if (n.href.includes('#') && n.href.split('#')[1]) {
+        links[url].add(n.href.split('#')[1]);
+      }
+    });
+    return Object.keys(links)
+    // turning sets into arrays
+      .reduce((acc, u) => {
+        acc[u] = [...links[u]];
+        return acc;
+    }, {});
   }
 
   // Create a namespace to expose all Reffy functions if needed,
