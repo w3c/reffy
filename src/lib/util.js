@@ -221,14 +221,7 @@ async function processSpecification(spec, callback, args, counter) {
         }
 
         // Handle multi-page specs
-        const pageUrls = await page.evaluate(() => {
-            const allPages = [...document.querySelectorAll('.toc a[href]')]
-                .map(link => link.href)
-                .map(url => url.split('#')[0])
-                .filter(url => url !== window.location.href);
-            const pageSet = new Set(allPages);
-            return [...pageSet];
-        });
+        const pageUrls = spec.pages || [];
 
         if (pageUrls.length > 0) {
             const pages = [];
