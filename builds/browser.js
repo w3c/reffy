@@ -3186,6 +3186,15 @@ for more information.`;
   }
 
   /**
+   * Extract headings data from documents
+  */
+  function extractHeadings () {
+    return [...document.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id] ,h6[id]')].map(n => {
+      return {id: n.id, level: n.tagName.slice(1), title: n.textContent.trim().replace(/^[0-9\.]+ /, '').trim()};
+    });
+  }
+
+  /**
    * Extract the list of references from the "References" appendix of the
    * current document.
    *
@@ -3470,6 +3479,7 @@ for more information.`;
       extractWebIdl,
       extractCSS,
       extractDefinitions,
+      extractHeadings,
       extractReferences,
       extractLinks,
       canonicalizeUrl,
