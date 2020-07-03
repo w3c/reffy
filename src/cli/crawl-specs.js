@@ -74,7 +74,7 @@ async function crawlSpec(spec, crawlOptions) {
     }
 
     try {
-        const result = await processSpecification(spec.crawled, () => {
+        const result = await processSpecification(spec.crawled, (spec) => {
             return {
                 crawled: window.location.toString(),
                 title: window.reffy.getTitle(),
@@ -87,7 +87,7 @@ async function crawlSpec(spec, crawlOptions) {
                 idl: window.reffy.extractWebIdl(),
                 css: window.reffy.extractCSS()
             };
-        });
+        }, [spec]);
 
         // Parse the extracted WebIdl content
         try {
@@ -142,6 +142,7 @@ async function crawlSpec(spec, crawlOptions) {
         spec.idl = result.idl;
         spec.css = result.css;
         spec.dfns = result.dfns;
+        spec.headings = result.headings;
     }
     catch (err) {
         spec.title = spec.title || '[Could not be determined, see error]';
