@@ -1,25 +1,9 @@
 [
   {
     "url": "https://www.w3.org/TR/WOFF2/",
-    "seriesComposition": "full",
-    "shortname": "WOFF2",
-    "series": {
-      "shortname": "WOFF",
-      "currentSpecification": "WOFF2"
-    },
-    "seriesVersion": "2",
-    "shortTitle": "WOFF 2.0",
-    "release": {
-      "url": "https://www.w3.org/TR/WOFF2/",
-      "filename": "Overview.html"
-    },
     "nightly": {
-      "url": "https://w3c.github.io/woff/woff2/",
-      "repository": "https://github.com/w3c/woff",
-      "filename": "index.html"
+      "url": "https://w3c.github.io/woff/woff2/"
     },
-    "title": "WOFF2",
-    "source": "w3c",
     "versions": [
       "https://www.w3.org/TR/WOFF2/",
       "https://w3c.github.io/woff/woff2/"
@@ -48,6 +32,7 @@
       "hasObsoleteIdl": false,
       "idl": ""
     },
+    "title": "WOFF2",
     "generator": null,
     "css": {
       "properties": {},
@@ -78,24 +63,9 @@
   },
   {
     "url": "https://www.w3.org/TR/audio-output/",
-    "seriesComposition": "full",
-    "shortname": "audio-output",
-    "series": {
-      "shortname": "audio-output",
-      "currentSpecification": "audio-output"
-    },
-    "release": {
-      "url": "https://www.w3.org/TR/audio-output/",
-      "filename": "Overview.html"
-    },
     "nightly": {
-      "url": "https://w3c.github.io/mediacapture-output/",
-      "repository": "https://github.com/w3c/mediacapture-output",
-      "filename": "index.html"
+      "url": "https://w3c.github.io/mediacapture-output/"
     },
-    "title": "No Title",
-    "source": "w3c",
-    "shortTitle": "Audio Output Devices API",
     "versions": [
       "https://www.w3.org/TR/audio-output/",
       "https://w3c.github.io/mediacapture-output/"
@@ -134,6 +104,7 @@
       "hasObsoleteIdl": false,
       "idl": ""
     },
+    "title": "No Title",
     "generator": "respec",
     "css": {
       "properties": {},
@@ -197,24 +168,9 @@
   },
   {
     "url": "https://www.w3.org/TR/accelerometer/",
-    "seriesComposition": "full",
-    "shortname": "accelerometer",
-    "series": {
-      "shortname": "accelerometer",
-      "currentSpecification": "accelerometer"
-    },
-    "release": {
-      "url": "https://www.w3.org/TR/accelerometer/",
-      "filename": "Overview.html"
-    },
     "nightly": {
-      "url": "https://w3c.github.io/accelerometer/",
-      "repository": "https://github.com/w3c/accelerometer",
-      "filename": "index.html"
+      "url": "https://w3c.github.io/accelerometer/"
     },
-    "title": "[No title found for https://w3c.github.io/accelerometer/]",
-    "source": "w3c",
-    "shortTitle": "Accelerometer",
     "versions": [
       "https://www.w3.org/TR/accelerometer/",
       "https://w3c.github.io/accelerometer/"
@@ -246,6 +202,7 @@
       "hasObsoleteIdl": false,
       "idl": ""
     },
+    "title": "[No title found for https://w3c.github.io/accelerometer/]",
     "generator": null,
     "css": {
       "properties": {},

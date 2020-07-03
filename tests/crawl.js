@@ -2,8 +2,11 @@ const { crawlList } = require("../src/cli/crawl-specs");
 const nock = require('nock');
 const fs = require("fs");
 
-// TODO: fix crawl-specs to not have to do this
-const specs = require('browser-specs');
+const specs = [
+  {url: "https://www.w3.org/TR/WOFF2/", nightly: {url: "https://w3c.github.io/woff/woff2/"}},
+  {url: "https://www.w3.org/TR/audio-output/", nightly: {url: "https://w3c.github.io/mediacapture-output/"}},
+  {url: "https://www.w3.org/TR/accelerometer/", nightly: {url: "https://w3c.github.io/accelerometer/"}}
+];
 
 const mockSpecs = {
   "/woff/woff2/": {html:
@@ -65,18 +68,7 @@ nock.emitter.on('no match', function(req, options, requestBody) {
 });
 
 async function crawl() {
-  const results = await crawlList(
-    [
-      // a hand-generated document
-      "https://www.w3.org/TR/WOFF2/",
-      // a respec document
-      "https://www.w3.org/TR/audio-output/",
-      // a bikeshed document
-      "https://www.w3.org/TR/accelerometer/"
-    ]
-    // This should be done in crawl-specs directly
-      .map(url => specs.find(s => s.url === url)).filter(x => !!x)
-  ) ;
+  const results = await crawlList(specs) ;
   // to avoid reporting bogus diff on updated date
   results.forEach(s => delete s.date);
   return results;
