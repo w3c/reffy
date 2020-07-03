@@ -81,7 +81,7 @@ async function crawlSpec(spec, crawlOptions) {
                 generator: window.reffy.getGenerator(),
                 date: window.reffy.getLastModifiedDate(),
                 links: window.reffy.extractLinks(),
-                dfns: window.reffy.extractDefinitions(),
+                dfns: window.reffy.extractDefinitions(spec.shortname),
                 headings: window.reffy.extractHeadings(),
                 refs: window.reffy.extractReferences(),
                 idl: window.reffy.extractWebIdl(),
