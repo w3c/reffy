@@ -82,6 +82,7 @@ async function crawlSpec(spec, crawlOptions) {
                 date: window.reffy.getLastModifiedDate(),
                 links: window.reffy.extractLinks(),
                 dfns: window.reffy.extractDefinitions(),
+                headings: window.reffy.extractHeadings(),
                 refs: window.reffy.extractReferences(),
                 idl: window.reffy.extractWebIdl(),
                 css: window.reffy.extractCSS()
