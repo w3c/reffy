@@ -6,7 +6,10 @@ const fs = require("fs");
 const specs = require('browser-specs');
 
 const mockSpecs = {
-  "/woff/woff2/": `<title>WOFF2</title><body><dfn id='foo'>Foo</dfn><a href="https://www.w3.org/TR/bar/#baz">bar</a>`,
+  "/woff/woff2/": {html:
+                   `<title>WOFF2</title><body><dfn id='foo'>Foo</dfn><a href="https://www.w3.org/TR/bar/#baz">bar</a><ul class='toc'><li><a href='page.html'>page</a></ul>`,
+                   pages: {"page.html": `<h2 id='bar'>Heading in subpage</h2>`}
+                  },
   "/mediacapture-output/": `<script>respecConfig = {};</script><script src='https://www.w3.org/Tools/respec/respec-w3c'></script><div id=abstract></div><pre class='idl'>[Exposed=Window] interface Foo { attribute DOMString bar; };</pre>`,
   "/accelerometer/": `<html><h2>Normative references</h2><dl><dt>FOO</dt><dd><a href='https://www.w3.org/TR/Foo'>Foo</a></dd></dl>`
 };
@@ -18,7 +21,15 @@ nock.enableNetConnect('127.0.0.1');
 Object.keys(mockSpecs).forEach(path => {
   nock("https://w3c.github.io")
     .get(path)
-    .reply(200, mockSpecs[path], {'Content-Type': 'text/html'});
+    .reply(200, typeof mockSpecs[path] === "string" ? mockSpecs[path] : mockSpecs[path].html, {'Content-Type': 'text/html'});
+
+  Object.keys(mockSpecs[path].pages || {}).forEach(page => {
+    console.error(path  + page);
+    nock("https://w3c.github.io")
+      .get(path + page)
+      .reply(200, mockSpecs[path].pages[page], {'Content-Type': 'text/html'});
+
+  });
 });
 
 
@@ -80,6 +91,7 @@ if (global.describe && describe instanceof Function) {
       const refResults = JSON.parse(fs.readFileSync(__dirname + "/crawl-test.json", "utf-8"));
       const results = await crawl();
       assert.deepEqual(refResults, results);
+      nock.isDone();
     });
   });
 } else if (require.main === module) {

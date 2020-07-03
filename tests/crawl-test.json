@@ -68,7 +68,13 @@
         "informative": false
       }
     ],
-    "headings": []
+    "headings": [
+      {
+        "id": "bar",
+        "level": "2",
+        "title": "Heading in subpage"
+      }
+    ]
   },
   {
     "url": "https://www.w3.org/TR/audio-output/",
