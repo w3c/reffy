@@ -120,7 +120,7 @@ async function processSpecification(spec, callback, args, counter) {
                 }
 
                 // Abort network requests to common image formats
-                if (/\.(gif|ico|jpg|jpeg|png)$/i.test(request.url)) {
+                if (/\.(gif|ico|jpg|jpeg|png|ttf|woff)$/i.test(request.url)) {
                     await cdp.send('Fetch.failRequest', { requestId, errorReason: 'Failed' });
                     return;
                 }
