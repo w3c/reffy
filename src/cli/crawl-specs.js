@@ -163,7 +163,7 @@ async function crawlSpec(spec, crawlOptions) {
  * @return {Promise<Array(Object)} The promise to get an array of complete
  *   specification descriptions
  */
-async function crawlList(speclist, crawlOptions, resultsPath) {
+async function crawlList(speclist, crawlOptions) {
     crawlOptions = crawlOptions || {};
 
     const list = speclist.map(completeWithAlternativeUrls);
