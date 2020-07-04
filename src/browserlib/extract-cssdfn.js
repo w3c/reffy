@@ -50,10 +50,15 @@ const dfnLabel2Property = label => label.trim()
 const extractTableDfn = table => {
   let res = {};
   const lines = [...table.querySelectorAll('tr')]
-    .map(line => Object.assign({
-      name: dfnLabel2Property(line.querySelector(':first-child').textContent),
-      value: line.querySelector('td:last-child').textContent.trim().replace(/\s+/g, ' ')
-    }));
+    .map(line => {
+      const cleanedLine = line.cloneNode(true);
+      const annotations = cleanedLine.querySelectorAll("aside");
+      annotations.forEach(n => n.remove());
+      return Object.assign({
+        name: dfnLabel2Property(cleanedLine.querySelector(':first-child').textContent),
+        value: cleanedLine.querySelector('td:last-child').textContent.trim().replace(/\s+/g, ' ')
+      });
+    });
   for (let prop of lines) {
     res[prop.name] = prop.value;
   }
