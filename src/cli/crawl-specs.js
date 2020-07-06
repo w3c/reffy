@@ -394,7 +394,7 @@ function crawlSpecs(resultsPath, options) {
         prepareListOfSpecs(requireFromWorkingDirectory(options.specFile)) :
         specs;
 
-    return crawlList(requestedList, options, resultsPath)
+    return crawlList(requestedList, options)
         .then(results => saveResults(options, results, resultsPath));
 }
 
