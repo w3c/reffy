@@ -54,10 +54,10 @@ const extractTableDfn = table => {
       const cleanedLine = line.cloneNode(true);
       const annotations = cleanedLine.querySelectorAll("aside");
       annotations.forEach(n => n.remove());
-      return Object.assign({
+      return {
         name: dfnLabel2Property(cleanedLine.querySelector(':first-child').textContent),
         value: cleanedLine.querySelector('td:last-child').textContent.trim().replace(/\s+/g, ' ')
-      });
+      };
     });
   for (let prop of lines) {
     res[prop.name] = prop.value;
