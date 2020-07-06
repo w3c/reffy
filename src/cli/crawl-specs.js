@@ -63,8 +63,8 @@ const byURL = (a, b) => a.url.localeCompare(b.url);
  */
 async function crawlSpec(spec, crawlOptions) {
     spec.crawled = crawlOptions.publishedVersion ?
-        (spec.release ? spec.release.url : spec.nightly.url) :
-        spec.nightly.url;
+        (spec.release ? spec.release : spec.nightly) :
+        spec.nightly;
     spec.date = "";
     spec.links = {};
     spec.refs = {};

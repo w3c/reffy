@@ -2,7 +2,10 @@
   {
     "url": "https://www.w3.org/TR/WOFF2/",
     "nightly": {
-      "url": "https://w3c.github.io/woff/woff2/"
+      "url": "https://w3c.github.io/woff/woff2/",
+      "pages": [
+        "https://w3c.github.io/woff/woff2/page.html"
+      ]
     },
     "versions": [
       "https://www.w3.org/TR/WOFF2/",
