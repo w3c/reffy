@@ -235,7 +235,7 @@ async function processSpecification(spec, callback, args, counter) {
             for (const url of pageUrls) {
                 const subAbort = new AbortController();
                 const subPage = await browser.newPage();
-                const subCdp = await page.target().createCDPSession();
+                const subCdp = await subPage.target().createCDPSession();
                 await subCdp.send('Fetch.enable');
                 subCdp.on('Fetch.requestPaused', interceptRequest(subCdp, subAbort));
                 try {
