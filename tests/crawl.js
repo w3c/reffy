@@ -45,14 +45,14 @@ nock("https://respec.org")
 
 nock("https://specref.herokuapp.com")
   .persist()
-  .get("/bibrefs?refs=webidl,__SPEC__HTML").reply(200, {webidl:{href:"https://heycam.github.io/webidl/"}}, {"Access-Control-Allow-Origin": "*"});
+  .get("/bibrefs?refs=webidl,html").reply(200, {webidl:{href:"https://heycam.github.io/webidl/"}}, {"Access-Control-Allow-Origin": "*"});
 
 nock("https://www.w3.org")
   .persist()
   .get("/scripts/TR/2016/fixup.js").reply(200, '')
   .get("/StyleSheets/TR/2016/logos/W3C").reply(200, '')
   .get("/StyleSheets/TR/2016/base.css").reply(200, '')
-  .get("/Tools/respec/respec-highlight.js").replyWithFile(200, __dirname + "/../node_modules/respec-hljs/dist/respec-highlight.js", {"Content-Type": "application/js"})
+  .get("/Tools/respec/respec-highlight").replyWithFile(200, __dirname + "/../node_modules/respec-hljs/dist/respec-highlight.js", {"Content-Type": "application/js"})
   .get("/Tools/respec/respec-w3c").replyWithFile(200, __dirname + "/../node_modules/respec/builds/respec-w3c.js", {"Content-Type": "application/js"});
 
 
@@ -78,7 +78,8 @@ if (global.describe && describe instanceof Function) {
   const { assert } = require('chai');
 
   describe("Test the crawl doesn't completely fail on a small sample of specs", function() {
-    this.timeout(10000);
+    this.slow(10000);
+    this.timeout(20000);
     it("doesn't report 3 errors on crawling 3 specs", async() => {
       const refResults = JSON.parse(fs.readFileSync(__dirname + "/crawl-test.json", "utf-8"));
       const results = await crawl();

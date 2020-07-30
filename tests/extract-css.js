@@ -122,6 +122,7 @@ const tests = [
 ]
 
 describe("Test CSS properties extraction", function() {
+  this.slow(5000);
   this.timeout(10000);
   let browser;
   before(async () => {
