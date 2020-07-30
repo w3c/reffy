@@ -20,7 +20,9 @@ const testHeadings = [
   }
 ];
 
-describe("Test headings extraction", () => {
+describe("Test headings extraction", function () {
+  this.slow(5000);
+
   let browser;
   before(async () => {
     browser = await puppeteer.launch({ headless: true });

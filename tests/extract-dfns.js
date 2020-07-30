@@ -552,7 +552,9 @@ async function assertExtractedDefinition(browser, html, dfns, spec) {
 }
 
 
-describe("Test definition extraction", () => {
+describe("Test definition extraction", function () {
+  this.slow(5000);
+
   let browser;
   before(async () => {
     browser = await puppeteer.launch({ headless: true });
