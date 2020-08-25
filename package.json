@@ -44,7 +44,7 @@
   "devDependencies": {
     "chai": "4.2.0",
     "jasmine": "3.6.1",
-    "mocha": "8.1.1",
+    "mocha": "8.1.2",
     "nock": "13.0.4",
     "respec": "25.14.0",
     "respec-hljs": "2.1.1",
