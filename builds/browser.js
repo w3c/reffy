@@ -247,10 +247,10 @@
         const cleanedLine = line.cloneNode(true);
         const annotations = cleanedLine.querySelectorAll("aside");
         annotations.forEach(n => n.remove());
-        return Object.assign({
+        return {
           name: dfnLabel2Property(cleanedLine.querySelector(':first-child').textContent),
           value: cleanedLine.querySelector('td:last-child').textContent.trim().replace(/\s+/g, ' ')
-        });
+        };
       });
     for (let prop of lines) {
       res[prop.name] = prop.value;
@@ -445,6 +445,24 @@
     return splitted[splitted.length - 1];
   }
 
+  function appendIfExist(base, target) {
+    let result = base;
+    if (target) {
+      result += ` ${target}`;
+    }
+    return result;
+  }
+
+  function contextAsText(node) {
+    const hierarchy = [node];
+    while (node && node.parent) {
+      const { parent } = node;
+      hierarchy.unshift(parent);
+      node = parent;
+    }
+    return hierarchy.map(n => appendIfExist(n.type, n.name)).join(" -> ");
+  }
+
   /**
    * @typedef {object} WebIDL2ErrorOptions
    * @property {"error" | "warning"} [level]
@@ -495,7 +513,7 @@
 
     const contextType = kind === "Syntax" ? "since" : "inside";
     const inSourceName = source.name ? ` in ${source.name}` : "";
-    const grammaticalContext = (current && current.name) ? `, ${contextType} \`${current.partial ? "partial " : ""}${current.type} ${current.name}\`` : "";
+    const grammaticalContext = (current && current.name) ? `, ${contextType} \`${current.partial ? "partial " : ""}${contextAsText(current)}\`` : "";
     const context = `${kind} error at line ${line}${inSourceName}${grammaticalContext}:\n${sourceContext}`;
     return {
       message: `${context} ${message}`,
@@ -873,7 +891,7 @@ information.`;
    * @param {string} typeName
    */
   function generic_type(tokeniser, typeName) {
-    const base = tokeniser.consume("FrozenArray", "Promise", "sequence", "record");
+    const base = tokeniser.consume("FrozenArray", "ObservableArray", "Promise", "sequence", "record");
     if (!base) {
       return;
     }
@@ -887,7 +905,8 @@ information.`;
         break;
       }
       case "sequence":
-      case "FrozenArray": {
+      case "FrozenArray":
+      case "ObservableArray": {
         const subtype = type_with_extended_attributes(tokeniser, typeName) || tokeniser.error(`Missing ${base.type} subtype`);
         ret.subtype.push(subtype);
         break;
@@ -1013,6 +1032,16 @@ information.`;
 
     *validate(defs) {
       yield* this.extAttrs.validate(defs);
+
+      if (this.idlType === "void") {
+        const message = `\`void\` is now replaced by \`undefined\`. Refer to the \
+[relevant GitHub issue](https://github.com/heycam/webidl/issues/60) \
+for more information.`;
+        yield validationError(this.tokens.base, this, "replace-void", message, {
+          autofix: replaceVoid(this)
+        });
+      }
+
       /*
        * If a union is nullable, its subunions cannot include a dictionary
        * If not, subunions may include dictionaries if each union is not nullable
@@ -1027,7 +1056,7 @@ information.`;
         const { reference } = idlTypeIncludesDictionary(target, defs) || {};
         if (reference) {
           const targetToken = (this.union ? reference : this).tokens.base;
-          const message = `Nullable union cannot include a dictionary type`;
+          const message = "Nullable union cannot include a dictionary type.";
           yield validationError(targetToken, this, "no-nullable-union-dict", message);
         }
       } else {
@@ -1037,6 +1066,15 @@ information.`;
         }
       }
     }
+  }
+
+  /**
+   * @param {Type} type
+   */
+  function replaceVoid(type) {
+    return () => {
+      type.tokens.base.value = "undefined";
+    };
   }
 
   class Default extends Base {
@@ -1390,7 +1428,7 @@ information.`;
     const { source } = tokeniser;
     const num_type = integer_type() || decimal_type();
     if (num_type) return num_type;
-    const base = tokeniser.consume("boolean", "byte", "octet");
+    const base = tokeniser.consume("boolean", "byte", "octet", "undefined");
     if (base) {
       return new Type({ source, tokens: { base } });
     }
@@ -1634,6 +1672,7 @@ information.`;
     "FrozenArray",
     "Infinity",
     "NaN",
+    "ObservableArray",
     "Promise",
     "boolean",
     "byte",
@@ -1651,6 +1690,7 @@ information.`;
     "sequence",
     "short",
     "true",
+    "undefined",
     "unsigned",
     "void"
   ].concat(argumentNameKeywords, stringTypes, typeNameKeywords);
