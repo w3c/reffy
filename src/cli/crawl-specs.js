@@ -239,9 +239,47 @@ async function saveResults(crawlOptions, data, folder) {
         }
         return subfolder;
     }
-    const idlFolder = await getSubfolder('idl');
-    const cssFolder = await getSubfolder('css');
-    const dfnsFolder = await getSubfolder('dfns');
+
+    const folders = {
+        css: await getSubfolder('css'),
+        dfns: await getSubfolder('dfns'),
+        headings: await getSubfolder('headings'),
+        idl: await getSubfolder('idl'),
+        idlparsed: await getSubfolder('idlparsed'),
+        links: await getSubfolder('links'),
+        refs: await getSubfolder('refs')
+    };
+
+    function getBaseJSON(spec) {
+        return {
+            spec: {
+                title: spec.title,
+                url: spec.crawled
+            }
+        };
+    }
+
+    function getSavePropFunction(property, filter) {
+        return async function (spec) {
+            if (filter(spec)) {
+                const contents = getBaseJSON(spec);
+                contents[property] = spec[property];
+                const json = JSON.stringify(contents, null, 2);
+                const filename = path.join(folders[property], spec.shortname + '.json');
+                try {
+                    await fs.promises.writeFile(filename, json);
+                }
+                catch (err) {
+                    // TODO: report error!
+                    console.log(err);
+                }
+                spec[property] = `${property}/${spec.shortname}.json`;
+            }
+            else {
+                delete spec[property];
+            }
+        };
+    }
 
     async function saveIdl(spec) {
         let idlHeader = `
@@ -255,10 +293,9 @@ async function saveResults(crawlOptions, data, folder) {
             .replace(/\t/g, '  ')
             .trim();
         idl = idlHeader + idl + '\n';
-        delete spec.idl.idl;
         try {
             await fs.promises.writeFile(
-                path.join(idlFolder, spec.series.shortname + '.idl'), idl);
+                path.join(folders.idl, spec.series.shortname + '.idl'), idl);
         }
         catch (err) {
             console.log(err);
@@ -268,12 +305,7 @@ async function saveResults(crawlOptions, data, folder) {
     async function saveCss(spec) {
         // There are no comments in JSON, so include the spec title+URL as the
         // first property instead.
-        const css = Object.assign({
-            spec: {
-                title: spec.title,
-                url: spec.crawled
-            }
-        }, spec.css);
+        const css = Object.assign(getBaseJSON(spec), spec.css);
         const json = JSON.stringify(css, (key, val) => {
             if ((key === 'parsedValue') || (key === 'valueParseError')) {
                 return undefined;
@@ -282,60 +314,32 @@ async function saveResults(crawlOptions, data, folder) {
                 return val;
             }
         }, 2) + '\n';
+        const filename = path.join(folders.css, spec.series.shortname + '.json')
         try {
-            await fs.promises.writeFile(
-                path.join(cssFolder, spec.series.shortname + '.json'), json);
+            await fs.promises.writeFile(filename, json);
         }
         catch (err) {
             console.log(err);
         }
+        spec.css = `css/${spec.series.shortname}.json`;
     };
 
-    async function saveDfns(spec) {
-        const dfns = {
-            spec: {
-                title: spec.title,
-                url: spec.crawled
-            },
-            dfns: spec.dfns
-        };
-        try {
-            await fs.promises.writeFile(
-                path.join(dfnsFolder, spec.shortname + '.json'),
-                JSON.stringify(dfns, null, 2));
-        }
-        catch (err) {
-            console.log(err);
-        }
-    }
-
     // Save IDL dumps for the latest level of a spec to the idl folder
+    // TODO: the raw IDL of previous levels in a series is not saved anywhere.
+    // That may not be a big deal though as people should only be interested in
+    // the latest level for IDL dumps.
     function defineIDLContent(spec) {
         return spec.idl && spec.idl.idl;
     }
+    const specsWithIDL = data.filter(defineIDLContent);
     await Promise.all(data
         .filter(spec => isLatestLevelThatPasses(spec, data, defineIDLContent))
         .map(saveIdl));
 
-    // Save CSS dumps for the latest level of a spec to the css folder
-    function defineCSSContent(spec) {
-        return spec.css && (
-            (Object.keys(spec.css.properties || {}).length > 0) ||
-            (Object.keys(spec.css.descriptors || {}).length > 0) ||
-            (Object.keys(spec.css.valuespaces || {}).length > 0));
-    }
-    await Promise.all(data
-        .filter(spec => isLatestLevelThatPasses(spec, data, defineCSSContent))
-        .map(saveCss));
-
-    // Save definitions for all specs
-    await Promise.all(data
-        .filter(spec => spec.dfns && spec.dfns.length > 0)
-        .map(saveDfns));
-
+    // TODO: Legacy code, drop when crawl.json is no longer used anywhere
     // Save all results to the crawl.json file
     let reportFilename = path.join(folder, 'crawl.json');
-    return new Promise((resolve, reject) =>
+    await new Promise((resolve, reject) =>
         fs.readFile(reportFilename, function(err, content) {
             if (err) return reject(err);
 
@@ -360,6 +364,80 @@ async function saveResults(crawlOptions, data, folder) {
                          err => { if (err) return reject(err); return resolve();});
         })
     );
+
+    // Move parsed IDL to right property, and replace raw IDL with link to
+    // generated IDL extract
+    data.map(spec => {
+        if (specsWithIDL.includes(spec)) {
+            delete spec.idl.idl;
+            spec.idlparsed = spec.idl;
+            spec.idl = `idl/${spec.series.shortname}.idl`;
+        }
+        else if (spec.idl) {
+            delete spec.idl;
+        }
+    });
+
+    // Save CSS dumps for the latest level of a spec to the css folder
+    // TODO: crawl.json contains the CSS dumps for earlier levels in a series,
+    // but index.json does not since it only links to generated files and we
+    // don't generate CSS dumps for specs that are not the latest level. Save
+    // them somewhere?
+    function defineCSSContent(spec) {
+        return spec.css && (
+            (Object.keys(spec.css.properties || {}).length > 0) ||
+            (Object.keys(spec.css.descriptors || {}).length > 0) ||
+            (Object.keys(spec.css.valuespaces || {}).length > 0));
+    }
+    data.filter(spec => !isLatestLevelThatPasses(spec, data, defineCSSContent))
+        .map(spec => delete spec.css);
+    await Promise.all(data
+        .filter(spec => isLatestLevelThatPasses(spec, data, defineCSSContent))
+        .map(saveCss));
+
+    // Save definitions, links, headings, and refs for individual specs
+    await Promise.all(data.map(getSavePropFunction('dfns',
+        spec => spec.dfns && (spec.dfns.length > 0))));
+    await Promise.all(data.map(getSavePropFunction('links',
+        spec => spec.links && (Object.keys(spec.links).length > 0))));
+    await Promise.all(data.map(getSavePropFunction('headings',
+        spec => spec.headings && (spec.headings.length > 0))));
+    await Promise.all(data.map(getSavePropFunction('refs',
+        spec => spec.refs &&
+            ((spec.refs.normative && spec.refs.normative.length > 0) ||
+             (spec.refs.informative && spec.refs.informative.length > 0)))));
+
+    // Save parsed IDL structures (without the raw IDL)
+    await Promise.all(data.map(getSavePropFunction('idlparsed',
+        spec => spec.idlparsed)));
+
+    // Save all results to the index.json file
+    let indexFilename = path.join(folder, 'index.json');
+    await new Promise((resolve, reject) =>
+        fs.readFile(indexFilename, function (err, content) {
+            if (err) return reject(err);
+
+            let filedata = {};
+            try {
+                filedata = JSON.parse(content);
+            } catch (e) {}
+
+            filedata.type = filedata.type || 'crawl';
+            filedata.title = 'Reffy crawl';
+            filedata.date = filedata.date || (new Date()).toJSON();
+            filedata.options = crawlOptions;
+            filedata.stats = {};
+            filedata.results = (filedata.results || []).concat(data);
+            filedata.results.sort(byURL);
+            filedata.stats = {
+                crawled: filedata.results.length,
+                errors: filedata.results.filter(spec => !!spec.error).length
+            };
+
+            fs.writeFile(indexFilename, JSON.stringify(filedata, null, 2),
+                         err => { if (err) return reject(err); return resolve();});
+        })
+    );
 }
 
 
@@ -377,6 +455,9 @@ function crawlSpecs(resultsPath, options) {
         return Promise.reject('Required folder parameter missing');
     }
     try {
+        fs.writeFileSync(path.join(resultsPath, 'index.json'), '');
+
+        // TODO: Legacy code, drop when crawl.json is no longer used anywhere
         fs.writeFileSync(path.join(resultsPath, 'crawl.json'), '');
     } catch (err) {
         return Promise.reject('Impossible to write to ' + resultsPath + ': ' + err);

@@ -31,10 +31,12 @@
  * @module analyzer
  */
 
+const path = require('path');
 const canonicalizeUrl = require('../../builds/canonicalize-url').canonicalizeUrl;
 const canonicalizesTo = require('../../builds/canonicalize-url').canonicalizesTo;
 const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
 const isLatestLevelThatPasses = require('../lib/util').isLatestLevelThatPasses;
+const expandCrawlResult = require('../lib/util').expandCrawlResult;
 
 const array_concat = (a,b) => a.concat(b);
 const uniqueFilter = (item, idx, arr) => arr.indexOf(item) === idx;
@@ -314,9 +316,11 @@ function studyCrawlResults(results, specsToInclude) {
 }
 
 
-function studyCrawl(crawlResults, toInclude) {
+async function studyCrawl(crawlResults, toInclude) {
   if (typeof crawlResults === 'string') {
+    const crawlResultsPath = crawlResults;
     crawlResults = requireFromWorkingDirectory(crawlResults);
+    crawlResults = await expandCrawlResult(crawlResults, path.dirname(crawlResultsPath));
   }
   else {
     crawlResults = crawlResults || {};
@@ -361,14 +365,6 @@ if (require.main === module) {
         process.exit(2);
     }
 
-    let crawlResults;
-    try {
-        crawlResults = requireFromWorkingDirectory(crawlResultsPath);
-    } catch(e) {
-        console.error("Impossible to read " + crawlResultsPath + ": " + e);
-        process.exit(3);
-    }
-
-    const results = studyCrawl(crawlResults, specUrls.map(url => { return {url}; }));
-    console.log(JSON.stringify(results, null, 2));
+    studyCrawl(crawlResultsPath, specUrls.map(url => { return {url}; }))
+        .then(results => console.log(JSON.stringify(results, null, 2)));
 }

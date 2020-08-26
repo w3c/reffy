@@ -392,10 +392,71 @@ function isLatestLevelThatPasses(spec, list, predicate) {
 }
 
 
+/**
+ * Takes the results of a crawl (typically the contents of the index.json file)
+ * and expands it to include the contents of all referenced files.
+ *
+ * Note the crawl object is expanded in place.
+ *
+ * @function
+ * @public
+ * @param {String} filename The path to the index.json file to parse
+ * @return {Promise(object)} The promise to get an expanded crawl object that
+ *   contains the entire crawl report (and no longer references external files)
+ */
+async function expandCrawlResult(crawl, baseFolder) {
+    baseFolder = baseFolder || '';
+
+    async function expandSpec(spec) {
+        // Special case for "idl" that must be processed first
+        if (spec.idl && (typeof spec.idl === 'string')) {
+            spec.idl = {
+                idl: await fs.readFile(path.join(baseFolder, spec.idl), 'utf8')
+            };
+        }
+
+        const properties = ['css', 'dfns', 'headings', 'idlparsed', 'links', 'refs'];
+        await Promise.all(properties.map(async property => {
+            if (!spec[property] || (typeof spec[property] !== 'string')) {
+                return;
+            }
+            const filename = path.join(baseFolder, spec[property]);
+            let contents = await fs.readFile(filename);
+            if (spec[property].endsWith('.json')) {
+                contents = JSON.parse(contents);
+            }
+            if (property === 'css') {
+                // Special case for CSS where the "css" level does not exist
+                // in the generated files
+                const css = Object.assign({}, contents);
+                delete css.spec;
+                spec[property] = css;
+            }
+            else if (property === 'idlparsed') {
+                // Special case for parsed IDL extracts, as result needs to be
+                // attached to "idl"
+                if (!spec.idl) {
+                    spec.idl = {};
+                }
+                Object.assign(spec.idl, contents[property]);
+            }
+            else {
+                spec[property] = contents[property];
+            }
+        }));
+        return spec;
+    }
+
+    crawl.results = await Promise.all(crawl.results.map(expandSpec));
+    return crawl;
+}
+
+
 module.exports = {
     fetch,
     requireFromWorkingDirectory,
     processSpecification,
     completeWithAlternativeUrls,
-    isLatestLevelThatPasses
+    isLatestLevelThatPasses,
+    expandCrawlResult
 };

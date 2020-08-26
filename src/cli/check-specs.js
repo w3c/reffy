@@ -24,7 +24,9 @@
  */
 
 const fs = require('fs');
+const path = require('path');
 const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
+const expandCrawlResult = require('../lib/util').expandCrawlResult;
 const crawlList = require('./crawl-specs').crawlList;
 const mergeCrawlResults = require('./merge-crawl-results').mergeCrawlResults;
 const studyCrawl = require('./study-crawl').studyCrawl;
@@ -124,6 +126,7 @@ if (require.main === module) {
     let refCrawl;
     try {
         refCrawl = requireFromWorkingDirectory(refCrawlPath);
+        refCrawl = expandCrawlResult(refCrawl, path.dirname(refCrawlPath));
     } catch(e) {
         console.error("Impossible to read " + crawlResultsPath + ": " + e);
         process.exit(3);
