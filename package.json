@@ -43,7 +43,6 @@
   },
   "devDependencies": {
     "chai": "4.2.0",
-    "jasmine": "3.6.1",
     "mocha": "8.1.2",
     "nock": "13.0.4",
     "respec": "25.14.0",
@@ -69,6 +68,6 @@
     "ed-html": "node reffy.js run ed html",
     "ed-diff": "node reffy.js run ed diff",
     "ed-diffnew": "node reffy.js run ed diffnew",
-    "test": "jasmine && mocha --recursive tests/"
+    "test": "mocha --recursive tests/"
   }
 }
