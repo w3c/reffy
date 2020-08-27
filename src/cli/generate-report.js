@@ -5,29 +5,23 @@
  * parameters, the generated report may be a report per spec, a report per
  * issue, a dependencies report, or a diff report.
  *
- * The report generator can also take a crawl report as input. In that case, it
- * will first start by running the [crawl analyzer]{@link module:analyzer} to
- * produce the anomalies report.
- *
  * The report generator can be called directly through:
  *
  * `node generate-report.js [anomalies report] [type]`
  *
  * where `anomalies report` is the name of a JSON file that contains the
- * anomalies report to parse (or the crawl report), and `type` is an optional
- * parameter that specifies the type of report to generate, one of `perspec`
- * (default value) to produce a report per spec, `perissue` to produce a report
- * per issue, `dep` to produce a dependencies report, or `diff` to produce a
- * diff report. When `diff` is used, an extra parameter must be given which must
- * point to the reference anomalies report the new report needs to be compared
- * with.
+ * anomalies report to parse and `type` is an optional parameter that specifies
+ * the type of report to generate, one of `perspec` (default value) to produce
+ * a report per spec, `perissue` to produce a report per issue, `dep` to
+ * produce a dependencies report, or `diff` to produce a diff report. When
+ * `diff` is used, an extra parameter must be given which must  point to the
+ * reference anomalies report the new report needs to be compared with.
  *
  * @module markdownGenerator
  */
 
 const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
 const fetch = require('../lib/util').fetch;
-const studyCrawl = require('./study-crawl').studyCrawl;
 
 
 /**
@@ -867,20 +861,11 @@ async function generateReport(studyFile, options) {
         throw new Error('Impossible to read ' + studyFile + ': ' + e);
     }
 
-    // Study the result of the crawl if the contents we have is not already the
-    // study result.
-    if (study.type !== 'study') {
-        study = studyCrawl(study);
-    }
-
     if (options.diffReport) {
         if (options.refStudyFile.startsWith('http')) {
             try {
                 let response = await fetch(options.refStudyFile, { nolog: true });
                 let refStudy = await response.json();
-                if (refStudy.type !== 'study') {
-                    refStudy = studyCrawl(refStudy);
-                }
                 return generateDiffReport(study, refStudy, { onlyNew: options.onlyNew });
             }
             catch (e) {
@@ -893,9 +878,6 @@ async function generateReport(studyFile, options) {
                 refStudy = requireFromWorkingDirectory(options.refStudyFile);
             } catch (e) {
                 throw new Error('Impossible to read ' + options.refStudyFile + ': ' + e);
-            }
-            if (refStudy.type !== 'study') {
-                refStudy = studyCrawl(refStudy);
             }
             return generateDiffReport(study, refStudy, { onlyNew: options.onlyNew });
         }
