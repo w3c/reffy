@@ -25,6 +25,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const browserSpecs = require('browser-specs');
 const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
 const expandCrawlResult = require('../lib/util').expandCrawlResult;
 const crawlList = require('./crawl-specs').crawlList;
@@ -54,24 +55,28 @@ const prop = p => x => x[p];
  * @return {Promise} The promise to get the study report for the requested list
  *   of specs
  */
-function checkSpecs(speclist, refCrawl, options) {
-    return crawlList(speclist, options)
-        .then(crawl => {
-            return {
-                type: 'crawl',
-                title: 'Anomalies in spec: ' + speclist.map(prop('url')).join(', '),
-                description: 'Study of anomalies in the given spec against a reference crawl report',
-                date: (new Date()).toJSON(),
-                options: options,
-                stats: {
-                    crawled: crawl.length,
-                    errors: crawl.filter(spec => !!spec.error).length
-                },
-                results: crawl
-            };
-        })
-        .then(crawl => mergeCrawlResults(crawl, refCrawl))
-        .then(mergedCrawl => studyCrawl(mergedCrawl, speclist))
+async function checkSpecs(speclist, refCrawl, options) {
+    const specs = speclist.map(spec => (typeof spec === 'string') ?
+            browserSpecs.find(s => s.url === spec || s.shortname === spec) :
+            spec)
+        .filter(spec => !!spec);
+
+    const crawl = await crawlList(specs, options);
+    const report = {
+        type: 'crawl',
+        title: 'Anomalies in spec: ' + specs.map(prop('url')).join(', '),
+        description: 'Study of anomalies in the given spec against a reference crawl report',
+        date: (new Date()).toJSON(),
+        options: options,
+        stats: {
+            crawled: crawl.length,
+            errors: crawl.filter(spec => !!spec.error).length
+        },
+        results: crawl
+    };
+    const mergedReport = await mergeCrawlResults(report, refCrawl);
+    const study = await studyCrawl(mergedReport, specs);
+    return study;
 }
 
 
@@ -104,8 +109,7 @@ module.exports.checkSpec = checkSpec;
 Code run if the code is run as a stand-alone module
 **************************************************/
 if (require.main === module) {
-    const specUrls = (process.argv[2] ? process.argv[2].split(',') : [])
-        .map(url => { return {url}; });
+    const specUrls = (process.argv[2] ? process.argv[2].split(',') : []);
     const refCrawlPath = process.argv[3];
     const resPath = process.argv[4];
     const crawlOptions = { publishedVersion: (process.argv[5] === 'tr') };
