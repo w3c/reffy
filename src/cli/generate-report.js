@@ -861,19 +861,19 @@ async function generateReport(studyFile, options) {
         throw new Error('Impossible to read ' + studyFile + ': ' + e);
     }
 
+    let refStudy = {};
     if (options.diffReport) {
         if (options.refStudyFile.startsWith('http')) {
             try {
                 let response = await fetch(options.refStudyFile, { nolog: true });
-                let refStudy = await response.json();
-                return generateDiffReport(study, refStudy, { onlyNew: options.onlyNew });
+                refStudy = await response.json();
             }
             catch (e) {
                 throw new Error('Impossible to fetch ' + options.refStudyFile + ': ' + e);
             }
+            return generateDiffReport(study, refStudy, { onlyNew: options.onlyNew });
         }
         else {
-            let refStudy = {};
             try {
                 refStudy = requireFromWorkingDirectory(options.refStudyFile);
             } catch (e) {

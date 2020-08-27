@@ -28,12 +28,12 @@ const pandoc = require('node-pandoc');
 const perspectives = {
   'ed': {
     description: 'Crawls the latest Editor\'s Drafts',
-    refStudy: 'https://tidoust.github.io/reffy-reports/ed/crawl.json'
+    refStudy: 'https://tidoust.github.io/reffy-reports/ed/study.json'
   },
   'tr': {
     description: 'Crawls the latest published versions of specifications in /TR/ space instead of the latest Editor\'s Drafts',
     publishedVersion: true,
-    refStudy: 'https://tidoust.github.io/reffy-reports/tr/crawl.json'
+    refStudy: 'https://tidoust.github.io/reffy-reports/tr/study.json'
   }
 };
 
