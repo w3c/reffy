@@ -396,11 +396,16 @@ function isLatestLevelThatPasses(spec, list, predicate) {
  * Takes the results of a crawl (typically the contents of the index.json file)
  * and expands it to include the contents of all referenced files.
  *
+ * The function handles both files and HTTPS resources, using either filesystem
+ * functions (for files) or fetch (for HTTPS resources).
+ *
  * Note the crawl object is expanded in place.
  *
  * @function
  * @public
- * @param {String} filename The path to the index.json file to parse
+ * @param {Object} crawl Crawl index object that needs to be expanded
+ * @param {string} baseFolder The base folder that contains the crawl file, or
+ *   the base HTTPS URI to resolve relative links in the crawl object.
  * @return {Promise(object)} The promise to get an expanded crawl object that
  *   contains the entire crawl report (and no longer references external files)
  */
@@ -410,9 +415,18 @@ async function expandCrawlResult(crawl, baseFolder) {
     async function expandSpec(spec) {
         // Special case for "idl" that must be processed first
         if (spec.idl && (typeof spec.idl === 'string')) {
-            spec.idl = {
-                idl: await fs.readFile(path.join(baseFolder, spec.idl), 'utf8')
-            };
+            if (baseFolder.startsWith('https:')) {
+                const url = (new URL(spec.idl, baseFolder)).toString();
+                let response = await fetch(url, { nolog: true });
+                spec.idl = {
+                    idl: await response.text()
+                };
+            }
+            else {
+                spec.idl = {
+                    idl: await fs.readFile(path.join(baseFolder, spec.idl), 'utf8')
+                };
+            }
         }
 
         const properties = ['css', 'dfns', 'headings', 'idlparsed', 'links', 'refs'];
@@ -420,8 +434,16 @@ async function expandCrawlResult(crawl, baseFolder) {
             if (!spec[property] || (typeof spec[property] !== 'string')) {
                 return;
             }
-            const filename = path.join(baseFolder, spec[property]);
-            let contents = await fs.readFile(filename);
+            let contents = null;
+            if (baseFolder.startsWith('https:')) {
+                const url = (new URL(spec[property], baseFolder)).toString();
+                const response = await fetch(url, { nolog: true });
+                contents = await response.text();
+            }
+            else {
+                const filename = path.join(baseFolder, spec[property]);
+                contents = await fs.readFile(filename, 'utf8');
+            }
             if (spec[property].endsWith('.json')) {
                 contents = JSON.parse(contents);
             }
@@ -439,6 +461,7 @@ async function expandCrawlResult(crawl, baseFolder) {
                     spec.idl = {};
                 }
                 Object.assign(spec.idl, contents[property]);
+                delete spec.idlparsed;
             }
             else {
                 spec[property] = contents[property];
