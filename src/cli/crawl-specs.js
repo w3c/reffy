@@ -284,8 +284,8 @@ async function saveResults(crawlOptions, data, folder) {
     async function saveIdl(spec) {
         let idlHeader = `
             // GENERATED CONTENT - DO NOT EDIT
-            // Content was automatically extracted by Reffy into reffy-reports
-            // (https://github.com/tidoust/reffy-reports)
+            // Content was automatically extracted by Reffy into webref
+            // (https://github.com/w3c/webref)
             // Source: ${spec.title} (${spec.crawled})`;
         idlHeader = idlHeader.replace(/^\s+/gm, '').trim() + '\n\n';
         let idl = spec.idl.idl
