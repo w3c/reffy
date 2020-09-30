@@ -245,7 +245,7 @@
     const lines = [...table.querySelectorAll('tr')]
       .map(line => {
         const cleanedLine = line.cloneNode(true);
-        const annotations = cleanedLine.querySelectorAll("aside");
+        const annotations = cleanedLine.querySelectorAll("aside, .mdn-anno");
         annotations.forEach(n => n.remove());
         return {
           name: dfnLabel2Property(cleanedLine.querySelector(':first-child').textContent),
