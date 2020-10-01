@@ -281,7 +281,7 @@ async function saveResults(crawlOptions, data, folder) {
         };
     }
 
-    async function saveIdl(spec) {
+    async function saveIdl(spec, filename) {
         let idlHeader = `
             // GENERATED CONTENT - DO NOT EDIT
             // Content was automatically extracted by Reffy into webref
@@ -295,14 +295,14 @@ async function saveResults(crawlOptions, data, folder) {
         idl = idlHeader + idl + '\n';
         try {
             await fs.promises.writeFile(
-                path.join(folders.idl, spec.series.shortname + '.idl'), idl);
+                path.join(folders.idl, filename + '.idl'), idl);
         }
         catch (err) {
             console.log(err);
         }
     };
 
-    async function saveCss(spec) {
+    async function saveCss(spec, filename) {
         // There are no comments in JSON, so include the spec title+URL as the
         // first property instead.
         const css = Object.assign(getBaseJSON(spec), spec.css);
@@ -314,14 +314,14 @@ async function saveResults(crawlOptions, data, folder) {
                 return val;
             }
         }, 2) + '\n';
-        const filename = path.join(folders.css, spec.series.shortname + '.json')
+        const pathname = path.join(folders.css, filename + '.json')
         try {
-            await fs.promises.writeFile(filename, json);
+            await fs.promises.writeFile(pathname, json);
         }
         catch (err) {
             console.log(err);
         }
-        spec.css = `css/${spec.series.shortname}.json`;
+        spec.css = `css/${filename}.json`;
     };
 
     // Save IDL dumps for the latest level of a spec to the idl folder
@@ -334,7 +334,13 @@ async function saveResults(crawlOptions, data, folder) {
     const specsWithIDL = data.filter(defineIDLContent);
     await Promise.all(data
         .filter(spec => isLatestLevelThatPasses(spec, data, defineIDLContent))
-        .map(saveIdl));
+        .map(spec => saveIdl(spec, spec.series.shortname)));
+
+    // Save IDL dumps of delta specs too
+    // (using the actual shortname of the spec)
+    await Promise.all(data
+        .filter(spec => (spec.seriesComposition === 'delta') && defineIDLContent(spec))
+        .map(spec => saveIdl(spec, spec.shortname)));
 
     // TODO: Legacy code, drop when crawl.json is no longer used anywhere
     // Save all results to the crawl.json file
@@ -371,7 +377,12 @@ async function saveResults(crawlOptions, data, folder) {
         if (specsWithIDL.includes(spec)) {
             delete spec.idl.idl;
             spec.idlparsed = spec.idl;
-            spec.idl = `idl/${spec.series.shortname}.idl`;
+            if (spec.seriesComposition === 'delta') {
+                spec.idl = `idl/${spec.shortname}.idl`;
+            }
+            else {
+                spec.idl = `idl/${spec.series.shortname}.idl`;
+            }
         }
         else if (spec.idl) {
             delete spec.idl;
@@ -389,11 +400,18 @@ async function saveResults(crawlOptions, data, folder) {
             (Object.keys(spec.css.descriptors || {}).length > 0) ||
             (Object.keys(spec.css.valuespaces || {}).length > 0));
     }
-    data.filter(spec => !isLatestLevelThatPasses(spec, data, defineCSSContent))
-        .map(spec => delete spec.css);
     await Promise.all(data
         .filter(spec => isLatestLevelThatPasses(spec, data, defineCSSContent))
-        .map(saveCss));
+        .map(spec => saveCss(spec, spec.series.shortname)));
+
+    // Save CSS dumps of delta specs too
+    // (using the actual shortname of the spec)
+    await Promise.all(data
+        .filter(spec => (spec.seriesComposition === 'delta') && defineCSSContent(spec))
+        .map(spec => saveCss(spec, spec.shortname)));
+
+    data.filter(spec => defineCSSContent(spec))
+        .map(spec => delete spec.css);
 
     // Save definitions, links, headings, and refs for individual specs
     await Promise.all(data.map(getSavePropFunction('dfns',
