@@ -104,30 +104,45 @@ async function crawlSpec(spec, crawlOptions) {
             result.idl = err;
         }
 
+        // Add CSS property definitions that weren't in a table
+        (result.dfns || []).filter((dfn) => dfn.type == "property").forEach(propDfn => {
+            propDfn.linkingText.forEach(lt => {
+                if (!result.css.properties.hasOwnProperty(lt)) {
+                    result.css.properties[lt] = {
+                        name: lt
+                    };
+                }
+            });
+        });
+
         // Parse extracted CSS definitions
-        Object.keys(result.css.properties || {}).forEach(prop => {
-            try {
-                result.css.properties[prop].parsedValue = cssDfnParser.parsePropDefValue(
-                    result.css.properties[prop].value || result.css.properties[prop].newValues);
-            } catch (e) {
-                result.css.properties[prop].valueParseError = e.message;
-            }
-        });
-        Object.keys(result.css.descriptors || {}).forEach(desc => {
-            try {
-                result.css.descriptors[desc].parsedValue = cssDfnParser.parsePropDefValue(
-                    result.css.descriptors[desc].value);
-            } catch (e) {
-                result.css.descriptors[desc].valueParseError = e.message;
-            }
-        });
-        Object.keys(result.css.valuespaces || {}).forEach(vs => {
-            if (result.css.valuespaces[vs].value) {
+        Object.entries(result.css.properties || {}).forEach(([prop, dfn]) => {
+            if (dfn.value || dfn.newValues) {
                 try {
-                    result.css.valuespaces[vs].parsedValue = cssDfnParser.parsePropDefValue(
-                        result.css.valuespaces[vs].value);
+                    dfn.parsedValue = cssDfnParser.parsePropDefValue(
+                        dfn.value || dfn.newValues);
                 } catch (e) {
-                    result.css.valuespaces[vs].valueParseError = e.message;
+                    dfn.valueParseError = e.message;
+                }
+            }
+        });
+        Object.entries(result.css.descriptors || {}).forEach(([desc, dfn]) => {
+            if (dfn.value) {
+                try {
+                    dfn.parsedValue = cssDfnParser.parsePropDefValue(
+                        dfn.value);
+                } catch (e) {
+                    dfn.valueParseError = e.message;
+                }
+            }
+        });
+        Object.entries(result.css.valuespaces || {}).forEach(([vs, dfn]) => {
+            if (dfn.value) {
+                try {
+                    dfn.parsedValue = cssDfnParser.parsePropDefValue(
+                        dfn.value);
+                } catch (e) {
+                    dfn.valueParseError = e.message;
                 }
             }
         });
