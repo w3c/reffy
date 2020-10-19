@@ -410,7 +410,10 @@ async function saveResults(crawlOptions, data, folder) {
         .filter(spec => (spec.seriesComposition === 'delta') && defineCSSContent(spec))
         .map(spec => saveCss(spec, spec.shortname)));
 
-    data.filter(spec => defineCSSContent(spec))
+    // Specs that define CSS now have a "css" key that point to the CSS extract.
+    // Specs that don't define CSS still have a "css" key that points to an
+    // empty object structure. Let's get rid of it.
+    data.filter(spec => spec.css && typeof spec.css !== 'string')
         .map(spec => delete spec.css);
 
     // Save definitions, links, headings, and refs for individual specs
