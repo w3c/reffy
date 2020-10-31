@@ -115,6 +115,16 @@ async function crawlSpec(spec, crawlOptions) {
             });
         });
 
+        // Ideally, the sample definition (property-name) in CSS2 and the custom
+        // property definition (--*) in CSS Variables would not be flagged as
+        // real CSS properties. In practice, they are. Let's remove them from
+        // the extract.
+        ['property-name', '--*'].forEach(prop => {
+            if ((result.css.properties || {})[prop]) {
+                delete result.css.properties[prop];
+            }
+        });
+
         // Parse extracted CSS definitions
         Object.entries(result.css.properties || {}).forEach(([prop, dfn]) => {
             if (dfn.value || dfn.newValues) {
