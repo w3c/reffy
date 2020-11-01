@@ -75,14 +75,15 @@ async function crawlSpec(spec, crawlOptions) {
 
     try {
         const result = await processSpecification(spec.crawled, (spec) => {
+            const idToHeading = window.reffy.mapIdsToHeadings();
             return {
                 crawled: window.location.toString(),
                 title: window.reffy.getTitle(),
                 generator: window.reffy.getGenerator(),
                 date: window.reffy.getLastModifiedDate(),
                 links: window.reffy.extractLinks(),
-                dfns: window.reffy.extractDefinitions(spec.shortname),
-                headings: window.reffy.extractHeadings(),
+                dfns: window.reffy.extractDefinitions(spec.shortname, idToHeading),
+                headings: window.reffy.extractHeadings(idToHeading),
                 refs: window.reffy.extractReferences(),
                 idl: window.reffy.extractWebIdl(),
                 css: window.reffy.extractCSS()
