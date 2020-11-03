@@ -86,9 +86,7 @@ function definitionMapper(el, idToHeading) {
   };
 }
 
-export default function (spec, idToHeading) {
-  idToHeading = idToHeading || {};
-
+export default function (spec, idToHeading = {}) {
   const definitionsSelector = [
     // re data-lt, see https://github.com/tidoust/reffy/issues/336#issuecomment-650339747
     'dfn[id]:not([data-lt=""])',
