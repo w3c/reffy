@@ -1,6 +1,7 @@
 const { assert } = require('chai');
 const puppeteer = require('puppeteer');
 const path = require('path');
+const rollup = require('rollup');
 
 // Note: Most of these tests are taken from the Sample outlines section in HTML
 // https://html.spec.whatwg.org/multipage/sections.html#sample-outlines
@@ -286,8 +287,20 @@ Ok it's almost certainly not true
 describe("Test outline generation", function () {
   this.slow(5000);
 
+  let createOutlineCode;
   let browser;
   before(async () => {
+    // Convert the JS module to a JS script that can be loaded in Puppeteer
+    // without having to provide a URL for it (tests run in "about:blank" pages)
+    const bundle = await rollup.rollup({
+      input: path.resolve(__dirname, '../src/browserlib/create-outline.js')
+    });
+    const { output } = await bundle.generate({
+      name: 'createOutline',
+      format: 'iife'
+    });
+    createOutlineCode = output[0].code;
+
     browser = await puppeteer.launch({ headless: true });
   });
 
@@ -295,9 +308,7 @@ describe("Test outline generation", function () {
     it(t.title, async () => {
       const page = await browser.newPage();
       page.setContent(t.html);
-      await page.addScriptTag({
-        path: path.resolve(__dirname, "../builds/browser.js")
-      });
+      await page.addScriptTag({ content: createOutlineCode });
 
       const result = await page.evaluate(async () => {
         function outlineToString(outline, level) {
@@ -306,7 +317,7 @@ describe("Test outline generation", function () {
             level + ' - ' + (section.heading.innerText || "(implied)") + '\n' +
             outlineToString(section.subSections, level + 1)).join("");
         }
-        const { outline, nodeToSection } = reffy.createOutline(document.body);
+        const { outline, nodeToSection } = createOutline(document.body);
 
         const charlie = document.getElementById("charlie");
         const section = nodeToSection.get(charlie);

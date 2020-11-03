@@ -2740,9 +2740,7 @@ for more information.`;
     };
   }
 
-  function extractDefinitions (spec, idToHeading) {
-    idToHeading = idToHeading || {};
-
+  function extractDefinitions (spec, idToHeading = {}) {
     const definitionsSelector = [
       // re data-lt, see https://github.com/tidoust/reffy/issues/336#issuecomment-650339747
       'dfn[id]:not([data-lt=""])',
@@ -3975,7 +3973,6 @@ for more information.`;
       extractLinks,
       canonicalizeUrl,
       canonicalizesTo,
-      createOutline,
       mapIdsToHeadings
     }
   );
