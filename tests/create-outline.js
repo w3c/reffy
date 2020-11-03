@@ -16,7 +16,6 @@ const testOutlines = [
  <aside>
   <p id="charlie">My cat is cute.</p>
  </aside>
- <script type="module" src="./main.js"></script>
 </body>`,
 
     res: `
