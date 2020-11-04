@@ -22,7 +22,7 @@ import {parse} from "../../node_modules/webidl2/index.js";
  * @return {Array(Object)} An Array of definitions
 */
 
-function definitionMapper(el) {
+function definitionMapper(el, idToHeading) {
   function normalize(str) {
     return str.trim().replace(/\s+/g, ' ');
   }
@@ -79,11 +79,14 @@ function definitionMapper(el) {
       '.informative', '.note', '.issue', '.example', '.ednote', '.practice',
       '.introductory', '.non-normative'
 
-    ].join(','))
+    ].join(',')),
+
+    // Heading under which the term is to be found
+    heading: idToHeading[el.getAttribute('id')]
   };
 }
 
-export default function (spec) {
+export default function (spec, idToHeading = {}) {
   const definitionsSelector = [
     // re data-lt, see https://github.com/tidoust/reffy/issues/336#issuecomment-650339747
     'dfn[id]:not([data-lt=""])',
@@ -105,7 +108,7 @@ export default function (spec) {
   }
 
   return [...document.querySelectorAll(definitionsSelector)]
-    .map(definitionMapper);
+    .map(node => definitionMapper(node, idToHeading));
 }
 
 function preProcessHTML() {

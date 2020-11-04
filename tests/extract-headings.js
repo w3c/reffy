@@ -6,7 +6,7 @@ const testHeadings = [
   {
     title: "extracts a simple heading",
     html: "<h1 id=title>Title</h1>",
-    res: [{id: "title", title: "Title", level: "1"}]
+    res: [{id: "title", title: "Title", level: 1}]
   },
   {
     title: "ignores a heading without id",
@@ -16,7 +16,7 @@ const testHeadings = [
   {
     title: "extracts a heading title without its section number",
     html: "<h2 id=title>2.3 Title</h2>",
-    res: [{id: "title", title: "Title", level: "2"}]
+    res: [{id: "title", title: "Title", number: "2.3", level: 2}]
   }
 ];
 
@@ -37,7 +37,8 @@ describe("Test headings extraction", function () {
       });
 
       const extractedHeadings = await page.evaluate(async () => {
-        return reffy.extractHeadings();
+        const idToHeading = reffy.mapIdsToHeadings();
+        return reffy.extractHeadings(idToHeading);
       });
       await page.close();
       assert.deepEqual(extractedHeadings, t.res);
