@@ -3944,7 +3944,7 @@ for more information.`;
 
         mappingTable[node.id] = {
           id,
-          title: trimmedText.replace(reNumber, '').trim()
+          title: trimmedText.replace(reNumber, '').trim().replace(/\s+/g, ' ')
         };
 
         if (number) {
