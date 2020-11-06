@@ -116,6 +116,23 @@ function getExpectedDfnsFromIdl(idl = {}) {
 
 
 /**
+ * Return true if the given parsed IDL object describes a default toJSON
+ * operation that references:
+ * https://heycam.github.io/webidl/#default-tojson-steps
+ *
+ * @function
+ * @private
+ * @param {Object} desc Parsed IDL object to check
+ * @return {Boolean} true when object describes a default toJSON operation.
+ */
+function isDefaultToJSONOperation(desc) {
+  return (desc.type === 'operation') &&
+    (desc.name === 'toJSON') &&
+    (desc.extAttrs && desc.extAttrs.find(attr => attr.name === "Default"));
+}
+
+
+/**
  * Return the list of expected definitions from a parsed IDL extract entry.
  *
  * The function is recursive.
@@ -233,7 +250,8 @@ function getExpectedDfnsFromIdlDesc(desc = {}, parentDesc = {}) {
       // hard to map automatically.
       if ((desc.special !== 'stringifier') &&
           (desc.special !== 'getter') &&
-          (desc.special !== 'setter')) {
+          (desc.special !== 'setter') &&
+          !isDefaultToJSONOperation(desc)) {
         addExpected({
           linkingText: [`${desc.name}(${serializeArgs(desc.arguments)})`],
           type: 'method',
