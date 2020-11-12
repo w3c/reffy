@@ -21,6 +21,26 @@
 
 const path = require('path');
 
+/**
+ * List of spec shortnames that, so far, don't follow the dfns data model
+ */
+const specsWithOutdatedDfnsModel = [
+  'svg-animations', 'svg-markers', 'svg-strokes', 'SVG2',
+  'webgl1', 'webgl2',
+  'webrtc-identity'
+];
+
+
+/**
+ * Return true when provided arrays are "equal", meaning that they contain the
+ * same items
+ *
+ * @function
+ * @private
+ * @param {Array} a First array to compare
+ * @param {Array} b Second array to compare
+ * @return {boolean} True when arrays are equal
+ */
 function arraysEqual(a, b) {
   return Array.isArray(a) &&
     Array.isArray(b) &&
@@ -172,11 +192,16 @@ function getExpectedDfnsFromIdlDesc(desc = {}, parentDesc = {}) {
       break;
 
     case 'constructor':
-      addExpected({
-        linkingText: [`constructor(${serializeArgs(desc.arguments)})`],
-        type: desc.type,
-        'for': [parentDesc.name]
-      })
+      // Ignore constructors for HTML elements, the spec has a dedicated
+      // section for them:
+      // https://html.spec.whatwg.org/multipage/dom.html#html-element-constructors
+      if (!parentDesc.name.startsWith('HTML')) {
+        addExpected({
+          linkingText: [`constructor(${serializeArgs(desc.arguments)})`],
+          type: desc.type,
+          'for': [parentDesc.name]
+        })
+      }
       break;
 
     case 'enum':
@@ -349,8 +374,8 @@ function checkDefinitions(pathToReport) {
         return null;
       }
       else {
-        // Right definition is missing, there may be a definition that looks like
-        // the one we're looking for
+        // Right definition is missing, there may be a definition that looks
+        // like the one we're looking for
         const found = dfns.find(dfn =>
           arraysEqual(dfn.linkingText, expected.linkingText));
         return { expected, found };
@@ -361,12 +386,22 @@ function checkDefinitions(pathToReport) {
     const expectedIdlDfns = getExpectedDfnsFromIdl(idl.idlparsed);
     const missingIdlDfns = expectedIdlDfns.map(expected => {
       let actual = dfns.find(dfn => matchIdlDfn(expected, dfn));
+      if (!actual && ((expected.type === 'method') || (expected.type === 'constructor'))) {
+        // Right definition is missing. For methods and constructors that take
+        // only optional parameters, look for a version that starts with ", ",
+        // see: https://github.com/w3c/respec/issues/3200
+        const altExpected = Object.assign({}, expected, {
+          linkingText: [expected.linkingText[0].replace(/\(/, '(, ')]
+        });
+        actual = dfns.find(dfn => matchIdlDfn(altExpected, dfn));
+      }
       if (actual) {
         // Right definition found
         return null;
       }
       else {
-        // Missing definition
+        // Right definition is missing, there may be a definition that looks
+        // like the one we're looking for
         const found = dfns.find(dfn =>
           expected.linkingText.some(val => dfn.linkingText.includes(val)));
         return { expected, found };
@@ -400,12 +435,14 @@ if (require.main === module) {
     const format = process.argv[4] || 'markdown';
 
     let res = checkDefinitions(pathToReport);
-    if (spec !== 'all') {
-      res = res.filter(result => result.shortname === spec);
+    if (spec === 'all') {
+      res = res
+        .filter(result => !specsWithOutdatedDfnsModel.includes(result.shortname))
+        .filter(result => result.missing &&
+          ((result.missing.css.length > 0) || (result.missing.idl.length > 0)));
     }
     else {
-      res = res.filter(result => result.missing &&
-        ((result.missing.css.length > 0) || (result.missing.idl.length > 0)));
+      res = res.filter(result => result.shortname === spec);
     }
 
     if (format === 'json') {
@@ -413,7 +450,11 @@ if (require.main === module) {
     }
     else {
       res.forEach(result => {
-        console.log(`## [${result.shortname}](${result.crawled})`);
+        const nb = result.missing ?
+          result.missing.css.length + result.missing.idl.length :
+          0;
+        console.log('<details>');
+        console.log(`<summary><b><a href="${result.crawled}">${result.shortname}</a></b> (${nb} missing dfns)</summary>`);
         console.log();
         if (!result.missing) {
           console.log('All good!');
@@ -422,11 +463,12 @@ if (require.main === module) {
           result.missing[type].forEach(missing => {
             const exp = missing.expected;
             const found = missing.found;
-            console.log(`- \`${exp.linkingText[0]}\` with type \`${exp.type}\`` +
+            console.log(`- \`${exp.linkingText[0]}\` ${exp.type ? `with type \`${exp.type}\`` : ''}` +
               ((exp.for && exp.for.length) ? ` for \`${exp.for[0]}\`` : '') +
-              (found ? `, but found [\`${found.linkingText[0]}\`](${found.href})` : ''));
+              (found ? `, but found [\`${found.linkingText[0]}\`](${found.href}) with type \`${found.type}\`` : ''));
           });
         });
+        console.log('</details>');
         console.log();
       })
     }
