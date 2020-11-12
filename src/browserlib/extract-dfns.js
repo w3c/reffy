@@ -16,6 +16,12 @@ import {parse} from "../../node_modules/webidl2/index.js";
  *     "private" when it should be viewed as a local definition.
  * - informative: true when definition appears in an informative section,
  *     false if it is normative
+ * - heading: Heading under which the term is to be found. An object with "id",
+ *     "title", and "number" properties
+ * - definedIn: An indication of where the definition appears in the spec. Value
+ *     can be one of "dt", "pre", "table", "heading", "note", "example", or
+ *     "prose" (last one indicates that definition appears in the main body of
+ *     the spec)
  *
  * @function
  * @public
@@ -25,6 +31,32 @@ import {parse} from "../../node_modules/webidl2/index.js";
 function definitionMapper(el, idToHeading) {
   function normalize(str) {
     return str.trim().replace(/\s+/g, ' ');
+  }
+
+  let definedIn = 'prose';
+  const enclosingEl = el.closest('dt,pre,table,h1,h2,h3,h4,h5,h6,.note,.example') || el;
+  switch (enclosingEl.nodeName) {
+    case 'DT':
+    case 'PRE':
+    case 'TABLE':
+      definedIn = enclosingEl.nodeName.toLowerCase();
+      break;
+    case 'H1':
+    case 'H2':
+    case 'H3':
+    case 'H4':
+    case 'H5':
+    case 'H6':
+      definedIn = 'heading';
+      break;
+    default:
+      if (enclosingEl.classList.contains('note')) {
+        definedIn = 'note';
+      }
+      else if (enclosingEl.classList.contains('example')) {
+        definedIn = 'example';
+      }
+      break;
   }
 
   return {
@@ -82,7 +114,12 @@ function definitionMapper(el, idToHeading) {
     ].join(',')),
 
     // Heading under which the term is to be found
-    heading: idToHeading[el.getAttribute('id')]
+    heading: idToHeading[el.getAttribute('id')],
+
+    // Enclosing element under which the definition appears. Value can be one of
+    // "dt", "pre", "table", "heading", "note", "example", or "prose" (last one
+    // indicates that definition appears in the main body of the specification)
+    definedIn
   };
 }
 
