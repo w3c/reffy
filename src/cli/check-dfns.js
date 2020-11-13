@@ -309,18 +309,33 @@ function getExpectedDfnsFromIdlDesc(desc = {}, parentDesc = {}) {
  * and/or the name of the arguments differ between the overloaded definitions.
  * Otherwise it will just match the first definition that looks good.
  *
+ * The function works around Respec's issue #3200 for methods and constructors
+ * that take only optional parameters:
+ * https://github.com/w3c/respec/issues/3200
+ *
  * @function
  * @private
  * @param {Object} expected Expected definition
  * @param {Object} actual Actual definition to check
+ * @param {Object} options Comparison options
  * @return {Boolean} true when actual definition matches the expected one
  */
-function matchIdlDfn(expected, actual) {
-  return expected.linkingText.some(val => actual.linkingText
-      .map(t => t.replace(/!overload-\d/, ''))
-      .includes(val)) &&
-    expected.for.every(val => actual.for.includes(val)) &&
-    expected.type === actual.type;
+function matchIdlDfn(expected, actual,
+    {skipArgs, skipFor, skipType} = {skipArgs: false, skipFor: false, skipType: false}) {
+  const fixedLt = actual.linkingText
+    .map(lt => lt.replace(/!overload-\d/, ''))
+    .map(lt => lt.replace(/\(, /, '('));
+  let found = expected.linkingText.some(val => fixedLt.includes(val));
+  if (!found && skipArgs) {
+    const names = fixedLt.map(lt => lt.replace(/\(.*\)/, ''));
+    found = expected.linkingText.some(val => {
+      const valname = val.replace(/\(.*\)/, '');
+      return names.find(name => name === valname);
+    });
+  }
+  return found &&
+    (expected.for.every(val => actual.for.includes(val)) || skipFor) &&
+    (expected.type === actual.type || skipType);
 }
 
 
@@ -392,15 +407,6 @@ function checkDefinitions(pathToReport) {
     const expectedIdlDfns = getExpectedDfnsFromIdl(idl.idlparsed);
     const missingIdlDfns = expectedIdlDfns.map(expected => {
       let actual = dfns.find(dfn => matchIdlDfn(expected, dfn));
-      if (!actual && ((expected.type === 'method') || (expected.type === 'constructor'))) {
-        // Right definition is missing. For methods and constructors that take
-        // only optional parameters, look for a version that starts with ", ",
-        // see: https://github.com/w3c/respec/issues/3200
-        const altExpected = Object.assign({}, expected, {
-          linkingText: [expected.linkingText[0].replace(/\(/, '(, ')]
-        });
-        actual = dfns.find(dfn => matchIdlDfn(altExpected, dfn));
-      }
       if (actual) {
         // Right definition found
         return null;
@@ -408,9 +414,15 @@ function checkDefinitions(pathToReport) {
       else {
         // Right definition is missing, there may be a definition that looks
         // like the one we're looking for
-        const found = dfns.find(dfn =>
-          expected.linkingText.some(val => dfn.linkingText.includes(val)));
-        return { expected, found };
+        let found = dfns.find(dfn => matchIdlDfn(expected, dfn, { skipArgs: true }));
+        if (found) {
+          return { expected, found, warning: true };
+        }
+        else {
+          found = dfns.find(dfn => matchIdlDfn(expected, dfn,
+            { skipArgs: true, skipFor: true, skipType: true }));
+          return { expected, found };
+        }
       }
     }).filter(missing => !!missing);
 
@@ -423,6 +435,25 @@ function checkDefinitions(pathToReport) {
   });
 
   return missing;
+}
+
+
+/**
+ * Report missing dfn to the console as Markdown
+ *
+ * @function
+ * @private
+ * @param {Object} missing Object that desribes missing dfn
+ */
+function reportMissing(missing) {
+  const exp = missing.expected;
+  const found = missing.found;
+  const foundFor = (found && found.for && found.for.length > 0) ?
+    ' for ' + found.for.map(f => `\`${f}\``).join(',') :
+    '';
+  console.log(`- \`${exp.linkingText[0]}\` ${exp.type ? `with type \`${exp.type}\`` : ''}` +
+    ((exp.for && exp.for.length) ? ` for \`${exp.for[0]}\`` : '') +
+    (found ? `, but found [\`${found.linkingText[0]}\`](${found.href}) with type \`${found.type}\`${foundFor}` : ''));
 }
 
 
@@ -456,24 +487,33 @@ if (require.main === module) {
     }
     else {
       res.forEach(result => {
-        const nb = result.missing ?
-          result.missing.css.length + result.missing.idl.length :
-          0;
+        const missing = result.missing || {css: [], idl: []};
+        const errors = ['css', 'idl']
+          .map(type => result.missing[type].filter(missing => !missing.warning))
+          .flat();
+        const warnings = ['css', 'idl']
+          .map(type => result.missing[type].filter(missing => missing.warning))
+          .flat();
         console.log('<details>');
-        console.log(`<summary><b><a href="${result.crawled}">${result.shortname}</a></b> (${nb} missing dfns)</summary>`);
+        console.log(`<summary><b><a href="${result.crawled}">${result.shortname}</a></b> (${errors.length} errors, ${warnings.length} warnings)</summary>`);
         console.log();
-        if (!result.missing) {
+        if (errors.length === 0 && warnings.length === 0) {
           console.log('All good!');
         }
-        ['css', 'idl'].forEach(type => {
-          result.missing[type].forEach(missing => {
-            const exp = missing.expected;
-            const found = missing.found;
-            console.log(`- \`${exp.linkingText[0]}\` ${exp.type ? `with type \`${exp.type}\`` : ''}` +
-              ((exp.for && exp.for.length) ? ` for \`${exp.for[0]}\`` : '') +
-              (found ? `, but found [\`${found.linkingText[0]}\`](${found.href}) with type \`${found.type}\` ${found.for ? ' for ' + found.for.map(f => `\`${f}\``).join(',') : ''}` : ''));
-          });
-        });
+        if (errors.length > 0) {
+          console.log('<details open>');
+          console.log(`<summary><i>Errors</i> (${errors.length})</summary>`);
+          console.log();
+          errors.forEach(reportMissing);
+          console.log('</details>');
+        }
+        if (warnings.length > 0) {
+          console.log('<details open>');
+          console.log(`<summary><i>Warnings</i> (${warnings.length})</summary>`);
+          console.log();
+          warnings.forEach(reportMissing);
+          console.log('</details>');
+        }
         console.log('</details>');
         console.log();
       })
