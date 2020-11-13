@@ -302,7 +302,12 @@ function getExpectedDfnsFromIdlDesc(desc = {}, parentDesc = {}) {
 
 
 /**
- * Return true when the given IDL definition matches the expected definition
+ * Return true when the given IDL definition matches the expected definition.
+ *
+ * The function handles overloaded methods, though not properly. That is, it
+ * will only find the "right" definition for an overloaded method if the number
+ * and/or the name of the arguments differ between the overloaded definitions.
+ * Otherwise it will just match the first definition that looks good.
  *
  * @function
  * @private
@@ -311,7 +316,9 @@ function getExpectedDfnsFromIdlDesc(desc = {}, parentDesc = {}) {
  * @return {Boolean} true when actual definition matches the expected one
  */
 function matchIdlDfn(expected, actual) {
-  return expected.linkingText.some(val => actual.linkingText.includes(val)) &&
+  return expected.linkingText.some(val => actual.linkingText
+      .map(t => t.replace(/!overload-\d/, ''))
+      .includes(val)) &&
     expected.for.every(val => actual.for.includes(val)) &&
     expected.type === actual.type;
 }
