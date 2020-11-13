@@ -268,14 +268,13 @@ function getExpectedDfnsFromIdlDesc(desc = {}, parentDesc = {}) {
       break;
 
     case 'operation':
-      // TODO: handle overloaded methods (e.g. RTCPeerConnection.addIceCandidate)
-      // TODO: assess what to do with special methods "getter" and "setter"
-      // The "stringifier" operation needs to be defined in the spec, but the
-      // label is up to the spec (e.g. "stringification behavior" in DOM), so
-      // hard to map automatically.
+      // Ignore "getter", "setter", "deleter" and "stringifier", that may be
+      // defined in the spec, but with arbitrary labels (e.g. "stringification
+      // behavior" in DOM) that are hard to map automatically.
       if ((desc.special !== 'stringifier') &&
           (desc.special !== 'getter') &&
           (desc.special !== 'setter') &&
+          (desc.special !== 'deleter') &&
           !isDefaultToJSONOperation(desc)) {
         addExpected({
           linkingText: [`${desc.name}(${serializeArgs(desc.arguments)})`],
@@ -465,7 +464,7 @@ if (require.main === module) {
             const found = missing.found;
             console.log(`- \`${exp.linkingText[0]}\` ${exp.type ? `with type \`${exp.type}\`` : ''}` +
               ((exp.for && exp.for.length) ? ` for \`${exp.for[0]}\`` : '') +
-              (found ? `, but found [\`${found.linkingText[0]}\`](${found.href}) with type \`${found.type}\`` : ''));
+              (found ? `, but found [\`${found.linkingText[0]}\`](${found.href}) with type \`${found.type}\` ${found.for ? ' for ' + found.for.map(f => `\`${f}\``).join(',') : ''}` : ''));
           });
         });
         console.log('</details>');
