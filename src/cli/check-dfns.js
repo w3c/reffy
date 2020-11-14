@@ -268,13 +268,23 @@ function getExpectedDfnsFromIdlDesc(desc = {}, parentDesc = {}) {
       break;
 
     case 'operation':
-      // Ignore "getter", "setter", "deleter" and "stringifier", that may be
-      // defined in the spec, but with arbitrary labels (e.g. "stringification
-      // behavior" in DOM) that are hard to map automatically.
-      if ((desc.special !== 'stringifier') &&
-          (desc.special !== 'getter') &&
-          (desc.special !== 'setter') &&
-          (desc.special !== 'deleter') &&
+      // Stringification behavior is typically defined with a
+      // "stringification behavior" definition scoped to the interface
+      if (desc.special === 'stringifier') {
+        addExpected({
+          linkingText: ['stringification behavior', 'stringificationbehavior'],
+          type: 'dfn',
+          'for': [parentDesc.name]
+        });
+      }
+      // Ignore special "getter", "setter", "deleter" operations when they don't
+      // have an identifier. They should link to a definition in the prose, but
+      // the labels seem arbitrary for now.
+      // Also ignore default toJSON operations. Steps are defined in WebIDL.
+      else if ((desc.name ||
+            ((desc.special !== 'getter') &&
+            (desc.special !== 'setter') &&
+            (desc.special !== 'deleter'))) &&
           !isDefaultToJSONOperation(desc)) {
         addExpected({
           linkingText: [`${desc.name}(${serializeArgs(desc.arguments)})`],
