@@ -45,7 +45,8 @@ nock("https://respec.org")
 
 nock("https://specref.herokuapp.com")
   .persist()
-  .get("/bibrefs?refs=webidl,html").reply(200, {webidl:{href:"https://heycam.github.io/webidl/"}}, {"Access-Control-Allow-Origin": "*"});
+  .get("/bibrefs?refs=webidl,html").reply(200, {webidl:{href:"https://heycam.github.io/webidl/"}}, {"Access-Control-Allow-Origin": "*"})
+  .get("/bibrefs?refs=HTML").reply(200, {HTML:{href:"https://html.spec.whatwg.org/multipage/"}}, {"Access-Control-Allow-Origin": "*"});
 
 nock("https://www.w3.org")
   .persist()
