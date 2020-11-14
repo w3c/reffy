@@ -422,17 +422,35 @@ function checkDefinitions(pathToReport) {
         return null;
       }
       else {
-        // Right definition is missing, there may be a definition that looks
-        // like the one we're looking for
+        // Right definition is missing, include the interface's definitions to
+        // be able to link to it in the report
+        let parent = null;
+        if (expected.for && expected.for[0]) {
+          parent = dfns.find(dfn =>
+            (dfn.linkingText[0] === expected.for[0]) &&
+            ['callback', 'dictionary', 'enum', 'interface', 'namespace'].includes(dfn.type));
+        }
+
+        // Look for a definition that seems as close as possible to the one
+        // we're looking for, in the following order:
+        // 1. For operations, find a definition without taking arguments into
+        // account and report possible match with a "warning" flag.
+        // 2. For terms linked to a parent interface-like object, find a match
+        // scoped to the same parent without taking the type into account.
+        // 3. Look for a definition with the same name, neither taking the type
+        // nor the parent into account.
         let found = dfns.find(dfn => matchIdlDfn(expected, dfn, { skipArgs: true }));
         if (found) {
-          return { expected, found, warning: true };
+          return { expected, found, for: parent, warning: true };
         }
-        else {
-          found = dfns.find(dfn => matchIdlDfn(expected, dfn,
-            { skipArgs: true, skipFor: true, skipType: true }));
-          return { expected, found };
+        found = dfns.find(dfn => matchIdlDfn(expected, dfn,
+          { skipArgs: true, skipType: true }));
+        if (found) {
+          return { expected, found, for: parent };
         }
+        found = dfns.find(dfn => matchIdlDfn(expected, dfn,
+          { skipArgs: true, skipType: true, skipFor: true }));
+        return { expected, found, for: parent };
       }
     }).filter(missing => !!missing);
 
@@ -462,7 +480,7 @@ function reportMissing(missing) {
     ' for ' + found.for.map(f => `\`${f}\``).join(',') :
     '';
   console.log(`- \`${exp.linkingText[0]}\` ${exp.type ? `with type \`${exp.type}\`` : ''}` +
-    ((exp.for && exp.for.length) ? ` for \`${exp.for[0]}\`` : '') +
+    (missing.for ? ` for [\`${missing.for.linkingText[0]}\`](${missing.for.href})` : '') +
     (found ? `, but found [\`${found.linkingText[0]}\`](${found.href}) with type \`${found.type}\`${foundFor}` : ''));
 }
 
