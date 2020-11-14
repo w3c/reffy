@@ -6,7 +6,7 @@
  *
  * The definitions checker can be called directly through:
  *
- * `node check-dfns.js [crawl report] [spec] [format]`
+ * `node check-missing-dfns.js [crawl report] [spec] [format]`
  *
  * where:
  * - `crawl report` is the local path to the root folder that contains the
