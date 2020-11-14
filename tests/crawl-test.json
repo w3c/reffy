@@ -53,8 +53,7 @@
         "type": "dfn",
         "for": [],
         "access": "private",
-        "informative": false,
-        "definedIn": "prose"
+        "informative": false
       }
     ],
     "headings": [
@@ -132,8 +131,7 @@
         "heading": {
           "id": "title",
           "title": "No Title"
-        },
-        "definedIn": "pre"
+        }
       },
       {
         "id": "dom-foo-bar",
@@ -153,8 +151,7 @@
         "heading": {
           "id": "title",
           "title": "No Title"
-        },
-        "definedIn": "pre"
+        }
       }
     ],
     "headings": [
