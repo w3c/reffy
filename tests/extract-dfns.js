@@ -85,7 +85,8 @@ const baseDfn = {
     type: 'dfn',
     for: [],
     access: 'private',
-    informative: false
+    informative: false,
+    definedIn: 'prose'
 };
 const tests = [
   {title: "parses a simple <dfn>",
@@ -123,7 +124,7 @@ const tests = [
   },
   {title: "considers definitions in headings",
    html: "<h2 data-dfn-type=dfn id=foo>Foo</h2>",
-   changesToBaseDfn: [{heading: { id: "foo", title: "Foo"}}]
+   changesToBaseDfn: [{heading: { id: "foo", title: "Foo"}, definedIn: "heading"}]
   },
   {title: "ignores elements that aren't <dfn> and headings",
    html: "<span data-dfn-type=dfn id=foo>Foo</span>",
@@ -147,7 +148,8 @@ const tests = [
            access: "public",
            type: "element",
            linkingText: ["html"],
-           heading: { id: "the-html-element", title: "The html element", number: "4.1.1"}}],
+           heading: { id: "the-html-element", title: "The html element", number: "4.1.1"},
+           definedIn: "heading"}],
    spec: "html"
   },
   {title: "handles exceptions in the HTML spec convention for defining elements",
@@ -156,14 +158,16 @@ const tests = [
            access: "public",
            type: "element",
            linkingText: ["video"],
-           heading: { id: "the-video-element", title: "The video element", number: "4.8.9"}}],
+           heading: { id: "the-video-element", title: "The video element", number: "4.8.9"},
+           definedIn: "heading"}],
    spec: "html"
   },
   {title: "handles HTML spec conventions of definitions in headings",
    html: '<h6 id="parsing-main-inselect"><span class="secno">12.2.6.4.16</span> The "<dfn>in select</dfn>" insertion mode<a href="#parsing-main-inselect" class="self-link"></a></h6>',
    changesToBaseDfn: [{id: "parsing-main-inselect",
            linkingText: ["in select"],
-           heading: { id: "parsing-main-inselect", title: "The \"in select\" insertion mode", number: "12.2.6.4.16"}}],
+           heading: { id: "parsing-main-inselect", title: "The \"in select\" insertion mode", number: "12.2.6.4.16"},
+           definedIn: "heading"}],
    spec: "html"
   },
   {title: "handles HTML spec convention for defining element interfaces",
@@ -171,7 +175,8 @@ const tests = [
    changesToBaseDfn: [{id: "htmlhrelement",
            access: "public",
            type: "interface",
-           linkingText: ["HTMLHRElement"]}],
+           linkingText: ["HTMLHRElement"],
+           definedIn: "pre"}],
    spec: "html"
   },
   {title: "handles finding IDL type across mixins and partial",
@@ -187,7 +192,8 @@ const tests = [
    html: '<dt><dfn id="selector-visited" data-noexport=""><code>:visited</code></dfn></dt>',
    changesToBaseDfn: [{id: "selector-visited",
            type: "selector",
-           linkingText: [":visited"]}],
+           linkingText: [":visited"],
+           definedIn: "dt"}],
    spec: "html"
   },
   {
@@ -274,7 +280,8 @@ const tests = [
             access: "public",
             type: "dict-member",
             linkingText: ["withCredentials"],
-            for: ['EventSourceInit']}],
+            for: ['EventSourceInit'],
+            definedIn: "pre"}],
     spec: "html"
   },
   {
@@ -354,7 +361,8 @@ const tests = [
     changesToBaseDfn: [{
       id: "text/xml",
       linkingText: ["text/xml"],
-      href: "https://example.org/indices.html#text/xml"
+      href: "https://example.org/indices.html#text/xml",
+      definedIn: "dt"
     }],
     spec: "html"
   },
@@ -400,7 +408,8 @@ const tests = [
             "use",
             "video"
            ],
-      "access": "public"
+      "access": "public",
+      definedIn: "table"
     }],
     spec: "SVG2"
   },
@@ -412,7 +421,8 @@ const tests = [
       linkingText: ["link"],
       type: "element",
       access: "public",
-      heading: { id: "LinkElement", title: "External style sheets: the effect of the HTML ‘link’ element", number: "6.3"}
+      heading: { id: "LinkElement", title: "External style sheets: the effect of the HTML ‘link’ element", number: "6.3"},
+      definedIn: "heading"
     }],
     spec: "SVG2"
   },
@@ -424,7 +434,8 @@ const tests = [
       linkingText: ["patternUnits"],
       type: "element-attr",
       for: ["pattern"],
-      access: "public"
+      access: "public",
+      definedIn: "dt"
     }],
     spec: "SVG2"
   },
@@ -436,7 +447,8 @@ const tests = [
       linkingText: ["stop-opacity"],
       type: "property",
       for: ["stop"],
-      access: "public"
+      access: "public",
+      definedIn: "dt"
     }],
     spec: "SVG2"
   },
@@ -472,7 +484,8 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       linkingText: ["SVGAnimatedLengthList"],
       type: "interface",
       access: "public",
-      heading: { id: "InterfaceSVGAnimatedLengthList", title: "Interface SVGAnimatedLengthList", number: "4.6.10"}
+      heading: { id: "InterfaceSVGAnimatedLengthList", title: "Interface SVGAnimatedLengthList", number: "4.6.10"},
+      definedIn: "heading"
     }],
     spec: "SVG2"
   },
@@ -490,7 +503,8 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       id: "SVGBoundingBoxOptions",
       linkingText: ["SVGBoundingBoxOptions"],
       type: "dictionary",
-      access: "public"
+      access: "public",
+      definedIn: "pre"
     }],
     spec :"SVG2",
   }
