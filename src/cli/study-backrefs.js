@@ -5,22 +5,16 @@ const canonicalizesTo = require('../../builds/canonicalize-url').canonicalizesTo
 const computeShortName = require('../../../browser-specs/src/compute-shortname');
 const fs = require("fs");
 
-const matchSpecUrl = url => url.match(/spec.whatwg.org/) || url.match(/www.w3.org\/TR\/[a-z0-9]/) || (url.match(/w3c.github.io/) && ! url.match(/w3c.github.io\/test-results\//));
+const matchSpecUrl = url => url.match(/spec.whatwg.org/) || url.match(/www.w3.org\/TR\/[a-z0-9]/) || (url.match(/.github.io/) && ! url.match(/w3c.github.io\/test-results\//));
+const missingSpecs = {};
 
 const shortnameMap = {
   "html51": "html",
   "html5": "html",
   "html50": "html",
   "hr-time-2": "hr-time",
-  "webrtc-pc": "webrtc",
   "csp": "CSP",
-  "subresource-integrity": "SRI",
-  "mediacapture-image": "image-capture",
-  "mediacapture-main": "mediacapture-streams",
-  "IntersectionObserver": "intersection-observer",
-  "manifest": "appmanifest",
   "domcore": "dom",
-  "battery": "battery-status",
   "css3-background": "css-backgrounds",
   "css3-break": "css-break",
   "css3-color": "css-color",
@@ -28,6 +22,7 @@ const shortnameMap = {
   "css3-fonts": "css-fonts",
   "css3-grid-layout": "css-grid",
   "css3-images": "css-images",
+  "css3-mediaqueries": "mediaqueries",
   "css3-multicol": "css-multicol",
   "css3-namespace": "css-namespaces",
   "css3-page": "css-page",
@@ -43,29 +38,50 @@ const shortnameMap = {
   "css-selectors-3": "selectors",
   "css-selectors": "selectors",
   "selectors4": "selectors",
-  "ServiceWorker": "service-workers",
   // error in latest crawl
   "webdriver": "webdriver2",
   "resource-timing": "resource-timing-2",
   "html-aam": "html-aam-1.0"
 };
 
+const report = {};
+
+function recordAnomaly(spec, anomalyType, link) {
+  if (!report[spec]) {
+    report[spec] = {
+      notExported: [],
+      notDfn: [],
+      unknownSpec: []
+    };
+  }
+  report[spec][anomalyType].push(link);
+}
+
 function studyCrawlResults(results) {
-  return results.map(spec => {
-    return Object.keys(spec.links)
+  results.forEach(spec => {
+    Object.keys(spec.links)
       .filter(matchSpecUrl)
-      .map(l => {
+      .forEach(l => {
         let shortname;
-        const report = [];
-        try {
-          ({shortname} = computeShortName(l));
-        } catch (e) {
-          let m = l.match(/www\.w3\.org\/TR\/[0-9]{4}\/[A-Z]+-(.+)-[0-9]{8}/);
-          if (m) {
-            shortname = m[1];
-          } else {
-            report.push("No shortname found for " + l + " referenced in " + spec.url);
-            return report;
+        let nakedLink = l.replace(/#.*$/, '');
+        if (nakedLink.endsWith(".html")) {
+          nakedLink = nakedLink.replace(/\/[^/]*\.html/, '/');
+        }
+        if (nakedLink[nakedLink.length - 1] !== '/') {
+          nakedLink += '/';
+        }
+        shortname = (results.find(r => r.url === nakedLink || (r.release && r.release.url === nakedLink) || r.nightly.url === nakedLink || (r.series && nakedLink === 'https://www.w3.org/TR/' + r.series.shortname + '/') ) || {}).shortname;
+        if (!shortname) {
+          try {
+            ({shortname} = computeShortName(l));
+          } catch (e) {
+            let m = l.match(/www\.w3\.org\/TR\/[0-9]{4}\/[A-Z]+-(.+)-[0-9]{8}/);
+            if (m) {
+              shortname = m[1];
+            } else {
+              recordAnomaly(spec.url, "unknownSpec", l);
+              return;
+            }
           }
         }
         if (shortnameMap[shortname]) {
@@ -78,32 +94,40 @@ function studyCrawlResults(results) {
         for(let anchor of anchors) {
           let sourceSpec = results.find(s => s.shortname === shortname || s.series.shortname === shortname);
           if (!sourceSpec) {
-            report.push("No data crawled for " + shortname + " referenced in " + spec.url);
+            if (!missingSpecs[shortname]) {
+              //report.push("No data crawled for " + shortname + " referenced in " + spec.url);
+              missingSpecs[shortname] = true;
+            }
             continue;
           }
           let headings = sourceSpec.headings || [];
-          let dfns = sourceSpec.dfns;
-          if (!dfns) {
-            if (fs.existsSync("../reffy-reports/ed/dfns/" + shortname + ".json")) {
-              dfns = JSON.parse(fs.readFileSync("../reffy-reports/ed/dfns/" + shortname + ".json", "utf-8")).dfns;
-            } else {
-              report.push("No definitions crawled for " + shortname + " referenced in " + spec.url);
+          let dfns = sourceSpec.dfns || [];
+          if (!dfns.length) {
+            if (fs.existsSync("../webref/ed/dfns/" + shortname + ".json")) {
+              dfns = JSON.parse(fs.readFileSync("../webref/ed/dfns/" + shortname + ".json", "utf-8")).dfns;
+            }
+            if (fs.existsSync("../webref/tr/dfns/" + shortname + ".json")) {
+              dfns = dfns.concat(JSON.parse(fs.readFileSync("../webref/ed/dfns/" + shortname + ".json", "utf-8")).dfns);
+            }
+            if (!dfns.length) {
+              //report.push("No definitions crawled for " + shortname + " referenced in " + spec.url);
+              missingSpecs[shortname] = true;
               continue;
             }
           }
           let heading = headings.find(h => h.id === anchor);
           let dfn = dfns.find(d => d.id === anchor);
           if (!heading && !dfn) {
-            report.push("Anchor " + anchor + " of " + shortname + " found in " + spec.url + " is not a definition nor a heading");
-            continue;
+            recordAnomaly(spec.url, "notDfn", l + "#" + anchor);
           }
           if (dfn && dfn.access !== "public") {
-            report.push("Anchor " + anchor + " of " + shortname + " found in " + spec.url + " is not an exported definition");
+            recordAnomaly(spec.url, "notExported", l  + "#" + anchor);
+
           }
         }
-        return report;
-      })
+      });
   });
+  return report;
 }
 
 
@@ -124,5 +148,32 @@ if (require.main === module) {
   }
 
   const results = studyCrawlResults(crawlResults.results);
-  console.log(JSON.stringify(results, null, 2));
+  let report = "";
+  Object.keys(results).forEach(s => {
+    report += "<details><summary>" + s + "</summary>\n\n";
+    if (results[s].notDfn.length) {
+      report += "Links to anchors that are not definitions or headings:\n"
+      results[s].notDfn.forEach(l => {
+        report += "* " + l + "\n";
+      })
+      report += "\n\n";
+    }
+    if (results[s].notExported.length) {
+      report += "Links to definitions that are not exported:\n"
+      results[s].notExported.forEach(l => {
+        report += "* " + l + "\n";
+      })
+      report += "\n\n";
+    }
+    if (results[s].unknownSpec.length) {
+      report += "Links to things that look like specs but that aren't recognized in reffy data::\n"
+      results[s].unknownSpec.forEach(l => {
+        report += "* " + l + "\n";
+      })
+      report += "\n\n";
+    }
+    report += "</details>\n";
+  });
+  console.log(report);
+  console.error(JSON.stringify(Object.keys(missingSpecs).sort(), null, 2));
 }
