@@ -125,7 +125,7 @@ function definitionMapper(el, idToHeading) {
 
 export default function (spec, idToHeading = {}) {
   const definitionsSelector = [
-    // re data-lt, see https://github.com/tidoust/reffy/issues/336#issuecomment-650339747
+    // re data-lt, see https://github.com/w3c/reffy/issues/336#issuecomment-650339747
     'dfn[id]:not([data-lt=""])',
     'h2[id][data-dfn-type]:not([data-lt=""])',
     'h3[id][data-dfn-type]:not([data-lt=""])',
