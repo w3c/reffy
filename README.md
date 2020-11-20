@@ -126,7 +126,7 @@ The crawler reads parameters from the `config.json` file. Optional parameters:
 
 Authors so far are [François Daoust](https://github.com/tidoust/) and [Dominique Hazaël-Massieux](https://github.com/dontcallmedom/).
 
-Additional ideas, bugs and/or code contributions are most welcome. Create [issues on GitHub](https://github.com/tidoust/reffy/issues) as needed!
+Additional ideas, bugs and/or code contributions are most welcome. Create [issues on GitHub](https://github.com/w3c/reffy/issues) as needed!
 
 
 ## Licensing

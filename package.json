@@ -4,10 +4,10 @@
   "description": "W3C/WHATWG spec dependencies exploration companion. Features a short set of tools to study spec references as well as WebIDL term definitions and references found in W3C specifications.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tidoust/reffy.git"
+    "url": "https://github.com/w3c/reffy.git"
   },
   "bugs": {
-    "url": "https://github.com/tidoust/reffy/issues"
+    "url": "https://github.com/w3c/reffy/issues"
   },
   "author": {
     "name": "tidoust",
