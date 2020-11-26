@@ -3240,6 +3240,17 @@ for more information.`;
   }
 
   /**
+   * Extract ids from documents
+  */
+  function extractIds () {
+    return [...document.querySelectorAll('*[id]')].map(n => n.id).concat(
+      // Capture anchors set in <a name> when they're not dup of ids
+      [...document.querySelectorAll('a[name]')]
+        .filter(n => !n.id || n.id !== n.name).map(n => n.name)
+    );
+  }
+
+  /**
    * Extract the list of references from the "References" appendix of the
    * current document.
    *
@@ -3525,6 +3536,7 @@ for more information.`;
       extractCSS,
       extractDefinitions,
       extractHeadings,
+      extractIds,
       extractReferences,
       extractLinks,
       canonicalizeUrl,

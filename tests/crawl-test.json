@@ -62,6 +62,10 @@
         "level": "2",
         "title": "Heading in subpage"
       }
+    ],
+    "ids": [
+      "foo",
+      "bar"
     ]
   },
   {
@@ -167,6 +171,40 @@
         "level": "3",
         "title": "A.1 Informative references"
       }
+    ],
+    "ids": [
+      "respec-ui-styles",
+      "respec-mainstyle",
+      "initialUserConfig",
+      "respec-ui",
+      "respec-pill",
+      "respec-menu",
+      "respec-button-export",
+      "respec-button-search-specref",
+      "respec-button-search-definitions",
+      "respec-button-about-25.16.5",
+      "respec-pill-error",
+      "respec-pill-warning",
+      "title",
+      "abstract",
+      "toc",
+      "table-of-contents",
+      "webidl-187362828",
+      "idl-def-foo",
+      "respec-offender-couldn-t-find-a-match-for-html",
+      "dom-foo",
+      "idl-def-foo-bar",
+      "dom-foo-bar",
+      "references",
+      "a-references",
+      "informative-references",
+      "a-1-informative-references",
+      "bib-html",
+      "bib-webidl",
+      "back-to-top",
+      "dfn-panel-for-dom-foo",
+      "dfn-panel-for-dom-foo-bar",
+      "respec-dfn-panel"
     ]
   },
   {
@@ -213,6 +251,7 @@
       "valuespaces": {}
     },
     "dfns": [],
-    "headings": []
+    "headings": [],
+    "ids": []
   }
 ]

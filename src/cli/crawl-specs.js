@@ -83,6 +83,7 @@ async function crawlSpec(spec, crawlOptions) {
                 links: window.reffy.extractLinks(),
                 dfns: window.reffy.extractDefinitions(spec.shortname),
                 headings: window.reffy.extractHeadings(),
+                ids: window.reffy.extractIds(),
                 refs: window.reffy.extractReferences(),
                 idl: window.reffy.extractWebIdl(),
                 css: window.reffy.extractCSS()
@@ -143,6 +144,7 @@ async function crawlSpec(spec, crawlOptions) {
         spec.css = result.css;
         spec.dfns = result.dfns;
         spec.headings = result.headings;
+        spec.ids = result.ids;
     }
     catch (err) {
         spec.title = spec.title || '[Could not be determined, see error]';
@@ -243,6 +245,7 @@ async function saveResults(crawlOptions, data, folder) {
     const folders = {
         css: await getSubfolder('css'),
         dfns: await getSubfolder('dfns'),
+        ids: await getSubfolder('ids'),
         headings: await getSubfolder('headings'),
         idl: await getSubfolder('idl'),
         idlparsed: await getSubfolder('idlparsed'),
