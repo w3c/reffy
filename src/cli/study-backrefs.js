@@ -221,7 +221,7 @@ if (require.main === module) {
   const results = studyCrawlResults(crawlResults.results);
   let report = "";
   Object.keys(results).forEach(s => {
-    report += `<details><summary>[${results[s].title}](${s})</summary>\n\n`;
+    report += `<details><summary><a href="${s}">${results[s].title}</a></summary>\n\n`;
     if (results[s].notDfn.length) {
       report += "Links to anchors that are not definitions or headings:\n"
       results[s].notDfn.forEach(l => {
