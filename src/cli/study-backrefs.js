@@ -32,6 +32,7 @@ const shortNamesOfOutdatedSpecs = {
 };
 
 const shortnameMap = {
+  "mixedcontent": "mixed-content",
   "powerfulfeatures": "secure-contexts",
   "hr-time-2": "hr-time",
   "csp": "CSP",
@@ -145,11 +146,9 @@ function studyCrawlResults(results) {
               // Ignore links to previous versions
               if (m[1] !== spec.shortname) {
                 recordAnomaly(spec, "datedUrl", l);
-                return;
               }
             } else {
               recordAnomaly(spec, "unknownSpec", l);
-              return;
             }
           }
         }
@@ -158,16 +157,15 @@ function studyCrawlResults(results) {
         } else if (shortNamesOfOutdatedSpecs[shortname]) {
           recordAnomaly(spec, "outdatedSpec", l);
         }
+        if (!shortname) { return ;}
         // self-references might be broken because of ed vs tr
         if (shortname === spec.shortname || shortname === spec.series.shortname) return [];
         let sourceSpec = results.find(s => s.shortname === shortname || s.series.shortname === shortname);
         if (!sourceSpec) {
-          if (!shortNamesOfOutdatedSpecs[shortname] && !shortnameOfNonNormativeDocs.includes(shortname)) {
+          if (shortname && !shortNamesOfOutdatedSpecs[shortname] && !shortnameOfNonNormativeDocs.includes(shortname)) {
             recordUnknownSpec(l, shortname, spec)
           }
           return;
-        } else {
-          
         }
         let headings = sourceSpec.headings || [];
         let dfns = sourceSpec.dfns || [];
