@@ -8,13 +8,22 @@ const fs = require("fs");
 const matchSpecUrl = url => url.match(/spec.whatwg.org/) || url.match(/www.w3.org\/TR\/[a-z0-9]/) || (url.match(/.github.io/) && ! url.match(/w3c.github.io\/test-results\//));
 const missingSpecs = {};
 
+// TODO
+// dated URLs
+// report outdated shortnames
+// crawl all ids and report broken links
+
+// shortnames for specs that should no longer be linked to
+const shortNamesOfOutdatedSpecs = {
+  "html51": "https://html.spec.whatwg.org/",
+  "html5": "https://html.spec.whatwg.org/",
+  "html50": "https://html.spec.whatwg.org/",
+  "domcore": "https://dom.spec.whatwg.org/",
+};
+
 const shortnameMap = {
-  "html51": "html",
-  "html5": "html",
-  "html50": "html",
   "hr-time-2": "hr-time",
   "csp": "CSP",
-  "domcore": "dom",
   "css3-background": "css-backgrounds",
   "css3-break": "css-break",
   "css3-color": "css-color",
