@@ -97,14 +97,7 @@ const extractDfns = (doc, selector, extractor) => {
     .map(dfn => dfn.name.split(',').map(name => Object.assign({},
       dfn, { name: name.trim() })))
     .reduce((acc, val) => acc.concat(val), [])
-    .forEach(dfn => {
-      if ((dfn.name === 'property-name') ||
-          (dfn.name === '--*')) {
-        // Ignore sample definition && custom properties definition
-        return;
-      }
-      res[dfn.name] = dfn;
-    });
+    .forEach(dfn => res[dfn.name] = dfn);
   return res;
 };
 

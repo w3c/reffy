@@ -75,14 +75,15 @@ async function crawlSpec(spec, crawlOptions) {
 
     try {
         const result = await processSpecification(spec.crawled, (spec) => {
+            const idToHeading = window.reffy.mapIdsToHeadings();
             return {
                 crawled: window.location.toString(),
                 title: window.reffy.getTitle(),
                 generator: window.reffy.getGenerator(),
                 date: window.reffy.getLastModifiedDate(),
                 links: window.reffy.extractLinks(),
-                dfns: window.reffy.extractDefinitions(spec.shortname),
-                headings: window.reffy.extractHeadings(),
+                dfns: window.reffy.extractDefinitions(spec.shortname, idToHeading),
+                headings: window.reffy.extractHeadings(idToHeading),
                 ids: window.reffy.extractIds(),
                 refs: window.reffy.extractReferences(),
                 idl: window.reffy.extractWebIdl(),
@@ -105,30 +106,55 @@ async function crawlSpec(spec, crawlOptions) {
             result.idl = err;
         }
 
+        // Add CSS property definitions that weren't in a table
+        (result.dfns || []).filter((dfn) => dfn.type == "property").forEach(propDfn => {
+            propDfn.linkingText.forEach(lt => {
+                if (!result.css.properties.hasOwnProperty(lt)) {
+                    result.css.properties[lt] = {
+                        name: lt
+                    };
+                }
+            });
+        });
+
+        // Ideally, the sample definition (property-name) in CSS2 and the custom
+        // property definition (--*) in CSS Variables would not be flagged as
+        // real CSS properties. In practice, they are. Let's remove them from
+        // the extract.
+        ['property-name', '--*'].forEach(prop => {
+            if ((result.css.properties || {})[prop]) {
+                delete result.css.properties[prop];
+            }
+        });
+
         // Parse extracted CSS definitions
-        Object.keys(result.css.properties || {}).forEach(prop => {
-            try {
-                result.css.properties[prop].parsedValue = cssDfnParser.parsePropDefValue(
-                    result.css.properties[prop].value || result.css.properties[prop].newValues);
-            } catch (e) {
-                result.css.properties[prop].valueParseError = e.message;
-            }
-        });
-        Object.keys(result.css.descriptors || {}).forEach(desc => {
-            try {
-                result.css.descriptors[desc].parsedValue = cssDfnParser.parsePropDefValue(
-                    result.css.descriptors[desc].value);
-            } catch (e) {
-                result.css.descriptors[desc].valueParseError = e.message;
-            }
-        });
-        Object.keys(result.css.valuespaces || {}).forEach(vs => {
-            if (result.css.valuespaces[vs].value) {
+        Object.entries(result.css.properties || {}).forEach(([prop, dfn]) => {
+            if (dfn.value || dfn.newValues) {
                 try {
-                    result.css.valuespaces[vs].parsedValue = cssDfnParser.parsePropDefValue(
-                        result.css.valuespaces[vs].value);
+                    dfn.parsedValue = cssDfnParser.parsePropDefValue(
+                        dfn.value || dfn.newValues);
                 } catch (e) {
-                    result.css.valuespaces[vs].valueParseError = e.message;
+                    dfn.valueParseError = e.message;
+                }
+            }
+        });
+        Object.entries(result.css.descriptors || {}).forEach(([desc, dfn]) => {
+            if (dfn.value) {
+                try {
+                    dfn.parsedValue = cssDfnParser.parsePropDefValue(
+                        dfn.value);
+                } catch (e) {
+                    dfn.valueParseError = e.message;
+                }
+            }
+        });
+        Object.entries(result.css.valuespaces || {}).forEach(([vs, dfn]) => {
+            if (dfn.value) {
+                try {
+                    dfn.parsedValue = cssDfnParser.parsePropDefValue(
+                        dfn.value);
+                } catch (e) {
+                    dfn.valueParseError = e.message;
                 }
             }
         });
@@ -413,7 +439,10 @@ async function saveResults(crawlOptions, data, folder) {
         .filter(spec => (spec.seriesComposition === 'delta') && defineCSSContent(spec))
         .map(spec => saveCss(spec, spec.shortname)));
 
-    data.filter(spec => defineCSSContent(spec))
+    // Specs that define CSS now have a "css" key that point to the CSS extract.
+    // Specs that don't define CSS still have a "css" key that points to an
+    // empty object structure. Let's get rid of it.
+    data.filter(spec => spec.css && typeof spec.css !== 'string')
         .map(spec => delete spec.css);
 
     // Save definitions, links, headings, and refs for individual specs

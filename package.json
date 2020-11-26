@@ -4,10 +4,10 @@
   "description": "W3C/WHATWG spec dependencies exploration companion. Features a short set of tools to study spec references as well as WebIDL term definitions and references found in W3C specifications.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tidoust/reffy.git"
+    "url": "https://github.com/w3c/reffy.git"
   },
   "bugs": {
-    "url": "https://github.com/tidoust/reffy/issues"
+    "url": "https://github.com/w3c/reffy/issues"
   },
   "author": {
     "name": "tidoust",
@@ -34,18 +34,18 @@
   },
   "dependencies": {
     "abortcontroller-polyfill": "1.5.0",
-    "browser-specs": "1.17.0",
-    "commander": "6.1.0",
+    "browser-specs": "1.21.2",
+    "commander": "6.2.0",
     "fetch-filecache-for-crawling": "4.0.2",
     "node-pandoc": "0.3.0",
-    "puppeteer": "5.3.1",
+    "puppeteer": "5.5.0",
     "webidl2": "23.13.0"
   },
   "devDependencies": {
     "chai": "4.2.0",
-    "mocha": "8.1.3",
-    "nock": "13.0.4",
-    "respec": "25.16.5",
+    "mocha": "8.2.1",
+    "nock": "13.0.5",
+    "respec": "25.18.3",
     "respec-hljs": "2.1.1",
     "rollup": "2.17.0"
   },
