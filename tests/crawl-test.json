@@ -186,25 +186,13 @@
       }
     ],
     "ids": [
-      "respec-ui-styles",
-      "respec-mainstyle",
       "initialUserConfig",
-      "respec-ui",
-      "respec-pill",
-      "respec-menu",
-      "respec-button-export",
-      "respec-button-search-specref",
-      "respec-button-search-definitions",
-      "respec-button-about-25.16.5",
-      "respec-pill-error",
-      "respec-pill-warning",
       "title",
       "abstract",
       "toc",
       "table-of-contents",
       "webidl-187362828",
       "idl-def-foo",
-      "respec-offender-couldn-t-find-a-match-for-html",
       "dom-foo",
       "idl-def-foo-bar",
       "dom-foo-bar",
@@ -216,8 +204,7 @@
       "bib-webidl",
       "back-to-top",
       "dfn-panel-for-dom-foo",
-      "dfn-panel-for-dom-foo-bar",
-      "respec-dfn-panel"
+      "dfn-panel-for-dom-foo-bar"
     ]
   },
   {
