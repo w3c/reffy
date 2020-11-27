@@ -452,6 +452,8 @@ async function saveResults(crawlOptions, data, folder) {
         spec => spec.links && (Object.keys(spec.links).length > 0))));
     await Promise.all(data.map(getSavePropFunction('headings',
         spec => spec.headings && (spec.headings.length > 0))));
+    await Promise.all(data.map(getSavePropFunction('ids',
+        spec => spec.ids && (spec.ids.length > 0))));
     await Promise.all(data.map(getSavePropFunction('refs',
         spec => spec.refs &&
             ((spec.refs.normative && spec.refs.normative.length > 0) ||
