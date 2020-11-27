@@ -106,6 +106,7 @@ function recordAnomaly(spec, anomalyType, link) {
       title: spec.title,
       notExported: [],
       notDfn: [],
+      brokenLink: [],
       outdatedSpec: [],
       unknownSpec: [],
       datedUrl: []
@@ -169,6 +170,7 @@ function studyCrawlResults(results) {
         }
         let headings = sourceSpec.headings || [];
         let dfns = sourceSpec.dfns || [];
+        let ids = sourceSpec.ids || [];
         if (!dfns.length) {
           if (fs.existsSync("../webref/ed/dfns/" + shortname + ".json")) {
             dfns = JSON.parse(fs.readFileSync("../webref/ed/dfns/" + shortname + ".json", "utf-8")).dfns;
@@ -185,12 +187,14 @@ function studyCrawlResults(results) {
         // anchors
         const anchors = spec.links[l];
         for(let anchor of anchors) {
+          let id = ids.includes(anchor);
           let heading = headings.find(h => h.id === anchor);
           let dfn = dfns.find(d => d.id === anchor);
-          if (!heading && !dfn) {
+          if (!id) {
+            recordAnomaly(spec, "brokenLink", l + "#" + anchor);
+          } else if (!heading && !dfn) {
             recordAnomaly(spec, "notDfn", l + "#" + anchor);
-          }
-          if (dfn && dfn.access !== "public") {
+          } else if (dfn && dfn.access !== "public") {
             recordAnomaly(spec, "notExported", l  + "#" + anchor);
           }
         }
