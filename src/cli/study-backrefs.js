@@ -224,6 +224,13 @@ if (require.main === module) {
   let report = "";
   Object.keys(results).forEach(s => {
     report += `<details><summary><a href="${s}">${results[s].title}</a></summary>\n\n`;
+    if (results[s].brokenLink.length) {
+      report += "Links to anchors that don't exist:\n"
+      results[s].brokenLink.forEach(l => {
+        report += "* " + l + "\n";
+      })
+      report += "\n\n";
+    }
     if (results[s].notDfn.length) {
       report += "Links to anchors that are not definitions or headings:\n"
       results[s].notDfn.forEach(l => {
