@@ -20,6 +20,7 @@
     }
   ],
   "license": "MIT",
+  "main": "index.js",
   "bin": {
     "reffy": "./reffy.js",
     "check-specs": "./src/cli/check-specs.js",
