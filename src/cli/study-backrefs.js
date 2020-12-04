@@ -182,6 +182,7 @@ function recordAnomaly(spec, anomalyType, link) {
       notExported: [],
       notDfn: [],
       brokenLink: [],
+      evolvingLink: [],
       outdatedSpec: [],
       unknownSpec: [],
       datedUrl: []
@@ -255,7 +256,11 @@ function studyCrawlResults(edResults, trResults) {
           let heading = headings.find(h => h.id === anchor);
           let dfn = dfns.find(d => d.id === anchor);
           if (!id) {
-            recordAnomaly(spec, "brokenLink", l + "#" + anchor);
+            if ((trSourceSpec.ids || []).includes(anchor) && l.match(/w3\.org\/TR\//)) {
+              recordAnomaly(spec, "evolvingLink", l + "#" + anchor);
+            } else {
+              recordAnomaly(spec, "brokenLink", l + "#" + anchor);
+            }
           } else if (!heading && !dfn) {
             recordAnomaly(spec, "notDfn", l + "#" + anchor);
           } else if (dfn && dfn.access !== "public") {
@@ -298,6 +303,13 @@ if (require.main === module) {
     if (results[s].brokenLink.length) {
       report += "Links to anchors that don't exist:\n"
       results[s].brokenLink.forEach(l => {
+        report += "* " + l + "\n";
+      })
+      report += "\n\n";
+    }
+    if (results[s].evolvingLink.length) {
+      report += "Links to anchors that no longer exist in the editor draft of the target spec:\n"
+      results[s].evolvingLink.forEach(l => {
         report += "* " + l + "\n";
       })
       report += "\n\n";
