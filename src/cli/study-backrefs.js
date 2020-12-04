@@ -199,8 +199,8 @@ function recordUnknownSpec(link, shortname, spec) {
   missingSpecs[shortname].push({link, spec: spec.url});
 }
 
-function studyCrawlResults(results) {
-  results.forEach(spec => {
+function studyCrawlResults(edResults, trResults) {
+  edResults.forEach(spec => {
     Object.keys(spec.links)
       .filter(matchSpecUrl)
       .forEach(l => {
@@ -212,7 +212,7 @@ function studyCrawlResults(results) {
         if (nakedLink[nakedLink.length - 1] !== '/') {
           nakedLink += '/';
         }
-        shortname = (results.find(r => r.url === nakedLink || (r.release && r.release.url === nakedLink) || r.nightly.url === nakedLink || (r.series && nakedLink === 'https://www.w3.org/TR/' + r.series.shortname + '/') ) || {}).shortname;
+        shortname = (edResults.find(r => r.url === nakedLink || (r.release && r.release.url === nakedLink) || r.nightly.url === nakedLink || (r.series && nakedLink === 'https://www.w3.org/TR/' + r.series.shortname + '/') ) || {}).shortname;
         if (!shortname) {
           try {
             ({shortname} = computeShortname(l));
@@ -236,7 +236,8 @@ function studyCrawlResults(results) {
         if (!shortname) { return ;}
         // self-references might be broken because of ed vs tr
         if (shortname === spec.shortname || shortname === spec.series.shortname) return [];
-        let sourceSpec = results.find(s => s.shortname === shortname || s.series.shortname === shortname);
+        let sourceSpec = edResults.find(s => s.shortname === shortname || s.series.shortname === shortname);
+        let trSourceSpec = trResults.find(s => s.shortname === shortname || s.series.shortname === shortname);
         if (!sourceSpec) {
           if (shortname && !shortNamesOfOutdatedSpecs[shortname] && !shortnameOfNonNormativeDocs.includes(shortname)) {
             recordUnknownSpec(l, shortname, spec)
@@ -246,18 +247,6 @@ function studyCrawlResults(results) {
         let headings = sourceSpec.headings || [];
         let dfns = sourceSpec.dfns || [];
         let ids = sourceSpec.ids || [];
-        if (!dfns.length) {
-          if (fs.existsSync("../webref/ed/dfns/" + shortname + ".json")) {
-            dfns = JSON.parse(fs.readFileSync("../webref/ed/dfns/" + shortname + ".json", "utf-8")).dfns;
-          }
-          if (fs.existsSync("../webref/tr/dfns/" + shortname + ".json")) {
-            dfns = dfns.concat(JSON.parse(fs.readFileSync("../webref/ed/dfns/" + shortname + ".json", "utf-8")).dfns);
-          }
-          if (!dfns.length) {
-            recordUnknownSpec(l, shortname, spec)
-            return;
-          }
-        }
 
         // anchors
         const anchors = spec.links[l];
@@ -280,22 +269,29 @@ function studyCrawlResults(results) {
 
 
 if (require.main === module) {
-  const crawlResultsPath = process.argv[2];
+  const edCrawlResultsPath = process.argv[2];
+  const trCrawlResultsPath = process.argv[3];
 
-  if (!crawlResultsPath) {
-    console.error("Required crawl results parameter missing");
+  if (!edCrawlResultsPath || !trCrawlResultsPath) {
+    console.error("Paths to crawl results from ED and TR parameter required");
     process.exit(2);
   }
 
-  let crawlResults;
+  let edCrawlResults, trCrawlResults;
   try {
-    crawlResults = requireFromWorkingDirectory(crawlResultsPath);
+    edCrawlResults = requireFromWorkingDirectory(edCrawlResultsPath);
   } catch(e) {
-    console.error("Impossible to read " + crawlResultsPath + ": " + e);
+    console.error("Impossible to read " + edCrawlResultsPath + ": " + e);
+    process.exit(3);
+  }
+  try {
+    trCrawlResults = requireFromWorkingDirectory(trCrawlResultsPath);
+  } catch(e) {
+    console.error("Impossible to read " + trCrawlResultsPath + ": " + e);
     process.exit(3);
   }
 
-  const results = studyCrawlResults(crawlResults.results);
+  const results = studyCrawlResults(edCrawlResults.results, trCrawlResults.results);
   let report = "";
   Object.keys(results).forEach(s => {
     report += `<details><summary><a href="${s}">${results[s].title}</a></summary>\n\n`;
