@@ -1,15 +1,90 @@
 #!/usr/bin/env node
 const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
-const canonicalizeUrl = require('../../builds/canonicalize-url').canonicalizeUrl;
-const canonicalizesTo = require('../../builds/canonicalize-url').canonicalizesTo;
-// FIXME
-const computeShortName = require('../../../browser-specs/src/compute-shortname');
+const {canonicalizeUrl, canonicalizesTo} = require('../../builds/canonicalize-url');
 const fs = require("fs");
 
 const matchSpecUrl = url => url.match(/spec.whatwg.org/) || url.match(/www.w3.org\/TR\/[a-z0-9]/) || (url.match(/.github.io/) && ! url.match(/w3c.github.io\/test-results\//));
 
-// TODO
-// report broken links based on crawled ids
+/*
+ TODO: DRY
+ Copied from browser-specs/src/compute-shortname.js
+*/
+function computeShortname(url) {
+  function parseUrl(url) {
+    // Handle /TR/ URLs
+    const w3cTr = url.match(/^https?:\/\/(?:www\.)?w3\.org\/TR\/([^\/]+)\/$/);
+    if (w3cTr) {
+      return w3cTr[1];
+    }
+
+    // Handle WHATWG specs
+    const whatwg = url.match(/\/\/(.+)\.spec\.whatwg\.org\/?/);
+    if (whatwg) {
+        return whatwg[1];
+    }
+
+    // Handle TC39 Proposals
+    const tc39 = url.match(/\/\/tc39\.es\/proposal-([^\/]+)\/$/);
+    if (tc39) {
+        return "tc39-" + tc39[1];
+    }
+
+
+    // Handle Khronos extensions
+    const khronos = url.match(/https:\/\/www\.khronos\.org\/registry\/webgl\/extensions\/([^\/]+)\/$/);
+    if (khronos) {
+        return khronos[1];
+    }
+
+    // Handle extension specs defined in the same repo as the main spec
+    // (e.g. generate a "gamepad-extensions" name for
+    // https://w3c.github.io/gamepad/extensions.html")
+    const ext = url.match(/\/.*\.github\.io\/([^\/]+)\/(extensions?)\.html$/);
+    if (ext) {
+      return ext[1] + '-' + ext[2];
+    }
+
+    // Handle draft specs on GitHub, excluding the "webappsec-" prefix for
+    // specifications developed by the Web Application Security Working Group
+    const github = url.match(/\/.*\.github\.io\/(?:webappsec-)?([^\/]+)\//);
+    if (github) {
+        return github[1];
+    }
+
+    // Handle CSS WG specs
+    const css = url.match(/\/drafts\.(?:csswg|fxtf|css-houdini)\.org\/([^\/]+)\//);
+    if (css) {
+      return css[1];
+    }
+
+    // Handle SVG drafts
+    const svg = url.match(/\/svgwg\.org\/specs\/(?:svg-)?([^\/]+)\//);
+    if (svg) {
+      return "svg-" + svg[1];
+    }
+
+    // Return name when one was given
+    if (!url.match(/\//)) {
+      return url;
+    }
+
+    throw `Cannot extract meaningful name from ${url}`;
+  }
+
+  // Parse the URL to extract the name
+  const name = parseUrl(url);
+
+  // Make sure name looks legit, in other words that it is composed of basic
+  // Latin characters (a-z letters, digits, underscore and "-"), and that it
+  // only contains a dot for fractional levels at the end of the name
+  // (e.g. "blah-1.2" is good but "blah.blah" and "blah-3.1-blah" are not)
+  if (!name.match(/^[\w\-]+((?<=\-\d+)\.\d+)?$/)) {
+    throw `Specification name contains unexpected characters: ${name} (extracted from ${url})`;
+  }
+
+  return name;
+}
+
 
 // shortnames for specs that should no longer be linked to
 const shortNamesOfOutdatedSpecs = {
@@ -140,7 +215,7 @@ function studyCrawlResults(results) {
         shortname = (results.find(r => r.url === nakedLink || (r.release && r.release.url === nakedLink) || r.nightly.url === nakedLink || (r.series && nakedLink === 'https://www.w3.org/TR/' + r.series.shortname + '/') ) || {}).shortname;
         if (!shortname) {
           try {
-            ({shortname} = computeShortName(l));
+            ({shortname} = computeShortname(l));
           } catch (e) {
             let m = l.match(/www\.w3\.org\/TR\/[0-9]{4}\/[A-Z]+-(.+)-[0-9]{8}/);
             if (m) {
