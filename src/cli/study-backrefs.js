@@ -298,7 +298,9 @@ if (require.main === module) {
 
   const results = studyCrawlResults(edCrawlResults.results, trCrawlResults.results);
   let report = "";
-  Object.keys(results).forEach(s => {
+  Object.keys(results)
+    .sort((r1, r2) => results[r1].title.localeCompare(results[r2].title))
+    .forEach(s => {
     report += `<details><summary><a href="${s}">${results[s].title}</a></summary>\n\n`;
     if (results[s].brokenLink.length) {
       report += "Links to anchors that don't exist:\n"
