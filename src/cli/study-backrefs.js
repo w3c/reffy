@@ -28,10 +28,27 @@
 const {expandCrawlResult, requireFromWorkingDirectory} = require("../lib/util");
 const path = require("path");
 
+/**
+ * The backrefs analyzer only checks links to other specs. This function returns
+ * true when a link does target a spec, and false if it targets something else
+ * (e.g. a test suite, a wiki page, an issue, etc.)
+ *
+ * TODO: Consider matching specs from the Khronos Group (but note there are
+ * different types of resources under www.khronos.org0)
+ * TODO: Consider matching TC39 specs... once we have dfns and IDs for them!
+ */
 const matchSpecUrl = url =>
-  url.match(/spec.whatwg.org/) ||
-  url.match(/www.w3.org\/TR\/[a-z0-9]/) ||
-  (url.match(/.github.io/) && ! url.match(/w3c.github.io\/test-results\//));
+  url.match(/spec\.whatwg\.org/) ||
+  url.match(/www\.w3\.org\/TR\/[a-z0-9]/) ||
+
+  // CSS drafts tend to link to various non-spec resources under *.csswg.org
+  // (e.g. log.csswg.org or wiki.csswg.org)
+  url.match(/(?<!log|hg|test|wiki)\.csswg\.org(?!\/issues)/) ||
+  url.match(/\.fxtf\.org/) ||
+  url.match(/\.css-houdini\.org/) ||
+
+  url.match(/\.svgwg\.org/) ||
+  (url.match(/\.github\.io/) && !url.match(/w3c\.github\.io\/test-results\//));
 
 /*
  TODO: DRY
@@ -116,22 +133,22 @@ function computeShortname(url) {
 
 // shortnames for specs that should no longer be linked to
 const shortNamesOfOutdatedSpecs = {
-  "2dcontext": "https://html.spec.whatwg.org/",
-  "2dcontext2": "https://html.spec.whatwg.org/",
-  "cors":  "https://fetch.spec.whatwg.org/",
-  "custom-elements": "https://html.spec.whatwg.org/",
-  "domcore": "https://dom.spec.whatwg.org/",
-  "eventsource": "https://html.spec.whatwg.org/",
-  "html5": "https://html.spec.whatwg.org/",
-  "html50": "https://html.spec.whatwg.org/",
-  "html51": "https://html.spec.whatwg.org/",
-  "html52": "https://html.spec.whatwg.org/",
-  "selectors-api": "https://dom.spec.whatwg.org/",
-  "webmessaging": "https://html.spec.whatwg.org/",
-  "websockets": "https://html.spec.whatwg.org/",
-  "webstorage": "https://html.spec.whatwg.org/",
-  "workers": "https://html.spec.whatwg.org/",
-  "worklets-1": "https://html.spec.whatwg.org/"
+  "2dcontext": "html",
+  "2dcontext2": "html",
+  "cors":  "fetch",
+  "custom-elements": "html",
+  "domcore": "dom",
+  "eventsource": "html",
+  "html5": "html",
+  "html50": "html",
+  "html51": "html",
+  "html52": "html",
+  "selectors-api": "dom",
+  "webmessaging": "html",
+  "websockets": "html",
+  "webstorage": "html",
+  "workers": "html",
+  "worklets-1": "html"
 };
 
 const shortnameMap = {
@@ -198,7 +215,7 @@ const shortnameMap = {
 
 // TODO: check the link is non-normative (somehow)
 const shortnameOfNonNormativeDocs = [
-    "accept-encoding-range-test",
+  "accept-encoding-range-test",
   "aria-practices",
   "Audio-EQ-Cookbook",
   "books",
@@ -253,7 +270,6 @@ const shortnameOfNonNormativeDocs = [
 
 function studyCrawlResults(edResults, trResults) {
   const report = {};
-  const missingSpecs = {};
 
   function recordAnomaly(spec, anomalyType, link) {
     if (!report[spec.url]) {
@@ -271,13 +287,6 @@ function studyCrawlResults(edResults, trResults) {
     report[spec.url][anomalyType].push(link);
   }
 
-  function recordUnknownSpec(link, shortname, spec) {
-    if (!missingSpecs[shortname]) {
-      missingSpecs[shortname] = [];
-    }
-    missingSpecs[shortname].push({link, spec: spec.url});
-  }
-
   edResults.forEach(spec => {
     Object.keys(spec.links)
       .filter(matchSpecUrl)
@@ -290,63 +299,91 @@ function studyCrawlResults(edResults, trResults) {
         if (nakedLink[nakedLink.length - 1] !== '/') {
           nakedLink += '/';
         }
+
+        // Detect links to dated specs
+        const match = nakedLink.match(/www\.w3\.org\/TR\/[0-9]{4}\/[A-Z]+-(.+)-[0-9]{8}\//);
+        if (match) {
+          // ED should not link to dated versions of the spec, unless it
+          // voluntarily links to previous versions of itself
+          if (match[1] !== spec.shortname) {
+            recordAnomaly(spec, "datedUrl", link);
+          }
+
+          // TODO: consider pursuing the analysis with the non-dated version,
+          // but note this may trigger some obscure broken fragment messages
+          // when a fragment exists in the dated version but no longer exists
+          // in the ED.
+          return;
+        }
+
+        // Check whether the naked link matches any known URL in the crawl
         shortname = (edResults.find(r =>
           r.url === nakedLink ||
           (r.release && r.release.url === nakedLink) ||
           r.nightly.url === nakedLink ||
-          (r.series && nakedLink === 'https://www.w3.org/TR/' + r.series.shortname + '/') ) || {}).shortname;
+          (r.series && nakedLink === `https://www.w3.org/TR/${r.series.shortname}/`) ) || {}).shortname;
+
+        // If it does not match any known URL, try to compute a shortname out of
+        // it directly.
         if (!shortname) {
           try {
-            ({shortname} = computeShortname(link));
-            if (shortnameMap[shortname]) {
-              shortname = shortnameMap[shortname];
-            }
-            else if (shortNamesOfOutdatedSpecs[shortname]) {
-              recordAnomaly(spec, "outdatedSpec", link);
-            }
-          } catch (e) {
-            let m = link.match(/www\.w3\.org\/TR\/[0-9]{4}\/[A-Z]+-(.+)-[0-9]{8}/);
-            if (m) {
-              // Ignore links to previous versions
-              if (m[1] !== spec.shortname) {
-                recordAnomaly(spec, "datedUrl", link);
-              }
-            } else {
-              recordAnomaly(spec, "unknownSpec", link);
-            }
+            shortname = computeShortname(nakedLink);
+          }
+          catch (e) {
+            recordAnomaly(spec, "unknownSpec", link);
+            return;
           }
         }
-        if (!shortname) {
+
+        if (shortNamesOfOutdatedSpecs[shortname]) {
+          // The specification should no longer be referenced.
+          // In theory, we could still try to match the anchor against the
+          // right spec. In practice, these outdated specs are sufficiently
+          // outdated that it does not make a lot of sense to do so.
+          recordAnomaly(spec, "outdatedSpec", link);
           return;
         }
 
-        // Make sure that the targeted spec exists in the crawls, or can be
-        // ignored because it is an outdated spec (which will be reported as
-        // such), or because it is an informative spec
-        let sourceSpec = edResults.find(s => s.shortname === shortname || s.series.shortname === shortname);
-        if (!sourceSpec) {
-          if (shortNamesOfOutdatedSpecs[shortname] || shortnameOfNonNormativeDocs.includes(shortname)) {
-            return;
-          }
-          recordUnknownSpec(link, shortname, spec);
+        if (shortnameMap[shortname]) {
+          // TODO: Consider reporting that as a "non ideal" link.
+          shortname = shortnameMap[shortname];
         }
 
-        // Self-references might be broken because of ed vs tr
+        // At this point, we managed to associate the link with a shortname,
+        // let's check whether the shortname matches a spec in the crawl,
+        // matching the exact spec shortname if possible, or the series
+        // shortname otherwise (in which case we'll use the current spec)
+        const sourceSpec =
+          edResults.find(s => s.shortname === shortname) ||
+          edResults.find(s => s.series.shortname === shortname && s.series.currentSpecification === s.shortname);
+        if (!sourceSpec) {
+          if (!shortnameOfNonNormativeDocs.includes(shortname)) {
+            recordAnomaly(spec, "unknownSpec", link);
+          }
+          return;
+        }
+
+        // Self-references might be broken because of ED vs TR, ignore that
         if (shortname === spec.shortname || shortname === spec.series.shortname) {
           return;
         }
 
-        let trSourceSpec = trResults.find(s => s.shortname === shortname || s.series.shortname === shortname) || {};
-        let headings = sourceSpec.headings || [];
-        let dfns = sourceSpec.dfns || [];
-        let ids = sourceSpec.ids || [];
+        // Look for a corresponding entry in the TR crawl, which we'll use to
+        // distinguish between broken links and "evolving" links (meaning links
+        // that exist in the TR version but no longer exist in the ED)
+        const trSourceSpec =
+          trResults.find(s => s.shortname === shortname) ||
+          trResults.find(s => s.series.shortname === shortname && s.series.currentSpecification === s.shortname);
+        const headings = sourceSpec.headings || [];
+        const dfns = sourceSpec.dfns || [];
+        const ids = sourceSpec.ids || [];
 
         // Check anchors
         const anchors = spec.links[link];
         for (let anchor of anchors) {
-          let isKnownId = ids.includes(anchor);
-          let heading = headings.find(h => h.id === anchor);
-          let dfn = dfns.find(d => d.id === anchor);
+          const isKnownId = ids.includes(anchor);
+          const heading = headings.find(h => h.id === anchor);
+          const dfn = dfns.find(d => d.id === anchor);
           if (!isKnownId) {
             if ((trSourceSpec.ids || []).includes(anchor) && link.match(/w3\.org\/TR\//)) {
               recordAnomaly(spec, "evolvingLink", link + "#" + anchor);
@@ -361,7 +398,7 @@ function studyCrawlResults(edResults, trResults) {
         }
       });
   });
-  return { report, missingSpecs };
+  return report;
 }
 
 
@@ -472,10 +509,7 @@ if (require.main === module) {
 
   // Analyze the crawl results
   studyBackrefs(edCrawlResultsPath, trCrawlResultsPath)
-    .then(({report, missingSpecs}) => {
-      reportToConsole(report);
-      console.error(JSON.stringify(missingSpecs, null, 2));
-    })
+    .then(reportToConsole)
     .catch(e => {
       console.error(e);
       process.exit(3);
