@@ -49,8 +49,12 @@ if (require.main === module) {
         console.error('Required URL parameter missing');
         process.exit(2);
     }
-    extract(url)
+
+    const { setupBrowser, teardownBrowser } = require('../lib/util');
+    setupBrowser()
+      .then(_ => extract(url))
       .then(css => console.log(JSON.stringify(css, null, 2)))
+      .then(teardownBrowser)
       .catch(err => {
         console.error(err);
         process.exit(64);

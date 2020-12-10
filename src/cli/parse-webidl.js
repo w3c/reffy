@@ -388,17 +388,20 @@ module.exports.hasObsoleteIdl = hasObsoleteIdl;
 Code run if the code is run as a stand-alone module
 **************************************************/
 if (require.main === module) {
-    var url = process.argv[2];
+    const url = process.argv[2];
     if (!url) {
         console.error("Required URL parameter missing");
         process.exit(2);
     }
-    var webidlExtract = require("./extract-webidl");
-    webidlExtract.extract(url)
+    const webidlExtract = require("./extract-webidl");
+    const { setupBrowser, teardownBrowser } = require("../lib/util");
+    setupBrowser()
+        .then(() => webidlExtract.extract(url))
         .then(parse)
         .then(function (data) {
             console.log(JSON.stringify(data, null, 2));
         })
+        .then(teardownBrowser)
         .catch(function (err) {
             console.error(err, err.stack);
             process.exit(64);

@@ -1,6 +1,6 @@
 const { assert } = require('chai');
 const puppeteer = require('puppeteer');
-const path = require('path');
+const { buildBrowserlib } = require("../src/lib/util");
 
 // Associating HTML definitions with the right data relies on IDL defined in that spec
 const baseHtml = `<pre><code class=idl>
@@ -510,7 +510,7 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
   }
 ];
 
-async function assertExtractedDefinition(browser, html, dfns, spec) {
+async function assertExtractedDefinition(browser, browserlib, html, dfns, spec) {
   const page = await browser.newPage();
   let pageContent = "";
   switch(spec) {
@@ -526,9 +526,7 @@ async function assertExtractedDefinition(browser, html, dfns, spec) {
     .on('console', message =>
         console.error(`${message.type().substr(0, 3).toUpperCase()} ${message.text()}`));
   page.setContent(pageContent);
-  await page.addScriptTag({
-    path: path.resolve(__dirname, '../builds/browser.js')
-  });
+  await page.addScriptTag({ content: browserlib });
 
   const extractedDfns = await page.evaluate(async () => {
     const idToHeading = reffy.mapIdsToHeadings();
@@ -544,12 +542,14 @@ describe("Test definition extraction", function () {
   this.slow(5000);
 
   let browser;
+  let browserlib;
   before(async () => {
     browser = await puppeteer.launch({ headless: true });
+    browserlib = await buildBrowserlib();
   });
 
   tests.forEach(t => {
-    it(t.title, async () => assertExtractedDefinition(browser, t.html, t.changesToBaseDfn, t.spec));
+    it(t.title, async () => assertExtractedDefinition(browser, browserlib, t.html, t.changesToBaseDfn, t.spec));
   });
 
 

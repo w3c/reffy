@@ -1,6 +1,6 @@
 const { assert } = require('chai');
 const puppeteer = require('puppeteer');
-const path = require('path');
+const { buildBrowserlib } = require("../src/lib/util");
 
 const testHeadings = [
   {
@@ -24,17 +24,17 @@ describe("Test headings extraction", function () {
   this.slow(5000);
 
   let browser;
+  let browserlib;
   before(async () => {
     browser = await puppeteer.launch({ headless: true });
+    browserlib = await buildBrowserlib();
   });
 
   testHeadings.forEach(t => {
     it(t.title, async () => {
       const page = await browser.newPage();
       page.setContent(t.html);
-      await page.addScriptTag({
-        path: path.resolve(__dirname, '../builds/browser.js')
-      });
+      await page.addScriptTag({ content: browserlib });
 
       const extractedHeadings = await page.evaluate(async () => {
         const idToHeading = reffy.mapIdsToHeadings();

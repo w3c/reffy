@@ -1,6 +1,6 @@
 const { assert } = require('chai');
 const puppeteer = require('puppeteer');
-const path = require('path');
+const { buildBrowserlib } = require("../src/lib/util");
 
 const tests = [
   {title: "parses a regular propdef table",
@@ -125,8 +125,10 @@ describe("Test CSS properties extraction", function() {
   this.slow(5000);
   this.timeout(10000);
   let browser;
+  let browserlib;
   before(async () => {
     browser = await puppeteer.launch({ headless: true });
+    browserlib = await buildBrowserlib();
   });
 
   tests.forEach(t => {
@@ -135,9 +137,7 @@ describe("Test CSS properties extraction", function() {
       const page = await browser.newPage();
       let pageContent = t.html;
       page.setContent(pageContent);
-      await page.addScriptTag({
-        path: path.resolve(__dirname, '../builds/browser.js')
-      });
+      await page.addScriptTag({ content: browserlib });
 
       const extractedCss = await page.evaluate(async () => {
         return reffy.extractCSS();

@@ -6,6 +6,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const puppeteer = require('puppeteer');
 const crypto = require('crypto');
+const rollup = require('rollup');
 const { AbortController } = require('abortcontroller-polyfill/dist/cjs-ponyfill');
 const fetch = require('./fetch');
 const specEquivalents = require('../specs/spec-equivalents.json');
@@ -32,6 +33,78 @@ const prop = p => x => x[p];
  */
 function requireFromWorkingDirectory(filename) {
     return require(path.resolve(filename));
+}
+
+
+/**
+ * Bundle the JS code that creates the reffy namespace in a browser context
+ * out of the source code in src/browserlib.
+ *
+ * @function
+ * @public
+ */
+async function buildBrowserlib() {
+    // Convert the JS module to a JS script that can be loaded in Puppeteer
+    const bundle = await rollup.rollup({
+      input: path.resolve(__dirname, '../browserlib/reffy.mjs'),
+      onwarn: () => {}
+    });
+    const { output } = await bundle.generate({
+      format: 'iife'
+    });
+    return output[0].code;
+}
+
+
+/**
+ * Puppeteer browser instance used to load and process specifications
+ */
+let browser = null;
+
+
+/**
+ * JS code to inject in loaded pages to expose functions under a `reffy`
+ * namespace. The code will be built from scripts in `src/browserlib`.
+ */
+let browserlib = null;
+
+
+/**
+ * Setup and launch browser instance to use to load and process specifications.
+ *
+ * The function must be called before any attempt to call `processSpecification`
+ * and should only be called once.
+ *
+ * The function also generates the code that will inject the `reffy` namespace
+ * in each processed page.
+ *
+ * Note: Switch `headless` to `false` to access dev tools and debug processing
+ *
+ * @function
+ * @public
+ */
+async function setupBrowser() {
+    // Create browser instance (one per specification. Switch "headless" to
+    // "false" (and commenting out the call to "browser.close()") is typically
+    // useful when something goes wrong to access dev tools and debug)
+    browser = await puppeteer.launch({ headless: true });
+    browserlib = await buildBrowserlib();
+}
+
+
+/**
+ * Close and destroy browser instance.
+ *
+ * The function should be called once at the end of the processing.
+ *
+ * @function
+ * @public
+ */
+async function teardownBrowser() {
+    if (browser) {
+        await browser.close();
+        browser = null;
+    }
 }
 
 
@@ -99,10 +172,9 @@ async function processSpecification(spec, callback, args, counter) {
         throw new Error('Infinite loop detected');
     }
 
-    // Create browser instance (one per specification. Switch "headless" to
-    // "false" (and commenting out the call to "browser.close()") is typically
-    // useful when something goes wrong to access dev tools and debug)
-    const browser = await puppeteer.launch({ headless: true });
+    if (!browser) {
+        throw new Error('Browser instance not initialized, setupBrowser() must be called before processSpecification().');
+    }
 
     // Create an abort controller for network requests directly handled by the
     // Node.js code (and not by Puppeteer)
@@ -286,9 +358,7 @@ async function processSpecification(spec, callback, args, counter) {
         // Expose additional functions defined in src/browserlib/ to the
         // browser context, under a window.reffy namespace, so that processing
         // script may call them
-        await page.addScriptTag({
-            path: path.resolve(__dirname, '../../builds/browser.js')
-        });
+        await page.addScriptTag({ content: browserlib });
 
         // Run the callback method in the browser context
         const results = await page.evaluate(callback, ...args);
@@ -308,9 +378,6 @@ async function processSpecification(spec, callback, args, counter) {
     finally {
         // Signal abortion again (in case an exception was thrown)
         abortController.abort();
-
-        // Kill the browser instance
-        await browser.close();
     }
 }
 
@@ -478,6 +545,9 @@ async function expandCrawlResult(crawl, baseFolder) {
 module.exports = {
     fetch,
     requireFromWorkingDirectory,
+    buildBrowserlib,
+    setupBrowser,
+    teardownBrowser,
     processSpecification,
     completeWithAlternativeUrls,
     isLatestLevelThatPasses,

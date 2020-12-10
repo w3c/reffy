@@ -1,4 +1,4 @@
-import { canonicalizeUrl } from './canonicalize-url.js';
+import { canonicalizeUrl } from './canonicalize-url.mjs';
 
 /**
  * Extract and canonicalize absolute links of the document and their fragments

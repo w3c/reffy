@@ -552,11 +552,11 @@ if (require.main === module) {
     };
 
     // Process the file and crawl specifications it contains
-    crawlSpecs(resultsPath, crawlOptions)
-        .then(data => {
-            console.log('finished');
-            process.exit(0);
-        })
+    const { setupBrowser, teardownBrowser } = require('../lib/util');
+    setupBrowser()
+        .then(_ => crawlSpecs(resultsPath, crawlOptions))
+        .then(teardownBrowser)
+        .then(_ => console.log('Finished'))
         .catch(err => {
             console.error(err);
             process.exit(1);

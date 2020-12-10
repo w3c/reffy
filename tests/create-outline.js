@@ -293,7 +293,7 @@ describe("Test outline generation", function () {
     // Convert the JS module to a JS script that can be loaded in Puppeteer
     // without having to provide a URL for it (tests run in "about:blank" pages)
     const bundle = await rollup.rollup({
-      input: path.resolve(__dirname, '../src/browserlib/create-outline.js')
+      input: path.resolve(__dirname, '../src/browserlib/create-outline.mjs')
     });
     const { output } = await bundle.generate({
       name: 'createOutline',

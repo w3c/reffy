@@ -32,11 +32,16 @@
  */
 
 const path = require('path');
-const canonicalizeUrl = require('../../builds/canonicalize-url').canonicalizeUrl;
-const canonicalizesTo = require('../../builds/canonicalize-url').canonicalizesTo;
 const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
 const isLatestLevelThatPasses = require('../lib/util').isLatestLevelThatPasses;
 const expandCrawlResult = require('../lib/util').expandCrawlResult;
+
+// Canonicalize methods are defined in an ES6 module so that they can also be
+// used in a browser environment. As such, they can only be loaded async through
+// a call to import(). This cannot be done here, and rather takes place at the
+// beginning of `studyCrawl`.
+let canonicalizeUrl = null;
+let canonicalizesTo = null;
 
 const array_concat = (a,b) => a.concat(b);
 const uniqueFilter = (item, idx, arr) => arr.indexOf(item) === idx;
@@ -315,8 +320,10 @@ function studyCrawlResults(results, specsToInclude) {
         });
 }
 
-
 async function studyCrawl(crawlResults, toInclude) {
+  // Import functions from ES6 module and expose them globally
+  ({canonicalizeUrl, canonicalizesTo} = await import('../browserlib/canonicalize-url.mjs'));
+
   if (typeof crawlResults === 'string') {
     const crawlResultsPath = crawlResults;
     crawlResults = requireFromWorkingDirectory(crawlResults);
@@ -350,7 +357,6 @@ async function studyCrawl(crawlResults, toInclude) {
 Export methods for use as module
 **************************************************/
 module.exports.studyCrawl = studyCrawl;
-module.exports.studyCrawlResults = studyCrawlResults;
 
 
 /**************************************************

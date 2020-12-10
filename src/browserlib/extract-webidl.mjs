@@ -1,4 +1,4 @@
-import getGenerator from './get-generator.js';
+import getGenerator from './get-generator.mjs';
 
 /**
  * Extract the list of WebIDL definitions in the current spec

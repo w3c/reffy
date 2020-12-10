@@ -1,4 +1,4 @@
-import createOutline from './create-outline.js';
+import createOutline from './create-outline.mjs';
 
 /**
  * Generate a mapping between elements that have an ID and the closest heading
