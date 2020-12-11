@@ -6,7 +6,6 @@ const fs = require('fs').promises;
 const path = require('path');
 const puppeteer = require('puppeteer');
 const crypto = require('crypto');
-const rollup = require('rollup');
 const { AbortController } = require('abortcontroller-polyfill/dist/cjs-ponyfill');
 const fetch = require('./fetch');
 const specEquivalents = require('../specs/spec-equivalents.json');
@@ -37,36 +36,9 @@ function requireFromWorkingDirectory(filename) {
 
 
 /**
- * Bundle the JS code that creates the reffy namespace in a browser context
- * out of the source code in src/browserlib.
- *
- * @function
- * @public
- */
-async function buildBrowserlib() {
-    // Convert the JS module to a JS script that can be loaded in Puppeteer
-    const bundle = await rollup.rollup({
-      input: path.resolve(__dirname, '../browserlib/reffy.mjs'),
-      onwarn: () => {}
-    });
-    const { output } = await bundle.generate({
-      format: 'iife'
-    });
-    return output[0].code;
-}
-
-
-/**
  * Puppeteer browser instance used to load and process specifications
  */
 let browser = null;
-
-
-/**
- * JS code to inject in loaded pages to expose functions under a `reffy`
- * namespace. The code will be built from scripts in `src/browserlib`.
- */
-let browserlib = null;
 
 
 /**
@@ -88,7 +60,6 @@ async function setupBrowser() {
     // "false" (and commenting out the call to "browser.close()") is typically
     // useful when something goes wrong to access dev tools and debug)
     browser = await puppeteer.launch({ headless: true });
-    browserlib = await buildBrowserlib();
 }
 
 
@@ -112,7 +83,7 @@ async function teardownBrowser() {
  * Load and process the given specification.
  *
  * The method automatically exposes Reffy's library functions in a window.reffy
- * namespace (see src/browserlib/reffy.js) so that the callback function can
+ * namespace (see src/browserlib/reffy.mjs) so that the callback function can
  * call them directly. Additional callback arguments that would need to be
  * passed to the browser context can be provided through the "args" parameter.
  *
@@ -208,22 +179,41 @@ async function processSpecification(spec, callback, args, counter) {
                     return;
                 }
 
+                // The request needs to be intercepted, either because it
+                // targets one of the local script files, or because we would
+                // like to use our local cache to avoid sending network requests
+                // when possible.
                 //console.log(`intercept ${request.url}`);
-                let response = await fetch(request.url, { signal: controller.signal });
-                let body = await response.buffer();
-
+                const reffyPath = '/reffy/scripts/';
+                const webidl2Path = '/node_modules/webidl2/';
+                if (request.url.includes(reffyPath) || request.url.includes(webidl2Path)) {
+                    const file = request.url.includes(reffyPath) ?
+                        path.resolve(__dirname, '../browserlib', request.url.substring(request.url.indexOf(reffyPath) + reffyPath.length)) :
+                        path.resolve(__dirname, '../../node_modules/webidl2', request.url.substring(request.url.indexOf(webidl2Path) + webidl2Path.length));
+                    const body = await fs.readFile(file);
+                    await cdp.send('Fetch.fulfillRequest', {
+                        requestId,
+                        responseCode: 200,
+                        responseHeaders: [{ name: 'Content-Type', value: 'application/javascript' }],
+                        body: body.toString('base64')
+                    });
+                }
+                else {
+                    const response = await fetch(request.url, { signal: controller.signal });
+                    const body = await response.buffer();
+                    await cdp.send('Fetch.fulfillRequest', {
+                        requestId,
+                        responseCode: response.status,
+                        responseHeaders: Object.keys(response.headers.raw()).map(header => {
+                            return {
+                                name: header,
+                                value: response.headers.raw()[header].join(',')
+                            };
+                        }),
+                        body: body.toString('base64')
+                    });
+                }
                 //console.log(`intercept ${request.url} - done`);
-                await cdp.send('Fetch.fulfillRequest', {
-                    requestId,
-                    responseCode: response.status,
-                    responseHeaders: Object.keys(response.headers.raw()).map(header => {
-                        return {
-                            name: header,
-                            value: response.headers.raw()[header].join(',')
-                        };
-                    }),
-                    body: body.toString('base64')
-                });
             }
             catch (err) {
                 if (controller.signal.aborted) {
@@ -357,8 +347,17 @@ async function processSpecification(spec, callback, args, counter) {
 
         // Expose additional functions defined in src/browserlib/ to the
         // browser context, under a window.reffy namespace, so that processing
-        // script may call them
-        await page.addScriptTag({ content: browserlib });
+        // script may call them. The script is an ES6 module and needs to be
+        // loaded as such.
+        // Note that we're using a fake relative URL on purpose. In practice,
+        // the request will be processed by "interceptRequest", which will
+        // respond with the contents of the script file. Also, there are two
+        // path levels in that fake URL on purpose as well, because scripts
+        // import the WebIDL2.js library with a "../../node_modules/[...]" URL.
+        await page.addScriptTag({
+            url: 'reffy/scripts/reffy.mjs',
+            type: 'module'
+        });
 
         // Run the callback method in the browser context
         const results = await page.evaluate(callback, ...args);
@@ -379,6 +378,25 @@ async function processSpecification(spec, callback, args, counter) {
         // Signal abortion again (in case an exception was thrown)
         abortController.abort();
     }
+}
+
+
+/**
+ * Short wrapper around the processSpecification method for situations where
+ * only one specification needs to be processed.
+ *
+ * The method takes care of the setup and teardown phases.
+ *
+ * Same parameters as processSpecification.
+ *
+ * @function
+ * @public
+ */
+async function processSingleSpecification(spec, callback, args, counter) {
+    await setupBrowser();
+    const results = await processSpecification(spec, callback, args, counter);
+    await teardownBrowser();
+    return results;
 }
 
 
@@ -545,10 +563,10 @@ async function expandCrawlResult(crawl, baseFolder) {
 module.exports = {
     fetch,
     requireFromWorkingDirectory,
-    buildBrowserlib,
     setupBrowser,
     teardownBrowser,
     processSpecification,
+    processSingleSpecification,
     completeWithAlternativeUrls,
     isLatestLevelThatPasses,
     expandCrawlResult

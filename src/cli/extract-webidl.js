@@ -12,7 +12,7 @@
  * @module webidlExtractor
  */
 
-const processSpecification = require('../lib/util').processSpecification;
+const { processSingleSpecification } = require('../lib/util');
 
 
 /**
@@ -26,7 +26,7 @@ const processSpecification = require('../lib/util').processSpecification;
  *   an empty string if the spec does not contain any IDL.
  */
 async function extract(url) {
-    const result = await processSpecification(url, () => {
+    const result = await processSingleSpecification(url, () => {
         return window.reffy.extractWebIdl();
     });
     return result;
@@ -48,11 +48,9 @@ if (require.main === module) {
         console.error('Required URL parameter missing');
         process.exit(2);
     }
-    const { setupBrowser, teardownBrowser } = require('../lib/util');
-    setupBrowser()
-        .then(_ => extract(url))
+
+    extract(url)
         .then(idl => console.log(idl))
-        .then(teardownBrowser)
         .catch(err => {
             console.error(err);
             process.exit(64);

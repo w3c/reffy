@@ -1,6 +1,7 @@
 const { assert } = require('chai');
 const puppeteer = require('puppeteer');
-const { buildBrowserlib } = require("../src/lib/util");
+const path = require('path');
+const rollup = require('rollup');
 
 const tests = [
   {title: "parses a regular propdef table",
@@ -125,22 +126,30 @@ describe("Test CSS properties extraction", function() {
   this.slow(5000);
   this.timeout(10000);
   let browser;
-  let browserlib;
+  let extractCSSCode;
   before(async () => {
+    // Convert the JS module to a JS script that can be loaded in Puppeteer
+    // without having to provide a URL for it (tests run in "about:blank" pages)
+    const bundle = await rollup.rollup({
+      input: path.resolve(__dirname, '../src/browserlib/extract-cssdfn.mjs')
+    });
+    const { output } = await bundle.generate({
+      name: 'extractCSS',
+      format: 'iife'
+    });
+    extractCSSCode = output[0].code;
     browser = await puppeteer.launch({ headless: true });
-    browserlib = await buildBrowserlib();
   });
 
   tests.forEach(t => {
     it(t.title, async () => {
-      it
       const page = await browser.newPage();
       let pageContent = t.html;
       page.setContent(pageContent);
-      await page.addScriptTag({ content: browserlib });
+      await page.addScriptTag({ content: extractCSSCode });
 
       const extractedCss = await page.evaluate(async () => {
-        return reffy.extractCSS();
+        return extractCSS();
       });
       await page.close();
 

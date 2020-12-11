@@ -394,14 +394,12 @@ if (require.main === module) {
         process.exit(2);
     }
     const webidlExtract = require("./extract-webidl");
-    const { setupBrowser, teardownBrowser } = require("../lib/util");
-    setupBrowser()
-        .then(() => webidlExtract.extract(url))
+
+    webidlExtract.extract(url)
         .then(parse)
         .then(function (data) {
             console.log(JSON.stringify(data, null, 2));
         })
-        .then(teardownBrowser)
         .catch(function (err) {
             console.error(err, err.stack);
             process.exit(64);

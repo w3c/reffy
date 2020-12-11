@@ -37,6 +37,7 @@ const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDir
 const completeWithAlternativeUrls = require('../lib/util').completeWithAlternativeUrls;
 const isLatestLevelThatPasses = require('../lib/util').isLatestLevelThatPasses;
 const processSpecification = require('../lib/util').processSpecification;
+const { setupBrowser, teardownBrowser } = require('../lib/util');
 
 /**
  * Flattens an array
@@ -194,6 +195,9 @@ async function crawlSpec(spec, crawlOptions) {
 async function crawlList(speclist, crawlOptions) {
     crawlOptions = crawlOptions || {};
 
+    // Prepare Puppeteer instance
+    await setupBrowser();
+
     const list = speclist.map(completeWithAlternativeUrls);
     const listAndPromise = list.map(spec => {
         let resolve = null;
@@ -233,6 +237,10 @@ async function crawlList(speclist, crawlOptions) {
     }
 
     const results = await Promise.all(listAndPromise.map(crawlSpecAndPromise));
+
+    // Close Puppeteer instance
+    teardownBrowser();
+
     return results;
 }
 
@@ -552,11 +560,11 @@ if (require.main === module) {
     };
 
     // Process the file and crawl specifications it contains
-    const { setupBrowser, teardownBrowser } = require('../lib/util');
-    setupBrowser()
-        .then(_ => crawlSpecs(resultsPath, crawlOptions))
-        .then(teardownBrowser)
-        .then(_ => console.log('Finished'))
+    crawlSpecs(resultsPath, crawlOptions)
+        .then(_ => {
+            console.log('Finished');
+            process.exit(0);
+        })
         .catch(err => {
             console.error(err);
             process.exit(1);

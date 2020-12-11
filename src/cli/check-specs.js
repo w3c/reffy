@@ -136,13 +136,10 @@ if (require.main === module) {
         process.exit(3);
     }
 
-    const { setupBrowser, teardownBrowser } = require("../lib/util");
-    setupBrowser()
-        .then(_ => checkSpecs(specUrls, refCrawl, crawlOptions))
+    checkSpecs(specUrls, refCrawl, crawlOptions)
         .then(study => new Promise((resolve, reject) =>
             fs.writeFile(resPath, JSON.stringify(study, null, 2),
                          err => { if (err) return reject(err); resolve();})))
-        .then(teardownBrowser)
         .then(_ => console.log('Finished'))
         .catch(err => {
             console.error(err);

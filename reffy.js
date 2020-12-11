@@ -20,7 +20,6 @@ const crawlSpecs = require('./src/cli/crawl-specs.js').crawlSpecs;
 const studyCrawl = require('./src/cli/study-crawl.js').studyCrawl;
 const generateReport = require('./src/cli/generate-report.js').generateReport;
 const pandoc = require('node-pandoc');
-const { setupBrowser, teardownBrowser } = require('./src/lib/util');
 
 
 // List of possible perspectives and associated parameters
@@ -84,11 +83,9 @@ program
       switch (action) {
       case 'crawl':
         promise = promise
-          .then(setupBrowser)
           .then(_ => crawlSpecs(
             reportFolder,
-            { publishedVersion, debug }))
-          .then(teardownBrowser);
+            { publishedVersion, debug }));
         break;
 
       case 'study':

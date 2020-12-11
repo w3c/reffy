@@ -1,5 +1,4 @@
 const { crawlList } = require("../src/cli/crawl-specs");
-const { setupBrowser, teardownBrowser } = require("../src/lib/util");
 const nock = require('nock');
 const fs = require("fs");
 
@@ -80,10 +79,6 @@ if (global.describe && describe instanceof Function) {
   const { assert } = require('chai');
 
   describe("Test the crawl doesn't completely fail on a small sample of specs", function() {
-    before(async () => {
-      await setupBrowser();
-    });
-
     this.slow(10000);
     this.timeout(20000);
     it("doesn't report 3 errors on crawling 3 specs", async() => {
@@ -91,10 +86,6 @@ if (global.describe && describe instanceof Function) {
       const results = await crawl();
       assert.deepEqual(refResults, results);
       nock.isDone();
-    });
-
-    after(async () => {
-      await teardownBrowser();
     });
   });
 } else if (require.main === module) {

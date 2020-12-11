@@ -13,7 +13,7 @@
  * @module cssExtractor
  */
 
-const processSpecification = require('../lib/util').processSpecification;
+const { processSingleSpecification } = require('../lib/util');
 
 
 /**
@@ -27,7 +27,7 @@ const processSpecification = require('../lib/util').processSpecification;
  *   object whose first-level keys are "properties" and "descriptors"
  */
 async function extract(url) {
-  const result = await processSpecification(url, () => {
+  const result = await processSingleSpecification(url, () => {
     return window.reffy.extractCSS();
   });
   return result;
@@ -50,11 +50,8 @@ if (require.main === module) {
         process.exit(2);
     }
 
-    const { setupBrowser, teardownBrowser } = require('../lib/util');
-    setupBrowser()
-      .then(_ => extract(url))
+    extract(url)
       .then(css => console.log(JSON.stringify(css, null, 2)))
-      .then(teardownBrowser)
       .catch(err => {
         console.error(err);
         process.exit(64);

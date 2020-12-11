@@ -18,7 +18,7 @@
  * @module referencesParser
  */
 
-const processSpecification = require('../lib/util').processSpecification;
+const { processSingleSpecification } = require('../lib/util');
 
 
 /**
@@ -32,7 +32,7 @@ const processSpecification = require('../lib/util').processSpecification;
  *   references
  */
 async function extract(url) {
-    const result = await processSpecification(url, () => {
+    const result = await processSingleSpecification(url, () => {
         return window.reffy.extractReferences();
     });
     return result;
@@ -54,11 +54,9 @@ if (require.main === module) {
         console.error('Required URL parameter missing');
         process.exit(2);
     }
-    const { setupBrowser, teardownBrowser } = require('../lib/util');
-    setupBrowser()
-        .then(_ => extract(url))
+
+    extract(url)
         .then(references => console.log(JSON.stringify(references, null, 2)))
-        .then(teardownBrowser)
         .catch(err => {
             console.error(err);
             process.exit(64);

@@ -1,6 +1,7 @@
 const { assert } = require('chai');
 const puppeteer = require('puppeteer');
-const { buildBrowserlib } = require("../src/lib/util");
+const path = require('path');
+const rollup = require('rollup');
 
 // Associating HTML definitions with the right data relies on IDL defined in that spec
 const baseHtml = `<pre><code class=idl>
@@ -510,46 +511,66 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
   }
 ];
 
-async function assertExtractedDefinition(browser, browserlib, html, dfns, spec) {
-  const page = await browser.newPage();
-  let pageContent = "";
-  switch(spec) {
-  case "html":
-    pageContent = baseHtml;
-    break;
-  case "SVG2":
-    pageContent = baseSVG2;
-    break;
-  };
-  pageContent += html + "<script>let spec = '" + spec + "';</script>"
-  page
-    .on('console', message =>
-        console.error(`${message.type().substr(0, 3).toUpperCase()} ${message.text()}`));
-  page.setContent(pageContent);
-  await page.addScriptTag({ content: browserlib });
-
-  const extractedDfns = await page.evaluate(async () => {
-    const idToHeading = reffy.mapIdsToHeadings();
-    return reffy.extractDefinitions(spec, idToHeading);
-  });
-  await page.close();
-
-  assert.deepEqual(extractedDfns, dfns.map(d => Object.assign({}, baseDfn, {href: "about:blank#" + (d.id || baseDfn.id)}, d)));
-}
-
-
 describe("Test definition extraction", function () {
   this.slow(5000);
 
   let browser;
-  let browserlib;
+  let mapIdsToHeadingsCode;
+  let extractDefinitionsCode;
+
+  async function assertExtractedDefinition(html, dfns, spec) {
+    const page = await browser.newPage();
+    let pageContent = "";
+    switch(spec) {
+    case "html":
+      pageContent = baseHtml;
+      break;
+    case "SVG2":
+      pageContent = baseSVG2;
+      break;
+    };
+    pageContent += html + "<script>let spec = '" + spec + "';</script>"
+    page
+      .on('console', message =>
+          console.error(`${message.type().substr(0, 3).toUpperCase()} ${message.text()}`));
+    page.setContent(pageContent);
+    await page.addScriptTag({ content: mapIdsToHeadingsCode });
+    await page.addScriptTag({ content: extractDefinitionsCode });
+
+    const extractedDfns = await page.evaluate(async () => {
+      const idToHeading = mapIdsToHeadings();
+      return extractDefinitions(spec, idToHeading);
+    });
+    await page.close();
+
+    assert.deepEqual(extractedDfns, dfns.map(d => Object.assign({}, baseDfn, {href: "about:blank#" + (d.id || baseDfn.id)}, d)));
+  }
+
   before(async () => {
+    const extractDefinitionsBundle = await rollup.rollup({
+      input: path.resolve(__dirname, '../src/browserlib/extract-dfns.mjs'),
+      onwarn: _ => {}
+    });
+    const extractDefinitionsOutput = (await extractDefinitionsBundle.generate({
+      name: 'extractDefinitions',
+      format: 'iife'
+    })).output;
+    extractDefinitionsCode = extractDefinitionsOutput[0].code;
+
+    const mapIdsToHeadingsBundle = await rollup.rollup({
+      input: path.resolve(__dirname, '../src/browserlib/map-ids-to-headings.mjs')
+    });
+    const mapIdsToHeadingsOutput = (await mapIdsToHeadingsBundle.generate({
+      name: 'mapIdsToHeadings',
+      format: 'iife'
+    })).output;
+    mapIdsToHeadingsCode = mapIdsToHeadingsOutput[0].code;
+
     browser = await puppeteer.launch({ headless: true });
-    browserlib = await buildBrowserlib();
   });
 
   tests.forEach(t => {
-    it(t.title, async () => assertExtractedDefinition(browser, browserlib, t.html, t.changesToBaseDfn, t.spec));
+    it(t.title, async () => assertExtractedDefinition(t.html, t.changesToBaseDfn, t.spec));
   });
 
 
