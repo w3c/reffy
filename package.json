@@ -54,7 +54,7 @@
     "nock": "13.0.5",
     "respec": "25.18.3",
     "respec-hljs": "2.1.1",
-    "rollup": "2.17.0"
+    "rollup": "2.35.0"
   },
   "scripts": {
     "build": "rollup --config src/browserlib/rollup.config.js",
