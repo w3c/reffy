@@ -36,10 +36,54 @@ function requireFromWorkingDirectory(filename) {
 
 
 /**
+ * Puppeteer browser instance used to load and process specifications
+ */
+let browser = null;
+
+
+/**
+ * Setup and launch browser instance to use to load and process specifications.
+ *
+ * The function must be called before any attempt to call `processSpecification`
+ * and should only be called once.
+ *
+ * The function also generates the code that will inject the `reffy` namespace
+ * in each processed page.
+ *
+ * Note: Switch `headless` to `false` to access dev tools and debug processing
+ *
+ * @function
+ * @public
+ */
+async function setupBrowser() {
+    // Create browser instance (one per specification. Switch "headless" to
+    // "false" (and commenting out the call to "browser.close()") is typically
+    // useful when something goes wrong to access dev tools and debug)
+    browser = await puppeteer.launch({ headless: true });
+}
+
+
+/**
+ * Close and destroy browser instance.
+ *
+ * The function should be called once at the end of the processing.
+ *
+ * @function
+ * @public
+ */
+async function teardownBrowser() {
+    if (browser) {
+        await browser.close();
+        browser = null;
+    }
+}
+
+
+/**
  * Load and process the given specification.
  *
  * The method automatically exposes Reffy's library functions in a window.reffy
- * namespace (see src/browserlib/reffy.js) so that the callback function can
+ * namespace (see src/browserlib/reffy.mjs) so that the callback function can
  * call them directly. Additional callback arguments that would need to be
  * passed to the browser context can be provided through the "args" parameter.
  *
@@ -99,10 +143,9 @@ async function processSpecification(spec, callback, args, counter) {
         throw new Error('Infinite loop detected');
     }
 
-    // Create browser instance (one per specification. Switch "headless" to
-    // "false" (and commenting out the call to "browser.close()") is typically
-    // useful when something goes wrong to access dev tools and debug)
-    const browser = await puppeteer.launch({ headless: true });
+    if (!browser) {
+        throw new Error('Browser instance not initialized, setupBrowser() must be called before processSpecification().');
+    }
 
     // Create an abort controller for network requests directly handled by the
     // Node.js code (and not by Puppeteer)
@@ -136,22 +179,41 @@ async function processSpecification(spec, callback, args, counter) {
                     return;
                 }
 
+                // The request needs to be intercepted, either because it
+                // targets one of the local script files, or because we would
+                // like to use our local cache to avoid sending network requests
+                // when possible.
                 //console.log(`intercept ${request.url}`);
-                let response = await fetch(request.url, { signal: controller.signal });
-                let body = await response.buffer();
-
+                const reffyPath = '/reffy/scripts/';
+                const webidl2Path = '/node_modules/webidl2/';
+                if (request.url.includes(reffyPath) || request.url.includes(webidl2Path)) {
+                    const file = request.url.includes(reffyPath) ?
+                        path.resolve(__dirname, '../browserlib', request.url.substring(request.url.indexOf(reffyPath) + reffyPath.length)) :
+                        path.resolve(__dirname, '../../node_modules/webidl2', request.url.substring(request.url.indexOf(webidl2Path) + webidl2Path.length));
+                    const body = await fs.readFile(file);
+                    await cdp.send('Fetch.fulfillRequest', {
+                        requestId,
+                        responseCode: 200,
+                        responseHeaders: [{ name: 'Content-Type', value: 'application/javascript' }],
+                        body: body.toString('base64')
+                    });
+                }
+                else {
+                    const response = await fetch(request.url, { signal: controller.signal });
+                    const body = await response.buffer();
+                    await cdp.send('Fetch.fulfillRequest', {
+                        requestId,
+                        responseCode: response.status,
+                        responseHeaders: Object.keys(response.headers.raw()).map(header => {
+                            return {
+                                name: header,
+                                value: response.headers.raw()[header].join(',')
+                            };
+                        }),
+                        body: body.toString('base64')
+                    });
+                }
                 //console.log(`intercept ${request.url} - done`);
-                await cdp.send('Fetch.fulfillRequest', {
-                    requestId,
-                    responseCode: response.status,
-                    responseHeaders: Object.keys(response.headers.raw()).map(header => {
-                        return {
-                            name: header,
-                            value: response.headers.raw()[header].join(',')
-                        };
-                    }),
-                    body: body.toString('base64')
-                });
             }
             catch (err) {
                 if (controller.signal.aborted) {
@@ -285,9 +347,16 @@ async function processSpecification(spec, callback, args, counter) {
 
         // Expose additional functions defined in src/browserlib/ to the
         // browser context, under a window.reffy namespace, so that processing
-        // script may call them
+        // script may call them. The script is an ES6 module and needs to be
+        // loaded as such.
+        // Note that we're using a fake relative URL on purpose. In practice,
+        // the request will be processed by "interceptRequest", which will
+        // respond with the contents of the script file. Also, there are two
+        // path levels in that fake URL on purpose as well, because scripts
+        // import the WebIDL2.js library with a "../../node_modules/[...]" URL.
         await page.addScriptTag({
-            path: path.resolve(__dirname, '../../builds/browser.js')
+            url: 'reffy/scripts/reffy.mjs',
+            type: 'module'
         });
 
         // Run the callback method in the browser context
@@ -308,10 +377,26 @@ async function processSpecification(spec, callback, args, counter) {
     finally {
         // Signal abortion again (in case an exception was thrown)
         abortController.abort();
-
-        // Kill the browser instance
-        await browser.close();
     }
+}
+
+
+/**
+ * Short wrapper around the processSpecification method for situations where
+ * only one specification needs to be processed.
+ *
+ * The method takes care of the setup and teardown phases.
+ *
+ * Same parameters as processSpecification.
+ *
+ * @function
+ * @public
+ */
+async function processSingleSpecification(spec, callback, args, counter) {
+    await setupBrowser();
+    const results = await processSpecification(spec, callback, args, counter);
+    await teardownBrowser();
+    return results;
 }
 
 
@@ -478,7 +563,10 @@ async function expandCrawlResult(crawl, baseFolder) {
 module.exports = {
     fetch,
     requireFromWorkingDirectory,
+    setupBrowser,
+    teardownBrowser,
     processSpecification,
+    processSingleSpecification,
     completeWithAlternativeUrls,
     isLatestLevelThatPasses,
     expandCrawlResult

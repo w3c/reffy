@@ -9,8 +9,7 @@
   "files": [
     "index.js",
     "reffy.js",
-    "src/",
-    "builds/"
+    "src/"
   ],
   "bugs": {
     "url": "https://github.com/w3c/reffy/issues"
@@ -26,6 +25,9 @@
     }
   ],
   "license": "MIT",
+  "engines": {
+    "node": ">=14"
+  },
   "main": "index.js",
   "bin": {
     "reffy": "./reffy.js",
@@ -57,7 +59,6 @@
     "rollup": "2.35.0"
   },
   "scripts": {
-    "build": "rollup --config src/browserlib/rollup.config.js",
     "all": "node reffy.js run ed all && node reffy.js run tr all",
     "diff": "node reffy.js run ed diff && node reffy.js run tr diff",
     "diffnew": "node reffy.js run ed diffnew && node reffy.js run tr diffnew",

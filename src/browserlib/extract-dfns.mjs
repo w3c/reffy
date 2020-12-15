@@ -1,4 +1,4 @@
-import extractWebIdl from './extract-webidl.js';
+import extractWebIdl from './extract-webidl.mjs';
 import {parse} from "../../node_modules/webidl2/index.js";
 /**
  * Extract definitions in the spec that follow the "Definitions data model":

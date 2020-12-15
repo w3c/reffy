@@ -1,6 +1,7 @@
 const { assert } = require('chai');
 const puppeteer = require('puppeteer');
 const path = require('path');
+const rollup = require('rollup');
 
 const testHeadings = [
   {
@@ -24,7 +25,28 @@ describe("Test headings extraction", function () {
   this.slow(5000);
 
   let browser;
+  let extractDefinitionsCode;
+  let mapIdsToHeadingsCode;
+
   before(async () => {
+    const extractHeadingsBundle = await rollup.rollup({
+      input: path.resolve(__dirname, '../src/browserlib/extract-headings.mjs')
+    });
+    const extractHeadingsOutput = (await extractHeadingsBundle.generate({
+      name: 'extractHeadings',
+      format: 'iife'
+    })).output;
+    extractHeadingsCode = extractHeadingsOutput[0].code;
+
+    const mapIdsToHeadingsBundle = await rollup.rollup({
+      input: path.resolve(__dirname, '../src/browserlib/map-ids-to-headings.mjs')
+    });
+    const mapIdsToHeadingsOutput = (await mapIdsToHeadingsBundle.generate({
+      name: 'mapIdsToHeadings',
+      format: 'iife'
+    })).output;
+    mapIdsToHeadingsCode = mapIdsToHeadingsOutput[0].code;
+
     browser = await puppeteer.launch({ headless: true });
   });
 
@@ -32,13 +54,12 @@ describe("Test headings extraction", function () {
     it(t.title, async () => {
       const page = await browser.newPage();
       page.setContent(t.html);
-      await page.addScriptTag({
-        path: path.resolve(__dirname, '../builds/browser.js')
-      });
+      await page.addScriptTag({ content: extractHeadingsCode });
+      await page.addScriptTag({ content: mapIdsToHeadingsCode });
 
       const extractedHeadings = await page.evaluate(async () => {
-        const idToHeading = reffy.mapIdsToHeadings();
-        return reffy.extractHeadings(idToHeading);
+        const idToHeading = mapIdsToHeadings();
+        return extractHeadings(idToHeading);
       });
       await page.close();
       assert.deepEqual(extractedHeadings, t.res);
