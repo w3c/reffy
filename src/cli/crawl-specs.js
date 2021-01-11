@@ -370,7 +370,7 @@ async function saveResults(crawlOptions, data, folder) {
     }
     const specsWithIDL = data.filter(defineIDLContent);
     await Promise.all(data
-        .filter(spec => isLatestLevelThatPasses(spec, data, defineIDLContent))
+        .filter(spec => (spec.seriesComposition !== 'delta') && isLatestLevelThatPasses(spec, data, defineIDLContent))
         .map(spec => saveIdl(spec, spec.series.shortname)));
 
     // Save IDL dumps of delta specs too
@@ -438,7 +438,7 @@ async function saveResults(crawlOptions, data, folder) {
             (Object.keys(spec.css.valuespaces || {}).length > 0));
     }
     await Promise.all(data
-        .filter(spec => isLatestLevelThatPasses(spec, data, defineCSSContent))
+        .filter(spec => (spec.seriesComposition !== 'delta') && isLatestLevelThatPasses(spec, data, defineCSSContent))
         .map(spec => saveCss(spec, spec.series.shortname)));
 
     // Save CSS dumps of delta specs too
