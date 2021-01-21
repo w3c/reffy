@@ -24,7 +24,7 @@ const path = require('path');
 /**
  * List of spec shortnames that, so far, don't follow the dfns data model
  */
-const specsWithOutdatedDfnsModel = [
+const specsWithObsoleteDfnsModel = [
   'svg-animations', 'svg-markers', 'svg-strokes', 'SVG2',
   'webgl1', 'webgl2',
   'webrtc-identity'
@@ -350,6 +350,114 @@ function matchIdlDfn(expected, actual,
 
 
 /**
+ * Checks the CSS and IDL extracts against the dfns extract for the given spec
+ *
+ * @function
+ * @public
+ * @param {Object} spec Crawl result for the spec to parse
+ * @param {String} options Check options. Set the rootFolder property to the
+ *   root folder against which to resolve relative paths to load CSS/IDL
+ *   extracts (only needed if the extracts have not yet been loaded and attached
+ *   to the spec object). Set the includeObsolete property to true to include
+ *   detailed results about specs that use an obsolete dfns data model.
+ * @return {Object} An object with a css and idl property, each of them holding
+ *   an array of missing CSS or IDL definitions. The function returns null when
+ *   there are no missing definitions.
+ */
+function checkSpecDefinitions(spec, options = {}) {
+  if (!options.includeObsolete && specsWithObsoleteDfnsModel.includes(spec.shortname)) {
+    return { obsoleteDfnsModel: true };
+  }
+
+  const dfns = (typeof spec.dfns === "string") ?
+    require(path.resolve(options.rootFolder, spec.dfns)).dfns :
+    (spec.dfns || []);
+  const css = (typeof spec.css === "string") ?
+    require(path.resolve(options.rootFolder, spec.css)) :
+    (spec.css || {});
+  const idl = (typeof spec.idlparsed === "string") ?
+    require(path.resolve(options.rootFolder, spec.idlparsed)).idlparsed :
+    spec.idl;
+
+  // Make sure that all expected CSS definitions exist in the dfns extract
+  const expectedCSSDfns = getExpectedDfnsFromCSS(css);
+  const missingCSSDfns = expectedCSSDfns.map(expected => {
+    let actual = dfns.find(dfn => matchCSSDfn(expected, dfn));
+    if (!actual && !expected.type) {
+      // Right definition is missing. For valuespaces that define functions,
+      // look for a function definition without the enclosing "<>" instead
+      const altText = [expected.linkingText[0].replace(/^<(.*)\(\)>$/, '$1()')];
+      actual = dfns.find(dfn => arraysEqual(altText, dfn.linkingText));
+    }
+    if (!actual && expected.value) {
+      // Still missing? For valuespaces that define functions, this may be
+      // because there is no definition without parameters, try to find the
+      // actual value instead
+      actual = dfns.find(dfn => arraysEqual([expected.value], dfn.linkingText));
+    }
+    if (actual) {
+      // Right definition found
+      return null;
+    }
+    else {
+      // Right definition is missing, there may be a definition that looks
+      // like the one we're looking for
+      const found = dfns.find(dfn =>
+        arraysEqual(dfn.linkingText, expected.linkingText));
+      return { expected, found };
+    }
+  }).filter(missing => !!missing);
+
+  // Make sure that all expected IDL definitions exist in the dfns extract
+  const expectedIdlDfns = getExpectedDfnsFromIdl(idl);
+  const missingIdlDfns = expectedIdlDfns.map(expected => {
+    let actual = dfns.find(dfn => matchIdlDfn(expected, dfn));
+    if (actual) {
+      // Right definition found
+      return null;
+    }
+    else {
+      // Right definition is missing, include the interface's definitions to
+      // be able to link to it in the report
+      let parent = null;
+      if (expected.for && expected.for[0]) {
+        parent = dfns.find(dfn =>
+          (dfn.linkingText[0] === expected.for[0]) &&
+          ['callback', 'dictionary', 'enum', 'interface', 'namespace'].includes(dfn.type));
+      }
+
+      // Look for a definition that seems as close as possible to the one
+      // we're looking for, in the following order:
+      // 1. For operations, find a definition without taking arguments into
+      // account and report possible match with a "warning" flag.
+      // 2. For terms linked to a parent interface-like object, find a match
+      // scoped to the same parent without taking the type into account.
+      // 3. Look for a definition with the same name, neither taking the type
+      // nor the parent into account.
+      let found = dfns.find(dfn => matchIdlDfn(expected, dfn, { skipArgs: true }));
+      if (found) {
+        return { expected, found, for: parent, warning: true };
+      }
+      found = dfns.find(dfn => matchIdlDfn(expected, dfn,
+        { skipArgs: true, skipType: true }));
+      if (found) {
+        return { expected, found, for: parent };
+      }
+      found = dfns.find(dfn => matchIdlDfn(expected, dfn,
+        { skipArgs: true, skipType: true, skipFor: true }));
+      return { expected, found, for: parent };
+    }
+  }).filter(missing => !!missing);
+
+  // Report results
+  return {
+    css: missingCSSDfns,
+    idl: missingIdlDfns
+  };
+}
+
+
+/**
  * Checks the CSS and IDL extracts against the dfns extract for all specs in
  * the report.
  *
@@ -357,110 +465,36 @@ function matchIdlDfn(expected, actual,
  * @public
  * @param {String} pathToReport Path to the root folder that contains the
  *  `index.json` report file and the extracts subfolders.
+ * @param {Object} options Check options. Set the "shortname" property to a
+ *  spec's shortname to only check that spec.
  * @return {Array} The list of specifications along with dfn problems that have
  *  been identified. Each entry has `url`, 'crawled`, `shortname` properties to
  *  identify the specification, and a `missing` property that is an object that
  *  may have `css` and `idl` properties which list missing CSS/IDL definitions.
  */
-function checkDefinitions(pathToReport) {
+function checkDefinitions(pathToReport, options = {}) {
   const rootFolder = path.resolve(process.cwd(), pathToReport);
   const index = require(path.resolve(rootFolder, 'index.json')).results;
 
-  const cssSpecs = index.filter(spec => spec.css);
-  const idlSpecs = index.filter(spec => spec.idl);
-
   // Check all dfns against CSS and IDL extracts
-  const missing = index.map(spec => {
-    const res = {
-      url: spec.url,
-      crawled: spec.crawled,
-      shortname: spec.shortname,
-    };
-    if (!spec.dfns) {
+  const checkOptions = {
+    rootFolder,
+    includeObsolete: !!options.shortname
+  };
+  const missing = index
+    .filter(spec => !options.shortname || spec.shortname === options.shortname)
+    .map(spec => {
+      const res = {
+        url: spec.url,
+        crawled: spec.crawled,
+        shortname: spec.shortname,
+      };
+      if (!spec.dfns) {
+        return res;
+      }
+      res.missing = checkSpecDefinitions(spec, checkOptions);
       return res;
-    }
-
-    const dfns = require(path.resolve(rootFolder, spec.dfns)).dfns;
-    const css = spec.css ? require(path.resolve(rootFolder, spec.css)) : {};
-    const idl = spec.idlparsed ? require(path.resolve(rootFolder, spec.idlparsed)) : {};
-
-    // Make sure that all expected CSS definitions exist in the dfns extract
-    const expectedCSSDfns = getExpectedDfnsFromCSS(css);
-    const missingCSSDfns = expectedCSSDfns.map(expected => {
-      let actual = dfns.find(dfn => matchCSSDfn(expected, dfn));
-      if (!actual && !expected.type) {
-        // Right definition is missing. For valuespaces that define functions,
-        // look for a function definition without the enclosing "<>" instead
-        const altText = [expected.linkingText[0].replace(/^<(.*)\(\)>$/, '$1()')];
-        actual = dfns.find(dfn => arraysEqual(altText, dfn.linkingText));
-      }
-      if (!actual && expected.value) {
-        // Still missing? For valuespaces that define functions, this may be
-        // because there is no definition without parameters, try to find the
-        // actual value instead
-        actual = dfns.find(dfn => arraysEqual([expected.value], dfn.linkingText));
-      }
-      if (actual) {
-        // Right definition found
-        return null;
-      }
-      else {
-        // Right definition is missing, there may be a definition that looks
-        // like the one we're looking for
-        const found = dfns.find(dfn =>
-          arraysEqual(dfn.linkingText, expected.linkingText));
-        return { expected, found };
-      }
-    }).filter(missing => !!missing);
-
-    // Make sure that all expected IDL definitions exist in the dfns extract
-    const expectedIdlDfns = getExpectedDfnsFromIdl(idl.idlparsed);
-    const missingIdlDfns = expectedIdlDfns.map(expected => {
-      let actual = dfns.find(dfn => matchIdlDfn(expected, dfn));
-      if (actual) {
-        // Right definition found
-        return null;
-      }
-      else {
-        // Right definition is missing, include the interface's definitions to
-        // be able to link to it in the report
-        let parent = null;
-        if (expected.for && expected.for[0]) {
-          parent = dfns.find(dfn =>
-            (dfn.linkingText[0] === expected.for[0]) &&
-            ['callback', 'dictionary', 'enum', 'interface', 'namespace'].includes(dfn.type));
-        }
-
-        // Look for a definition that seems as close as possible to the one
-        // we're looking for, in the following order:
-        // 1. For operations, find a definition without taking arguments into
-        // account and report possible match with a "warning" flag.
-        // 2. For terms linked to a parent interface-like object, find a match
-        // scoped to the same parent without taking the type into account.
-        // 3. Look for a definition with the same name, neither taking the type
-        // nor the parent into account.
-        let found = dfns.find(dfn => matchIdlDfn(expected, dfn, { skipArgs: true }));
-        if (found) {
-          return { expected, found, for: parent, warning: true };
-        }
-        found = dfns.find(dfn => matchIdlDfn(expected, dfn,
-          { skipArgs: true, skipType: true }));
-        if (found) {
-          return { expected, found, for: parent };
-        }
-        found = dfns.find(dfn => matchIdlDfn(expected, dfn,
-          { skipArgs: true, skipType: true, skipFor: true }));
-        return { expected, found, for: parent };
-      }
-    }).filter(missing => !!missing);
-
-    // Report results
-    res.missing = {
-      css: missingCSSDfns,
-      idl: missingIdlDfns
-    };
-    return res;
-  });
+    });
 
   return missing;
 }
@@ -488,6 +522,7 @@ function reportMissing(missing) {
 /**************************************************
 Export methods for use as module
 **************************************************/
+module.exports.checkSpecDefinitions = checkSpecDefinitions;
 module.exports.checkDefinitions = checkDefinitions;
 
 
@@ -496,18 +531,16 @@ Code run if the code is run as a stand-alone module
 **************************************************/
 if (require.main === module) {
     const pathToReport = process.argv[2];
-    const spec = process.argv[3] || 'all';
+    const shortname = process.argv[3] || 'all';
     const format = process.argv[4] || 'markdown';
 
-    let res = checkDefinitions(pathToReport);
-    if (spec === 'all') {
+    const options = (shortname === 'all') ? undefined : { shortname };
+    let res = checkDefinitions(pathToReport, options);
+    if (shortname === 'all') {
       res = res
-        .filter(result => !specsWithOutdatedDfnsModel.includes(result.shortname))
         .filter(result => result.missing &&
+          !result.missing.obsoleteDfnsModel &&
           ((result.missing.css.length > 0) || (result.missing.idl.length > 0)));
-    }
-    else {
-      res = res.filter(result => result.shortname === spec);
     }
 
     if (format === 'json') {

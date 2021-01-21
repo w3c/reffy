@@ -9,6 +9,8 @@
  * - Links to definitions that are not exported
  * - Links to dated TR URLs
  * - Links to specs that should no longer be referenced
+ * - Links to documents that look like specs but are unknown in Reffy
+ *   (likely not an anomaly per se)
  *
  * It also flags links that look like specs but that do not appear in the crawl
  * (most of these should be false positives).
@@ -268,7 +270,8 @@ const shortnameOfNonNormativeDocs = [
 ];
 
 
-function studyCrawlResults(edResults, trResults) {
+function studyBackrefs(edResults, trResults = []) {
+  trResults = trResults || [];
   const report = {};
 
   function recordAnomaly(spec, anomalyType, link) {
@@ -277,11 +280,11 @@ function studyCrawlResults(edResults, trResults) {
         title: spec.title,
         notExported: [],
         notDfn: [],
-        brokenLink: [],
-        evolvingLink: [],
-        outdatedSpec: [],
-        unknownSpec: [],
-        datedUrl: []
+        brokenLinks: [],
+        evolvingLinks: [],
+        outdatedSpecs: [],
+        unknownSpecs: [],
+        datedUrls: []
       };
     }
     report[spec.url][anomalyType].push(link);
@@ -306,7 +309,7 @@ function studyCrawlResults(edResults, trResults) {
           // ED should not link to dated versions of the spec, unless it
           // voluntarily links to previous versions of itself
           if (match[1] !== spec.shortname) {
-            recordAnomaly(spec, "datedUrl", link);
+            recordAnomaly(spec, "datedUrls", link);
           }
 
           // TODO: consider pursuing the analysis with the non-dated version,
@@ -330,7 +333,7 @@ function studyCrawlResults(edResults, trResults) {
             shortname = computeShortname(nakedLink);
           }
           catch (e) {
-            recordAnomaly(spec, "unknownSpec", link);
+            recordAnomaly(spec, "unknownSpecs", link);
             return;
           }
         }
@@ -340,7 +343,7 @@ function studyCrawlResults(edResults, trResults) {
           // In theory, we could still try to match the anchor against the
           // right spec. In practice, these outdated specs are sufficiently
           // outdated that it does not make a lot of sense to do so.
-          recordAnomaly(spec, "outdatedSpec", link);
+          recordAnomaly(spec, "outdatedSpecs", link);
           return;
         }
 
@@ -358,7 +361,7 @@ function studyCrawlResults(edResults, trResults) {
           edResults.find(s => s.series.shortname === shortname && s.series.currentSpecification === s.shortname);
         if (!sourceSpec) {
           if (!shortnameOfNonNormativeDocs.includes(shortname)) {
-            recordAnomaly(spec, "unknownSpec", link);
+            recordAnomaly(spec, "unknownSpecs", link);
           }
           return;
         }
@@ -373,7 +376,8 @@ function studyCrawlResults(edResults, trResults) {
         // that exist in the TR version but no longer exist in the ED)
         const trSourceSpec =
           trResults.find(s => s.shortname === shortname) ||
-          trResults.find(s => s.series.shortname === shortname && s.series.currentSpecification === s.shortname);
+          trResults.find(s => s.series.shortname === shortname && s.series.currentSpecification === s.shortname) ||
+          {};
         const headings = sourceSpec.headings || [];
         const dfns = sourceSpec.dfns || [];
         const ids = sourceSpec.ids || [];
@@ -386,9 +390,9 @@ function studyCrawlResults(edResults, trResults) {
           const dfn = dfns.find(d => d.id === anchor);
           if (!isKnownId) {
             if ((trSourceSpec.ids || []).includes(anchor) && link.match(/w3\.org\/TR\//)) {
-              recordAnomaly(spec, "evolvingLink", link + "#" + anchor);
+              recordAnomaly(spec, "evolvingLinks", link + "#" + anchor);
             } else {
-              recordAnomaly(spec, "brokenLink", link + "#" + anchor);
+              recordAnomaly(spec, "brokenLinks", link + "#" + anchor);
             }
           } else if (!heading && !dfn) {
             recordAnomaly(spec, "notDfn", link + "#" + anchor);
@@ -402,8 +406,7 @@ function studyCrawlResults(edResults, trResults) {
 }
 
 
-async function studyBackrefs(edCrawlResultsPath, trCrawlResultsPath) {
-  // Load the crawl results
+async function loadCrawlResults(edCrawlResultsPath, trCrawlResultsPath) {
   let edCrawlResults, trCrawlResults;
   try {
     edCrawlResults = requireFromWorkingDirectory(edCrawlResultsPath);
@@ -419,7 +422,10 @@ async function studyBackrefs(edCrawlResultsPath, trCrawlResultsPath) {
   edCrawlResults = await expandCrawlResult(edCrawlResults, edCrawlResultsPath.replace(/index\.json$/, ''));
   trCrawlResults = await expandCrawlResult(trCrawlResults, trCrawlResultsPath.replace(/index\.json$/, ''));
 
-  return studyCrawlResults(edCrawlResults.results, trCrawlResults.results);
+  return {
+    ed: edCrawlResults.results,
+    tr: trCrawlResults.results
+  };
 }
 
 function reportToConsole(results) {
@@ -427,62 +433,72 @@ function reportToConsole(results) {
   Object.keys(results)
     .sort((r1, r2) => results[r1].title.localeCompare(results[r2].title))
     .forEach(s => {
-    report += `<details><summary><a href="${s}">${results[s].title}</a></summary>\n\n`;
-    if (results[s].brokenLink.length) {
-      report += "Links to anchors that don't exist:\n"
-      results[s].brokenLink.forEach(l => {
-        report += "* " + l + "\n";
-      })
-      report += "\n\n";
-    }
-    if (results[s].evolvingLink.length) {
-      report += "Links to anchors that no longer exist in the editor draft of the target spec:\n"
-      results[s].evolvingLink.forEach(l => {
-        report += "* " + l + "\n";
-      })
-      report += "\n\n";
-    }
-    if (results[s].notDfn.length) {
-      report += "Links to anchors that are not definitions or headings:\n"
-      results[s].notDfn.forEach(l => {
-        report += "* " + l + "\n";
-      })
-      report += "\n\n";
-    }
-    if (results[s].notExported.length) {
-      report += "Links to definitions that are not exported:\n"
-      results[s].notExported.forEach(l => {
-        report += "* " + l + "\n";
-      })
-      report += "\n\n";
-    }
-    if (results[s].datedUrl.length) {
-      report += "Links to dated TR URLs:\n"
-      results[s].datedUrl.forEach(l => {
-        report += "* " + l + "\n";
-      })
-      report += "\n\n";
-    }
-    if (results[s].outdatedSpec.length) {
-      report += "Links to specs that should no longer be referenced:\n"
-      results[s].outdatedSpec.forEach(l => {
-        report += "* " + l + "\n";
-      })
-      report += "\n\n";
-    }
-    if (results[s].unknownSpec.length) {
-      report += "Links to things that look like specs but that aren't recognized in reffy data:\n"
-      results[s].unknownSpec.forEach(l => {
-        report += "* " + l + "\n";
-      })
-      report += "\n\n";
-    }
-    report += "</details>\n";
-  });
+      const result = results[s];
+      report += `<details><summary><a href="${s}">${result.title}</a></summary>\n\n`;
+      if (result.brokenLinks.length) {
+        report += "Links to anchors that don't exist:\n"
+        result.brokenLinks.forEach(l => {
+          report += "* " + l + "\n";
+        })
+        report += "\n\n";
+      }
+      if (result.evolvingLinks.length) {
+        report += "Links to anchors that no longer exist in the editor draft of the target spec:\n"
+        result.evolvingLinks.forEach(l => {
+          report += "* " + l + "\n";
+        })
+        report += "\n\n";
+      }
+      if (result.notDfn.length) {
+        report += "Links to anchors that are not definitions or headings:\n"
+        result.notDfn.forEach(l => {
+          report += "* " + l + "\n";
+        })
+        report += "\n\n";
+      }
+      if (result.notExported.length) {
+        report += "Links to definitions that are not exported:\n"
+        result.notExported.forEach(l => {
+          report += "* " + l + "\n";
+        })
+        report += "\n\n";
+      }
+      if (result.datedUrls.length) {
+        report += "Links to dated TR URLs:\n"
+        result.datedUrls.forEach(l => {
+          report += "* " + l + "\n";
+        })
+        report += "\n\n";
+      }
+      if (result.outdatedSpecs.length) {
+        report += "Links to specs that should no longer be referenced:\n"
+        result.outdatedSpecs.forEach(l => {
+          report += "* " + l + "\n";
+        })
+        report += "\n\n";
+      }
+      if (result.unknownSpecs.length) {
+        report += "Links to things that look like specs but that aren't recognized in reffy data:\n"
+        result.unknownSpecs.forEach(l => {
+          report += "* " + l + "\n";
+        })
+        report += "\n\n";
+      }
+      report += "</details>\n";
+    });
   console.log(report);
 }
 
 
+/**************************************************
+Export methods for use as module
+**************************************************/
+module.exports.studyBackrefs = studyBackrefs;
+
+
+/**************************************************
+Code run if the code is run as a stand-alone module
+**************************************************/
 if (require.main === module) {
   let edCrawlResultsPath = process.argv[2];
   let trCrawlResultsPath = process.argv[3];
@@ -508,7 +524,8 @@ if (require.main === module) {
   }
 
   // Analyze the crawl results
-  studyBackrefs(edCrawlResultsPath, trCrawlResultsPath)
+  loadCrawlResults(edCrawlResultsPath, trCrawlResultsPath)
+    .then(crawl => studyBackrefs(crawl.ed, crawl.tr))
     .then(reportToConsole)
     .catch(e => {
       console.error(e);
