@@ -237,6 +237,28 @@ function generateReportPerSpec(study) {
                         i.refs.map(ref => ('[' + ref.title + '](' + ref.crawled + ')')).join(' or '));
                 });
             }
+            [
+                {prop: 'css', warning: false, title: 'No definition for CSS properties'},
+                {prop: 'idl', warning: false, title: 'No definition for IDL properties'},
+                {prop: 'css', warning: true, title: 'Possibly no definition for CSS properties'},
+                {prop: 'idl', warning: true, title: 'Possibly no definition for IDL properties'}
+            ].forEach(type => {
+                if (report.missingDfns && report.missingDfns[type.prop] &&
+                    (report.missingDfns[type.prop].filter(r => !!r.warning === type.warning).length > 0)) {
+                    w('- ' + type.title + ': ');
+                    report.missingDfns[type.prop].filter(r => !!r.warning === type.warning).map(missing => {
+                        const exp = missing.expected;
+                        const found = missing.found;
+                        const foundFor = (found && found.for && found.for.length > 0) ?
+                            ' for ' + found.for.map(f => '`' + f + '`').join(',') :
+                            '';
+                        w('     * `' + exp.linkingText[0] + '`' +
+                            (exp.type ? ' with type `' + exp.type + '`' : '') +
+                            (missing.for ? ' for [`' + missing.for.linkingText[0] + '`](' + missing.for.href + ')' : '') +
+                            (found ? ', but found [`' + found.linkingText[0] + '`](' + found.href + ') with type `' + found.type + '`' + foundFor : ''));
+                    });
+                }
+            });
             if (report.missingLinkRef &&
                 (report.missingLinkRef.length > 0)) {
                 w('- Missing references for links: ');
@@ -249,6 +271,23 @@ function generateReportPerSpec(study) {
                 w('- Inconsistent references for links: ');
                 report.inconsistentRef.map(l => {
                     w('     * [`' + l.link + '`](' + l.link + '), related reference "' + l.ref.name + '" uses URL [`' + l.ref.url + '`](' + l.ref.url + ')');
+                });
+            }
+            if (report.xrefs) {
+                [
+                    { prop: 'notExported', title: 'External links to private terms' },
+                    { prop: 'notDfn', title: 'External links that neither target definitions nor headings' },
+                    { prop: 'brokenLinks', title: 'Broken external links' },
+                    { prop: 'evolvingLinks', title: 'External links to terms that no longer exist in the latest version of the targeted specification' },
+                    { prop: 'outdatedSpecs', title: 'External links to outdated specs' },
+                    { prop: 'datedUrls', title: 'External links that use a dated URL' }
+                ].forEach(type => {
+                    if (report.xrefs[type.prop] && (report.xrefs[type.prop].length > 0)) {
+                        w('- ' + type.title + ':');
+                        report.xrefs[type.prop].map(l => {
+                            w('     * [`' + l + '`](' + l + ')');
+                        })
+                    }
                 });
             }
         }
@@ -518,6 +557,48 @@ function generateReportPerIssue(study) {
     w();
     w();
 
+    [
+        {prop: 'css', warning: false, title: 'No definition for CSS properties'},
+        {prop: 'idl', warning: false, title: 'No definition for IDL properties'},
+        {prop: 'css', warning: true, title: 'Possibly no definition for CSS properties'},
+        {prop: 'idl', warning: true, title: 'Possibly no definition for IDL properties'}
+    ].forEach(type => {
+        count = 0;
+        countrefs = 0;
+        w('## ' + type.title);
+        w();
+
+        results.forEach(spec => {
+            if (spec.report.missingDfns &&
+                spec.report.missingDfns[type.prop] &&
+                (spec.report.missingDfns[type.prop].filter(r => !!r.warning === type.warning).length > 0)) {
+                count += 1;
+
+                w('- [' + spec.title + '](' + spec.crawled + '):');
+                spec.report.missingDfns[type.prop].filter(r => !!r.warning === type.warning).map(missing => {
+                    countrefs += 1;
+                    const exp = missing.expected;
+                    const found = missing.found;
+                    const foundFor = (found && found.for && found.for.length > 0) ?
+                        ' for ' + found.for.map(f => '`' + f + '`').join(',') :
+                        '';
+                    w('    * `' + exp.linkingText[0] + '`' +
+                        (exp.type ? ' with type `' + exp.type + '`' : '') +
+                        (missing.for ? ' for [`' + missing.for.linkingText[0] + '`](' + missing.for.href + ')' : '') +
+                        (found ? ', but found [`' + found.linkingText[0] + '`](' + found.href + ') with type `' + found.type + '`' + foundFor : ''));
+                });
+            }
+        });
+
+        w();
+        w('=> ' + countrefs + ' propert' + ((countrefs > 1) ? 'ies' : 'y') +
+          ' without definition found in ' + count + ' specification' +
+          ((count > 1) ? 's' : ''));
+        w();
+        w();
+    });
+
+
     count = 0;
     countrefs = 0;
     w('## Missing references based on document links');
@@ -595,6 +676,44 @@ function generateReportPerIssue(study) {
             ' published version in the References section.' +
             ' There should be some consistency across the specification.');
     }
+    w();
+    w();
+
+    [
+        { prop: 'notExported', title: 'External links to private terms' },
+        { prop: 'notDfn', title: 'External links that neither target definitions nor headings' },
+        { prop: 'brokenLinks', title: 'Broken external links' },
+        { prop: 'evolvingLinks', title: 'External links to terms that no longer exist in the latest version of the targeted specification' },
+        { prop: 'outdatedSpecs', title: 'External links to outdated specs' },
+        { prop: 'datedUrls', title: 'External links that use a dated URL' }
+    ].forEach(type => {
+        count = 0;
+        countrefs = 0;
+        w('## ' + type.title);
+        w();
+
+        results.forEach(spec => {
+            if (spec.report.xrefs &&
+                spec.report.xrefs[type.prop] &&
+                (spec.report.xrefs[type.prop].length > 0)) {
+                count += 1;
+
+                w('- [' + spec.title + '](' + spec.crawled + '):');
+                spec.report.xrefs[type.prop].map(l => {
+                    countrefs += 1;
+                    w('     * [`' + l + '`](' + l + ')');
+                });
+            }
+        });
+
+        w();
+        w('=> ' + countrefs + ' problematic external link' + ((countrefs > 1) ? 's' : '') +
+          ' found in ' + count + ' specification' +
+          ((count > 1) ? 's' : ''));
+        w();
+        w();
+    });
+
 
     return wres;
 }

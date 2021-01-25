@@ -31,10 +31,13 @@
  * @module analyzer
  */
 
+const fs = require('fs');
 const path = require('path');
-const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
-const isLatestLevelThatPasses = require('../lib/util').isLatestLevelThatPasses;
-const expandCrawlResult = require('../lib/util').expandCrawlResult;
+const { requireFromWorkingDirectory } = require('../lib/util');
+const { isLatestLevelThatPasses } = require('../lib/util');
+const { expandCrawlResult } = require('../lib/util');
+const { studyBackrefs } = require('./study-backrefs');
+const checkMissingDefinitions = require('./check-missing-dfns').checkSpecDefinitions;
 
 // Canonicalize methods are defined in an ES6 module so that they can also be
 // used in a browser environment. As such, they can only be loaded async through
@@ -57,6 +60,16 @@ const matchSpecUrl = url => url.match(/spec.whatwg.org/) || url.match(/www.w3.or
  * Compares specs for ordering by title
  */
 const byTitle = (a, b) => (a.title || '').toUpperCase().localeCompare((b.title || '').toUpperCase());
+
+
+/**
+ * Returns true when the given error array is not set or does not contain any
+ * error.
+ */
+function isOK(errors) {
+    return !errors || (errors.length === 0);
+}
+
 
 
 /**
@@ -91,7 +104,7 @@ function filterSpecInfo(spec) {
  *   a "report" property with "interesting" properties, see code comments inline
  *   for details
  */
-function studyCrawlResults(results, specsToInclude) {
+function studyCrawlResults(results, options = {}) {
     var knownIdlNames = results
         .map(r => r.idl && r.idl.idlNames ? Object.keys(r.idl.idlNames) : [], [])
         .reduce(array_concat)
@@ -136,6 +149,9 @@ function studyCrawlResults(results, specsToInclude) {
         equivalents: specEquivalents
     };
 
+    const xrefsReport = studyBackrefs(sortedResults, options.trResults);
+
+    const specsToInclude = options.include;
     return sortedResults
         .filter(spec => !specsToInclude ||
             (specsToInclude.length === 0) ||
@@ -154,6 +170,20 @@ function studyCrawlResults(results, specsToInclude) {
             var idlDeps = spec.idl.externalDependencies ?
                 spec.idl.externalDependencies : [];
             var exposed = spec.idl.exposed ? Object.keys(spec.idl.exposed) : [];
+
+            const xrefs = xrefsReport[spec.url];
+            if (xrefs) {
+                // The backrefs analysis tool includes the spec's title in its
+                // report, which we already have at the top level.
+                delete xrefs.title;
+
+                // The backrefs analysis tool also includes a list of documents
+                // that look like specs but that are not crawled. That is not
+                // an anomaly with the spec but rather a list of potential specs
+                // to be included in browser-specs. They should be treated
+                // separately.
+                delete xrefs.unknownSpecs;
+            }
 
             var report = {
                 // An error at this level means the spec could not be parsed at all
@@ -238,6 +268,10 @@ function studyCrawlResults(results, specsToInclude) {
                     })
                     .filter(i => !!i),
 
+                // CSS/IDL terms that do not have a corresponding dfn in the
+                // specification
+                missingDfns: checkMissingDefinitions(spec),
+
                 // Links to external specifications within the body of the spec
                 // that do not have a corresponding entry in the references
                 // (all links to external specs should have a companion ref)
@@ -292,7 +326,10 @@ function studyCrawlResults(results, specsToInclude) {
                             canonicalizesTo(r.url, spec.url, useEquivalents) ||
                             canonicalizesTo(r.url, spec.versions, useEquivalents)))
                         .map(filterSpecInfo)
-                }
+                },
+
+                // Analysis of cross-references to other specs
+                xrefs: xrefsReport[spec.url]
             };
 
             // A spec is OK if it does not contain anything "suspicious".
@@ -301,11 +338,22 @@ function studyCrawlResults(results, specsToInclude) {
                 !report.hasInvalidIdl &&
                 !report.hasObsoleteIdl &&
                 !report.noRefToWebIDL &&
-                (!report.unknownIdlNames || (report.unknownIdlNames.length === 0)) &&
-                (!report.redefinedIdlNames || (report.redefinedIdlNames.length === 0)) &&
-                (!report.missingWebIdlRef || (report.missingWebIdlRef.length === 0)) &&
-                (report.missingLinkRef.length === 0) &&
-                (report.inconsistentRef.length === 0);
+                !report.missingDfns.obsoleteDfnsModel &&
+                isOK(report.unknownIdlNames) &&
+                isOK(report.redefinedIdlNames) &&
+                isOK(report.missingWebIdlRef) &&
+                isOK(report.missingDfns.css.filter(r => !r.warning)) &&
+                isOK(report.missingDfns.idl.filter(r => !r.warning)) &&
+                isOK(report.missingLinkRef) &&
+                isOK(report.inconsistentRef) &&
+                (!report.xrefs || (
+                    isOK(report.xrefs.notExported) &&
+                    isOK(report.xrefs.notDfn) &&
+                    isOK(report.xrefs.brokenLinks) &&
+                    isOK(report.xrefs.evolvingLinks) &&
+                    isOK(report.xrefs.outdatedSpecs) &&
+                    isOK(report.xrefs.datedUrls)));
+
             var res = {
                 title: spec.title || spec.url,
                 shortname: spec.shortname,
@@ -320,7 +368,7 @@ function studyCrawlResults(results, specsToInclude) {
         });
 }
 
-async function studyCrawl(crawlResults, toInclude) {
+async function studyCrawl(crawlResults, options = {}) {
   // Import functions from ES6 module and expose them globally
   ({canonicalizeUrl, canonicalizesTo} = await import('../browserlib/canonicalize-url.mjs'));
 
@@ -334,9 +382,15 @@ async function studyCrawl(crawlResults, toInclude) {
   }
   crawlResults.results = crawlResults.results || [];
   crawlResults.stats = crawlResults.stats || {};
-  toInclude = toInclude || [];
 
-  const results = studyCrawlResults(crawlResults.results, toInclude);
+  if (typeof options.trResults === 'string') {
+    const crawlResultsPath = options.trResults;
+    options.trResults = requireFromWorkingDirectory(options.trResults);
+    options.trResults = await expandCrawlResult(options.trResults, path.dirname(crawlResultsPath));
+    options.trResults = options.trResults.results;
+  }
+
+  const results = studyCrawlResults(crawlResults.results, options);
 
   return {
     type: 'study',
@@ -363,14 +417,34 @@ module.exports.studyCrawl = studyCrawl;
 Code run if the code is run as a stand-alone module
 **************************************************/
 if (require.main === module) {
-    const crawlResultsPath = process.argv[2];
+    let crawlResultsPath = process.argv[2];
     const specUrls = process.argv[3] ? process.argv[3].split(',') : [];
+
 
     if (!crawlResultsPath) {
         console.error("Required crawl results parameter missing");
         process.exit(2);
     }
 
-    studyCrawl(crawlResultsPath, specUrls.map(url => { return {url}; }))
+    // Check whether we cab find the TR crawl results under the given path.
+    // If we can, that means we also need to look for the ED crawl results.
+    // If not, we just need to target index.json.
+    let edResultsPath = path.join(crawlResultsPath, 'ed', 'index.json');
+    if (!fs.existsSync(edResultsPath)) {
+        if (!crawlResultsPath.endsWith('.json')) {
+            edResultsPath = path.join(crawlResultsPath, 'index.json');
+        }
+    }
+
+    let trResultsPath = path.join(crawlResultsPath, 'tr', 'index.json');
+    if (!fs.existsSync(trResultsPath)) {
+        trResultsPath = null;
+    }
+
+    const options = {
+        include: specUrls.map(url => { return {url}; }),
+        trResults: trResultsPath
+    };
+    studyCrawl(edResultsPath, options)
         .then(results => console.log(JSON.stringify(results, null, 2)));
 }

@@ -75,7 +75,7 @@ async function checkSpecs(speclist, refCrawl, options) {
         results: crawl
     };
     const mergedReport = await mergeCrawlResults(report, refCrawl);
-    const study = await studyCrawl(mergedReport, specs);
+    const study = await studyCrawl(mergedReport, { include: specs });
     return study;
 }
 

@@ -71,7 +71,7 @@ program
     let refStudy = perspectives[perspective].refStudy;
     let reportFolder = perspectives[perspective].reportFolder ||
       'reports/' + perspective;
-    let crawlReport = path.join(reportFolder, 'crawl.json');
+    let crawlReport = path.join(reportFolder, 'index.json');
     let studyReport = path.join(reportFolder, 'study.json');
 
     let promise = Promise.resolve();
@@ -89,8 +89,14 @@ program
         break;
 
       case 'study':
+        const options = {};
+        if (perspective === 'ed') {
+          const trFolder = perspectives.tr.reportFolder || 'reports/tr';
+          const trReport = path.join(trFolder, 'index.json');
+          options.trResults = trReport;
+        }
         promise = promise
-          .then(_ => studyCrawl(crawlReport))
+          .then(_ => studyCrawl(crawlReport, options))
           .then(results => {
             fs.writeFileSync(path.join(reportFolder, 'study.json'),
               JSON.stringify(results, null, 2));
