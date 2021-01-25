@@ -93,7 +93,9 @@ program
         if (perspective === 'ed') {
           const trFolder = perspectives.tr.reportFolder || 'reports/tr';
           const trReport = path.join(trFolder, 'index.json');
-          options.trResults = trReport;
+          if (fs.existsSync(trReport)) {
+            options.trResults = trReport;
+          }
         }
         promise = promise
           .then(_ => studyCrawl(crawlReport, options))
