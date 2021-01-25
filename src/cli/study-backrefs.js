@@ -291,7 +291,7 @@ function studyBackrefs(edResults, trResults = []) {
   }
 
   edResults.forEach(spec => {
-    Object.keys(spec.links)
+    Object.keys(spec.links || {})
       .filter(matchSpecUrl)
       .forEach(link => {
         let shortname;
