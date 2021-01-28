@@ -133,6 +133,15 @@ function parseIdlAstTree(idlReport, contextName) {
     const { idlNames, idlExtendedNames, dependencies, externalDependencies } = idlReport;
 
     return function (def) {
+        // The WebIDL parser uses classes with an inheritance chain. This means
+        // that certain properties such as "type" or "name" are inherited and
+        // not part of the object's own properties. Our processing wraps and
+        // extends parsed items with a raw object approach. For instance, the
+        // IDL names generator will call "Object.assign" to extend and make a
+        // shallow copy of a definition. For that to work, let's get back to a
+        // raw object.
+        def = JSON.parse(JSON.stringify(def));
+
         switch(def.type) {
         case "namespace":
         case "interface":
