@@ -29,8 +29,30 @@ function linkifyIdl(idl, results) {
     return;
   }
 
-  function traverseIdl(idl, parentIdl) {
-    // Complete IDL with a link to the definition in the spec, if found
+  const parentIdl = idl;
+  const idlToLinkify = [idl];
+
+  switch (idl.type) {
+    case 'enum':
+      if (idl.values) {
+        idlToLinkify.push(...idl.values);
+      }
+      break;
+
+    case 'callback':
+    case 'callback interface':
+    case 'dictionary':
+    case 'interface':
+    case 'interface mixin':
+    case 'namespace':
+      if (idl.members) {
+        idlToLinkify.push(...idl.members);
+      }
+      break;
+  }
+
+  // Complete IDL to linkify with a link to the definition in the spec, if found
+  idlToLinkify.forEach(idl => {
     const expected = getExpectedDfnFromIdlDesc(idl, parentIdl);
     if (expected) {
       const dfn = spec.dfns.find(dfn => matchIdlDfn(expected, dfn));
@@ -41,24 +63,7 @@ function linkifyIdl(idl, results) {
         // console.warn('[warn] IDL Names - Missing dfn', JSON.stringify(expected));
       }
     }
-
-    switch (idl.type) {
-      case 'enum':
-        (idl.values || []).forEach(value => traverseIdl(value, idl));
-        break;
-
-      case 'callback':
-      case 'callback interface':
-      case 'dictionary':
-      case 'interface':
-      case 'interface mixin':
-      case 'namespace':
-        (idl.members || []).forEach(member => traverseIdl(member, idl));
-        break;
-    }    
-  }
-
-  traverseIdl(idl);
+  });
 }
 
 

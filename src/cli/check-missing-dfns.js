@@ -174,7 +174,7 @@ function getExpectedDfnFromIdlDesc(idl, parentIdl) {
   let expected = {
     linkingText: [idl.name],
     type: idl.type,
-    'for': parentIdl ? [parentIdl.name] : []
+    'for': parentIdl && (parentIdl !== idl) ? [parentIdl.name] : []
   };
 
   switch (idl.type) {
@@ -276,33 +276,20 @@ function getExpectedDfnFromIdlDesc(idl, parentIdl) {
  *
  * @function
  * @private
- * @param {Object} desc The object that describes the IDL term in the
+ * @param {Object} idl The object that describes the IDL term in the
  *   `idlparsed` extract.
- * @param {Object} parentDesc (optional) The object that describes the parent
- *   IDL term of the term to parse (used to compute the `for` property).
  * @return {Array} An array of expected definitions
  */
-function getExpectedDfnsFromIdlDesc(desc, parentDesc) {
-  let res = [];
-  function addExpected(expected) {
-    if (expected) {
-      expected.access = 'public';
-      expected.informative = false;
-      res.push(expected);
-    }
-  }
+function getExpectedDfnsFromIdlDesc(idl) {
+  const res = [];
+  const parentIdl = idl;
+  const idlToProcess = [idl];
 
-  const expected = getExpectedDfnFromIdlDesc(desc, parentDesc);
-  if (expected) {
-    addExpected(expected);
-  }
-
-  switch (desc.type) {
+  switch (idl.type) {
     case 'enum':
-      (desc.values || [])
-        .map(value => getExpectedDfnsFromIdlDesc(value, desc))
-        .flat()
-        .forEach(addExpected);
+      if (idl.values) {
+        idlToProcess.push(...idl.values);
+      }
       break;
 
     case 'callback':
@@ -311,12 +298,20 @@ function getExpectedDfnsFromIdlDesc(desc, parentDesc) {
     case 'interface':
     case 'interface mixin':
     case 'namespace':
-      (desc.members || [])
-        .map(member => getExpectedDfnsFromIdlDesc(member, desc))
-        .flat()
-        .forEach(addExpected);
+      if (idl.members) {
+        idlToProcess.push(...idl.members);
+      }
       break;
   }
+
+  idlToProcess.forEach(idl => {
+    const expected = getExpectedDfnFromIdlDesc(idl, parentIdl);
+    if (expected) {
+      expected.access = 'public';
+      expected.informative = false;
+      res.push(expected);
+    }
+  });
 
   return res;
 }
