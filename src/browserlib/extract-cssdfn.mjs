@@ -131,8 +131,11 @@ const extractValueSpaces = doc => {
       .map(line => line.split(/\s?=\s/).map(s => s.trim().replace(/\s+/g, ' ')))
       .filter(val => val[0].match(/^<.*>$|^.*\(\)$/))
       .filter(val => !!val[1])
-      .forEach(val => res[val[0].replace(/^(.*\(\))$/, '<$1>')] = {
-        value: val[1]
+      .forEach(val => {
+        const name = val[0].replace(/^(.*\(\))$/, '<$1>')
+        if (!(name in res)) {
+          res[name] = { value: val[1] };
+        }
       });
 
   // Extract non-terminal value spaces defined in `pre` tags
@@ -225,11 +228,14 @@ const extractValueSpaces = doc => {
     })
     .filter(space => !!space)
     .forEach(space => {
-      res[space.name] = {};
-      if (space.prose) {
+      if (!(space.name) in res) {
+        res[space.name] = {};
+      }
+
+      if (!res[space.name].prose && space.prose) {
         res[space.name].prose = space.prose;
       }
-      if (space.value) {
+      if (!res[space.name].value && space.value) {
         res[space.name].value = space.value;
       }
     });
