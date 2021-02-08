@@ -6,13 +6,14 @@
  *
  * The spec checker can be called directly through:
  *
- * `node generate-idlnames.js [crawl report] [save folder]`
+ * `node generate-idlnames.js [crawl report] [dfns] [save folder]`
  *
  * where `crawl report` is the path to the folder that contains the
  * `index.json` file and all other crawl results produced by crawl-specs.js,
- * and `save folder` is an optional folder (which must exist) where IDL name
- * extracts are to be saved. In the absence of this parameter, the report is
- * written to the console.
+ * `dfns` a param to set to "true" or "dfns" to embed dfns in the generated
+ * report, and `save folder` is an optional folder (which must exist) where IDL
+ * name extracts are to be saved. In the absence of this parameter, the report
+ * is written to the console.
  *
  * @module checker
  */
@@ -23,19 +24,32 @@ const { requireFromWorkingDirectory, expandCrawlResult } = require('../lib/util'
 const { matchIdlDfn, getExpectedDfnFromIdlDesc } = require('./check-missing-dfns');
 
 
-function linkifyIdl(idl, results) {
-  const spec = results.find(s => s.url === idl.spec.url);
+/**
+ * Retrieve the list of definitions that are needed to link members of the
+ * the given IDL node
+ *
+ * @function
+ * @param {Object} desc The node that describes an IDL fragment (without the
+ *   parsed IDL node structure)
+ * @param {Object} idlNode The parsed IDL node that describes the IDL fragment
+ * @param {Array} results The list of spec crawl results
+ * @return {Object} A list of related definitions indexed by URL of the spec
+ *   that defines them.
+ */
+function getRelatedDfns(desc, idlNode, results) {
+  const dfns = [];
+  const spec = results.find(s => s.url === desc.spec.url);
   if (!spec || !spec.dfns) {
-    return;
+    return {};
   }
 
-  const parentIdl = idl;
-  const idlToLinkify = [idl];
+  const parentIdl = idlNode;
+  const idlToLinkify = [idlNode];
 
-  switch (idl.type) {
+  switch (idlNode.type) {
     case 'enum':
-      if (idl.values) {
-        idlToLinkify.push(...idl.values);
+      if (idlNode.values) {
+        idlToLinkify.push(...idlNode.values);
       }
       break;
 
@@ -45,8 +59,8 @@ function linkifyIdl(idl, results) {
     case 'interface':
     case 'interface mixin':
     case 'namespace':
-      if (idl.members) {
-        idlToLinkify.push(...idl.members);
+      if (idlNode.members) {
+        idlToLinkify.push(...idlNode.members);
       }
       break;
   }
@@ -57,13 +71,15 @@ function linkifyIdl(idl, results) {
     if (expected) {
       const dfn = spec.dfns.find(dfn => matchIdlDfn(expected, dfn));
       if (dfn) {
-        idl.href = dfn.href;
+        dfns.push(dfn);
       }
       else {
         // console.warn('[warn] IDL Names - Missing dfn', JSON.stringify(expected));
       }
     }
   });
+
+  return { spec, dfns };
 }
 
 
@@ -73,12 +89,14 @@ function linkifyIdl(idl, results) {
  * @function
  * @public
  * @param {Array} results The list of spec crawl results to process
+ * @param {Object} options Generation options. Set "dfns" to true to embed
+ *   definitions in the final export.
  * @return {Object} A list indexed by referenceable IDL name that details, for
  *   each of them, the parsed IDL that defines the name throughout the specs,
  *   along with links to the actual definition of the terms in the specs
  *   (when known).
  */
-function generateIdlNames(results) {
+function generateIdlNames(results, options = {}) {
   function specInfo(spec) {
     return {
       spec: {
@@ -88,6 +106,7 @@ function generateIdlNames(results) {
     };
   }
 
+  const fragments = {};
   const names = {};
 
   // Add main definitions of all IDL names
@@ -96,9 +115,8 @@ function generateIdlNames(results) {
       return;
     }
     Object.entries(spec.idl.idlNames).forEach(([name, idl]) => {
-      // Make a deep copy of the IDL block since we're going to add "href"
-      // properties throughout the structure, and extend it with spec info
-      idl = Object.assign(specInfo(spec), JSON.parse(JSON.stringify(idl)));
+      const desc = Object.assign(specInfo(spec), { fragment: idl.fragment });
+      fragments[idl.fragment] = idl;
 
       if (names[name]) {
         // That should never happen, yet it does:
@@ -109,7 +127,8 @@ function generateIdlNames(results) {
         return;
       }
       names[name] = {
-        defined: idl,
+        name: name,
+        defined: desc,
         extended: [],
         inheritance: idl.inheritance,
         includes: []
@@ -124,9 +143,8 @@ function generateIdlNames(results) {
     }
     Object.entries(spec.idl.idlExtendedNames).forEach(([name, extensions]) =>
       extensions.forEach(idl => {
-        // Make a deep copy of the IDL block since we're going to add "href"
-        // properties throughout the structure, and extend it with spec info
-        idl = Object.assign(specInfo(spec), JSON.parse(JSON.stringify(idl)));
+        const desc = Object.assign(specInfo(spec), { fragment: idl.fragment });
+        fragments[idl.fragment] = idl;
 
         if (!names[name]) {
           // That should never happen, and it does not in practice unless there
@@ -141,25 +159,14 @@ function generateIdlNames(results) {
         if (idl.includes) {
           names[name].includes.push(idl.includes);
         }
-        names[name].extended.push(idl);
+        names[name].extended.push(desc);
       }));
-  });
-
-  // Look at extracted dfns and complete the parsed IDL structures with links
-  // to the definitions of the terms in the spec
-  Object.values(names).forEach(desc => {
-    if (desc.defined) {
-      linkifyIdl(desc.defined, results);
-    }
-    if (desc.extended) {
-      desc.extended.forEach(ext => linkifyIdl(ext, results));
-    }
   });
 
   // Expand inheritance and includes info
   Object.values(names).forEach(desc => {
     if (desc.includes) {
-      desc.includes = desc.includes.map(name => names[name]);
+      desc.includes = desc.includes.map(name => names[name]).filter(k => !!k);
     }
     if (desc.inheritance) {
       desc.inheritance = names[desc.inheritance];
@@ -180,14 +187,84 @@ function generateIdlNames(results) {
     }
   });
 
+  // Serialize structures
+  Object.entries(names).forEach(([name, desc]) => {
+    names[name] = JSON.parse(JSON.stringify(desc));
+  });
+
+  // If requested, add, for each IDL name, the list of definitions for the
+  // interfaces and members that the name defines, extends, inherits, or
+  // includes.
+  if (options.dfns) {
+    const dfns = {};
+    Object.entries(names).forEach(([name, desc]) => {
+      dfns[name] = {};
+      if (desc.defined) {
+        const idl = fragments[desc.defined.fragment];
+        const descDfns = getRelatedDfns(desc.defined, idl, results);
+        const url = descDfns.spec ? descDfns.spec.url : null;
+        if (url) {
+          if (!dfns[name][url]) {
+            dfns[name][url] = new Set();
+          }
+          descDfns.dfns.forEach(dfn => dfns[name][url].add(dfn));
+        }
+      }
+      if (desc.extended) {
+        desc.extended.forEach(ext => {
+          const idl = fragments[ext.fragment];
+          const extDfns = getRelatedDfns(ext, idl, results);
+          const url = extDfns.spec ? extDfns.spec.url : null;
+          if (url) {
+            if (!dfns[name][url]) {
+              dfns[name][url] = new Set();
+            }
+            extDfns.dfns.forEach(dfn => dfns[name][url].add(dfn));
+          }
+        });
+      }
+    });
+
+    // Add definitions at the root level and recursively extend the list
+    // with the definitions related to the IDL names that the current IDL name
+    // inherits from or includes.
+    function addDfns(rootName, name) {
+      name = name || rootName;
+      if (!names[rootName].dfns) {
+        names[rootName].dfns = {};
+      }
+      Object.entries(dfns[name]).forEach(([url, list]) => {
+        if (!names[rootName].dfns[url]) {
+          names[rootName].dfns[url] = new Set();
+        }
+        list.forEach(dfn => names[rootName].dfns[url].add(dfn));
+      });
+      const desc = names[name];
+      if (desc.includes) {
+        desc.includes.forEach(incl => addDfns(rootName, incl.name));
+      }
+      if (desc.inheritance) {
+        addDfns(rootName, desc.inheritance.name);
+      }
+    }
+    Object.keys(names).forEach(name => {
+      addDfns(name);
+
+      // Convert sets to arrays
+      Object.entries(names[name].dfns).forEach(([url, list]) => {
+        names[name].dfns[url] = Array.from(list);
+      });
+    });
+  }
+
   return names;
 }
 
 
-async function generateIdlNamesFromPath(crawlPath) {
+async function generateIdlNamesFromPath(crawlPath, options = {}) {
   const crawlIndex = requireFromWorkingDirectory(path.resolve(crawlPath, 'index.json'));
   const crawlResults = await expandCrawlResult(crawlIndex, crawlPath);
-  return generateIdlNames(crawlResults.results);
+  return generateIdlNames(crawlResults.results, options);
 }
 
 
@@ -225,8 +302,9 @@ if (require.main === module) {
     process.exit(2);
   }
 
-  const savePath = process.argv[3];
-  generateIdlNamesFromPath(crawlPath)
+  const dfns = process.argv[3] === 'dfns' || process.argv[3] === 'true';
+  const savePath = process.argv[4];
+  generateIdlNamesFromPath(crawlPath, { dfns })
     .then(report => {
       if (savePath) {
         saveIdlNames(report, savePath);

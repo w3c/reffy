@@ -225,6 +225,10 @@ function getExpectedDfnFromIdlDesc(idl, parentIdl) {
       }
       break;
 
+    case 'includes':
+      expected = null;
+      break;
+
     case 'iterable':
     case 'maplike':
     case 'setlike':
@@ -257,6 +261,10 @@ function getExpectedDfnFromIdlDesc(idl, parentIdl) {
       break;
 
     case 'typedef':
+      break;
+
+    case 'argument':
+      expected = null;
       break;
 
     default:
