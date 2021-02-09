@@ -228,7 +228,7 @@ const extractValueSpaces = doc => {
     })
     .filter(space => !!space)
     .forEach(space => {
-      if (!(space.name) in res) {
+      if (!(space.name in res)) {
         res[space.name] = {};
       }
 
