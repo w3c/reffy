@@ -191,6 +191,27 @@ function generateIdlNames(results, options = {}) {
     }
   });
 
+  // Add a link to the definition of each IDL name, when possible
+  Object.entries(names).forEach(([name, desc]) => {
+    if (!desc.defined) {
+      return;
+    }
+    const spec = results.find(s => s.url === desc.defined.spec.url);
+    if (!spec || !spec.dfns) {
+      return;
+    }
+    const idl = fragments[desc.defined.fragment];
+    const expected = getExpectedDfnFromIdlDesc(idl);
+    if (!expected) {
+      return;
+    }
+    const dfn = spec.dfns.find(dfn => matchIdlDfn(expected, dfn));
+    if (!dfn) {
+      return;
+    }
+    desc.defined.href = dfn.href;
+  });
+
   // Serialize structures
   Object.entries(names).forEach(([name, desc]) => {
     names[name] = JSON.parse(JSON.stringify(desc));
