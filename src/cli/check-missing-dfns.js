@@ -131,7 +131,7 @@ function matchCSSDfn(expected, actual) {
  */
 function getExpectedDfnsFromIdl(idl = {}) {
   const idlNames = Object.values(idl.idlNames || {});
-  return idlNames.map(getExpectedDfnsFromIdlDesc).flat();
+  return idlNames.map(name => getExpectedDfnsFromIdlDesc(name)).flat();
 }
 
 
@@ -153,88 +153,60 @@ function isDefaultToJSONOperation(desc) {
 
 
 /**
- * Return the list of expected definitions from a parsed IDL extract entry.
- *
- * The function is recursive.
+ * Return the expected definition for the given parsed IDL structure
  *
  * @function
- * @private
+ * @public
  * @param {Object} desc The object that describes the IDL term in the
  *   `idlparsed` extract.
  * @param {Object} parentDesc (optional) The object that describes the parent
  *   IDL term of the term to parse (used to compute the `for` property).
- * @return {Array} An array of expected definitions
+ * @return {Object} The expected definition, or null if no expected definition
+ *   is defined.
  */
-function getExpectedDfnsFromIdlDesc(desc = {}, parentDesc = {}) {
-  let res = [];
-  function addExpected(expected) {
-    if (expected) {
-      expected.access = 'public';
-      expected.informative = false;
-      res.push(expected);
-    }
-  }
-
+function getExpectedDfnFromIdlDesc(idl, parentIdl) {
   function serializeArgs(args = []) {
     return args
       .map(arg => arg.variadic ? `...${arg.name}` : arg.name)
       .join(', ');
   }
 
-  switch (desc.type) {
+  let expected = {
+    linkingText: [idl.name],
+    type: idl.type,
+    'for': parentIdl && (parentIdl !== idl) ? [parentIdl.name] : []
+  };
+
+  switch (idl.type) {
     case 'attribute':
     case 'const':
-      addExpected({
-        linkingText: [desc.name],
-        type: desc.type,
-        'for': [parentDesc.name]
-      });
       break;
 
     case 'constructor':
       // Ignore constructors for HTML elements, the spec has a dedicated
       // section for them:
       // https://html.spec.whatwg.org/multipage/dom.html#html-element-constructors
-      if (!parentDesc.name.startsWith('HTML')) {
-        addExpected({
-          linkingText: [`constructor(${serializeArgs(desc.arguments)})`],
-          type: desc.type,
-          'for': [parentDesc.name]
-        })
+      if (!parentIdl.name.startsWith('HTML')) {
+        expected.linkingText = [`constructor(${serializeArgs(idl.arguments)})`];
+      }
+      else {
+        expected = null;
       }
       break;
 
     case 'enum':
-      addExpected({
-        linkingText: [desc.name],
-        type: desc.type,
-        'for': []
-      });
-      (desc.values || [])
-        .map(value => getExpectedDfnsFromIdlDesc(value, desc))
-        .flat()
-        .forEach(addExpected);
       break;
 
     case 'enum-value':
       // The enumeration could include the empty string as a value. There
       // cannot be a matching definition in that case.
       // Note: look for the quoted value and the unquoted value
-      const value = desc.value.replace(/^"(.*)"$/, '$1');
-      const values = (value !== '') ? [`"${value}"`, value] : [`"${value}"`];
-      addExpected({
-        linkingText: values,
-        type: desc.type,
-        'for': [parentDesc.name]
-      });      
+      const value = idl.value.replace(/^"(.*)"$/, '$1');
+      expected.linkingText = (value !== '') ? [`"${value}"`, value] : [`"${value}"`];
       break;
 
     case 'field':
-      addExpected({
-        linkingText: [desc.name],
-        type: 'dict-member',
-        'for': [parentDesc.name]
-      });
+      expected.type = 'dict-member';
       break;
 
     case 'callback':
@@ -243,69 +215,111 @@ function getExpectedDfnsFromIdlDesc(desc = {}, parentDesc = {}) {
     case 'interface':
     case 'interface mixin':
     case 'namespace':
-      const type =
-        (desc.type === 'callback interface') ? 'callback' :
-        (desc.type === 'interface mixin') ? 'interface' :
-        desc.type;
+      expected.type =
+        (idl.type === 'callback interface') ? 'callback' :
+        (idl.type === 'interface mixin') ? 'interface' :
+        idl.type;
       // Ignore partial definition
-      if (!desc.partial) {
-        addExpected({
-          linkingText: [desc.name],
-          type,
-          'for': []
-        });
+      if (idl.partial) {
+        expected = null;
       }
-      (desc.members || [])
-        .map(member => getExpectedDfnsFromIdlDesc(member, desc))
-        .flat()
-        .forEach(addExpected);
+      break;
+
+    case 'includes':
+      expected = null;
       break;
 
     case 'iterable':
     case 'maplike':
     case 'setlike':
       // No definition expected for iterable, maplike and setlike members
+      expected = null;
       break;
 
     case 'operation':
       // Stringification behavior is typically defined with a
       // "stringification behavior" definition scoped to the interface
-      if (desc.special === 'stringifier') {
-        addExpected({
-          linkingText: ['stringification behavior', 'stringificationbehavior'],
-          type: 'dfn',
-          'for': [parentDesc.name]
-        });
+      if (idl.special === 'stringifier') {
+        expected.linkingText = ['stringification behavior', 'stringificationbehavior'];
+        expected.type = 'dfn';
       }
       // Ignore special "getter", "setter", "deleter" operations when they don't
       // have an identifier. They should link to a definition in the prose, but
       // the labels seem arbitrary for now.
       // Also ignore default toJSON operations. Steps are defined in WebIDL.
-      else if ((desc.name ||
-            ((desc.special !== 'getter') &&
-            (desc.special !== 'setter') &&
-            (desc.special !== 'deleter'))) &&
-          !isDefaultToJSONOperation(desc)) {
-        addExpected({
-          linkingText: [`${desc.name}(${serializeArgs(desc.arguments)})`],
-          type: 'method',
-          'for': [parentDesc.name]
-        });
+      else if ((idl.name ||
+            ((idl.special !== 'getter') &&
+            (idl.special !== 'setter') &&
+            (idl.special !== 'deleter'))) &&
+          !isDefaultToJSONOperation(idl)) {
+        expected.linkingText = [`${idl.name}(${serializeArgs(idl.arguments)})`];
+        expected.type = 'method';
+      }
+      else {
+        expected = null;
       }
       break;
 
     case 'typedef':
-      addExpected({
-        linkingText: [desc.name],
-        type: desc.type,
-        'for': []
-      });
+      break;
+
+    case 'argument':
+      expected = null;
       break;
 
     default:
-      console.warn('unsupported type', desc.type, desc);
+      console.warn('Unsupported IDL type', idl.type, idl);
+      expected = null;
       break;
   }
+
+  return expected;
+}
+
+
+/**
+ * Return the list of expected definitions from a parsed IDL extract entry.
+ *
+ * The function is recursive.
+ *
+ * @function
+ * @private
+ * @param {Object} idl The object that describes the IDL term in the
+ *   `idlparsed` extract.
+ * @return {Array} An array of expected definitions
+ */
+function getExpectedDfnsFromIdlDesc(idl) {
+  const res = [];
+  const parentIdl = idl;
+  const idlToProcess = [idl];
+
+  switch (idl.type) {
+    case 'enum':
+      if (idl.values) {
+        idlToProcess.push(...idl.values);
+      }
+      break;
+
+    case 'callback':
+    case 'callback interface':
+    case 'dictionary':
+    case 'interface':
+    case 'interface mixin':
+    case 'namespace':
+      if (idl.members) {
+        idlToProcess.push(...idl.members);
+      }
+      break;
+  }
+
+  idlToProcess.forEach(idl => {
+    const expected = getExpectedDfnFromIdlDesc(idl, parentIdl);
+    if (expected) {
+      expected.access = 'public';
+      expected.informative = false;
+      res.push(expected);
+    }
+  });
 
   return res;
 }
@@ -524,6 +538,12 @@ Export methods for use as module
 **************************************************/
 module.exports.checkSpecDefinitions = checkSpecDefinitions;
 module.exports.checkDefinitions = checkDefinitions;
+
+// "Inner" functions that the IDL names generator uses to link IDL terms with
+// their definition (see generate-idlnames.js)
+module.exports.getExpectedDfnFromIdlDesc = getExpectedDfnFromIdlDesc;
+module.exports.matchIdlDfn = matchIdlDfn;
+
 
 
 /**************************************************

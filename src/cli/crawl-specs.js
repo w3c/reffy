@@ -38,6 +38,7 @@ const completeWithAlternativeUrls = require('../lib/util').completeWithAlternati
 const isLatestLevelThatPasses = require('../lib/util').isLatestLevelThatPasses;
 const processSpecification = require('../lib/util').processSpecification;
 const { setupBrowser, teardownBrowser } = require('../lib/util');
+const { generateIdlNames, saveParsedIdlNames, saveIdlNames } = require('./generate-idlnames');
 
 /**
  * Flattens an array
@@ -282,7 +283,9 @@ async function saveResults(crawlOptions, data, folder) {
         ids: await getSubfolder('ids'),
         headings: await getSubfolder('headings'),
         idl: await getSubfolder('idl'),
+        idlnames: await getSubfolder('idlnames'),
         idlparsed: await getSubfolder('idlparsed'),
+        idlnamesparsed: await getSubfolder('idlnamesparsed'),
         links: await getSubfolder('links'),
         refs: await getSubfolder('refs')
     };
@@ -360,6 +363,14 @@ async function saveResults(crawlOptions, data, folder) {
         }
         spec.css = `css/${filename}.json`;
     };
+
+    // Sort results by URL
+    data.sort(byURL);
+
+    // Prepare and save IDL names exports
+    const idlNames = generateIdlNames(data);
+    await saveParsedIdlNames(idlNames, folders.idlnamesparsed);
+    await saveIdlNames(idlNames, folders.idlnames);
 
     // Save IDL dumps for the latest level of a spec to the idl folder
     // TODO: the raw IDL of previous levels in a series is not saved anywhere.

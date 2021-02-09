@@ -54,6 +54,22 @@ function hasObsoleteIdl(idl) {
 
 
 /**
+ * Serialize an IDL AST node to a JSON object that contains both a textual
+ * serialization of the IDL fragment and a tree serialization of the AST node
+ *
+ * @function
+ * @private
+ * @param {Object} def The parsed IDL node returned by the webidl2.js parser
+ * @return {Object} An object with a "value" and "parsedValue" properties
+ */
+function serialize(def) {
+    return Object.assign(
+        { fragment: WebIDL2.write([def]).trim() },
+        JSON.parse(JSON.stringify(def)));
+}
+
+
+/**
  * Main method that takes IDL definitions and parses that IDL to compute
  * the list of internal/external dependencies.
  *
@@ -142,7 +158,7 @@ function parseIdlAstTree(idlReport, contextName) {
             parseInterfaceOrDictionary(def, idlReport);
             break;
         case "enum":
-            idlNames[def.name] = def;
+            idlNames[def.name] = serialize(def);
             break;
         case "operation":
             if (def.stringifier || (def.special && def.special === 'stringifier')) return;
@@ -168,14 +184,14 @@ function parseIdlAstTree(idlReport, contextName) {
                idlExtendedNames[def.target] = [];
             }
             const mixin = {name: def.target, type: "interface", includes: def.includes};
-            idlExtendedNames[def.target].push(mixin);
+            idlExtendedNames[def.target].push(serialize(def));
             break;
         case "typedef":
             parseType(def.idlType, idlReport);
-            idlNames[def.name] = def;
+            idlNames[def.name] = serialize(def);
             break;
         case "callback":
-            idlNames[def.name] = def;
+            idlNames[def.name] = serialize(def);
             def.arguments.forEach(a => parseType(a.idlType, idlReport));
             break;
         case "iterable":
@@ -220,11 +236,11 @@ function parseInterfaceOrDictionary(def, idlReport) {
         if (!idlExtendedNames[def.name]) {
             idlExtendedNames[def.name] = [];
         }
-        idlExtendedNames[def.name].push(def);
+        idlExtendedNames[def.name].push(serialize(def));
         addDependency(def.name, idlNames, externalDependencies);
     }
     else {
-        idlNames[def.name] = def;
+        idlNames[def.name] = serialize(def);
     }
     if (def.inheritance) {
         addDependency(def.inheritance, idlNames, externalDependencies);

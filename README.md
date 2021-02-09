@@ -77,6 +77,8 @@ The **WebIDL extractor** takes the URL of a spec as input and outputs the IDL de
 
 The **WebIDL parser** takes the URL of a spec as input and generates a JSON structure that describes WebIDL term definitions and references that the spec contains. The parser uses [WebIDL2](https://github.com/darobin/webidl2.js/) to parse the WebIDL content found in the spec. To run the WebIDL parser: `parse-webidl [url]`
 
+The **WebIDL names generator** takes the results of a crawl as input and creates a report per referenceable IDL name, that details the complete parsed IDL structure that defines the name across all specs. To run the generator: `generate-idlnames [crawl folder] [save folder]`
+
 The **CSS definitions extractor** takes the URL of a spec as input and outputs the CSS definitions found in the spec in a JSON structure. To run the extractor: `extract-cssdfn [url]`
 
 The **crawl results merger** merges a new JSON crawl report into a reference one. This tool is typically useful to replace the crawl results of a given specification with the results of a new run of the crawler on that specification. To run the crawl results merger: `merge-crawl-results [new crawl report] [reference crawl report] [crawl report to create]`
