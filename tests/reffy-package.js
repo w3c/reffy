@@ -12,6 +12,12 @@ const specs = [
   {url: "https://www.w3.org/TR/accelerometer/", nightly: {url: "https://w3c.github.io/accelerometer/"}}
 ];
 
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 describe("The npm package of Reffy", function () {
   this.slow(30000);
   this.timeout(60000);
@@ -38,6 +44,10 @@ describe("The npm package of Reffy", function () {
 
   after(async () => {
     if (tmpdir) {
+      // The Chrome instance ran by Puppeteer may keep a handle on a few tmp
+      // files, let's give it some time to release the handles so that we can
+      // delete the tmp folder
+      await sleep(1000);
       await fs.promises.rmdir(tmpdir, { recursive: true });
     }
   });

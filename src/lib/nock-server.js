@@ -45,11 +45,13 @@ nock.enableNetConnect('127.0.0.1');
 
 Object.keys(mockSpecs).forEach(path => {
   nock("https://w3c.github.io")
+    .persist()
     .get(path)
     .reply(200, typeof mockSpecs[path] === "string" ? mockSpecs[path] : mockSpecs[path].html, {'Content-Type': 'text/html'});
 
   Object.keys(mockSpecs[path].pages || {}).forEach(page => {
     nock("https://w3c.github.io")
+      .persist()
       .get(path + page)
       .reply(200, mockSpecs[path].pages[page], {'Content-Type': 'text/html'});
 
