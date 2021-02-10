@@ -22,7 +22,7 @@ describe("The npm package of Reffy", function () {
     tmpdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'reffy-'));
     const reffydir = path.resolve(__dirname, "..");
     const { stdout: reffyPackage } = await exec(`npm pack "${reffydir}"`, { cwd: tmpdir});
-    await exec(`npm install "${reffyPackage}"`, { cwd: tmpdir });
+    await exec(`npm install ${reffyPackage.trim()}`, { cwd: tmpdir });
   });
 
   it("can crawl specs", async () => {
