@@ -3,6 +3,7 @@
  */
 
 const fs = require('fs').promises;
+const { existsSync } = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer');
 const crypto = require('crypto');
@@ -33,6 +34,26 @@ const prop = p => x => x[p];
 function requireFromWorkingDirectory(filename) {
     return require(path.resolve(filename));
 }
+
+
+/**
+ * Determine the path to the "node_modules" folder to resolve relative links
+ * in the ES6 browser lib modules. The path depends on whether Reffy is run
+ * directly, or installed as a library.
+ *
+ * @function
+ * @return {String} Path to the node_modules folder.
+ */
+function getModulesFolder() {
+    const rootFolder = path.resolve(__dirname, '../..');
+    let folder = path.resolve(rootFolder, 'node_modules');
+    if (existsSync(folder)) {
+        return folder;
+    }
+    folder = path.resolve(rootFolder, '..');
+    return folder;
+}
+const modulesFolder = getModulesFolder();
 
 
 /**
@@ -189,7 +210,7 @@ async function processSpecification(spec, callback, args, counter) {
                 if (request.url.includes(reffyPath) || request.url.includes(webidl2Path)) {
                     const file = request.url.includes(reffyPath) ?
                         path.resolve(__dirname, '../browserlib', request.url.substring(request.url.indexOf(reffyPath) + reffyPath.length)) :
-                        path.resolve(__dirname, '../../node_modules/webidl2', request.url.substring(request.url.indexOf(webidl2Path) + webidl2Path.length));
+                        path.resolve(modulesFolder, 'webidl2', request.url.substring(request.url.indexOf(webidl2Path) + webidl2Path.length));
                     const body = await fs.readFile(file);
                     await cdp.send('Fetch.fulfillRequest', {
                         requestId,
