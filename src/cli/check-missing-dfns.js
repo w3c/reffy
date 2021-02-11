@@ -130,8 +130,16 @@ function matchCSSDfn(expected, actual) {
  * @return {Array} An array of expected definitions
  */
 function getExpectedDfnsFromIdl(idl = {}) {
+  // Parse IDL names that the spec defines
   const idlNames = Object.values(idl.idlNames || {});
-  return idlNames.map(name => getExpectedDfnsFromIdlDesc(name)).flat();
+  let expected = idlNames.map(name => getExpectedDfnsFromIdlDesc(name)).flat();
+
+  // Parse members of IDL names that the spec extends
+  const idlExtendedNames = Object.values(idl.idlExtendedNames || {});
+  expected = expected.concat(idlExtendedNames.map(extended =>
+      extended.map(name => getExpectedDfnsFromIdlDesc(name, { excludeRoot: true })))
+    .flat(2));
+  return expected;
 }
 
 
@@ -288,10 +296,10 @@ function getExpectedDfnFromIdlDesc(idl, parentIdl) {
  *   `idlparsed` extract.
  * @return {Array} An array of expected definitions
  */
-function getExpectedDfnsFromIdlDesc(idl) {
+function getExpectedDfnsFromIdlDesc(idl, {excludeRoot} = {excludeRoot: false}) {
   const res = [];
   const parentIdl = idl;
-  const idlToProcess = [idl];
+  const idlToProcess = excludeRoot ? [] : [idl];
 
   switch (idl.type) {
     case 'enum':
