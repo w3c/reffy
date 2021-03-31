@@ -35,7 +35,7 @@ const mockSpecs = {
       "page.html": `<h2 id='bar'>Heading in subpage</h2>`
     }
   },
-  "/mediacapture-output/": `<script>respecConfig = {};</script><script src='https://www.w3.org/Tools/respec/respec-w3c'></script><div id=abstract></div><pre class='idl'>[Exposed=Window] interface Foo { attribute DOMString bar; };</pre>`,
+  "/mediacapture-output/": `<script>respecConfig = { shortName: 'test' };</script><script src='https://www.w3.org/Tools/respec/respec-w3c'></script><div id=abstract></div><pre class='idl'>[Exposed=Window] interface Foo { attribute DOMString bar; };</pre>`,
   "/accelerometer/": `<html><h2>Normative references</h2><dl><dt>FOO</dt><dd><a href='https://www.w3.org/TR/Foo'>Foo</a></dd></dl>`
 };
 
@@ -66,7 +66,7 @@ nock("https://respec.org")
                                      "Access-Control-Allow-Origin": "*"}).
   post("/xref/").reply(200, {"result":[["cc15613180c92a877452c092012792b9572ad189",[{"shortname":"webidl","spec":"webidl","type":"extended-attribute","normative":true,"uri":"#Exposed"}]],["a28dcf4738f5492eb05f1fd8a27b8ce0ae124d21",[{"shortname":"webidl","spec":"webidl","type":"interface","normative":true,"uri":"#idl-DOMString"}]],["2eb09984ad7f314b43fefeb75a6feedb049ad595",[]]]});
 
-nock("https://specref.herokuapp.com")
+nock("https://api.specref.org")
   .persist()
   .get("/bibrefs?refs=webidl,html").reply(200, {webidl:{href:"https://heycam.github.io/webidl/"}}, {"Access-Control-Allow-Origin": "*"})
   .get("/bibrefs?refs=HTML").reply(200, {HTML:{href:"https://html.spec.whatwg.org/multipage/"}}, {"Access-Control-Allow-Origin": "*"});
