@@ -320,7 +320,7 @@ function preProcessHTML() {
     }
 
     //throw "Cannot match " + containerid + " to a known IDL name (" + id + ")";
-    return {type: "unknown", _for: containerid +  " with " + id};
+    return {type: "dfn", _for: containerid +  " with " + id};
   }
 
   const headingSelector = [
