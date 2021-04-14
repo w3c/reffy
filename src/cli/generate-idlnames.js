@@ -339,7 +339,7 @@ async function saveIdlNamesFragments(names, folder) {
   }
 
   await createFolderIfNeeded(folder);
-  await Promise.all(Object.values(names).map(idl => {
+  await Promise.all(Object.entries(names).map(([name, idl]) => {
     const res = [];
     if (idl.defined) {
       res.push(serializeNode(idl.defined));
@@ -347,7 +347,7 @@ async function saveIdlNamesFragments(names, folder) {
     if (idl.extended) {
       idl.extended.map(node => res.push(serializeNode(node)));
     }
-    const filename = path.join(folder, idl.name + '.idl');
+    const filename = path.join(folder, name + '.idl');
     return fs.promises.writeFile(filename, res.join('\n\n'));
   }));
 }
