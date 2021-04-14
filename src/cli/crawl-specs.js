@@ -387,35 +387,6 @@ async function saveResults(crawlOptions, data, folder) {
         .filter(spec => (spec.seriesComposition === 'delta') && defineIDLContent(spec))
         .map(spec => saveIdl(spec, spec.shortname)));
 
-    // TODO: Legacy code, drop when crawl.json is no longer used anywhere
-    // Save all results to the crawl.json file
-    let reportFilename = path.join(folder, 'crawl.json');
-    await new Promise((resolve, reject) =>
-        fs.readFile(reportFilename, function(err, content) {
-            if (err) return reject(err);
-
-            let filedata = {};
-            try {
-                filedata = JSON.parse(content);
-            } catch (e) {}
-
-            filedata.type = filedata.type || 'crawl';
-            filedata.title = 'Reffy crawl';
-            filedata.date = filedata.date || (new Date()).toJSON();
-            filedata.options = crawlOptions;
-            filedata.stats = {};
-            filedata.results = (filedata.results || []).concat(data);
-            filedata.results.sort(byURL);
-            filedata.stats = {
-                crawled: filedata.results.length,
-                errors: filedata.results.filter(spec => !!spec.error).length
-            };
-
-            fs.writeFile(reportFilename, JSON.stringify(filedata, null, 2),
-                         err => { if (err) return reject(err); return resolve();});
-        })
-    );
-
     // Move parsed IDL to right property, and replace raw IDL with link to
     // generated IDL extract
     data.map(spec => {
@@ -435,7 +406,7 @@ async function saveResults(crawlOptions, data, folder) {
     });
 
     // Save CSS dumps for the latest level of a spec to the css folder
-    // TODO: crawl.json contains the CSS dumps for earlier levels in a series,
+    // TODO: crawl.json contained the CSS dumps for earlier levels in a series,
     // but index.json does not since it only links to generated files and we
     // don't generate CSS dumps for specs that are not the latest level. Save
     // them somewhere?
@@ -524,9 +495,6 @@ function crawlSpecs(resultsPath, options) {
     }
     try {
         fs.writeFileSync(path.join(resultsPath, 'index.json'), '');
-
-        // TODO: Legacy code, drop when crawl.json is no longer used anywhere
-        fs.writeFileSync(path.join(resultsPath, 'crawl.json'), '');
     } catch (err) {
         return Promise.reject('Impossible to write to ' + resultsPath + ': ' + err);
     }
