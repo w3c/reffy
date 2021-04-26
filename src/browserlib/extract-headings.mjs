@@ -2,7 +2,18 @@
  * Extract headings data from documents
 */
 export default function (idToHeading) {
-  return [...document.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id] ,h6[id]')].map(n => {
+  // Headings using the markup convention of the EcmaScript spec
+  const esHeadings = [...document.querySelectorAll('emu-clause[id] > h1')].map(n => {
+    const headingNumber = n.querySelector(".secnum")?.textContent;
+    const headingLevel = headingNumber ? headingNumber.split(".").length : undefined;
+    return {
+      id: n.parentNode.id,
+      title: n.textContent.replace(headingNumber, '').trim(),
+      level: headingLevel,
+      number: headingNumber
+    };
+  });
+  return esHeadings.concat([...document.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id] ,h6[id]')].map(n => {
     // Note: In theory, all <hX> heading elements that have an ID are associated
     // with a heading in idToHeading. One exception to the rule: when the
     // heading element appears in a <hgroup> element, the mapping is not
@@ -25,5 +36,5 @@ export default function (idToHeading) {
     }
 
     return res;
-  });
+  }));
 }
