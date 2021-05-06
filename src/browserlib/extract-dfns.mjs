@@ -324,11 +324,11 @@ function preProcessHTML() {
   }
 
   const headingSelector = [
-    'h2[id]:not([data-dfn-type]) dfn:not([data-dfn-type])',
-    'h3[id]:not([data-dfn-type]) dfn:not([data-dfn-type])',
-    'h4[id]:not([data-dfn-type]) dfn:not([data-dfn-type])',
-    'h5[id]:not([data-dfn-type]) dfn:not([data-dfn-type])',
-    'h6[id]:not([data-dfn-type]) dfn:not([data-dfn-type])'
+    'h2[id]:not([data-dfn-type]) dfn',
+    'h3[id]:not([data-dfn-type]) dfn',
+    'h4[id]:not([data-dfn-type]) dfn',
+    'h5[id]:not([data-dfn-type]) dfn',
+    'h6[id]:not([data-dfn-type]) dfn'
   ].join(',');
 
   // we copy the id on the dfn when it is set on the surrounding heading
@@ -338,7 +338,7 @@ function preProcessHTML() {
       if (!el.id) {
         el.id = headingId;
       }
-      if (headingId.match(/^the-([^-]*)-element$/)) {
+      if (!el.dataset.dfnType && headingId.match(/^the-([^-]*)-element$/)) {
         el.dataset.dfnType = 'element';
       }
     });
