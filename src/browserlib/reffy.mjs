@@ -8,6 +8,7 @@ import extractHeadings from './extract-headings.mjs';
 import extractIds from './extract-ids.mjs';
 import extractReferences from './extract-references.mjs';
 import extractLinks from './extract-links.mjs';
+import extractEditors from './extract-editors.mjs';
 import mapIdsToHeadings from './map-ids-to-headings.mjs';
 import { canonicalizeUrl, canonicalizesTo } from './canonicalize-url.mjs';
 
@@ -21,6 +22,7 @@ window.reffy = Object.assign(
     getGenerator,
     getLastModifiedDate,
     extractWebIdl,
+    extractEditors,
     extractCSS,
     extractDefinitions,
     extractHeadings,
