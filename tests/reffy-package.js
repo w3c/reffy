@@ -33,9 +33,10 @@ describe("The npm package of Reffy", function () {
 
   it("can crawl specs", async () => {
     const clidir = path.join(tmpdir, 'node_modules', 'reffy', 'src', 'cli');
-    const { crawlList } = require(path.join(clidir, 'crawl-specs'));
+    const { crawlSpecs } = require(path.join(clidir, 'crawl-specs'));
+    const { extractWebrefData } = require(path.join(clidir, 'process-specs'));
     const refResults = JSON.parse(fs.readFileSync(__dirname + "/crawl-test.json", "utf-8"));
-    const results = await crawlList(specs);
+    const results = await crawlSpecs(specs, extractWebrefData);
     // to avoid reporting bogus diff on updated date
     results.forEach(s => delete s.date);
     assert.deepEqual(refResults, results);

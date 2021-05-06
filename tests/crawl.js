@@ -1,4 +1,5 @@
-const { crawlList } = require("../src/cli/crawl-specs");
+const { crawlSpecs } = require("../src/cli/crawl-specs");
+const { extractWebrefData } = require("../src/cli/process-specs");
 const nock = require('../src/lib/nock-server');
 const fs = require("fs");
 
@@ -9,7 +10,7 @@ const specs = [
 ];
 
 async function crawl() {
-  const results = await crawlList(specs) ;
+  const results = await crawlSpecs(specs, extractWebrefData) ;
   // to avoid reporting bogus diff on updated date
   results.forEach(s => delete s.date);
   return results;
