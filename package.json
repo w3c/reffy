@@ -43,7 +43,7 @@
     "study-crawl": "./src/cli/study-crawl.js"
   },
   "dependencies": {
-    "abortcontroller-polyfill": "1.7.1",
+    "abortcontroller-polyfill": "1.7.3",
     "browser-specs": "1.37.0",
     "commander": "7.2.0",
     "fetch-filecache-for-crawling": "4.0.2",
