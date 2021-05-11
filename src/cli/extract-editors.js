@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const fetch = require('../lib/util').fetch;
+const browserSpecs = require('browser-specs');
 const {crawlSpecs} = require('./crawl-specs'); // TODO mv to lib? util?
 const {processSpecification, requireFromWorkingDirectory} = require('../lib/util');
 
@@ -41,9 +42,8 @@ function processSpecs(specList, resultsPath) {
     } catch (err) {
         return Promise.reject('Impossible to write to ' + resultsPath + ': ' + err);
     }
-    const requestedList = requireFromWorkingDirectory(specList).map(s => { return {url: s};});
 
-    return crawlSpecs(requestedList, extractEditorFromSpec)
+    return crawlSpecs(specList, extractEditorFromSpec)
         .then(results => fs.promises.writeFile(path.join(resultsPath, 'index.json'), JSON.stringify(results, null, 2)));
 }
 
@@ -53,6 +53,12 @@ Code run if the code is run as a stand-alone module
 if (require.main === module) {
     var specList = process.argv[2];
     var resultsPath = process.argv[3];
+
+    if (specList === '') {
+        specList = browserSpecs;
+    } else {
+        specList = requireFromWorkingDirectory(specList).map(s => { return { url: s }; });
+    }
 
     // Process the file and crawl specifications it contains
     processSpecs(specList, resultsPath)
