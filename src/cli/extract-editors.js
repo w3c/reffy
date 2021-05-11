@@ -55,7 +55,8 @@ if (require.main === module) {
     var resultsPath = process.argv[3];
 
     if (specList === '') {
-        specList = browserSpecs;
+        // Use nightly specs.
+        specList = browserSpecs.map(s => Object.assign({}, s, { url: s.nightly?.url ?? s.url }));
     } else {
         specList = requireFromWorkingDirectory(specList).map(s => { return { url: s }; });
     }
