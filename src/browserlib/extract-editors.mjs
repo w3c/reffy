@@ -41,7 +41,7 @@ export default function () {
         // Try to parse a name and organization out of plain text.
         let parsed = /(?<name>[^(]+)\((?<org>[^)]+)\)/.exec(editor.text);
         if (!parsed) {
-          parsed = /^(?<name>[^,]+), (?<org>[a-zA-Z ]*)/.exec(editor.text);
+          parsed = /^(?<name>[^,]+), (?<org>[^<]+)/.exec(editor.text);
         }
 
         if (!editor.name) {
