@@ -35,14 +35,23 @@ export default function () {
             }
           }
         }
-      } else {
+      }
+
+      if (!editor.name || !editor.org) {
         // Try to parse a name and organization out of plain text.
         let parsed = /(?<name>[^(]+)\((?<org>[^)]+)\)/.exec(editor.text);
-        if (parsed) {
-          editor.name = parsed.groups.name;
-          editor.org = { name: parsed.groups.org };
+        if (!parsed) {
+          parsed = /^(?<name>[^,]+), (?<org>[a-zA-Z ]*)/.exec(editor.text);
+        }
+
+        if (!editor.name) {
+          editor.name = parsed.groups.name.trim();
+        }
+        if (!editor.org) {
+          editor.org = { name: parsed.groups.org.trim() };
         }
       }
+
       editors.push(editor);
     }
     dd = dd.nextElementSibling;
