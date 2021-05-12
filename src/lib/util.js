@@ -365,6 +365,9 @@ async function processSpecification(spec, callback, args, counter) {
             await isReady();
         });
 
+        page.on('pageerror', err => {
+            console.error(err);
+        });
 
         // Expose additional functions defined in src/browserlib/ to the
         // browser context, under a window.reffy namespace, so that processing
