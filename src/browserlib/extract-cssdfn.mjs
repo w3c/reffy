@@ -227,7 +227,7 @@ const extractValueSpaces = doc => {
           if (c.nodeName === 'DETAILS' ||
               c.nodeName === 'DL' ||
               c.classList.contains('note')) {
-            c.parentNode.removeChild(c);
+            c.remove();
           }
         });
         return {
