@@ -119,8 +119,74 @@ const tests = [
        "animationType": "discrete"
      }
    }
+  },
+
+  {
+    title: "parses a valuespace prose definition, excluding tests and notes",
+    html: `<dl>
+    <dt><dfn class="css" data-dfn-for="text-indent" data-dfn-type="value" data-export="" id="valdef-text-indent-percentage">&lt;percentage&gt;<a class="self-link" href="#valdef-text-indent-percentage"></a></dfn> 
+    </dt><dd>
+      Gives the amount of the indent
+      as a percentage of the block container’s own <a data-link-type="dfn" href="https://drafts.csswg.org/css-writing-modes-4/#logical-width" id="ref-for-logical-width">logical width</a>. 
+     <details class="wpt-tests-block" dir="ltr" lang="en">
+      <summary>Tests</summary>
+      <ul class="wpt-tests-list">
+       <li class="wpt-test"><a class="wpt-name" href="https://wpt.fyi/results/css/CSS2/text/text-indent-011.xht">text-indent-011.xht</a> <a class="wpt-live" href="http://wpt.live/css/CSS2/text/text-indent-011.xht" title="css/CSS2/text/text-indent-011.xht"><small>(live test)</small></a> <a class="wpt-source" href="https://github.com/web-platform-tests/wpt/blob/master/css/CSS2/text/text-indent-011.xht"><small>(source)</small></a></li>
+      </ul>
+     </details>
+     <p>Percentages must be treated as <span class="css">0</span> for the purpose of calculating <a data-link-type="dfn" href="https://drafts.csswg.org/css-sizing-3/#intrinsic-size-contribution" id="ref-for-intrinsic-size-contribution">intrinsic size contributions</a>,
+      but are always resolved normally when performing layout.</p>
+     <details class="wpt-tests-block" dir="ltr" lang="en">
+      <summary>Tests</summary>
+      <ul class="wpt-tests-list">
+       <li class="wpt-test"><a class="wpt-name" href="https://wpt.fyi/results/css/css-text/text-indent/percentage-value-intrinsic-size.html">percentage-value-intrinsic-size.html</a> <a class="wpt-live" href="http://wpt.live/css/css-text/text-indent/percentage-value-intrinsic-size.html" title="css/css-text/text-indent/percentage-value-intrinsic-size.html"><small>(live test)</small></a> <a class="wpt-source" href="https://github.com/web-platform-tests/wpt/blob/master/css/css-text/text-indent/percentage-value-intrinsic-size.html"><small>(source)</small></a></li>
+      </ul>
+     </details>
+     <p class="note" role="note"><span>Note:</span> This can lead to the element overflowing.
+      It is not recommended to use percentage indents and intrinsic sizing together.</p>
+    </dd></dl>`,
+    propertyName: "valuespaces",
+    css: {
+      "<percentage>": {
+        "prose": "Gives the amount of the indent as a percentage of the block container’s own logical width. Percentages must be treated as 0 for the purpose of calculating intrinsic size contributions, but are always resolved normally when performing layout."
+      }
+    }
+  },
+
+  {
+    title: "parses a valuespace prose definition, excluding subsections",
+    html: `<dl>
+     <dt data-md=""><dfn class="css" data-dfn-for="ray()" data-dfn-type="value" data-export="" id="valdef-ray-size">&lt;size&gt;<a class="self-link" href="#valdef-ray-size"></a></dfn>
+      </dt><dd data-md="">
+       <p>Decides the path length used when <a class="property" data-link-type="propdesc" href="#propdef-offset-distance" id="ref-for-propdef-offset-distance②">offset-distance</a> is expressed as a percentage, using the distance to the containing box. For <a class="production css" data-link-type="type" href="https://drafts.csswg.org/css-images-3/#typedef-size" id="ref-for-typedef-size①" title="Expands to: <length-percentage>{2} | <length> | closest-corner | closest-side | farthest-corner | farthest-side | sides">&lt;size&gt;</a> values other than <a href="#size-sides" id="ref-for-size-sides">sides</a>, the path length is independent of <a class="production css" data-link-type="type" href="https://drafts.csswg.org/css-values-3/#angle-value" id="ref-for-angle-value④" title="Expands to: deg | grad | rad | turn">&lt;angle&gt;</a>.</p>
+       <p>It is defined as:</p>
+       <p>&nbsp;<b>&lt;size&gt;</b> = [ closest-side | closest-corner | farthest-side | farthest-corner | sides ]</p>
+       <dl>
+        <dt data-md=""><dfn class="dfn-paneled css" data-dfn-for="<size>" data-dfn-type="value" data-export="" id="size-closest-side">closest-side</dfn>
+        </dt><dd data-md="">
+         <p>The perpendicular distance is measured between the initial position and the closest side of the box from it.</p>
+        </dd><dt data-md=""><dfn class="css" data-dfn-for="<size>" data-dfn-type="value" data-export="" id="size-closest-corner">closest-corner<a class="self-link" href="#size-closest-corner"></a></dfn>
+        </dt><dd data-md="">
+         <p>The distance is measured between the initial position and the closest corner of the box from it.</p>
+        </dd><dt data-md=""><dfn class="dfn-paneled css" data-dfn-for="<size>" data-dfn-type="value" data-export="" id="size-farthest-side">farthest-side</dfn>
+        </dt><dd data-md="">
+         <p>The perpendicular distance is measured between the initial position and the farthest side of the box from it.</p>
+        </dd><dt data-md=""><dfn class="css" data-dfn-for="<size>" data-dfn-type="value" data-export="" id="size-farthest-corner">farthest-corner<a class="self-link" href="#size-farthest-corner"></a></dfn>
+        </dt><dd data-md="">
+         <p>The distance is measured between the initial position and the farthest corner of the box from it.</p>
+        </dd><dt data-md=""><dfn class="dfn-paneled css" data-dfn-for="<size>" data-dfn-type="value" data-export="" id="size-sides">sides</dfn>
+        </dt><dd data-md="">
+         <p>The distance is measured between the initial position and the intersection of the ray with the box. If the initial position is not within the box, the distance is 0.</p>
+       </dd></dl>
+      </dd></dl>`,
+    propertyName: "valuespaces",
+    css: {
+      "<size>": {
+        "prose": "Decides the path length used when offset-distance is expressed as a percentage, using the distance to the containing box. For <size> values other than sides, the path length is independent of <angle>. It is defined as: <size> = [ closest-side | closest-corner | farthest-side | farthest-corner | sides ]"
+      }
+    }
   }
-]
+];
 
 describe("Test CSS properties extraction", function() {
   this.slow(5000);
@@ -153,7 +219,7 @@ describe("Test CSS properties extraction", function() {
       });
       await page.close();
 
-      assert.deepEqual(extractedCss.properties, t.css);
+      assert.deepEqual(extractedCss[t.propertyName ?? 'properties'], t.css);
     });
   });
 
