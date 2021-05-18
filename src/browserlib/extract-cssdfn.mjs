@@ -220,6 +220,16 @@ const extractValueSpaces = doc => {
         }
       }
       else {
+        // Remove notes, details sections that link to tests, and subsections
+        // that go too much into details
+        dd = dd.cloneNode(true);
+        [...dd.children].forEach(c => {
+          if (c.nodeName === 'DETAILS' ||
+              c.nodeName === 'DL' ||
+              c.classList.contains('note')) {
+            c.parentNode.removeChild(c);
+          }
+        });
         return {
           name: el.textContent.trim(),
           prose: dd.textContent.trim().replace(/\s+/g, ' ')
