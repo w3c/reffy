@@ -225,7 +225,7 @@ const extractValueSpaces = doc => {
         dd = dd.cloneNode(true);
         [...dd.children].forEach(c => {
           if (c.tagName === 'DETAILS' ||
-              c.nodeName === 'DL' ||
+              c.tagName === 'DL' ||
               c.classList.contains('note')) {
             c.remove();
           }
