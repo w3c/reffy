@@ -300,7 +300,7 @@ function preProcessHTML() {
     // TODO check the field is defined
     if (dict) return {type: "dict-member", _for: dict.name};
 
-    // Miscellanous exceptions
+    // Miscellaneous exceptions
     // Ideally, get this fixed upstream
     switch(containerid) {
       // not an enum, but a well-defined DOMString
