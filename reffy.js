@@ -24,7 +24,7 @@ const pandoc = require('node-pandoc');
 
 // List of possible perspectives and associated parameters
 // Note the "ed" perspective produces reports under "whatwg" for backward
-// compatilibity reason.
+// compatibility reason.
 const perspectives = {
   'ed': {
     description: 'Crawls the latest Editor\'s Drafts',
