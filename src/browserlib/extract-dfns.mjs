@@ -558,7 +558,7 @@ function preProcessSVG2() {
     });
   [...document.querySelectorAll("dt[id] > .adef, dt[id] > .property")].forEach(el => {
     const dt = el.parentNode;
-    const newdt = document.createElement("dt");
+    const newDt = document.createElement("dt");
     const dfn = document.createElement("dfn");
     dfn.id = dt.id;
     dfn.dataset.dfnType = el.classList.contains("adef") ? "element-attr" : "property";
@@ -571,8 +571,8 @@ function preProcessSVG2() {
       console.error("Could not find description for " + el.textContent + "/" + dfn.id);
     }
     dfn.textContent = el.textContent;
-    newdt.appendChild(dfn);
-    dt.replaceWith(newdt);
+    newDt.appendChild(dfn);
+    dt.replaceWith(newDt);
   });
   [...document.querySelectorAll('b[id^="__svg__"]')].forEach(el => {
     const [,, containername, membername] = el.id.split('__');
