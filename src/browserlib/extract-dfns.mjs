@@ -95,7 +95,7 @@ function definitionMapper(el, idToHeading) {
       el.getAttribute('data-dfn-for').split(/,(?![^\(]*\))/).map(normalize) :
       [],
 
-    // Definition is public if explictly marked as exportable or if export has
+    // Definition is public if explicitly marked as exportable or if export has
     // not been explicitly disallowed and its type is not "dfn"
     access: (el.hasAttribute('data-export') ||
              (!el.hasAttribute('data-noexport') &&
