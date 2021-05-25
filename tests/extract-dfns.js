@@ -348,7 +348,7 @@ const tests = [
     spec: "html"
   },
   {
-    "title": "ignores defintions imported in the HTML spec from other specs",
+    "title": "ignores definitions imported in the HTML spec from other specs",
     html: '<li>The <dfn id="xmlhttprequest"><a href="https://xhr.spec.whatwg.org/#xmlhttprequest"><code>XMLHttpRequest</code></a></dfn> interface</li>',
     changesToBaseDfn: [{
       id: "xmlhttprequest",
@@ -357,7 +357,7 @@ const tests = [
     spec: "html"
   },
   {
-    "title": "ignores defintions imported in the indices.html page of the HTML spec",
+    "title": "ignores definitions imported in the indices.html page of the HTML spec",
     html: '<section data-reffy-page="https://example.org/indices.html"><dl><dt><dfn id="text/xml"><code>text/xml</code></dfn></dt></dl></section>',
     changesToBaseDfn: [{
       id: "text/xml",

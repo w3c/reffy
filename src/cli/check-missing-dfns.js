@@ -527,7 +527,7 @@ function checkDefinitions(pathToReport, options = {}) {
  *
  * @function
  * @private
- * @param {Object} missing Object that desribes missing dfn
+ * @param {Object} missing Object that describes missing dfn
  */
 function reportMissing(missing) {
   const exp = missing.expected;

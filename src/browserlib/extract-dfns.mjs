@@ -95,7 +95,7 @@ function definitionMapper(el, idToHeading) {
       el.getAttribute('data-dfn-for').split(/,(?![^\(]*\))/).map(normalize) :
       [],
 
-    // Definition is public if explictly marked as exportable or if export has
+    // Definition is public if explicitly marked as exportable or if export has
     // not been explicitly disallowed and its type is not "dfn"
     access: (el.hasAttribute('data-export') ||
              (!el.hasAttribute('data-noexport') &&
@@ -300,7 +300,7 @@ function preProcessHTML() {
     // TODO check the field is defined
     if (dict) return {type: "dict-member", _for: dict.name};
 
-    // Miscellanous exceptions
+    // Miscellaneous exceptions
     // Ideally, get this fixed upstream
     switch(containerid) {
       // not an enum, but a well-defined DOMString
@@ -558,7 +558,7 @@ function preProcessSVG2() {
     });
   [...document.querySelectorAll("dt[id] > .adef, dt[id] > .property")].forEach(el => {
     const dt = el.parentNode;
-    const newdt = document.createElement("dt");
+    const newDt = document.createElement("dt");
     const dfn = document.createElement("dfn");
     dfn.id = dt.id;
     dfn.dataset.dfnType = el.classList.contains("adef") ? "element-attr" : "property";
@@ -571,8 +571,8 @@ function preProcessSVG2() {
       console.error("Could not find description for " + el.textContent + "/" + dfn.id);
     }
     dfn.textContent = el.textContent;
-    newdt.appendChild(dfn);
-    dt.replaceWith(newdt);
+    newDt.appendChild(dfn);
+    dt.replaceWith(newDt);
   });
   [...document.querySelectorAll('b[id^="__svg__"]')].forEach(el => {
     const [,, containername, membername] = el.id.split('__');
