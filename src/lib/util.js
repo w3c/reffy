@@ -584,6 +584,57 @@ async function expandCrawlResult(crawl, baseFolder) {
 }
 
 
+/**
+ * Retrieves the list of IDL attribute names that the CSS property generates
+ * per the CSSOM spec, see:
+ * https://drafts.csswg.org/cssom/#ref-for-css-property-to-idl-attribute
+ *
+ * @function
+ * @param {String} property CSS property name
+ * @return {Array(String)} An array of IDL attribute names, dashed attribute
+ *   first, then camel-cased attribute if different, then webkit-cased attribute
+ *   name if needed
+ */
+function getGeneratedIDLNamesByCSSProperty(property) {
+    // Converts a CSS property to an IDL attribute name per the CSSOM spec:
+    // https://drafts.csswg.org/cssom/#css-property-to-idl-attribute
+    function cssPropertyToIDLAttribute(property, lowercaseFirst) {
+        let output = '';
+        let uppercaseNext = false;
+        if (lowercaseFirst) {
+            property = property.substr(1);
+        }
+        for (const c of property) {
+            if (c === '-') {
+                uppercaseNext = true;
+            } else if (uppercaseNext) {
+                uppercaseNext = false;
+                output += c.toUpperCase();
+            } else {
+                output += c;
+            }
+        }
+        return output;
+    }
+
+    // Start with dashed attribute
+    const res = [property];
+
+    // Add camel-cased attribute if different
+    const camelCased = cssPropertyToIDLAttribute(property, false);
+    if (camelCased !== property) {
+        res.push(camelCased);
+    }
+
+    // Add webkit-cased attribute if needed
+    if (property.startsWith('-webkit-')) {
+        res.push(cssPropertyToIDLAttribute(property, true));
+    }
+
+    return res;
+};
+
+
 module.exports = {
     fetch,
     requireFromWorkingDirectory,
@@ -593,5 +644,6 @@ module.exports = {
     processSingleSpecification,
     completeWithAlternativeUrls,
     isLatestLevelThatPasses,
-    expandCrawlResult
+    expandCrawlResult,
+    getGeneratedIDLNamesByCSSProperty
 };

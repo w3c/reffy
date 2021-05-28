@@ -32,13 +32,17 @@ const path = require('path');
 const specs = require('browser-specs');
 const webidlParser = require('./parse-webidl');
 const cssDfnParser = require('../lib/css-grammar-parser');
-const fetch = require('../lib/util').fetch;
-const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
-const completeWithAlternativeUrls = require('../lib/util').completeWithAlternativeUrls;
-const isLatestLevelThatPasses = require('../lib/util').isLatestLevelThatPasses;
-const processSpecification = require('../lib/util').processSpecification;
-const { setupBrowser, teardownBrowser } = require('../lib/util');
 const { generateIdlNames, saveIdlNames } = require('./generate-idlnames');
+const {
+    completeWithAlternativeUrls,
+    fetch,
+    getGeneratedIDLNamesByCSSProperty,
+    isLatestLevelThatPasses,
+    processSpecification,
+    requireFromWorkingDirectory,
+    setupBrowser,
+    teardownBrowser
+} = require('../lib/util');
 
 /**
  * Flattens an array
@@ -129,7 +133,7 @@ async function crawlSpec(spec, crawlOptions) {
             }
         });
 
-        // Parse extracted CSS definitions
+        // Parse extracted CSS definitions and add generated IDL attribute names
         Object.entries(result.css.properties || {}).forEach(([prop, dfn]) => {
             if (dfn.value || dfn.newValues) {
                 try {
@@ -139,6 +143,7 @@ async function crawlSpec(spec, crawlOptions) {
                     dfn.valueParseError = e.message;
                 }
             }
+            dfn.styleDeclaration = getGeneratedIDLNamesByCSSProperty(prop);
         });
         Object.entries(result.css.descriptors || {}).forEach(([desc, dfn]) => {
             if (dfn.value) {
