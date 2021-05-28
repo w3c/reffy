@@ -1,7 +1,10 @@
 const { assert } = require('chai');
 
 const specs = require('browser-specs');
-const { isLatestLevelThatPasses } = require('../src/lib/util');
+const {
+  getGeneratedIDLNamesByCSSProperty,
+  isLatestLevelThatPasses
+} = require('../src/lib/util');
 
 describe('isLatestLevelThatPasses', () => {
   function getSpecAtLevel(level, flags) {
@@ -75,5 +78,26 @@ describe('isLatestLevelThatPasses', () => {
       specs.find(s => (s.shortname === spec.seriesNext) &&
         (s.seriesComposition === 'full')));
     assert.isTrue(isLatestLevelThatPasses(spec, specs, s => s === spec));
+  });
+});
+
+
+describe('getGeneratedIDLNamesByCSSProperty', () => {
+  it('returns the camel-cased and dashed attribute names for "touch-action"', () => {
+    assert.deepEqual(
+      getGeneratedIDLNamesByCSSProperty('touch-action'),
+      ['touch-action', 'touchAction']);
+  });
+
+  it('returns the camel-cased, webkit-cased and dashed attribute names for "-webkit-background-clip"', () => {
+    assert.deepEqual(
+      getGeneratedIDLNamesByCSSProperty('-webkit-background-clip'),
+      ['-webkit-background-clip', 'WebkitBackgroundClip', 'webkitBackgroundClip']);
+  });
+
+  it('returns the camel-cased attribute name for "display"', () => {
+    assert.deepEqual(
+      getGeneratedIDLNamesByCSSProperty('display'),
+      ['display']);
   });
 });
