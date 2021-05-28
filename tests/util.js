@@ -95,7 +95,7 @@ describe('getGeneratedIDLNamesByCSSProperty', () => {
       ['-webkit-background-clip', 'WebkitBackgroundClip', 'webkitBackgroundClip']);
   });
 
-  it('returns the camel-cased attribute name for "display"', () => {
+  it('returns just the name for "display"', () => {
     assert.deepEqual(
       getGeneratedIDLNamesByCSSProperty('display'),
       ['display']);
