@@ -89,6 +89,7 @@ async function crawlSpec(spec, crawlOptions) {
                 date: window.reffy.getLastModifiedDate(),
                 links: window.reffy.extractLinks(),
                 dfns: window.reffy.extractDefinitions(spec.shortname, idToHeading),
+                elements: window.reffy.extractElements(),
                 headings: window.reffy.extractHeadings(idToHeading),
                 ids: window.reffy.extractIds(),
                 refs: window.reffy.extractReferences(),
@@ -176,6 +177,7 @@ async function crawlSpec(spec, crawlOptions) {
         spec.idl = result.idl;
         spec.css = result.css;
         spec.dfns = result.dfns;
+        spec.elements = result.elements;
         spec.headings = result.headings;
         spec.ids = result.ids;
     }
@@ -285,6 +287,7 @@ async function saveResults(crawlOptions, data, folder) {
     const folders = {
         css: await getSubfolder('css'),
         dfns: await getSubfolder('dfns'),
+        elements: await getSubfolder('elements'),
         ids: await getSubfolder('ids'),
         headings: await getSubfolder('headings'),
         idl: await getSubfolder('idl'),
@@ -440,6 +443,8 @@ async function saveResults(crawlOptions, data, folder) {
     // Save definitions, links, headings, and refs for individual specs
     await Promise.all(data.map(getSavePropFunction('dfns',
         spec => spec.dfns && (spec.dfns.length > 0))));
+    await Promise.all(data.map(getSavePropFunction('elements',
+        spec => spec.elements && (spec.elements.length > 0))));
     await Promise.all(data.map(getSavePropFunction('links',
         spec => spec.links && (Object.keys(spec.links).length > 0))));
     await Promise.all(data.map(getSavePropFunction('headings',

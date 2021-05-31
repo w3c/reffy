@@ -36,6 +36,7 @@
       "idl": ""
     },
     "title": "WOFF2",
+    "elements": [],
     "generator": null,
     "css": {
       "properties": {},
@@ -113,6 +114,7 @@
       "idl": ""
     },
     "title": "No Title",
+    "elements": [],
     "generator": "respec",
     "css": {
       "properties": {},
@@ -244,6 +246,7 @@
       "idl": ""
     },
     "title": "[No title found for https://w3c.github.io/accelerometer/]",
+    "elements": [],
     "generator": null,
     "css": {
       "properties": {},

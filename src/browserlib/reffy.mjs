@@ -4,6 +4,7 @@ import getLastModifiedDate from './get-lastmodified-date.mjs';
 import extractWebIdl from './extract-webidl.mjs';
 import extractCSS from './extract-cssdfn.mjs';
 import extractDefinitions from './extract-dfns.mjs';
+import extractElements from './extract-elements.mjs';
 import extractHeadings from './extract-headings.mjs';
 import extractIds from './extract-ids.mjs';
 import extractReferences from './extract-references.mjs';
@@ -23,6 +24,7 @@ window.reffy = Object.assign(
     extractWebIdl,
     extractCSS,
     extractDefinitions,
+    extractElements,
     extractHeadings,
     extractIds,
     extractReferences,
