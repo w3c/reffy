@@ -538,7 +538,7 @@ async function expandCrawlResult(crawl, baseFolder) {
             }
         }
 
-        const properties = ['css', 'dfns', 'headings', 'ids', 'idlparsed', 'links', 'refs'];
+        const properties = ['css', 'dfns', 'elements', 'headings', 'ids', 'idlparsed', 'links', 'refs'];
         await Promise.all(properties.map(async property => {
             if (!spec[property] || (typeof spec[property] !== 'string')) {
                 return;
