@@ -383,15 +383,6 @@ function preProcessHTML() {
       }
       let m;
 
-      if (el.closest("code.idl")) {
-        // we look if that matches a top-level idl name
-        let idlTerm = idlTree.find(item => item.name === el.textContent);
-        if (idlTerm) {
-          // we split at space to cater for "interface mixin"
-          el.dataset.dfnType = idlTerm.type.split(' ')[0];
-          return;
-        }
-      }
       if ((m = el.id.match(/^attr-([^-]+)-([^-]+)$/))) {
         // e.g. attr-ul-type
         el.dataset.dfnType = 'element-attr';
