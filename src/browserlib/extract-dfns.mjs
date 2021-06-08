@@ -365,11 +365,6 @@ function preProcessHTML() {
         el.dataset.noexport = "";
         return;
       }
-      // audio/menu in a heading with an id, throws off the "heading" convention
-      if (el.id === "audio" || el.id === "menus") {
-        el.dataset.dfnType = 'element';
-        return;
-      }
 
       // If there is a link, we assume this documents an imported definition
       // so we make it ignored by removing the id
