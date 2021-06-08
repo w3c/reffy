@@ -338,9 +338,6 @@ function preProcessHTML() {
       if (!el.id) {
         el.id = headingId;
       }
-      if (!el.dataset.dfnType && headingId.match(/^the-([^-]*)-element$/)) {
-        el.dataset.dfnType = 'element';
-      }
     });
 
   const manualIgnore = ["dom-xsltprocessor-transformtofragment", "dom-xsltprocessor-transformtodocument"];
@@ -366,11 +363,6 @@ function preProcessHTML() {
         el.dataset.dfnType = 'attribute';
         el.dataset.dfnFor = 'HTMLElement';
         el.dataset.noexport = "";
-        return;
-      }
-      // audio/menu in a heading with an id, throws off the "heading" convention
-      if (el.id === "audio" || el.id === "menus") {
-        el.dataset.dfnType = 'element';
         return;
       }
 
