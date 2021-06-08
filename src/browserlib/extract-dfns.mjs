@@ -338,9 +338,6 @@ function preProcessHTML() {
       if (!el.id) {
         el.id = headingId;
       }
-      if (!el.dataset.dfnType && headingId.match(/^the-([^-]*)-element$/)) {
-        el.dataset.dfnType = 'element';
-      }
     });
 
   const manualIgnore = ["dom-xsltprocessor-transformtofragment", "dom-xsltprocessor-transformtodocument"];
