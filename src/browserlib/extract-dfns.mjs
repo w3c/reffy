@@ -401,12 +401,6 @@ function preProcessHTML() {
         }
         return;
       }
-      if ((m = el.id.match(/^attr-([^-]+)$/))) {
-        el.dataset.dfnType = 'element-attr';
-        // not sure how to encode "every html element"?
-        // el.dataset.dfnFor = 'all HTML elements';
-        return;
-      }
       if ((m = el.id.match(/^handler-([^-]+)$/))) {
         const sharedEventHandlers = ["GlobalEventHandlers", "WindowEventHandlers", "DocumentAndElementEventHandlers"];
         el.dataset.dfnType = 'attribute';
