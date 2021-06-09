@@ -401,23 +401,6 @@ function preProcessHTML() {
         }
         return;
       }
-      if ((m = el.id.match(/^handler-([^-]+)$/))) {
-        const sharedEventHandlers = ["GlobalEventHandlers", "WindowEventHandlers", "DocumentAndElementEventHandlers"];
-        el.dataset.dfnType = 'attribute';
-        if (!el.dataset.dfnFor) {
-          let _for = sharedEventHandlers.filter(iface => idlInterfaces.find(item => item.name === iface && item.members.find(member => member.name === m[1])))[0];
-          if (_for) {
-            el.dataset.dfnFor = _for;
-          }
-        }
-        return;
-      }
-
-      if ((m = el.id.match(/^handler-([^-]+)-/))) {
-        el.dataset.dfnType = 'attribute';
-        el.dataset.dfnFor = el.dataset.dfnFor || fromIdToTypeAndFor(m[1])._for;
-        return;
-      }
 
       if ((m = el.id.match(/^selector-/))) {
         el.dataset.dfnType = 'selector';
