@@ -151,15 +151,6 @@ const tests = [
            definedIn: "heading"}],
    spec: "html"
   },
-  {title: "handles HTML spec convention for defining element interfaces",
-   html: '<pre><code class="idl">interface <dfn id="htmlhrelement"><c- g="">HTMLHRElement</c-></dfn> {};</code></pre>',
-   changesToBaseDfn: [{id: "htmlhrelement",
-           access: "public",
-           type: "interface",
-           linkingText: ["HTMLHRElement"],
-           definedIn: "pre"}],
-   spec: "html"
-  },
   {title: "handles finding IDL type across mixins and partial",
    html: '<dfn id="dom-navigator-taintenabled"><code>taintEnabled()</code></dfn>',
    changesToBaseDfn: [{id: "dom-navigator-taintenabled",
