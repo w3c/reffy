@@ -137,12 +137,12 @@ export default function () {
   // Extract SVG elements that use the "element-summary" pattern
   const svgSummaryElements = [...document.querySelectorAll('div.element-summary')]
     .map(el => {
-      const dfn = el.querySelector('.element-name dfn');
+      let dfn = el.querySelector('.element-name');
       if (!dfn) {
         throw new Error('Could not extract name from element-summary element');
       }
 
-      const res = { name: getText(dfn) };
+      const res = { name: getText(dfn).replace(/‘|’/g, '') };
       const dts = [...el.querySelectorAll('dt')];
       dts.forEach(dt => {
         const prop = ({
