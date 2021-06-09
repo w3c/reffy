@@ -257,48 +257,6 @@ const tests = [
     spec: "html"
   },
   {
-    title: "handles HTML spec rules for “global” event handlers",
-    html: '<td><dfn id="handler-oncopy"><code>oncopy</code></dfn> </td>',
-    changesToBaseDfn: [
-      {id: "handler-oncopy",
-            access: "public",
-            type: "attribute",
-            linkingText: ["oncopy"],
-            for: ['DocumentAndElementEventHandlers']}
-    ],
-    spec:"html"
-  },
-  {
-    title: "handles HTML spec convention for interface-bound event handlers",
-    html: '<td><dfn id="handler-texttracklist-onchange"><code>onchange</code></dfn> </td>',
-    changesToBaseDfn: [{id: "handler-texttracklist-onchange",
-            access: "public",
-            type: "attribute",
-            linkingText: ["onchange"],
-            for: ['TextTrackList']}],
-    spec: "html"
-  },
-  {
-    title: "handles exceptions to HTML spec convention for event handlers",
-    html: '<td><dfn id="handler-tracklist-onchange"><code>onchange</code></dfn> </td>',
-    changesToBaseDfn: [{id: "handler-tracklist-onchange",
-            access: "public",
-            type: "attribute",
-            linkingText: ["onchange"],
-            for: ['AudioTrackList', 'VideoTrackList']}],
-    spec: "html"
-  },
-  {
-    title: "handles exceptions to HTML spec convention for event handlers",
-    html: '<td><dfn id="handler-appcache-onchecking"><code>onchecking</code></dfn> </td>',
-    changesToBaseDfn: [{id: "handler-appcache-onchecking",
-            access: "public",
-            type: "attribute",
-            linkingText: ["onchecking"],
-            for: ['ApplicationCache']}],
-    spec: "html"
-  },
-  {
     title: "handles exceptions to HTML spec convention for method attributions",
     html: '<dfn id="dom-navigator-canplaytype"><code>canPlayType(<var>type</var>)</code></dfn>',
     changesToBaseDfn: [{id: "dom-navigator-canplaytype",
