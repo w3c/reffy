@@ -472,25 +472,6 @@ function preProcessHTML() {
         return;
       }
 
-      if (m = el.id.match(/^event-([a-z]+)$/)) {
-        if (!el.textContent.match(/ /)) {
-          el.dataset.dfnType = 'event';
-          return;
-        }
-      }
-
-      if (m = el.id.match(/^event-([a-z]+)-(.*)$/)) {
-        if (!el.textContent.match(/ /)) {
-          if (m[1] === "media" && ["change", "addtrack", "removetrack"].includes(m[2])) {
-            el.dataset.dfnFor = "AudioTrackList,VideoTrackList,TextTrackList";
-          } else {
-            el.dataset.dfnFor = fromIdToIdl(m[1]) || m[1];
-          }
-          el.dataset.dfnType = 'event';
-          return;
-        }
-      }
-
     });
 }
 
