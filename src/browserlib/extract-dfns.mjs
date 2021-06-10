@@ -154,25 +154,6 @@ function preProcessHTML() {
   const idlTree = parse(idl);
   const idlInterfaces = idlTree.filter(item => item.type === "interface" || item.type === "interface mixin");
 
-  function fromIdToElement(id) {
-    switch(id) {
-    case "hyperlink": return "a,area";
-    case "mod": return "ins,del";
-    case "dim": return "img,iframe,embed,object,video";
-      // The spec lists img, but img doesn't have a form attribute
-    case "fae": return "button,fieldset,input,object,output,select,textarea";
-    case "fe": return "button,fieldset,input,object,output,select,textarea";
-    case "fs": return "form,button";
-    case "hx": return "h1,h2,h3,h4,h5,h6";
-    case "tdth": return "td,th";
-      // xml: attributes are id'd as xml-
-      // case "xml": return "all HTML elements";
-    case "xml": return undefined;
-
-    };
-    return id;
-  }
-
   function fromIdToIdl(id) {
     const specialInterfaceIds = {
       "appcache": "ApplicationCache",
@@ -352,12 +333,6 @@ function preProcessHTML() {
   [...document.querySelectorAll("dfn[id]:not([data-dfn-type]):not([data-skip])")]
     .forEach(el => {
       // Hard coded rules for special ids
-      // hyphen in attribute name throws off other match rules
-      if (el.id === "attr-form-accept-charset") {
-        el.dataset.dfnType = 'element-attr';
-        el.dataset.dfnFor = "form";
-        return;
-      }
       // dom-style is defined elsewhere
       if (el.id === "dom-style") {
         el.dataset.dfnType = 'attribute';
@@ -374,33 +349,6 @@ function preProcessHTML() {
         return;
       }
       let m;
-
-      if ((m = el.id.match(/^attr-([^-]+)-([^-]+)$/))) {
-        // e.g. attr-ul-type
-        el.dataset.dfnType = 'element-attr';
-        let _for = fromIdToElement(m[1]);
-        // special casing usemap attribute
-        if (m[1] === "hyperlink" && m[2] === "usemap") {
-          _for = "img,object";
-          return;
-        }
-        if (m[1] === "aria") {
-          // reference to external defined elements, noexport
-          el.dataset.noexport = true;
-          return;
-        }
-        // "loading", "crossorigin", "autocapitalize" are used in middle position
-        // when describing possible keywords
-        if (["loading", "crossorigin", "autocapitalize"].includes(m[1])) {
-          el.dataset.dfnType = 'dfn';
-          // Not sure how to indicate this is for an attribute value
-          // _for = m[1];
-        }
-        if (_for && !el.dataset.dfnFor) {
-          el.dataset.dfnFor = _for;
-        }
-        return;
-      }
 
       if ((m = el.id.match(/^dom-([^-]+)$/) || el.id.match(/^dom-([^-]+)-[0-9]+$/) || el.id.match(/^dom-([^-]+)-constructor$/))) {
         const globalscopes = [

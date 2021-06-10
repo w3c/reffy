@@ -205,16 +205,6 @@ const tests = [
     spec: "html"
   },
   {
-    title: "handles HTML spec convention for attributes",
-    html: '<dfn id="attr-html-manifest"><code>manifest</code></dfn>',
-    changesToBaseDfn: [{id: "attr-html-manifest",
-            access: "public",
-            type: "element-attr",
-            linkingText: ["manifest"],
-            for: ['html']}],
-    spec: "html"
-  },
-  {
     title: "handles HTML spec convention for methods",
     html: '<dfn id="dom-customelementregistry-whendefined"><code>whenDefined(<var>name</var>)</code></dfn>',
     changesToBaseDfn: [
