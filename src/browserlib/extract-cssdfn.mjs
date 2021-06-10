@@ -1,3 +1,5 @@
+import informativeSelector from './informative-selector.mjs';
+
 /**
  * Extract the list of CSS definitions in the current spec
  *
@@ -10,16 +12,16 @@
  */
 export default function () {
   let res = {
-    properties: extractTableDfns(document, 'propdef'),
-    descriptors: extractTableDfns(document, 'descdef'),
+    properties: extractTableDfns(document, 'propdef', { unique: true }),
+    descriptors: extractTableDfns(document, 'descdef', { unique: false }),
     valuespaces: extractValueSpaces(document)
   };
 
   // Try old recipes if we couldn't extract anything
   if ((Object.keys(res.properties).length === 0) &&
       (Object.keys(res.descriptors).length === 0)) {
-    res.properties = extractDlDfns(document, 'propdef');
-    res.descriptors = extractDlDfns(document, 'descdef');
+    res.properties = extractDlDfns(document, 'propdef', { unique: true });
+    res.descriptors = extractDlDfns(document, 'descdef', { unique: false });
   }
 
   return res;
@@ -89,15 +91,28 @@ const extractDlDfn = dl => {
 /**
  * Extract CSS definitions in a spec using the given CSS selector and extractor
  */
-const extractDfns = (doc, selector, extractor) => {
+const extractDfns = (doc, selector, extractor, { unique } = { unique: true }) => {
   let res = {};
   [...doc.querySelectorAll(selector)]
+    .filter(el => !el.closest(informativeSelector))
     .map(extractor)
     .filter(dfn => !!dfn.name)
     .map(dfn => dfn.name.split(',').map(name => Object.assign({},
       dfn, { name: name.trim() })))
     .reduce((acc, val) => acc.concat(val), [])
-    .forEach(dfn => res[dfn.name] = dfn);
+    .forEach(dfn => {
+      if (res[dfn.name]) {
+        if (unique) {
+          throw new Error(`More than one dfn found for CSS property/descriptor "${dfn.name}"`);
+        }
+        else {
+          res[dfn.name].push(dfn);
+        }
+      }
+      else {
+        res[dfn.name] = unique ? dfn : [dfn];
+      }
+    });
   return res;
 };
 
@@ -106,16 +121,16 @@ const extractDfns = (doc, selector, extractor) => {
  * Extract CSS definitions in tables for the given class name
  * (typically one of `propdef` or `descdef`)
  */
-const extractTableDfns = (doc, className) =>
-  extractDfns(doc, 'table.' + className + ':not(.attrdef)', extractTableDfn);
+const extractTableDfns = (doc, className, options) =>
+  extractDfns(doc, 'table.' + className + ':not(.attrdef)', extractTableDfn, options);
 
 
 /**
  * Extract CSS definitions in a dl list for the given class name
  * (typically one of `propdef` or `descdef`)
  */
-const extractDlDfns = (doc, className) =>
-  extractDfns(doc, 'div.' + className + ' dl', extractDlDfn);
+const extractDlDfns = (doc, className, options) =>
+  extractDfns(doc, 'div.' + className + ' dl', extractDlDfn, options);
 
 
 /**
@@ -142,6 +157,7 @@ const extractValueSpaces = doc => {
   // (remove note references as in:
   // https://drafts.csswg.org/css-syntax-3/#the-anb-type)
   parseProductionRules([...doc.querySelectorAll('pre.prod')]
+    .filter(el => !el.closest(informativeSelector))
     .map(el => {
       [...el.querySelectorAll('sup')]
         .map(sup => sup.parentNode.removeChild(sup));
@@ -153,6 +169,7 @@ const extractValueSpaces = doc => {
   // an explicit class, as in:
   // https://drafts.fxtf.org/compositing-1/#ltblendmodegt
   parseProductionRules([...doc.querySelectorAll('pre:not(.idl)')]
+    .filter(el => !el.closest(informativeSelector))
     .filter(el => el.querySelector('dfn'))
     .map(el => el.textContent));
 
@@ -160,6 +177,7 @@ const extractValueSpaces = doc => {
   // https://drafts.csswg.org/css-shapes-1/#funcdef-inset
   // https://drafts.csswg.org/css-transforms/#funcdef-transform-matrix
   parseProductionRules([...doc.querySelectorAll('dt > dfn.css, dt > span.prod > dfn.css')]
+    .filter(el => !el.closest(informativeSelector))
     .filter(el => el.parentNode.textContent.match(/\s?=\s/))
     .map(el => el.parentNode.textContent));
 
@@ -167,6 +185,7 @@ const extractValueSpaces = doc => {
   // value are mixed together, as in:
   // https://drafts.csswg.org/css-overflow-4/#funcdef-text-overflow-fade
   parseProductionRules([...doc.querySelectorAll('dt > dfn.css')]
+    .filter(el => !el.closest(informativeSelector))
     .filter(el => el.parentNode.textContent.trim().match(/^[a-zA-Z_][a-zA-Z0-9_\-]+\([^\)]*\)$/))
     .map(el => {
       let fn = el.parentNode.textContent.trim()
@@ -179,6 +198,7 @@ const extractValueSpaces = doc => {
   // paragraphs, as in:
   // https://svgwg.org/svg2-draft/painting.html#DataTypeDasharray
   parseProductionRules([...doc.querySelectorAll('.definition > dfn')]
+    .filter(el => !el.closest(informativeSelector))
     .filter(el => el.parentNode.textContent.match(/\s?=\s/))
     .map(el => el.parentNode.textContent));
 
@@ -187,6 +207,7 @@ const extractValueSpaces = doc => {
   // https://drafts.csswg.org/css-animations-2/#typedef-single-animation-composition
   // https://drafts.csswg.org/css-transitions/#single-transition-property
   parseProductionRules([...doc.querySelectorAll('p > dfn, div.prod > dfn')]
+    .filter(el => !el.closest(informativeSelector))
     .filter(el => el.parentNode.textContent.trim().match(/^<.*>\s?=\s/))
     .map(el => el.parentNode.textContent));
 
@@ -195,6 +216,7 @@ const extractValueSpaces = doc => {
   // https://drafts.csswg.org/css-fonts/#absolute-size-value
   // https://drafts.csswg.org/css-content/#typedef-content-content-list
   [...doc.querySelectorAll('dt > dfn, dt > var')]
+    .filter(el => !el.closest(informativeSelector))
     .filter(el => el.textContent.trim().match(/^<.*>$/))
     .filter(el => {
       let link = el.querySelector('a[href]');

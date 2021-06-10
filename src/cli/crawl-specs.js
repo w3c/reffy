@@ -114,14 +114,16 @@ async function crawlSpec(spec, crawlOptions) {
         }
 
         // Add CSS property definitions that weren't in a table
-        (result.dfns || []).filter((dfn) => dfn.type == "property").forEach(propDfn => {
-            propDfn.linkingText.forEach(lt => {
-                if (!result.css.properties.hasOwnProperty(lt)) {
-                    result.css.properties[lt] = {
-                        name: lt
-                    };
-                }
-            });
+        (result.dfns || [])
+            .filter(dfn => dfn.type == "property" && !dfn.informative)
+            .forEach(propDfn => {
+                propDfn.linkingText.forEach(lt => {
+                    if (!result.css.properties.hasOwnProperty(lt)) {
+                        result.css.properties[lt] = {
+                            name: lt
+                        };
+                    }
+                });
         });
 
         // Ideally, the sample definition (property-name) in CSS2 and the custom

@@ -1,4 +1,5 @@
 import getGenerator from './get-generator.mjs';
+import informativeSelector from './informative-selector.mjs';
 
 /**
  * Extract the list of WebIDL definitions in the current spec
@@ -59,15 +60,6 @@ function extractBikeshedIdl() {
  * sure that it only extracts elements once.
  */
 function extractRespecIdl() {
-    // IDL filter voluntarily similar to that defined in Respec to exclude
-    // IDL defined with an `exclude` class:
-    // https://github.com/w3c/respec/blob/develop/src/core/utils.js#L69
-    // https://tabatkins.github.io/bikeshed/#metadata-informative-classes
-    const nonNormativeSelector = [
-        '.informative', '.note', '.issue', '.example', '.ednote', '.practice',
-        '.introductory', '.non-normative'
-    ].join(',');
-
     // Helper function that trims individual lines in an IDL block,
     // removing as much space as possible from the beginning of the page
     // while preserving indentation. Rules followed:
@@ -114,7 +106,7 @@ function extractRespecIdl() {
         .reduce((res, elements) => res.concat(elements), [])
         .filter(el => el !== idlEl)
         .filter((el, idx, self) => self.indexOf(el) === idx)
-        .filter(el => !el.closest(nonNormativeSelector))
+        .filter(el => !el.closest(informativeSelector))
         .map(el => el.cloneNode(true))
         .map(el => {
             const header = el.querySelector('.idlHeader');
