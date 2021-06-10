@@ -161,50 +161,6 @@ const tests = [
    spec: "html"
   },
   {
-    title: "detects HTML spec constructors",
-    html: '<dfn id="dom-broadcastchannel"><code>BroadcastChannel()</code></dfn>',
-    changesToBaseDfn: [{id: "dom-broadcastchannel",
-            access: "public",
-            type: "constructor",
-            linkingText: ["BroadcastChannel()"],
-            for: ['BroadcastChannel']}],
-
-    spec: "html"
-  },
-  {
-    title: "detects HTML legacy factory functions",
-    html: '<dfn id="dom-audio"><code>Audio(<var>src</var>)</code></dfn>',
-    changesToBaseDfn: [{id: "dom-audio",
-            access: "public",
-            type: "constructor",
-            linkingText: ["Audio(src)"],
-            for: ['HTMLAudioElement']}
-    ],
-    spec: "html"
-  },
-  {
-    title: "detects methods in the global scope",
-    html: '<dfn id="dom-btoa"><code id="dom-windowbase64-btoa">btoa(<var>data</var>)</code></dfn>',
-    changesToBaseDfn: [{id: "dom-btoa",
-            access: "public",
-            type: "method",
-            linkingText: ["btoa(data)"],
-            for: ['WindowOrWorkerGlobalScope']
-           }],
-    spec: "html"
-  },
-  {
-    title: "detects attribute in the global scope",
-    html: '<dfn id="dom-navigator"><code>navigator</code></dfn>',
-    changesToBaseDfn: [{id: "dom-navigator",
-            access: "public",
-            type: "attribute",
-            linkingText: ["navigator"],
-            for: ['Window']
-           }],
-    spec: "html"
-  },
-  {
     title: "handles HTML spec convention for methods",
     html: '<dfn id="dom-customelementregistry-whendefined"><code>whenDefined(<var>name</var>)</code></dfn>',
     changesToBaseDfn: [
