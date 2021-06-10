@@ -143,41 +143,12 @@ const tests = [
    html: "<dfn data-lt='foo \n   |\nbar' id=foo>Foo</dfn>",
    changesToBaseDfn: [{linkingText: ["foo", "bar"]}]
   },
-  {title: "handles HTML spec convention for defining elements",
-   html: '<h4 id="the-html-element"><span class="secno">4.1.1</span> The <dfn><code>html</code></dfn> element<a href="#the-html-element" class="self-link"></a></h4>',
-   changesToBaseDfn: [{id: "the-html-element",
-           access: "public",
-           type: "element",
-           linkingText: ["html"],
-           heading: { id: "the-html-element", title: "The html element", number: "4.1.1"},
-           definedIn: "heading"}],
-   spec: "html"
-  },
-  {title: "handles exceptions in the HTML spec convention for defining elements",
-   html: '<h4 id="the-video-element"><span class="secno">4.8.9</span> The <dfn id="video"><code>video</code></dfn> element<a href="#the-video-element" class="self-link"></a></h4>',
-   changesToBaseDfn: [{id: "video",
-           access: "public",
-           type: "element",
-           linkingText: ["video"],
-           heading: { id: "the-video-element", title: "The video element", number: "4.8.9"},
-           definedIn: "heading"}],
-   spec: "html"
-  },
   {title: "handles HTML spec conventions of definitions in headings",
    html: '<h6 id="parsing-main-inselect"><span class="secno">12.2.6.4.16</span> The "<dfn>in select</dfn>" insertion mode<a href="#parsing-main-inselect" class="self-link"></a></h6>',
    changesToBaseDfn: [{id: "parsing-main-inselect",
            linkingText: ["in select"],
            heading: { id: "parsing-main-inselect", title: "The \"in select\" insertion mode", number: "12.2.6.4.16"},
            definedIn: "heading"}],
-   spec: "html"
-  },
-  {title: "handles HTML spec convention for defining element interfaces",
-   html: '<pre><code class="idl">interface <dfn id="htmlhrelement"><c- g="">HTMLHRElement</c-></dfn> {};</code></pre>',
-   changesToBaseDfn: [{id: "htmlhrelement",
-           access: "public",
-           type: "interface",
-           linkingText: ["HTMLHRElement"],
-           definedIn: "pre"}],
    spec: "html"
   },
   {title: "handles finding IDL type across mixins and partial",
@@ -273,48 +244,6 @@ const tests = [
             linkingText: ["withCredentials"],
             for: ['EventSourceInit'],
             definedIn: "pre"}],
-    spec: "html"
-  },
-  {
-    title: "handles HTML spec rules for “global” event handlers",
-    html: '<td><dfn id="handler-oncopy"><code>oncopy</code></dfn> </td>',
-    changesToBaseDfn: [
-      {id: "handler-oncopy",
-            access: "public",
-            type: "attribute",
-            linkingText: ["oncopy"],
-            for: ['DocumentAndElementEventHandlers']}
-    ],
-    spec:"html"
-  },
-  {
-    title: "handles HTML spec convention for interface-bound event handlers",
-    html: '<td><dfn id="handler-texttracklist-onchange"><code>onchange</code></dfn> </td>',
-    changesToBaseDfn: [{id: "handler-texttracklist-onchange",
-            access: "public",
-            type: "attribute",
-            linkingText: ["onchange"],
-            for: ['TextTrackList']}],
-    spec: "html"
-  },
-  {
-    title: "handles exceptions to HTML spec convention for event handlers",
-    html: '<td><dfn id="handler-tracklist-onchange"><code>onchange</code></dfn> </td>',
-    changesToBaseDfn: [{id: "handler-tracklist-onchange",
-            access: "public",
-            type: "attribute",
-            linkingText: ["onchange"],
-            for: ['AudioTrackList', 'VideoTrackList']}],
-    spec: "html"
-  },
-  {
-    title: "handles exceptions to HTML spec convention for event handlers",
-    html: '<td><dfn id="handler-appcache-onchecking"><code>onchecking</code></dfn> </td>',
-    changesToBaseDfn: [{id: "handler-appcache-onchecking",
-            access: "public",
-            type: "attribute",
-            linkingText: ["onchecking"],
-            for: ['ApplicationCache']}],
     spec: "html"
   },
   {

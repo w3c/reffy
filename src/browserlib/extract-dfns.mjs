@@ -319,9 +319,6 @@ function preProcessHTML() {
       if (!el.id) {
         el.id = headingId;
       }
-      if (!el.dataset.dfnType && headingId.match(/^the-([^-]*)-element$/)) {
-        el.dataset.dfnType = 'element';
-      }
     });
 
   const manualIgnore = ["dom-xsltprocessor-transformtofragment", "dom-xsltprocessor-transformtodocument"];
@@ -343,11 +340,6 @@ function preProcessHTML() {
         el.dataset.noexport = "";
         return;
       }
-      // audio/menu in a heading with an id, throws off the "heading" convention
-      if (el.id === "audio" || el.id === "menus") {
-        el.dataset.dfnType = 'element';
-        return;
-      }
 
       // If there is a link, we assume this documents an imported definition
       // so we make it ignored by removing the id
@@ -357,39 +349,6 @@ function preProcessHTML() {
         return;
       }
       let m;
-
-      if (el.closest("code.idl")) {
-        // we look if that matches a top-level idl name
-        let idlTerm = idlTree.find(item => item.name === el.textContent);
-        if (idlTerm) {
-          // we split at space to cater for "interface mixin"
-          el.dataset.dfnType = idlTerm.type.split(' ')[0];
-          return;
-        }
-      }
-      if ((m = el.id.match(/^attr-([^-]+)$/))) {
-        el.dataset.dfnType = 'element-attr';
-        // not sure how to encode "every html element"?
-        // el.dataset.dfnFor = 'all HTML elements';
-        return;
-      }
-      if ((m = el.id.match(/^handler-([^-]+)$/))) {
-        const sharedEventHandlers = ["GlobalEventHandlers", "WindowEventHandlers", "DocumentAndElementEventHandlers"];
-        el.dataset.dfnType = 'attribute';
-        if (!el.dataset.dfnFor) {
-          let _for = sharedEventHandlers.filter(iface => idlInterfaces.find(item => item.name === iface && item.members.find(member => member.name === m[1])))[0];
-          if (_for) {
-            el.dataset.dfnFor = _for;
-          }
-        }
-        return;
-      }
-
-      if ((m = el.id.match(/^handler-([^-]+)-/))) {
-        el.dataset.dfnType = 'attribute';
-        el.dataset.dfnFor = el.dataset.dfnFor || fromIdToTypeAndFor(m[1])._for;
-        return;
-      }
 
       if ((m = el.id.match(/^selector-/))) {
         el.dataset.dfnType = 'selector';
