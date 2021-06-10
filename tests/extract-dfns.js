@@ -160,14 +160,6 @@ const tests = [
                        linkingText: ["taintEnabled()"]}],
    spec: "html"
   },
-  {title: "handles HTML spec convention for CSS selectors",
-   html: '<dt><dfn id="selector-visited" data-noexport=""><code>:visited</code></dfn></dt>',
-   changesToBaseDfn: [{id: "selector-visited",
-           type: "selector",
-           linkingText: [":visited"],
-           definedIn: "dt"}],
-   spec: "html"
-  },
   {
     title: "detects HTML spec constructors",
     html: '<dfn id="dom-broadcastchannel"><code>BroadcastChannel()</code></dfn>',

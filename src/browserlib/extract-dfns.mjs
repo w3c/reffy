@@ -402,11 +402,6 @@ function preProcessHTML() {
         return;
       }
 
-      if ((m = el.id.match(/^selector-/))) {
-        el.dataset.dfnType = 'selector';
-        return;
-      }
-
       if ((m = el.id.match(/^dom-([^-]+)$/) || el.id.match(/^dom-([^-]+)-[0-9]+$/) || el.id.match(/^dom-([^-]+)-constructor$/))) {
         const globalscopes = [
           "ElementContentEditable",
