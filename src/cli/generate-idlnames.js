@@ -24,8 +24,12 @@
 
 const fs = require('fs');
 const path = require('path');
-const { requireFromWorkingDirectory, expandCrawlResult } = require('../lib/util');
 const { matchIdlDfn, getExpectedDfnFromIdlDesc } = require('./check-missing-dfns');
+const {
+  expandCrawlResult,
+  isLatestLevelThatPasses,
+  requireFromWorkingDirectory
+} = require('../lib/util');
 
 
 /**
@@ -113,7 +117,17 @@ function generateIdlNames(results, options = {}) {
   const fragments = {};
   const names = {};
 
+  function defineIDLContent(spec) {
+    return spec.idl && spec.idl.idl;
+  }
+
+  // Only keep latest version of specs and delta specs that define some IDL
+  results = results.filter(spec =>
+    (spec.seriesComposition !== 'delta' && isLatestLevelThatPasses(spec, results, defineIDLContent)) ||
+    (spec.seriesComposition === 'delta' && defineIDLContent(spec)));
+
   // Add main definitions of all IDL names
+  // (using the latest version of a spec that defines some IDL)
   results.forEach(spec => {
     if (!spec.idl || !spec.idl.idlNames) {
       return;
