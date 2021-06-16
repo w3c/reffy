@@ -1,4 +1,5 @@
 import extractWebIdl from './extract-webidl.mjs';
+import informativeSelector from './informative-selector.mjs';
 import {parse} from "../../node_modules/webidl2/index.js";
 /**
  * Extract definitions in the spec that follow the "Definitions data model":
@@ -103,15 +104,8 @@ function definitionMapper(el, idToHeading) {
               el.getAttribute('data-dfn-type') !== 'dfn')) ?
       'public' : 'private',
 
-    // Whether the term is defined in a normative/informative section,
-    // provided the wrapping section follows usual patterns:
-    // https://github.com/w3c/respec/blob/develop/src/core/utils.js#L69
-    // https://tabatkins.github.io/bikeshed/#metadata-informative-classes
-    informative: !!el.closest([
-      '.informative', '.note', '.issue', '.example', '.ednote', '.practice',
-      '.introductory', '.non-normative'
-
-    ].join(',')),
+    // Whether the term is defined in a normative/informative section
+    informative: !!el.closest(informativeSelector),
 
     // Heading under which the term is to be found
     heading: idToHeading[el.getAttribute('id')],

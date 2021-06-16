@@ -1,4 +1,4 @@
-const { assert } = require('chai');
+const assert = require('assert');
 const puppeteer = require('puppeteer');
 const path = require('path');
 const rollup = require('rollup');
@@ -122,6 +122,71 @@ const tests = [
   },
 
   {
+    title: "ignores properties defined in an informative section",
+    html: `<div class="non-normative">
+      <table class="propdef">
+      <tbody>
+       <tr>
+        <th>Name:
+        </th><td><dfn class="dfn-paneled css" data-dfn-type="property" data-export="" id="propdef-background-color">background-color</dfn>
+       </td></tr><tr>
+        <th><a href="#values">Value</a>:
+        </th><td><a class="production css" data-link-type="type" href="https://www.w3.org/TR/css-color-3/#valuea-def-color" id="ref-for-valuea-def-color" title="Expands to: aliceblue | antiquewhite | aqua | aquamarine | azure | beige | bisque | black | blanchedalmond | blue | blueviolet | brown | burlywood | cadetblue | chartreuse | chocolate | coral | cornflowerblue | cornsilk | crimson | currentcolor | cyan | darkblue | darkcyan | darkgoldenrod | darkgray | darkgreen | darkgrey | darkkhaki | darkmagenta | darkolivegreen | darkorange | darkorchid | darkred | darksalmon | darkseagreen | darkslateblue | darkslategray | darkslategrey | darkturquoise | darkviolet | deeppink | deepskyblue | dimgray | dimgrey | dodgerblue | firebrick | floralwhite | forestgreen | fuchsia | gainsboro | ghostwhite | gold | goldenrod | gray | green | greenyellow | grey | honeydew | hotpink | indianred | indigo | ivory | khaki | lavender | lavenderblush | lawngreen | lemonchiffon | lightblue | lightcoral | lightcyan | lightgoldenrodyellow | lightgray | lightgreen | lightgrey | lightpink | lightsalmon | lightseagreen | lightskyblue | lightslategray | lightslategrey | lightsteelblue | lightyellow | lime | limegreen | linen | magenta | maroon | mediumaquamarine | mediumblue | mediumorchid | mediumpurple | mediumseagreen | mediumslateblue | mediumspringgreen | mediumturquoise | mediumvioletred | midnightblue | mintcream | mistyrose | moccasin | navajowhite | navy | oldlace | olive | olivedrab | orange | orangered | orchid | palegoldenrod | palegreen | paleturquoise | palevioletred | papayawhip | peachpuff | peru | pink | plum | powderblue | purple | rebeccapurple | red | rosybrown | royalblue | saddlebrown | salmon | sandybrown | seagreen | seashell | sienna | silver | skyblue | slateblue | slategray | slategrey | snow | springgreen | steelblue | tan | teal | thistle | tomato | transparent | turquoise | violet | wheat | white | whitesmoke | yellow | yellowgreen">&lt;color&gt;</a> 
+       </td></tr><tr>
+        <th>Initial:
+        </th><td>transparent
+       </td></tr><tr>
+        <th>Applies to:
+        </th><td>all elements
+       </td></tr><tr>
+        <th>Inherited:
+        </th><td>no
+       </td></tr><tr>
+        <th>Percentages:
+        </th><td>N/A
+       </td></tr><tr>
+        <th>Computed value:
+        </th><td>computed color
+       </td></tr><tr>
+        <th>Animation type:
+        </th><td>by computed value
+     </td></tr></tbody></table></div>`,
+    css: {}
+  },
+
+  {
+    title: "parses a valuespace prose definition",
+    html: `<dl>
+    <dt><dfn class="css" data-dfn-for="text-indent" data-dfn-type="value" data-export="" id="valdef-text-indent-percentage">&lt;percentage&gt;<a class="self-link" href="#valdef-text-indent-percentage"></a></dfn> 
+    </dt><dd>
+      Gives the amount of the indent
+      as a percentage of the block container’s own <a data-link-type="dfn" href="https://drafts.csswg.org/css-writing-modes-4/#logical-width" id="ref-for-logical-width">logical width</a>. 
+     <p>Percentages must be treated as <span class="css">0</span> for the purpose of calculating <a data-link-type="dfn" href="https://drafts.csswg.org/css-sizing-3/#intrinsic-size-contribution" id="ref-for-intrinsic-size-contribution">intrinsic size contributions</a>,
+      but are always resolved normally when performing layout.</p>
+    </dd></dl>`,
+    propertyName: "valuespaces",
+    css: {
+      "<percentage>": {
+        "prose": "Gives the amount of the indent as a percentage of the block container’s own logical width. Percentages must be treated as 0 for the purpose of calculating intrinsic size contributions, but are always resolved normally when performing layout."
+      }
+    }
+  },
+
+  {
+    title: "ignores a valuespace prose definition in an informative section",
+    html: `<div class="note"><dl>
+    <dt><dfn class="css" data-dfn-for="text-indent" data-dfn-type="value" data-export="" id="valdef-text-indent-percentage">&lt;percentage&gt;<a class="self-link" href="#valdef-text-indent-percentage"></a></dfn> 
+    </dt><dd>
+      Gives the amount of the indent
+      as a percentage of the block container’s own <a data-link-type="dfn" href="https://drafts.csswg.org/css-writing-modes-4/#logical-width" id="ref-for-logical-width">logical width</a>. 
+     <p>Percentages must be treated as <span class="css">0</span> for the purpose of calculating <a data-link-type="dfn" href="https://drafts.csswg.org/css-sizing-3/#intrinsic-size-contribution" id="ref-for-intrinsic-size-contribution">intrinsic size contributions</a>,
+      but are always resolved normally when performing layout.</p>
+    </dd></dl></div>`,
+    propertyName: "valuespaces",
+    css: {}
+  },
+
+  {
     title: "parses a valuespace prose definition, excluding tests and notes",
     html: `<dl>
     <dt><dfn class="css" data-dfn-for="text-indent" data-dfn-type="value" data-export="" id="valdef-text-indent-percentage">&lt;percentage&gt;<a class="self-link" href="#valdef-text-indent-percentage"></a></dfn> 
@@ -185,6 +250,110 @@ const tests = [
         "prose": "Decides the path length used when offset-distance is expressed as a percentage, using the distance to the containing box. For <size> values other than sides, the path length is independent of <angle>. It is defined as: <size> = [ closest-side | closest-corner | farthest-side | farthest-corner | sides ]"
       }
     }
+  },
+
+
+  {
+    title: "extracts multiple descriptors with the same name",
+    html: `
+      <table class="def descdef">
+    <tbody>
+     <tr>
+      <th>Name:
+      </th><td><dfn class="dfn-paneled css" data-dfn-for="@font-face" data-dfn-type="descriptor" data-export="" id="descdef-font-face-font-display">font-display</dfn>
+     </td></tr><tr>
+      <th>For:
+      </th><td><a class="css" data-link-type="at-rule" href="#at-font-face-rule" id="ref-for-at-font-face-rule④⑥">@font-face</a>
+     </td></tr><tr>
+      <th>Value:
+      </th><td class="prod">auto <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-one" id="ref-for-comb-one⑥⑨">|</a> block <span id="ref-for-comb-one⑦⓪">|</span> swap <span id="ref-for-comb-one⑦①">|</span> fallback <span id="ref-for-comb-one⑦②">|</span> optional
+     </td></tr><tr>
+      <th>Initial:
+      </th><td>auto
+   </td></tr></tbody></table>
+   <table class="def descdef">
+    <tbody>
+     <tr>
+      <th>Name:
+      </th><td><dfn class="dfn-paneled css" data-dfn-for="@font-feature-values" data-dfn-type="descriptor" data-export="" id="descdef-font-feature-values-font-display">font-display</dfn>
+     </td></tr><tr>
+      <th>For:
+      </th><td><a class="css" data-link-type="at-rule" href="#at-ruledef-font-feature-values" id="ref-for-at-ruledef-font-feature-values③">@font-feature-values</a>
+     </td></tr><tr>
+      <th>Value:
+      </th><td class="prod">auto <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-one" id="ref-for-comb-one⑦③">|</a> block <span id="ref-for-comb-one⑦④">|</span> swap <span id="ref-for-comb-one⑦⑤">|</span> fallback <span id="ref-for-comb-one⑦⑥">|</span> optional
+     </td></tr><tr>
+      <th>Initial:
+      </th><td>auto
+   </td></tr></tbody></table>`,
+    propertyName: "descriptors",
+    css: {
+      "font-display": [
+        {
+          for: "@font-face",
+          initial: "auto",
+          name: "font-display",
+          value: "auto | block | swap | fallback | optional"
+        },
+        {
+          for: "@font-feature-values",
+          initial: "auto",
+          name: "font-display",
+          value: "auto | block | swap | fallback | optional"
+        }
+      ]
+    }
+  },
+
+
+  {
+    title: "throws when a property is defined more than once",
+    html: `
+      <table class="def propdef" data-link-for-hint="scrollbar-gutter"><tbody>
+       <tr>
+        <th>Name:
+        </th><td><dfn class="dfn-paneled css" data-dfn-type="property" data-export="" id="propdef-scrollbar-gutter">scrollbar-gutter</dfn>
+       </td></tr><tr class="value">
+        <th><a href="https://www.w3.org/TR/css-values/#value-defs">Value:</a>
+        </th><td class="prod">auto <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-one" id="ref-for-comb-one">|</a> stable <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-all" id="ref-for-comb-all">&amp;&amp;</a> mirror<a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#mult-opt" id="ref-for-mult-opt">?</a>
+       </td></tr><tr>
+        <th><a href="https://www.w3.org/TR/css-cascade/#initial-values">Initial:</a>
+        </th><td>auto
+       </td></tr><tr>
+        <th>Applies to:
+        </th><td><a data-link-type="dfn" href="https://drafts.csswg.org/css-overflow-3/#scroll-container" id="ref-for-scroll-container">scroll containers</a>
+       </td></tr><tr>
+        <th><a href="https://www.w3.org/TR/css-cascade/#inherited-property">Inherited:</a>
+        </th><td>no
+       </td></tr><tr>
+        <th><a href="https://www.w3.org/TR/css-values/#percentages">Percentages:</a>
+        </th><td>n/a
+       </td></tr><tr>
+        <th><a href="https://www.w3.org/TR/css-cascade/#computed">Computed value:</a>
+        </th><td>specified keyword(s)
+       </td></tr><tr>
+        <th>Canonical order:
+        </th><td>per grammar
+       </td></tr><tr>
+        <th><a href="https://www.w3.org/TR/web-animations/#animation-type">Animation type:</a>
+        </th><td>discrete
+        </td></tr>
+      </tbody></table>
+      <table class="def propdef partial" data-link-for-hint="scrollbar-gutter">
+       <tbody>
+        <tr>
+         <th>Name:
+         </th><td><a class="css" data-link-type="property" href="#propdef-scrollbar-gutter" id="ref-for-propdef-scrollbar-gutter①⓪">scrollbar-gutter</a>
+        </td></tr><tr class="value">
+         <th><a href="https://www.w3.org/TR/css-values/#value-defs">New values:</a>
+         </th><td class="prod">auto <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-one" id="ref-for-comb-one①⓪">|</a> [ [ stable <span id="ref-for-comb-one①①">|</span> always ] <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-all" id="ref-for-comb-all①">&amp;&amp;</a> mirror<a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#mult-opt" id="ref-for-mult-opt①">?</a> <span id="ref-for-comb-all②">&amp;&amp;</span> force<span id="ref-for-mult-opt②">?</span> ] <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-any" id="ref-for-comb-any">||</a> match-parent
+        </td></tr><tr>
+         <th>Applies to:
+         </th><td><a href="https://www.w3.org/TR/css-pseudo/#generated-content" title="Includes ::before and ::after pseudo-elements.">all elements</a>
+        </td></tr>
+       </tbody>
+      </table>`,
+    error: 'More than one dfn found for CSS property/descriptor "scrollbar-gutter"'
   }
 ];
 
@@ -210,19 +379,28 @@ describe("Test CSS properties extraction", function() {
   tests.forEach(t => {
     it(t.title, async () => {
       const page = await browser.newPage();
-      let pageContent = t.html;
+      const pageContent = t.html;
       page.setContent(pageContent);
       await page.addScriptTag({ content: extractCSSCode });
 
       const extractedCss = await page.evaluate(async () => {
-        return extractCSS();
+        try {
+          return extractCSS();
+        }
+        catch (err) {
+          return { error: err.message };
+        }
       });
       await page.close();
 
-      assert.deepEqual(extractedCss[t.propertyName ?? 'properties'], t.css);
+      if (t.error) {
+        assert.deepEqual(extractedCss, { error: t.error });
+      }
+      else {
+        assert.deepEqual(extractedCss[t.propertyName ?? 'properties'], t.css);
+      }
     });
   });
-
 
   after(async () => {
     await browser.close();
