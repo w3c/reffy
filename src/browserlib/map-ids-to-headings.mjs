@@ -36,6 +36,18 @@ export default function () {
   const { outline, nodeToSection } = createOutline(document.body);
   const sections = flattenSections(outline);
 
+  // Compute once whether we created a single page version out of multiple pages
+  const isMultipage = !!document.querySelector('[data-reffy-page]');
+
+  function getAbsoluteUrl(node) {
+    const page = isMultipage ?
+      node.closest('[data-reffy-page]')?.getAttribute('data-reffy-page') :
+      null;
+    const url = new URL(page ?? window.location.href);
+    url.hash = '#' + node.id;
+    return url.toString();
+  }
+
   const mappingTable = {};
   [...document.querySelectorAll('[id]')].forEach(node => {
     let parentSection = nodeToSection.get(node);
@@ -48,25 +60,35 @@ export default function () {
         section.subRoots.includes(parentSection));
     }
 
+    // Compute the absolute URL with fragment
+    // (Note the crawler merges pages of a multi-page spec in the first page
+    // to ease parsing logic, and we want to get back to the URL of the page)
+    const nodeid = getAbsoluteUrl(node);
+    let href = nodeid;
+
     if (parentSection) {
       const heading = parentSection.heading;
       let id = heading.id;
+      href = getAbsoluteUrl(heading);
+
       if (parentSection.root && parentSection.root.hasAttribute('id')) {
         id = parentSection.root.id;
+        href = getAbsoluteUrl(parentSection.root);
       }
 
       const trimmedText = heading.textContent.trim();
       const match = trimmedText.match(reNumber);
       const number = match ? match[1] : null;
 
-      mappingTable[node.id] = {
+      mappingTable[nodeid] = {
         id,
+        href,
         title: trimmedText.replace(reNumber, '').trim().replace(/\s+/g, ' ')
       };
 
       if (number) {
         // Store the number without the final "."
-        mappingTable[node.id].number = number.replace(/\.$/, '');
+        mappingTable[nodeid].number = number.replace(/\.$/, '');
       }
     }
   });

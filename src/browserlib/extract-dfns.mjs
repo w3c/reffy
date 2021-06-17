@@ -59,20 +59,21 @@ function definitionMapper(el, idToHeading) {
       break;
   }
 
+  // Compute the absolute URL with fragment
+  // (Note the crawler merges pages of a multi-page spec in the first page
+  // to ease parsing logic, and we want to get back to the URL of the page)
+  const page = el.closest('[data-reffy-page]')?.getAttribute('data-reffy-page');
+  const url = new URL(page ?? window.location.href);
+  url.hash = '#' + el.getAttribute('id');
+  const href = url.toString();
+
   return {
     // ID is the id attribute
+    // (ID may not be unique in a multi-page spec)
     id: el.getAttribute('id'),
 
-    // Compute the absolute URL
-    // (Note the crawler merges pages of a multi-page spec in the first page
-    // to ease parsing logic, and we want to get back to the URL of the page)
-    href: (_ => {
-      const pageWrapper = el.closest('[data-reffy-page]');
-      const url = new URL(pageWrapper ?
-                          pageWrapper.getAttribute('data-reffy-page') : window.location.href);
-      url.hash = '#' + el.getAttribute('id');
-      return url.toString();
-    })(),
+    // Absolute URL with fragment
+    href,
 
     // Linking text is given by the data-lt attribute if present, or it is the
     // textual content
@@ -114,7 +115,7 @@ function definitionMapper(el, idToHeading) {
     ].join(',')),
 
     // Heading under which the term is to be found
-    heading: idToHeading[el.getAttribute('id')],
+    heading: idToHeading[href],
 
     // Enclosing element under which the definition appears. Value can be one of
     // "dt", "pre", "table", "heading", "note", "example", or "prose" (last one

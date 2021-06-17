@@ -125,7 +125,7 @@ const tests = [
   },
   {title: "considers definitions in headings",
    html: "<h2 data-dfn-type=dfn id=foo>Foo</h2>",
-   changesToBaseDfn: [{heading: { id: "foo", title: "Foo"}, definedIn: "heading"}]
+   changesToBaseDfn: [{heading: { id: "foo", href: "about:blank#foo", title: "Foo"}, definedIn: "heading"}]
   },
   {title: "ignores elements that aren't <dfn> and headings",
    html: "<span data-dfn-type=dfn id=foo>Foo</span>",
@@ -147,7 +147,7 @@ const tests = [
    html: '<h6 id="parsing-main-inselect"><span class="secno">12.2.6.4.16</span> The "<dfn>in select</dfn>" insertion mode<a href="#parsing-main-inselect" class="self-link"></a></h6>',
    changesToBaseDfn: [{id: "parsing-main-inselect",
            linkingText: ["in select"],
-           heading: { id: "parsing-main-inselect", title: "The \"in select\" insertion mode", number: "12.2.6.4.16"},
+           heading: { id: "parsing-main-inselect", href: "about:blank#parsing-main-inselect", title: "The \"in select\" insertion mode", number: "12.2.6.4.16"},
            definedIn: "heading"}],
    spec: "html"
   },
@@ -333,7 +333,7 @@ const tests = [
       linkingText: ["link"],
       type: "element",
       access: "public",
-      heading: { id: "LinkElement", title: "External style sheets: the effect of the HTML ‘link’ element", number: "6.3"},
+      heading: { id: "LinkElement", href: "about:blank#LinkElement", title: "External style sheets: the effect of the HTML ‘link’ element", number: "6.3"},
       definedIn: "heading"
     }],
     spec: "SVG2"
@@ -396,7 +396,7 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       linkingText: ["SVGAnimatedLengthList"],
       type: "interface",
       access: "public",
-      heading: { id: "InterfaceSVGAnimatedLengthList", title: "Interface SVGAnimatedLengthList", number: "4.6.10"},
+      heading: { id: "InterfaceSVGAnimatedLengthList", href: "about:blank#InterfaceSVGAnimatedLengthList", title: "Interface SVGAnimatedLengthList", number: "4.6.10"},
       definedIn: "heading"
     }],
     spec: "SVG2"
