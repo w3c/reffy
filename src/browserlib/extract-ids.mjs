@@ -22,7 +22,7 @@ export default function () {
       .filter(n => !n.id || n.id !== n.name).map(n => getAbsoluteUrl(n))
     )
 
-    // I respec- prefixed ids to avoid keeping track of their evolution
+    // Ignore respec- prefixed ids to avoid keeping track of their evolution
     // They're clearly not meant to be link target in any case
     .filter(id => !id.startsWith('respec-'));
 }
