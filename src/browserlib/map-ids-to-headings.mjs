@@ -1,4 +1,5 @@
 import createOutline from './create-outline.mjs';
+import getAbsoluteUrl from './get-absolute-url.mjs';
 
 /**
  * Generate a mapping between elements that have an ID and the closest heading
@@ -37,16 +38,7 @@ export default function () {
   const sections = flattenSections(outline);
 
   // Compute once whether we created a single page version out of multiple pages
-  const isMultipage = !!document.querySelector('[data-reffy-page]');
-
-  function getAbsoluteUrl(node) {
-    const page = isMultipage ?
-      node.closest('[data-reffy-page]')?.getAttribute('data-reffy-page') :
-      null;
-    const url = new URL(page ?? window.location.href);
-    url.hash = '#' + node.id;
-    return url.toString();
-  }
+  const singlePage = !document.querySelector('[data-reffy-page]');
 
   const mappingTable = {};
   [...document.querySelectorAll('[id]')].forEach(node => {
@@ -63,17 +55,17 @@ export default function () {
     // Compute the absolute URL with fragment
     // (Note the crawler merges pages of a multi-page spec in the first page
     // to ease parsing logic, and we want to get back to the URL of the page)
-    const nodeid = getAbsoluteUrl(node);
+    const nodeid = getAbsoluteUrl(node, { singlePage });
     let href = nodeid;
 
     if (parentSection) {
       const heading = parentSection.heading;
       let id = heading.id;
-      href = getAbsoluteUrl(heading);
+      href = getAbsoluteUrl(heading, { singlePage });
 
       if (parentSection.root && parentSection.root.hasAttribute('id')) {
         id = parentSection.root.id;
-        href = getAbsoluteUrl(parentSection.root);
+        href = getAbsoluteUrl(parentSection.root, { singlePage });
       }
 
       const trimmedText = heading.textContent.trim();

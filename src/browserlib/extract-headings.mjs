@@ -1,18 +1,11 @@
+import getAbsoluteUrl from './get-absolute-url.mjs';
+
 /**
  * Extract headings data from documents
 */
 export default function (idToHeading) {
   // Compute once whether we created a single page version out of multiple pages
-  const isMultipage = !!document.querySelector('[data-reffy-page]');
-
-  function getAbsoluteUrl(node) {
-    const page = isMultipage ?
-      node.closest('[data-reffy-page]')?.getAttribute('data-reffy-page') :
-      null;
-    const url = new URL(page ?? window.location.href);
-    url.hash = '#' + node.id;
-    return url.toString();
-  }
+  const singlePage = !document.querySelector('[data-reffy-page]');
 
   // Headings using the markup convention of the EcmaScript spec
   const esHeadings = [...document.querySelectorAll('emu-clause[id] > h1')].map(n => {
@@ -33,7 +26,7 @@ export default function (idToHeading) {
     // headings not to create a mess in the outline). In practice, this only
     // really happens so far for WHATWG spec titles that (correctly) group the
     // title and subtitle headings in a <hgroup>.
-    const href = getAbsoluteUrl(n);
+    const href = getAbsoluteUrl(n, { singlePage });
     const heading = idToHeading[href] || {
       id: n.id,
       href,
