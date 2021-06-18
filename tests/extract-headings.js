@@ -7,7 +7,7 @@ const testHeadings = [
   {
     title: "extracts a simple heading",
     html: "<h1 id=title>Title</h1>",
-    res: [{id: "title", title: "Title", level: 1}]
+    res: [{id: "title", href: "about:blank#title", title: "Title", level: 1}]
   },
   {
     title: "ignores a heading without id",
@@ -17,7 +17,7 @@ const testHeadings = [
   {
     title: "extracts a heading title without its section number",
     html: "<h2 id=title>2.3 Title</h2>",
-    res: [{id: "title", title: "Title", number: "2.3", level: 2}]
+    res: [{id: "title", href: "about:blank#title", title: "Title", number: "2.3", level: 2}]
   }
 ];
 
