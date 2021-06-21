@@ -29,11 +29,77 @@ import {parse} from "../../node_modules/webidl2/index.js";
  * @return {Array(Object)} An Array of definitions
 */
 
-function definitionMapper(el, idToHeading) {
-  function normalize(str) {
-    return str.trim().replace(/\s+/g, ' ');
-  }
+function normalize(str) {
+  return str.trim().replace(/\s+/g, ' ');
+}
 
+// Valid types defined in https://tabatkins.github.io/bikeshed/#dfn-types
+// (+ "namespace" and "event" which are not yet in the doc)
+function hasValidType(el) {
+  const validDfnTypes = [
+    // CSS types
+    'property',
+    'descriptor',
+    'value',
+    'type',
+    'at-rule',
+    'function',
+    'selector',
+
+    // Web IDL types
+    'namespace',
+    'interface',
+    'constructor',
+    'method',
+    'argument',
+    'attribute',
+    'callback',
+    'dictionary',
+    'dict-member',
+    'enum',
+    'enum-value',
+    'exception',
+    'const',
+    'typedef',
+    'stringifier',
+    'serializer',
+    'iterator',
+    'maplike',
+    'setlike',
+    'extended-attribute',
+    'event',
+
+    // Element types
+    'element',
+    'element-state',
+    'element-attr',
+    'attr-value',
+
+
+    // URL scheme
+    'scheme',
+
+    // HTTP header
+    'http-header',
+
+    // Grammar type
+    'grammar',
+
+    // "English" terms
+    'abstract-op',
+    'dfn'
+  ];
+
+  const type = el.getAttribute('data-dfn-type') ?? 'dfn';
+  const isValid = validDfnTypes.includes(type);
+  if (!isValid) {
+    console.warn('[reffy]', `"${type}" is an invalid dfn type for "${normalize(el.textContent)}"`);
+  }
+  return isValid;
+}
+
+
+function definitionMapper(el, idToHeading) {
   let definedIn = 'prose';
   const enclosingEl = el.closest('dt,pre,table,h1,h2,h3,h4,h5,h6,.note,.example') || el;
   switch (enclosingEl.nodeName) {
@@ -140,6 +206,18 @@ export default function (spec, idToHeading = {}) {
   }
 
   return [...document.querySelectorAll(definitionsSelector)]
+    .map(node => {
+      // 2021-06-21: Temporary preprocessing of invalid "idl" dfn type (used for
+      // internal slots) while fix for https://github.com/w3c/respec/issues/3644
+      // propagates to all EDs and /TR specs. To be dropped once crawls no
+      // longer produce warnings.
+      if (node.getAttribute('data-dfn-type') === 'idl') {
+        node.setAttribute('data-dfn-type', 'attribute');
+        console.warn('[reffy]', `Fixed invalid "idl" dfn type "${normalize(node.textContent)}"`);
+      }
+      return node;
+    })
+    .filter(hasValidType)
     .map(node => definitionMapper(node, idToHeading));
 }
 
