@@ -107,16 +107,10 @@ const mergeDfns = (dfn1, dfn2) => {
     return null;
   }
 
-  const baseDfn = dfn2.value ? dfn2 : dfn1;
-  if (!baseDfn.value && !baseDfn.newValues) {
-    return null;
-  }
-
-  const partialDfn = (baseDfn === dfn1) ? dfn2 : dfn1;
-  if (!partialDfn.newValues || partialDfn.initial) {
-    return null;
-  }
-  if (partialDfn.initial && partialDfn.initial !== baseDfn.initial) {
+  const [baseDfn, partialDfn] = dfn2.value ? [dfn2, dfn1] : [dfn1, dfn2];
+  if ((!baseDfn.value && !baseDfn.newValues) ||
+      !partialDfn.newValues ||
+      (partialDfn.initial && partialDfn.initial !== baseDfn.initial)) {
     return null;
   }
 
