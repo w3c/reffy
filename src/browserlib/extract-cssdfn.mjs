@@ -89,12 +89,57 @@ const extractDlDfn = dl => {
 
 
 /**
+ * Merges CSS definitions for the same property into one
+ *
+ * The function runs a few simple sanity checks on the definitions. More checks
+ * would be needed to fully validate that merging is fine.
+ *
+ * The function returns null if CSS definitions cannot be merged.
+ */
+const mergeDfns = (dfn1, dfn2) => {
+  // Definitions should be about the same property
+  if (dfn1.name !== dfn2.name) {
+    return null;
+  }
+
+  // There should never be two base definitions for the same CSS property
+  if (dfn1.value && dfn2.value) {
+    return null;
+  }
+
+  const baseDfn = dfn2.value ? dfn2 : dfn1;
+  if (!baseDfn.value && !baseDfn.newValues) {
+    return null;
+  }
+
+  const partialDfn = (baseDfn === dfn1) ? dfn2 : dfn1;
+  if (!partialDfn.newValues || partialDfn.initial) {
+    return null;
+  }
+  if (partialDfn.initial && partialDfn.initial !== baseDfn.initial) {
+    return null;
+  }
+
+  const merged = Object.assign(baseDfn);
+  if (merged.value) {
+    merged.value += ` | ${partialDfn.newValues}`;
+  }
+  else {
+    merged.newValues += ` | ${partialDfn.newValues}`;
+  }
+
+  return merged;
+};
+
+
+/**
  * Extract CSS definitions in a spec using the given CSS selector and extractor
  */
 const extractDfns = (doc, selector, extractor, { unique } = { unique: true }) => {
   let res = {};
   [...doc.querySelectorAll(selector)]
     .filter(el => !el.closest(informativeSelector))
+    .filter(el => !el.querySelector('ins, del'))
     .map(extractor)
     .filter(dfn => !!dfn.name)
     .map(dfn => dfn.name.split(',').map(name => Object.assign({},
@@ -103,7 +148,11 @@ const extractDfns = (doc, selector, extractor, { unique } = { unique: true }) =>
     .forEach(dfn => {
       if (res[dfn.name]) {
         if (unique) {
-          throw new Error(`More than one dfn found for CSS property/descriptor "${dfn.name}"`);
+          const merged = mergeDfns(res[dfn.name], dfn);
+          if (!merged) {
+            throw new Error(`More than one dfn found for CSS property "${dfn.name}" and dfns cannot be merged`);
+          }
+          res[dfn.name] = merged;
         }
         else {
           res[dfn.name].push(dfn);

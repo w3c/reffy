@@ -307,7 +307,7 @@ const tests = [
 
 
   {
-    title: "throws when a property is defined more than once",
+    title: "throws when a property is defined more than once and cannot be merged",
     html: `
       <table class="def propdef" data-link-for-hint="scrollbar-gutter"><tbody>
        <tr>
@@ -348,13 +348,49 @@ const tests = [
          <th><a href="https://www.w3.org/TR/css-values/#value-defs">New values:</a>
          </th><td class="prod">auto <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-one" id="ref-for-comb-one①⓪">|</a> [ [ stable <span id="ref-for-comb-one①①">|</span> always ] <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-all" id="ref-for-comb-all①">&amp;&amp;</a> mirror<a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#mult-opt" id="ref-for-mult-opt①">?</a> <span id="ref-for-comb-all②">&amp;&amp;</span> force<span id="ref-for-mult-opt②">?</span> ] <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-any" id="ref-for-comb-any">||</a> match-parent
         </td></tr><tr>
+          <th><a href="https://www.w3.org/TR/css-cascade/#initial-values">Initial:</a>
+          </th><td>A different initial value
+         </td></tr><tr>
          <th>Applies to:
          </th><td><a href="https://www.w3.org/TR/css-pseudo/#generated-content" title="Includes ::before and ::after pseudo-elements.">all elements</a>
         </td></tr>
        </tbody>
       </table>`,
-    error: 'More than one dfn found for CSS property/descriptor "scrollbar-gutter"'
-  }
+    error: 'More than one dfn found for CSS property \"scrollbar-gutter\" and dfns cannot be merged'
+  },
+
+
+  {
+    title: "ignores definitions that describe changes",
+    html: `<table class="propdef">
+      <tbody>
+       <tr>
+        <th>Name:
+        </th><td><dfn class="dfn-paneled css" data-dfn-type="property" data-export="" id="propdef-background-color">background-color</dfn>
+       </td></tr><tr>
+        <th><a href="#values">Value</a>:
+        </th><td><a class="production css" data-link-type="type" href="https://www.w3.org/TR/css-color-3/#valuea-def-color" id="ref-for-valuea-def-color" title="Expands to: aliceblue | antiquewhite | aqua | aquamarine | azure | beige | bisque | black | blanchedalmond | blue | blueviolet | brown | burlywood | cadetblue | chartreuse | chocolate | coral | cornflowerblue | cornsilk | crimson | currentcolor | cyan | darkblue | darkcyan | darkgoldenrod | darkgray | darkgreen | darkgrey | darkkhaki | darkmagenta | darkolivegreen | darkorange | darkorchid | darkred | darksalmon | darkseagreen | darkslateblue | darkslategray | darkslategrey | darkturquoise | darkviolet | deeppink | deepskyblue | dimgray | dimgrey | dodgerblue | firebrick | floralwhite | forestgreen | fuchsia | gainsboro | ghostwhite | gold | goldenrod | gray | green | greenyellow | grey | honeydew | hotpink | indianred | indigo | ivory | khaki | lavender | lavenderblush | lawngreen | lemonchiffon | lightblue | lightcoral | lightcyan | lightgoldenrodyellow | lightgray | lightgreen | lightgrey | lightpink | lightsalmon | lightseagreen | lightskyblue | lightslategray | lightslategrey | lightsteelblue | lightyellow | lime | limegreen | linen | magenta | maroon | mediumaquamarine | mediumblue | mediumorchid | mediumpurple | mediumseagreen | mediumslateblue | mediumspringgreen | mediumturquoise | mediumvioletred | midnightblue | mintcream | mistyrose | moccasin | navajowhite | navy | oldlace | olive | olivedrab | orange | orangered | orchid | palegoldenrod | palegreen | paleturquoise | palevioletred | papayawhip | peachpuff | peru | pink | plum | powderblue | purple | rebeccapurple | red | rosybrown | royalblue | saddlebrown | salmon | sandybrown | seagreen | seashell | sienna | silver | skyblue | slateblue | slategray | slategrey | snow | springgreen | steelblue | tan | teal | thistle | tomato | transparent | turquoise | violet | wheat | white | whitesmoke | yellow | yellowgreen">&lt;color&gt;</a> 
+       </td></tr><tr>
+        <th>Initial:
+        </th><td>transparent
+       </td></tr><tr>
+        <th>Applies to:
+        </th><td>all elements
+       </td></tr><tr>
+        <th>Inherited:
+        </th><td>no
+       </td></tr><tr>
+        <th>Percentages:
+        </th><td>N/A
+       </td></tr><tr>
+        <th>Computed value:
+        </th><td><del>computed color</del> Changed
+       </td></tr><tr>
+        <th>Animation type:
+        </th><td>by computed value
+     </td></tr></tbody></table>`,
+    css: {}
+  },
 ];
 
 describe("Test CSS properties extraction", function() {
