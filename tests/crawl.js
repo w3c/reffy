@@ -24,6 +24,11 @@ if (global.describe && describe instanceof Function) {
     it("doesn't report 3 errors on crawling 3 specs", async() => {
       const refResults = JSON.parse(fs.readFileSync(__dirname + "/crawl-test.json", "utf-8"));
       const results = await crawl();
+      for (const result of results) {
+        if (result?.ids?.length) {
+          result.ids = result.ids.filter(id => !id.match(/\#respec\-/));
+        }
+      }
       assert.deepEqual(refResults, results);
       nock.isDone();
     });

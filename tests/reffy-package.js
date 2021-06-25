@@ -36,6 +36,11 @@ describe("The npm package of Reffy", function () {
     const { crawlList } = require(path.join(clidir, 'crawl-specs'));
     const refResults = JSON.parse(fs.readFileSync(__dirname + "/crawl-test.json", "utf-8"));
     const results = await crawlList(specs);
+    for (const result of results) {
+      if (result?.ids?.length) {
+        result.ids = result.ids.filter(id => !id.match(/\#respec\-/));
+      }
+    }
     // to avoid reporting bogus diff on updated date
     results.forEach(s => delete s.date);
     assert.deepEqual(refResults, results);
