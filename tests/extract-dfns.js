@@ -147,9 +147,13 @@ const tests = [
    html: "<dfn id=foo data-dfn-type=invalidtype>Foo</dfn>",
    changesToBaseDfn: []
   },
-  {title: "automatically fixes dfns with an invalid 'idl' data-dfn-type",
+  {title: "automatically fixes internal slots dfns with an invalid 'idl' data-dfn-type",
    html: "<dfn id=foo data-dfn-type=idl>Foo</dfn>",
    changesToBaseDfn: [{type: "attribute", access: "public"}]
+  },
+  {title: "automatically fixes internal methods with an invalid 'idl' data-dfn-type",
+   html: "<dfn id=foo data-dfn-type=idl>Foo()</dfn>",
+   changesToBaseDfn: [{ linkingText: [ 'Foo()' ], type: "method", access: "public"}]
   },
   {title: "handles HTML spec conventions of definitions in headings",
    html: '<h6 id="parsing-main-inselect"><span class="secno">12.2.6.4.16</span> The "<dfn>in select</dfn>" insertion mode<a href="#parsing-main-inselect" class="self-link"></a></h6>',

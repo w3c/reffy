@@ -212,7 +212,10 @@ export default function (spec, idToHeading = {}) {
       // propagates to all EDs and /TR specs. To be dropped once crawls no
       // longer produce warnings.
       if (node.getAttribute('data-dfn-type') === 'idl') {
-        node.setAttribute('data-dfn-type', 'attribute');
+        const linkingText = node.hasAttribute('data-lt') ?
+          node.getAttribute('data-lt').split('|').map(normalize) :
+          [normalize(node.textContent)];
+        node.setAttribute('data-dfn-type', linkingText[0].endsWith(')') ? 'method' : 'attribute');
         console.warn('[reffy]', `Fixed invalid "idl" dfn type "${normalize(node.textContent)}"`);
       }
       return node;
