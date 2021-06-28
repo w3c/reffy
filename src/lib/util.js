@@ -365,6 +365,15 @@ async function processSpecification(spec, callback, args, counter) {
             await isReady();
         });
 
+        // Capture and report Reffy's browserlib warnings
+        page.on('console', msg => {
+            const text = msg.text();
+            if (text.startsWith('[reffy] ')) {
+                console.warn(spec.url, `[${msg.type()}]`, msg.text().substr('[reffy] '.length));
+            }
+        });
+
+        // Capture and report when page throws an error
         page.on('pageerror', err => {
             console.error(err);
         });
