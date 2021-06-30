@@ -48,7 +48,7 @@
     "commander": "8.0.0",
     "fetch-filecache-for-crawling": "4.0.2",
     "node-pandoc": "0.3.0",
-    "puppeteer": "10.0.0",
+    "puppeteer": "10.1.0",
     "webidl2": "24.1.2"
   },
   "devDependencies": {
