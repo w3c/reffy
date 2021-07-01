@@ -77,7 +77,7 @@ function getExpectedDfnsFromCSS(css) {
 
   // Add the list of expected descriptors
   expected = expected.concat(
-    Object.values(css.descriptors || {}).map(desc => {
+    Object.values(css.descriptors || {}).flat().map(desc => {
       return {
         linkingText: [desc.name],
         type: 'descriptor',
