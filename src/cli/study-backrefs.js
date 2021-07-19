@@ -385,7 +385,7 @@ function studyBackrefs(edResults, trResults = []) {
         // Check anchors
         const anchors = spec.links[link];
         for (let anchor of anchors) {
-          const isKnownId = ids.includes(anchor);
+          const isKnownId = ids.includes(sourceSpec.nightly.url + "#" + anchor);
           const heading = headings.find(h => h.id === anchor);
           const dfn = dfns.find(d => d.id === anchor);
           if (!isKnownId) {
