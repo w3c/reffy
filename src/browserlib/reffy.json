@@ -1,0 +1,55 @@
+[
+  {
+    "href": "./get-title.mjs",
+    "property": "title",
+    "metadata": true
+  },
+  {
+    "href": "./get-generator.mjs",
+    "property": "generator",
+    "metadata": true
+  },
+  {
+    "href": "./get-lastmodified-date.mjs",
+    "property": "date",
+    "metadata": true,
+    "default": ""
+  },
+  {
+    "href": "./extract-links.mjs",
+    "property": "links",
+    "default": {}
+  },
+  {
+    "href": "./extract-references.mjs",
+    "property": "refs",
+    "default": {}
+  },
+  {
+    "href": "./extract-webidl.mjs",
+    "property": "idl",
+    "default": {}
+  },
+  {
+    "href": "./extract-cssdfn.mjs",
+    "property": "css"
+  },
+  {
+    "href": "./extract-dfns.mjs",
+    "property": "dfns",
+    "needsIdToHeadingMap": true
+  },
+  {
+    "href": "./extract-elements.mjs",
+    "property": "elements"
+  },
+  {
+    "href": "./extract-headings.mjs",
+    "property": "headings"
+  },
+  {
+    "href": "./extract-ids.mjs",
+    "property": "ids",
+    "needsIdToHeadingMap": true
+  }
+]

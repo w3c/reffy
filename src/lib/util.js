@@ -11,6 +11,8 @@ const { AbortController } = require('abortcontroller-polyfill/dist/cjs-ponyfill'
 const fetch = require('./fetch');
 const specEquivalents = require('../specs/spec-equivalents.json');
 
+const reffyModules = require('../browserlib/reffy.json');
+
 
 /**
  * Shortcut that returns a property extractor iterator
@@ -61,6 +63,135 @@ const modulesFolder = getModulesFolder();
  */
 let browser = null;
 
+/**
+ * The browser JS library that will be loaded onto every crawled page
+ */
+let browserlib = null;
+
+
+/**
+ * Expand list of browser modules with right set of descriptive properties
+ * 
+ * User may specify a browser module as:
+ * - a name which must match one of the existing modules in browserlib
+ * - a relative path to an .mjs file which must exist
+ * - an object with an "href" property that is a relative path to an .mjs file
+ * which must exist
+ * 
+ * Relative paths provided by the user are interpreted as relative to the
+ * current working directory, and converted to be relative to the browserlib
+ * directory.
+ * 
+ * @function
+ * @public
+ * @return {Array(Object)} List of modules with an href, name and property keys
+ */
+function expandBrowserModules(modules) {
+    // Helper function to create a camelCase name out of a module path
+    function getCamelCaseName(href) {
+        const filename = href.replace(/([^\/\\]+)\.mjs$/, '$1');
+        const nameParts = filename.split('-');
+        let name;
+        let namePart;
+        while (namePart = nameParts.shift()) {
+            namePart = namePart.replace(/\W/g, '');
+            if (name) {
+                name += namePart.substring(0, 1).toUpperCase() + namePart.substring(1);
+            }
+            else {
+                name = namePart;
+            }
+        }
+        return name;
+    }
+
+    const browserlibPath = path.resolve(__dirname, '..', 'browserlib');
+    if (!modules) {
+        return reffyModules.map(mod => Object.assign({
+            name: getCamelCaseName(mod.href),
+            expanded: true
+        }, mod));
+    }
+
+    modules = modules.map(mod => {
+        if (typeof mod === 'string') {
+            if (mod.endsWith('.mjs')) {
+                const name = getCamelCaseName(mod);
+                return {
+                    href: path.relative(browserlibPath, path.join(process.cwd(), mod)).replace(/\\/g, '/'),
+                    name,
+                    property: name,
+                    expanded: true
+                };
+            }
+            else if (mod === 'core') {
+                return reffyModules.map(mod => Object.assign({
+                    name: getCamelCaseName(mod.href),
+                    expanded: true
+                }, mod));
+            }
+            else {
+                const res = reffyModules.find(m => m.href === mod ||
+                    getCamelCaseName(m.href) === mod || m.property === mod);
+                if (!res) {
+                    throw new Error(`Unknown browserlib module ${mod}`);
+                }
+                return Object.assign({
+                    name: getCamelCaseName(res.href),
+                    expanded: true
+                }, res);
+            }
+        }
+        else if (mod.expanded) {
+            return mod;
+        }
+        else {
+            if (!mod.href) {
+                throw new Error('Browserlib module does not have an "href" property');
+            }
+            mod.href = path.relative(browserlibPath, path.join(process.cwd(), mod.href)).replace(/\\/g, '/');
+            if (!mod.name) {
+                mod.name = getCamelCaseName(mod.href);
+            }
+            if (!mod.property) {
+                mod.property = mod.name;
+            }
+            mod.expanded = true;
+            return mod;
+        }
+    });
+
+    return modules.flat();
+}
+
+
+/**
+ * Prepare the browserlib script that will be loaded in every crawled page.
+ * 
+ * The script exposes a global reffy namespace with the requested modules.
+ * 
+ * The function must be called before any attempt to call `processSpecification`
+ * and should only be called once. The `setupBrowser` function takes care of it.
+ * 
+ * @function
+ * @private
+ */
+function setupBrowserlib(modules) {
+    modules = expandBrowserModules(modules);
+    browserlib = 'window.reffy = window.reffy ?? {};\n';
+
+    if (modules.find(module => module.needsIdToHeadingMap)) {
+        browserlib += `
+import mapIdsToHeadings from './map-ids-to-headings.mjs';
+window.reffy.mapIdsToHeadings = mapIdsToHeadings;\n`;
+    }
+
+    browserlib += modules.map(module => `
+import ${module.name} from '${module.href}';
+window.reffy.${module.name} = ${module.name};
+`).join('\n');
+}
+
 
 /**
  * Setup and launch browser instance to use to load and process specifications.
@@ -76,11 +207,12 @@ let browser = null;
  * @function
  * @public
  */
-async function setupBrowser() {
+async function setupBrowser(modules) {
     // Create browser instance (one per specification. Switch "headless" to
     // "false" (and commenting out the call to "browser.close()") is typically
     // useful when something goes wrong to access dev tools and debug)
     browser = await puppeteer.launch({ headless: true });
+    setupBrowserlib(modules);
 }
 
 
@@ -104,7 +236,7 @@ async function teardownBrowser() {
  * Load and process the given specification.
  *
  * The method automatically exposes Reffy's library functions in a window.reffy
- * namespace (see src/browserlib/reffy.mjs) so that the callback function can
+ * namespace (see setupBrowserlib) so that the callback function can
  * call them directly. Additional callback arguments that would need to be
  * passed to the browser context can be provided through the "args" parameter.
  *
@@ -208,10 +340,30 @@ async function processSpecification(spec, callback, args, counter) {
                 const reffyPath = '/reffy/scripts/';
                 const webidl2Path = '/node_modules/webidl2/';
                 if (request.url.includes(reffyPath) || request.url.includes(webidl2Path)) {
-                    const file = request.url.includes(reffyPath) ?
-                        path.resolve(__dirname, '../browserlib', request.url.substring(request.url.indexOf(reffyPath) + reffyPath.length)) :
-                        path.resolve(modulesFolder, 'webidl2', request.url.substring(request.url.indexOf(webidl2Path) + webidl2Path.length));
-                    const body = await fs.readFile(file);
+                    let body;
+                    if (request.url.endsWith('reffy.mjs')) {
+                        body = Buffer.from(browserlib);
+                    }
+                    else if (request.url.includes(webidl2Path)) {
+                        const file = path.resolve(modulesFolder, 'webidl2',
+                            request.url.substring(request.url.indexOf(webidl2Path) + webidl2Path.length));
+                        body = await fs.readFile(file);
+                    }
+                    else {
+                        // The "__" folders are just a means to resolve
+                        // relative paths that are higher than the "browserlib"
+                        // folder on the storage drive
+                        const requestPath = request.url.substring(request.url.indexOf(reffyPath) + reffyPath.length);
+                        let depth = requestPath.lastIndexOf('__/') / 3;
+                        const filename = requestPath.substring(requestPath.lastIndexOf('__/') + 3);
+                        let filePath = path.resolve(__dirname, '..', 'browserlib');
+                        while (depth < 7) {
+                            filePath = path.resolve(filePath, '..');
+                            depth += 1;
+                        }
+                        const file = path.resolve(filePath, filename);
+                        body = await fs.readFile(file);
+                    }
                     await cdp.send('Fetch.fulfillRequest', {
                         requestId,
                         responseCode: 200,
@@ -384,11 +536,13 @@ async function processSpecification(spec, callback, args, counter) {
         // loaded as such.
         // Note that we're using a fake relative URL on purpose. In practice,
         // the request will be processed by "interceptRequest", which will
-        // respond with the contents of the script file. Also, there are two
-        // path levels in that fake URL on purpose as well, because scripts
-        // import the WebIDL2.js library with a "../../node_modules/[...]" URL.
+        // respond with the contents of the script file. Also, there are
+        // multiple path levels in that fake URL on purpose as well, because
+        // scripts import the WebIDL2.js library with a URL like
+        // "../../node_modules/[...]" and may import other scripts that are
+        // higher in the folder tree.
         await page.addScriptTag({
-            url: 'reffy/scripts/reffy.mjs',
+            url: 'reffy/scripts/__/__/__/__/__/__/__/__/reffy.mjs',
             type: 'module'
         });
 
@@ -547,9 +701,12 @@ async function expandCrawlResult(crawl, baseFolder) {
             }
         }
 
-        const properties = ['css', 'dfns', 'elements', 'headings', 'ids', 'idlparsed', 'links', 'refs'];
-        await Promise.all(properties.map(async property => {
-            if (!spec[property] || (typeof spec[property] !== 'string')) {
+        await Promise.all(Object.keys(spec).map(async property => {
+            // Only consider properties that link to an extract, i.e. an IDL
+            // or JSON file in subfolder.
+            if (!spec[property] ||
+                    (typeof spec[property] !== 'string') ||
+                    !spec[property].match(/^[^\/]+\/[^\/]+\.(json|idl)$/)) {
                 return;
             }
             let contents = null;
@@ -647,6 +804,7 @@ function getGeneratedIDLNamesByCSSProperty(property) {
 module.exports = {
     fetch,
     requireFromWorkingDirectory,
+    expandBrowserModules,
     setupBrowser,
     teardownBrowser,
     processSpecification,

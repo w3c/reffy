@@ -2,7 +2,7 @@
 
 Reffy is a **Web spec crawler and analyzer** tool. It is notably used to update [Webref](https://github.com/w3c/webref#webref) every 6 hours.
 
-The code features a crawler that can fetch Web specifications and generate machine-readable extracts out of them, and a set of individual tools to study these extracts and create human-readable reports (such as the [crawl report in Webref](https://w3c.github.io/webref/ed/)). Created extracts include lists of CSS properties, definitions, IDL, links and references contained in the specification.
+The code features a generic crawler that can fetch Web specifications and generate machine-readable extracts out of them, and a set of individual tools to study these extracts and create human-readable reports (such as the [crawl report in Webref](https://w3c.github.io/webref/ed/)). Created extracts include lists of CSS properties, definitions, IDL, links and references contained in the specification.
 
 
 ## How to use
@@ -18,17 +18,17 @@ Reffy is available as an NPM package. To install, run:
 
 `npm install reffy`
 
-### Launch the crawler
-
 This should install Reffy's command-line interface tools to Node.js path.
 
-To launch the crawler and the report study tool, follow these steps:
+### Launch Reffy
+
+To crawl all specs, generate a crawl report and an anomaly report, follow these steps:
 
 1. To produce a report using Editor's Drafts, run `reffy run ed`.
 2. To produce a report using latest published versions in `/TR/`, run `reffy run tr`.
 
 Under the hoods, these commands run the following steps (and related commands) in turn:
-1. **Crawling**: Crawls a list of spec and outputs relevant information in a JSON structure in the specified folder. `crawl-specs reports/ed [tr]`. Add `tr` to tell the crawler to load the latest published version of TR specifications instead of the latest Editor's Draft.
+1. **Crawling**: Crawls a list of spec and outputs relevant information extracts in the specified folder. See [Specs crawler](#specs-crawler) below for details.
 2. **Analysis**: Analyses the result of the crawling step, and produces a study report. `study-crawl reports/ed/crawl.json [url]`. When the `url` parameter is given, the resulting analysis will only contain the results for the spec at that URL (multiple URLs may be given as a comma-separated value list without spaces). You will probably want to redirect the output to a file, e.g. using `study-crawl reports/ed/crawl.json > reports/ed/study.json`.
 3. **Markdown report generation**: Produces a human-readable report in Markdown format out of the report returned by the analysis step, or directly out of results of the crawling step. `generate-report reports/ed/study.json [perspec|dep]`. By default, the tool generates a report per anomaly, pass `perspec` to create a report per specification and `dep` to generate a dependencies report. You will probably want to redirect the output to a file, e.g. using `generate-report reports/ed/study.json > reports/ed/index.md`.
 4. **Conversion to HTML**: Takes the Markdown analysis per specification and prepares an HTML report with expandable sections. `pandoc reports/ed/index.md -f markdown -t html5 --section-divs -s --template report-template.html -o reports/ed/index.html` (where `report.md` is the Markdown report)
@@ -43,11 +43,23 @@ Some notes:
 
 ### Specs crawler
 
-**Reffy's crawler** takes an initial list of spec URLs as input and generates a machine-readable report with facts about each spec, including:
+The **Specs crawler** takes a results folder as input and generates a machine-readable report with facts and associated extracts for each spec, including:
 
-1. Generic information such as the title of the spec or the URL of the Editor's Draft. This information is typically extracted from the [W3C API](https://w3c.github.io/w3c-api/).
-2. The list of normative/informative references found in the spec.
-3. Extended information about WebIDL term definitions and references that the spec contains
+1. Generic information such as the title of the spec or the URL of the Editor's Draft. This information is typically copied over from [browser-specs](https://github.com/w3c/browser-specs/).
+2. The list of terms that the spec defines, in a format suitable for ingestion in cross-referencing tools such as [ReSpec](https://respec.org/xref/).
+3. The list of IDs, the list of headings and the list of links in the spec.
+4. The list of normative/informative references found in the spec.
+5. Extended information about WebIDL term definitions and references that the spec contains
+6. For CSS specs, the list of CSS properties, descriptors and value spaces that the spec defines.
+
+The crawler can be fully parameterized to crawl a specific list of specs and run a custom set of processing modules on them. For example, to run an hypothetical `extract-editors.mjs` processing module on all specs and create individual spec extracts with the result of the processing under an `editors` folder, run:
+
+```bash
+crawl-specs reports/test --module editors:extract-editors.mjs
+```
+
+Run `crawl-specs -h` for usage details.
+
 
 ### Study tool
 
