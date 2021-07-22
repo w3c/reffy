@@ -199,7 +199,7 @@ const extractValueSpaces = doc => {
   // Extract non-terminal value spaces defined in `pre` tags
   // (remove note references as in:
   // https://drafts.csswg.org/css-syntax-3/#the-anb-type)
-  parseProductionRules([...doc.querySelectorAll('pre.prod')]
+  parseProductionRules([...doc.querySelectorAll('pre.prod,span.prod')]
     .filter(el => !el.closest(informativeSelector))
     .map(el => {
       [...el.querySelectorAll('sup')]
