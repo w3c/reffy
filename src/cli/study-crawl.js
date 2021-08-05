@@ -362,6 +362,8 @@ function studyCrawlResults(results, options = {}) {
                 release: spec.release,
                 nightly: spec.nightly,
                 crawled: spec.crawled,
+                organization: spec.organization,
+                groups: spec.groups,
                 report
             };
             return res;
