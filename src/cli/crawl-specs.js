@@ -27,6 +27,8 @@
  * @module crawler
  */
 
+const commander = require('commander');
+const version = require('../../package.json').version;
 const fs = require('fs');
 const path = require('path');
 const specs = require('browser-specs');
@@ -36,6 +38,7 @@ const { generateIdlNames, saveIdlNames } = require('./generate-idlnames');
 const {
     completeWithAlternativeUrls,
     fetch,
+    expandBrowserModules,
     getGeneratedIDLNamesByCSSProperty,
     isLatestLevelThatPasses,
     processSpecification,
@@ -71,117 +74,124 @@ async function crawlSpec(spec, crawlOptions) {
     spec.crawled = crawlOptions.publishedVersion ?
         (spec.release ? spec.release : spec.nightly) :
         spec.nightly;
-    spec.date = "";
-    spec.links = {};
-    spec.refs = {};
-    spec.idl = {};
+
+    // Set default values
+    // TODO: is that really needed? Not setting the properties seems cleaner
+    crawlOptions.modules.forEach(mod => {
+        if (mod.default !== undefined) {
+            spec[mod.property] = mod.default;
+        }
+    });
+
     if (spec.error) {
         return spec;
     }
 
     try {
-        const result = await processSpecification(spec.crawled, (spec) => {
-            const idToHeading = window.reffy.mapIdsToHeadings();
-            return {
-                crawled: window.location.toString(),
-                title: window.reffy.getTitle(),
-                generator: window.reffy.getGenerator(),
-                date: window.reffy.getLastModifiedDate(),
-                links: window.reffy.extractLinks(),
-                dfns: window.reffy.extractDefinitions(spec.shortname, idToHeading),
-                elements: window.reffy.extractElements(),
-                headings: window.reffy.extractHeadings(idToHeading),
-                ids: window.reffy.extractIds(),
-                refs: window.reffy.extractReferences(),
-                idl: window.reffy.extractWebIdl(),
-                css: window.reffy.extractCSS()
-            };
-        }, [spec]);
-
-        // Parse the extracted WebIdl content
-        try {
-            const parsedIdl = await webidlParser.parse(result.idl);
-            parsedIdl.hasObsoleteIdl = webidlParser.hasObsoleteIdl(result.idl);
-            parsedIdl.idl = result.idl;
-            result.idl = parsedIdl;
-        }
-        catch (err) {
-            // IDL content is invalid and cannot be parsed.
-            // Let's return the error, along with the raw IDL
-            // content so that it may be saved to a file.
-            err.idl = result.idl;
-            result.idl = err;
-        }
-
-        // Add CSS property definitions that weren't in a table
-        (result.dfns || [])
-            .filter(dfn => dfn.type == "property" && !dfn.informative)
-            .forEach(propDfn => {
-                propDfn.linkingText.forEach(lt => {
-                    if (!result.css.properties.hasOwnProperty(lt)) {
-                        result.css.properties[lt] = {
-                            name: lt
-                        };
-                    }
+        const result = await processSpecification(
+            spec.crawled,
+            (spec, modules) => {
+                const idToHeading = modules.find(m => m.needsIdToHeadingMap) ?
+                    window.reffy.mapIdsToHeadings() : null;
+                const res = {
+                    crawled: window.location.toString()
+                };
+                modules.forEach(mod => {
+                    res[mod.property] = window.reffy[mod.name](spec, idToHeading);
                 });
-        });
+                return res;
+            },
+            [spec, crawlOptions.modules]
+        );
 
-        // Ideally, the sample definition (property-name) in CSS2 and the custom
-        // property definition (--*) in CSS Variables would not be flagged as
-        // real CSS properties. In practice, they are. Let's remove them from
-        // the extract.
-        ['property-name', '--*'].forEach(prop => {
-            if ((result.css.properties || {})[prop]) {
-                delete result.css.properties[prop];
+        // Specific rule for IDL extracts:
+        // parse the extracted WebIdl content
+        if (result.idl !== undefined) {
+            try {
+                const parsedIdl = await webidlParser.parse(result.idl);
+                parsedIdl.hasObsoleteIdl = webidlParser.hasObsoleteIdl(result.idl);
+                parsedIdl.idl = result.idl;
+                result.idl = parsedIdl;
             }
-        });
+            catch (err) {
+                // IDL content is invalid and cannot be parsed.
+                // Let's return the error, along with the raw IDL
+                // content so that it may be saved to a file.
+                err.idl = result.idl;
+                result.idl = err;
+            }
+        }
 
-        // Parse extracted CSS definitions and add generated IDL attribute names
-        Object.entries(result.css.properties || {}).forEach(([prop, dfn]) => {
-            if (dfn.value || dfn.newValues) {
-                try {
-                    dfn.parsedValue = cssDfnParser.parsePropDefValue(
-                        dfn.value || dfn.newValues);
-                } catch (e) {
-                    dfn.valueParseError = e.message;
-                }
+        if (result.css) {
+            // Specific rule for CSS properties:
+            // Add CSS property definitions that weren't in a table
+            if (result.dfns) {
+                result.dfns
+                    .filter(dfn => dfn.type == "property" && !dfn.informative)
+                    .forEach(propDfn => {
+                        propDfn.linkingText.forEach(lt => {
+                            if (!result.css.properties.hasOwnProperty(lt)) {
+                                result.css.properties[lt] = {
+                                    name: lt
+                                };
+                            }
+                        });
+                    });
             }
-            dfn.styleDeclaration = getGeneratedIDLNamesByCSSProperty(prop);
-        });
-        Object.entries(result.css.descriptors || {}).forEach(([desc, dfn]) => {
-            if (dfn.value) {
-                try {
-                    dfn.parsedValue = cssDfnParser.parsePropDefValue(
-                        dfn.value);
-                } catch (e) {
-                    dfn.valueParseError = e.message;
+
+            // Specific rule for CSS properties:
+            // Ideally, the sample definition (property-name) in CSS2 and the custom
+            // property definition (--*) in CSS Variables would not be flagged as
+            // real CSS properties. In practice, they are. Let's remove them from
+            // the extract.
+            ['property-name', '--*'].forEach(prop => {
+                if ((result.css.properties || {})[prop]) {
+                    delete result.css.properties[prop];
                 }
-            }
-        });
-        Object.entries(result.css.valuespaces || {}).forEach(([vs, dfn]) => {
-            if (dfn.value) {
-                try {
-                    dfn.parsedValue = cssDfnParser.parsePropDefValue(
-                        dfn.value);
-                } catch (e) {
-                    dfn.valueParseError = e.message;
+            });
+
+            // Specific rule for CSS extracts:
+            // Parse extracted CSS definitions and add generated IDL attribute names
+            Object.entries(result.css.properties || {}).forEach(([prop, dfn]) => {
+                if (dfn.value || dfn.newValues) {
+                    try {
+                        dfn.parsedValue = cssDfnParser.parsePropDefValue(
+                            dfn.value || dfn.newValues);
+                    } catch (e) {
+                        dfn.valueParseError = e.message;
+                    }
                 }
-            }
-        });
+                dfn.styleDeclaration = getGeneratedIDLNamesByCSSProperty(prop);
+            });
+            Object.entries(result.css.descriptors || {}).forEach(([desc, dfn]) => {
+                if (dfn.value) {
+                    try {
+                        dfn.parsedValue = cssDfnParser.parsePropDefValue(
+                            dfn.value);
+                    } catch (e) {
+                        dfn.valueParseError = e.message;
+                    }
+                }
+            });
+            Object.entries(result.css.valuespaces || {}).forEach(([vs, dfn]) => {
+                if (dfn.value) {
+                    try {
+                        dfn.parsedValue = cssDfnParser.parsePropDefValue(
+                            dfn.value);
+                    } catch (e) {
+                        dfn.valueParseError = e.message;
+                    }
+                }
+            });
+        }
 
         // Copy results back into initial spec object
         spec.crawled = result.crawled;
-        spec.title = result.title ? result.title : spec.title;
-        spec.generator = result.generator;
-        spec.date = result.date;
-        spec.links = result.links;
-        spec.refs = result.refs;
-        spec.idl = result.idl;
-        spec.css = result.css;
-        spec.dfns = result.dfns;
-        spec.elements = result.elements;
-        spec.headings = result.headings;
-        spec.ids = result.ids;
+        crawlOptions.modules.forEach(mod => {
+            if (result[mod.property]) {
+                spec[mod.property] = result[mod.property];
+            }
+        });
     }
     catch (err) {
         spec.title = spec.title || '[Could not be determined, see error]';
@@ -206,7 +216,8 @@ async function crawlList(speclist, crawlOptions) {
     crawlOptions = crawlOptions || {};
 
     // Prepare Puppeteer instance
-    await setupBrowser();
+    crawlOptions.modules = expandBrowserModules(crawlOptions.modules);
+    await setupBrowser(crawlOptions.modules);
 
     const list = speclist.map(completeWithAlternativeUrls);
     const listAndPromise = list.map(spec => {
@@ -286,17 +297,21 @@ async function saveResults(crawlOptions, data, folder) {
         return subfolder;
     }
 
-    const folders = {
-        css: await getSubfolder('css'),
-        dfns: await getSubfolder('dfns'),
-        elements: await getSubfolder('elements'),
-        ids: await getSubfolder('ids'),
-        headings: await getSubfolder('headings'),
-        idl: await getSubfolder('idl'),
-        idlparsed: await getSubfolder('idlparsed'),
-        links: await getSubfolder('links'),
-        refs: await getSubfolder('refs')
-    };
+    const modules = crawlOptions.modules;
+    const folders = {};
+    for (const mod of modules) {
+        if (mod.metadata) {
+            continue;
+        }
+        folders[mod.property] = await getSubfolder(mod.property);
+
+        // Specific rule for IDL:
+        // Also export parsed IDL to separate folder
+        // (code will also create "idlnames" and "idlnamesparsed" folders)
+        if (mod.property === 'idl') {
+            folders.idlparsed = await getSubfolder('idlparsed');
+        }
+    }
 
     function getBaseJSON(spec) {
         return {
@@ -375,7 +390,9 @@ async function saveResults(crawlOptions, data, folder) {
     // Sort results by URL
     data.sort(byURL);
 
-    // Prepare and save IDL names exports
+    // Specific rules for IDL:
+    // - Prepare and save IDL names exports
+    // - Save IDL extracts for the latest level of a spec
     const idlNames = generateIdlNames(data);
     await saveIdlNames(idlNames, folder);
 
@@ -442,21 +459,21 @@ async function saveResults(crawlOptions, data, folder) {
     data.filter(spec => spec.css && typeof spec.css !== 'string')
         .map(spec => delete spec.css);
 
-    // Save definitions, links, headings, and refs for individual specs
-    await Promise.all(data.map(getSavePropFunction('dfns',
-        spec => spec.dfns && (spec.dfns.length > 0))));
-    await Promise.all(data.map(getSavePropFunction('elements',
-        spec => spec.elements && (spec.elements.length > 0))));
-    await Promise.all(data.map(getSavePropFunction('links',
-        spec => spec.links && (Object.keys(spec.links).length > 0))));
-    await Promise.all(data.map(getSavePropFunction('headings',
-        spec => spec.headings && (spec.headings.length > 0))));
-    await Promise.all(data.map(getSavePropFunction('ids',
-        spec => spec.ids && (spec.ids.length > 0))));
-    await Promise.all(data.map(getSavePropFunction('refs',
-        spec => spec.refs &&
-            ((spec.refs.normative && spec.refs.normative.length > 0) ||
-             (spec.refs.informative && spec.refs.informative.length > 0)))));
+    // Quick and dirty function to determine whether a variable is "empty"
+    // (it returns true for falsy values, which is good enough for what we need)
+    function isEmpty(thing) {
+        return !thing ||
+            (typeof thing === 'array') && (thing.length === 0) ||
+            (typeof thing === 'object') && Object.keys(thing).every(key => isEmpty(thing[key]));
+    }
+
+    // Save all other extracts
+    const remainingModules = modules.filter(mod =>
+        !mod.metadata && mod.property !== 'css' && mod.property !== 'idl');
+    for (const mod of remainingModules) {
+        await Promise.all(data.map(getSavePropFunction(mod.property,
+            spec => !isEmpty(spec[mod.property]))));
+    }
 
     // Save parsed IDL structures (without the raw IDL)
     await Promise.all(data.map(getSavePropFunction('idlparsed',
@@ -477,6 +494,7 @@ async function saveResults(crawlOptions, data, folder) {
             filedata.title = 'Reffy crawl';
             filedata.date = filedata.date || (new Date()).toJSON();
             filedata.options = crawlOptions;
+            filedata.options.modules = filedata.options.modules.map(mod => mod.property);
             filedata.stats = {};
             filedata.results = (filedata.results || []).concat(data);
             filedata.results.sort(byURL);
@@ -512,11 +530,9 @@ function crawlSpecs(resultsPath, options) {
     }
 
     function prepareListOfSpecs(list) {
-        return list
-            .map(spec => (typeof spec === 'string') ?
-                specs.find(s => s.url === spec || s.shortname === spec) :
-                spec)
-            .filter(spec => !!spec);
+        return list.map(spec => (typeof spec !== 'string') ? spec :
+            specs.find(s => s.url === spec || s.shortname === spec) ??
+            { url: spec, nightly: spec, shortname: spec.replace(/[:\/\.]/g, '') });
     }
 
     const requestedList = (options && options.specFile) ?
@@ -539,22 +555,106 @@ module.exports.crawlSpecs = crawlSpecs;
 Code run if the code is run as a stand-alone module
 **************************************************/
 if (require.main === module) {
-    var resultsPath = (process.argv[2] && process.argv[2].endsWith('.json')) ?
-            process.argv[3] : process.argv[2];
-    var crawlOptions = {
-        specFile: process.argv.find(arg => arg.endsWith('.json')),
-        publishedVersion: !!process.argv.find(arg => arg === 'tr'),
-        debug: !!process.argv.find(arg => arg === 'debug')
-    };
 
-    // Process the file and crawl specifications it contains
-    crawlSpecs(resultsPath, crawlOptions)
-        .then(_ => {
-            console.log('Finished');
-            process.exit(0);
+    function parseModuleOption(input) {
+        const parts = input.split(':');
+        if (parts.length > 2) {
+            throw new commander.InvalidArgumentError('Module input cannot have more than one ":" character');
+        }
+        if (parts.length === 2) {
+            return {
+                href: parts[1],
+                property: parts[0]
+            };
+        }
+        else {
+            return parts[0];
+        }
+    }
+
+    const program = new commander.Command();
+    program
+        .version(version)
+        .usage('<folder> [speclist] [options]')
+        .description('Crawls and processes a list of Web specifications and report results to a folder')
+        .option('-d, --debug', 'debug mode, crawl one spec at a time')
+        .option('-m, --module <modules...>', 'spec processing modules')
+        .option('-r, --release', 'crawl release (TR) version of specs')
+        .argument('<folder>', 'existing folder where crawl results are to be saved')
+        .argument('[speclist]', 'path to JSON file that lists specs to crawl')
+        .action((folder, speclist, options) => {
+            const crawlOptions = {
+                specFile: speclist,
+                publishedVersion: options.release,
+                debug: options.debug
+            };
+            if (options.module) {
+                crawlOptions.modules = options.module.map(parseModuleOption);
+            }
+            crawlSpecs(folder, crawlOptions)
+                .then(_ => {
+                    console.log('Finished');
+                    process.exit(0);
+                })
+                .catch(err => {
+                    console.error(err);
+                    process.exit(1);
+                });
         })
-        .catch(err => {
-            console.error(err);
-            process.exit(1);
-        });
+        .showHelpAfterError('(run with --help for usage information)')
+        .addHelpText('after', `
+Minimal usage example:
+  $ node crawl-specs.js reports/test
+
+Usage notes:
+- If [speclist] is not specified, the crawler crawls all specs in browser-specs:
+  https://github.com/w3c/browser-specs/
+
+- The [speclist] file may contain a mix of spec URLs and spec shortnames. Spec
+shortnames must exist in browser-specs.
+
+- If processing modules are not specified, the crawler runs all core processing
+modules:
+  https://github.com/w3c/reffy/tree/main/src/reffy.json
+
+- Modules must be specified using a relative path to an ".mjs" file that defines
+the processing logic to run on the spec's page in a browser context. For
+instance:
+  $ node crawl-specs.js reports/test --module extract-editors.mjs
+
+- Absolute paths to modules are not properly handled and will likely result in a
+crawling error.
+
+- Multiple modules can be specified, repeating the option name or not:
+  $ node crawl-specs.js reports/test -m extract-words.mjs extract-editors.mjs
+  $ node crawl-specs.js reports/test -m extract-words.mjs -m extract-editors.mjs
+
+- The "-m" or "--module" option cannot appear before <folder>, unless you use
+"--" to flag the end of the list:
+  $ node crawl-specs.js --module extract-editors.mjs -- reports/test
+
+- Core processing modules may be referenced using the name of the extract they
+define:
+  $ node crawl-specs.js reports/test --module dfns
+
+- To run all core processing modules, use "core". For instance, to apply a
+processing module on top of core processing modules, use:
+  $ node crawl-specs.js reports/test --module core extract-editors.mjs
+
+- Each module must export a function that takes a spec object as input and
+return a result that can be serialized as JSON. A typical module code looks
+like:
+  https://github.com/w3c/reffy/blob/main/src/browserlib/extract-ids.mjs
+
+- Individual extracts will be created under "<folder>/[camelCaseModule]" where
+"[camelCaseModule]" is derived from the module's filename, for instance:
+  "extract-editors.mjs" creates extracts under "<folder>/extractEditors"
+
+- The name of the folder where extracts get created may be specified for custom
+modules by prefixing the path to the module with the folder name followed by
+":". For instance, to save extracts to "reports/test/editors", use:
+  $ node crawl-specs.js reports/test --module editors:extract-editors.mjs
+`);
+
+    program.parse(process.argv);
 }

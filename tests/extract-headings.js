@@ -59,7 +59,7 @@ describe("Test headings extraction", function () {
 
       const extractedHeadings = await page.evaluate(async () => {
         const idToHeading = mapIdsToHeadings();
-        return extractHeadings(idToHeading);
+        return extractHeadings('', idToHeading);
       });
       await page.close();
       assert.deepEqual(extractedHeadings, t.res);

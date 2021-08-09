@@ -196,7 +196,8 @@ export default function (spec, idToHeading = {}) {
   ].join(',');
 
   let extraDefinitions = [];
-  switch (spec) {
+  const shortname = (typeof spec === 'string') ? spec : spec.shortname;
+  switch (shortname) {
   case "html":
     preProcessHTML();
     break;

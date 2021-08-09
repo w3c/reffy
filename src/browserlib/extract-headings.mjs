@@ -3,7 +3,7 @@ import getAbsoluteUrl from './get-absolute-url.mjs';
 /**
  * Extract headings data from documents
 */
-export default function (idToHeading) {
+export default function (spec, idToHeading) {
   // Compute once whether we created a single page version out of multiple pages
   const singlePage = !document.querySelector('[data-reffy-page]');
 
