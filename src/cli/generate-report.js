@@ -29,7 +29,6 @@ const fetch = require('../lib/util').fetch;
  */
 const byTitle = (a, b) => a.title.toUpperCase().localeCompare(b.title.toUpperCase());
 
-
 /**
  * Returns true when two arrays are equal
  */
@@ -46,6 +45,9 @@ const dateOptions = {
     year: 'numeric'
 };
 
+const toSlug = name => name.replace(/([A-Z])/g, s => s.toLowerCase())
+        .replace(/[^a-z0-9]/g, '_')
+        .replace(/_+/g, '_');
 
 /**
  * Helper function that outputs main crawl info about a spec
@@ -57,7 +59,7 @@ function writeCrawlInfo(spec, withHeader, w) {
     w = w || (msg => wres += (msg || '') + '\n');
 
     if (withHeader) {
-        w('### Spec info {.info}');
+        w('#### Spec info {.info}');
     }
     else  {
         w('Spec info:');
@@ -94,7 +96,7 @@ function writeDependenciesInfo(spec, results, withHeader, w) {
     w = w || (msg => wres += (msg || '') + '\n');
 
     if (withHeader) {
-        w('### Known dependencies on this specification {.dependencies}');
+        w('#### Known dependencies on this specification {.dependencies}');
         w();
     }
 
@@ -158,7 +160,7 @@ function generateReportPerSpec(study) {
     w('% ' + (new Date(study.date)).toLocaleDateString('en-US', dateOptions));
     w();
 
-    results.forEach(spec => {
+    const specReport = spec => {
         // Prepare anomaly flags
         let flags = ['spec'];
         if (spec.report.error) {
@@ -177,13 +179,13 @@ function generateReportPerSpec(study) {
         let attr = flags.reduce((res, anomaly) =>
             res + (res ? ' ' : '') + 'data-' + anomaly + '=true', '');
 
-        w('## ' + spec.title + ' {' + attr + '}');
+        w('### ' + spec.title + ' {' + attr + '}');
         w();
         writeCrawlInfo(spec, true, w);
         w();
 
         const report = spec.report;
-        w('### Potential issue(s) {.anomalies}');
+        w('#### Potential issue(s) {.anomalies}');
         w();
         if (report.ok) {
             w('This specification looks good!');
@@ -295,7 +297,21 @@ function generateReportPerSpec(study) {
         writeDependenciesInfo(spec, results, true, w);
         w();
         w();
-    });
+    };
+
+
+    const orgs = [...new Set(study.results.map(r => r.organization))].sort();
+    for (let org of orgs) {
+        w(`# ${org} {#${toSlug(org)}}`);
+        w();
+        const groups = [...new Set(study.results.filter(r => r.organization === org).map(r => r.groups.map(g => g.name)).flat())].sort()
+        for (let group of groups) {
+            w(`## ${group} {#${toSlug(group)}}`);
+            w();
+            study.results.filter(r => r.organization === org && r.groups.find(g => g.name === group)).forEach(specReport);
+        }
+    }
+
     w();
     w();
 
