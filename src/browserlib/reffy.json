@@ -12,23 +12,19 @@
   {
     "href": "./get-lastmodified-date.mjs",
     "property": "date",
-    "metadata": true,
-    "default": ""
+    "metadata": true
   },
   {
     "href": "./extract-links.mjs",
-    "property": "links",
-    "default": {}
+    "property": "links"
   },
   {
     "href": "./extract-references.mjs",
-    "property": "refs",
-    "default": {}
+    "property": "refs"
   },
   {
     "href": "./extract-webidl.mjs",
-    "property": "idl",
-    "default": {}
+    "property": "idl"
   },
   {
     "href": "./extract-cssdfn.mjs",

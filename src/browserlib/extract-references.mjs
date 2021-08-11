@@ -20,7 +20,12 @@ export default function () {
   const generator = getGenerator();
   const extractionRules = getExtractionRules(generator);
   const references = extractReferences(extractionRules);
-  return references;
+  if (references?.normative.length || references?.informative.length) {
+    return references;
+  }
+  else {
+    return null;
+  }
 }
 
 

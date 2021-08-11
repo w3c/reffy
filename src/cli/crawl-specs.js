@@ -75,14 +75,6 @@ async function crawlSpec(spec, crawlOptions) {
         (spec.release ? spec.release : spec.nightly) :
         spec.nightly;
 
-    // Set default values
-    // TODO: is that really needed? Not setting the properties seems cleaner
-    crawlOptions.modules.forEach(mod => {
-        if (mod.default !== undefined) {
-            spec[mod.property] = mod.default;
-        }
-    });
-
     if (spec.error) {
         return spec;
     }
@@ -463,8 +455,8 @@ async function saveResults(crawlOptions, data, folder) {
     // (it returns true for falsy values, which is good enough for what we need)
     function isEmpty(thing) {
         return !thing ||
-            (typeof thing === 'array') && (thing.length === 0) ||
-            (typeof thing === 'object') && Object.keys(thing).every(key => isEmpty(thing[key]));
+            Array.isArray(thing) && (thing.length === 0) ||
+            (typeof thing == 'object') && (Object.keys(thing).length === 0);
     }
 
     // Save all other extracts
