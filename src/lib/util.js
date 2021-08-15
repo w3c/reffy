@@ -34,7 +34,12 @@ const prop = p => x => x[p];
  *   working directory.
  */
 function requireFromWorkingDirectory(filename) {
-    return require(path.resolve(filename));
+    try {
+        return require(path.resolve(filename));
+    }
+    catch (err) {
+        return null;
+    }
 }
 
 
@@ -280,21 +285,21 @@ async function teardownBrowser() {
  * @param {Object|String} spec The spec to load. Must either be a URL string or
  *   an object with a "url" property. If the object contains an "html" property,
  *   the HTML content is loaded instead.
- * @param {function} callback Processing function that will be evaluated in the
- *   browser context where the spec gets loaded
- * @param {Arrays} args List of arguments to pass to the callback function.
- * @param {Number} counter Counter used to detect infinite loops in cases where
- *   the first URL leads to another
+ * @param {function} processFunction Processing function that will be evaluated
+ *   in the browser context where the spec gets loaded
+ * @param {Arrays} args List of arguments to pass to the processing function.
+ *   These arguments typically make it possible to pass contextual information
+ *   to the processing function (such as the spec object that describes the
+ *   spec being processed, or the list of processing modules to run)
+ * @param {Object} options Processing options. The only supported option is
+ *   "quiet", which tells the function not to report warnings to the console
  * @return {Promise} The promise to get the results of the processing function
  */
-async function processSpecification(spec, callback, args, counter) {
+async function processSpecification(spec, processFunction, args, options) {
     spec = (typeof spec === 'string') ? { url: spec } : spec;
-    callback = callback || function () {};
+    processFunction = processFunction || function () {};
     args = args || [];
-    counter = counter || 0;
-    if (counter >= 5) {
-        throw new Error('Infinite loop detected');
-    }
+    options = options || {};
 
     if (!browser) {
         throw new Error('Browser instance not initialized, setupBrowser() must be called before processSpecification().');
@@ -398,13 +403,13 @@ async function processSpecification(spec, callback, args, counter) {
 
                 // Fetch from file cache failed somehow, report a warning
                 // and let Puppeteer handle the request as fallback
-                console.warn(`Fall back to regular network request for ${request.url}`, err);
+                options.quiet ?? console.warn(`[warn] Fall back to regular network request for ${request.url}`, err);
                 try {
                     await cdp.send('Fetch.continueRequest', { requestId });
                 }
                 catch (err) {
                     if (!controller.signal.aborted) {
-                        console.warn(`Fall back to regular network request for ${request.url} failed`, err);
+                        options.quiet ?? console.warn(`[warn] Fall back to regular network request for ${request.url} failed`, err);
                     }
                 }
             }
@@ -521,13 +526,13 @@ async function processSpecification(spec, callback, args, counter) {
         page.on('console', msg => {
             const text = msg.text();
             if (text.startsWith('[reffy] ')) {
-                console.warn(spec.url, `[${msg.type()}]`, msg.text().substr('[reffy] '.length));
+                options.quiet ?? console.warn(spec.url, `[${msg.type()}]`, msg.text().substr('[reffy] '.length));
             }
         });
 
         // Capture and report when page throws an error
         page.on('pageerror', err => {
-            console.error(err);
+            options.quiet ?? console.warn(err);
         });
 
         // Expose additional functions defined in src/browserlib/ to the
@@ -546,8 +551,8 @@ async function processSpecification(spec, callback, args, counter) {
             type: 'module'
         });
 
-        // Run the callback method in the browser context
-        const results = await page.evaluate(callback, ...args);
+        // Run the processFunction method in the browser context
+        const results = await page.evaluate(processFunction, ...args);
 
         // Pending network requests may still be in the queue, flag the page
         // as closed not to send commands on a CDP session that's no longer
@@ -565,25 +570,6 @@ async function processSpecification(spec, callback, args, counter) {
         // Signal abortion again (in case an exception was thrown)
         abortController.abort();
     }
-}
-
-
-/**
- * Short wrapper around the processSpecification method for situations where
- * only one specification needs to be processed.
- *
- * The method takes care of the setup and teardown phases.
- *
- * Same parameters as processSpecification.
- *
- * @function
- * @public
- */
-async function processSingleSpecification(spec, callback, args, counter) {
-    await setupBrowser();
-    const results = await processSpecification(spec, callback, args, counter);
-    await teardownBrowser();
-    return results;
 }
 
 
@@ -678,15 +664,18 @@ function isLatestLevelThatPasses(spec, list, predicate) {
  * @param {Object} crawl Crawl index object that needs to be expanded
  * @param {string} baseFolder The base folder that contains the crawl file, or
  *   the base HTTPS URI to resolve relative links in the crawl object.
+ * @param {Array(string)} An explicit list of properties to expand (no value
+ *   means "expand all possible properties")
  * @return {Promise(object)} The promise to get an expanded crawl object that
  *   contains the entire crawl report (and no longer references external files)
  */
-async function expandCrawlResult(crawl, baseFolder) {
+async function expandCrawlResult(crawl, baseFolder, properties) {
     baseFolder = baseFolder || '';
 
     async function expandSpec(spec) {
         // Special case for "idl" that must be processed first
-        if (spec.idl && (typeof spec.idl === 'string')) {
+        if (spec.idl && (typeof spec.idl === 'string') &&
+                (!properties || properties.includes('idl') || properties.includes('idlparsed'))) {
             if (baseFolder.startsWith('https:')) {
                 const url = (new URL(spec.idl, baseFolder)).toString();
                 let response = await fetch(url, { nolog: true });
@@ -702,6 +691,11 @@ async function expandCrawlResult(crawl, baseFolder) {
         }
 
         await Promise.all(Object.keys(spec).map(async property => {
+            // Only consider properties explicitly requested
+            if (properties && !properties.includes(property)) {
+                return;
+            }
+
             // Only consider properties that link to an extract, i.e. an IDL
             // or JSON file in subfolder.
             if (!spec[property] ||
@@ -808,7 +802,6 @@ module.exports = {
     setupBrowser,
     teardownBrowser,
     processSpecification,
-    processSingleSpecification,
     completeWithAlternativeUrls,
     isLatestLevelThatPasses,
     expandCrawlResult,

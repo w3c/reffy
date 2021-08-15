@@ -43,7 +43,11 @@ Some notes:
 
 ### Specs crawler
 
-The **Specs crawler** takes a results folder as input and generates a machine-readable report with facts and associated extracts for each spec, including:
+The **Specs crawler** crawls requested specifications and runs a set of processing modules on the content fetched to create relevant extracts from each spec. Which specs get crawled, and which processing modules get run depend on how the crawler gets called. By default, the crawler crawls all specs defined in [browser-specs](https://github.com/w3c/browser-specs/) and runs all core processing modules defined in the [`browserlib`](https://github.com/w3c/reffy/tree/main/src/browserlib) folder.
+
+Crawl results will either be returned to the console or saved in individual files in a report folder when the `--output` parameter is set.
+
+Examples of information that can be extracted from the specs:
 
 1. Generic information such as the title of the spec or the URL of the Editor's Draft. This information is typically copied over from [browser-specs](https://github.com/w3c/browser-specs/).
 2. The list of terms that the spec defines, in a format suitable for ingestion in cross-referencing tools such as [ReSpec](https://respec.org/xref/).
@@ -52,13 +56,32 @@ The **Specs crawler** takes a results folder as input and generates a machine-re
 5. Extended information about WebIDL term definitions and references that the spec contains
 6. For CSS specs, the list of CSS properties, descriptors and value spaces that the spec defines.
 
-The crawler can be fully parameterized to crawl a specific list of specs and run a custom set of processing modules on them. For example, to run an hypothetical `extract-editors.mjs` processing module on all specs and create individual spec extracts with the result of the processing under an `editors` folder, run:
+The crawler can be fully parameterized to crawl a specific list of specs and run a custom set of processing modules on them. For example:
 
-```bash
-crawl-specs reports/test --module editors:extract-editors.mjs
-```
+- To extract the raw IDL defined in Fetch, run:
+  ```bash
+  crawl-specs --spec fetch --module idl
+  ```
+- To retrieve the list of specs that the HTML spec references, run (noting that crawling the HTML spec takes some time due to it being a multipage spec):
+  ```bash
+  crawl-specs --spec html --module refs`
+  ```
+- To extract the list of CSS properties defined in CSS Flexible Box Layout Module Level 1, run:
+  ```bash
+  crawl-specs --spec css-flexbox-1 --module css
+  ```
+- To extract the list of terms defined in WAI ARIA 1.2, run:
+  ```bash
+  crawl-specs --spec wai-aria-1.2 --module dfns
+  ```
+- To run an hypothetical `extract-editors.mjs` processing module and create individual spec extracts with the result of the processing under an `editors` folder for all specs in browser-specs, run:
+  ```bash
+  crawl-specs --output reports/test --module editors:extract-editors.mjs
+  ```
 
-Run `crawl-specs -h` for usage details.
+You may add `--terse` (or `-t`) to the above commands to access the extracts directly.
+
+Run `crawl-specs -h` for a complete list of options and usage details.
 
 
 ### Study tool
@@ -83,28 +106,18 @@ See the related **[WebIDLPedia](https://dontcallmedom.github.io/webidlpedia)** p
 
 Some of the tools that compose Reffy may also be used directly.
 
-The **references parser** takes the URL of a spec as input and generates a JSON structure that lists the normative and informative references found in the spec. To run the references parser: `parse-references [url]`
-
-The **WebIDL extractor** takes the URL of a spec as input and outputs the IDL definitions found in the spec as one block of text. To run the extractor: `extract-webidl [url]`
-
-The **WebIDL parser** takes the URL of a spec as input and generates a JSON structure that describes WebIDL term definitions and references that the spec contains. The parser uses [WebIDL2](https://github.com/darobin/webidl2.js/) to parse the WebIDL content found in the spec. To run the WebIDL parser: `parse-webidl [url]`
+The **WebIDL parser** takes the relative path to an IDL extract and generates a JSON structure that describes WebIDL term definitions and references that the spec contains. The parser uses [WebIDL2](https://github.com/darobin/webidl2.js/) to parse the WebIDL content found in the spec. To run the WebIDL parser: `parse-webidl [idlfile]`
 
 The **WebIDL names generator** takes the results of a crawl as input and creates a report per referenceable IDL name, that details the complete parsed IDL structure that defines the name across all specs. To run the generator: `generate-idlnames [crawl folder] [save folder]`
-
-The **CSS definitions extractor** takes the URL of a spec as input and outputs the CSS definitions found in the spec in a JSON structure. To run the extractor: `extract-cssdfn [url]`
 
 The **crawl results merger** merges a new JSON crawl report into a reference one. This tool is typically useful to replace the crawl results of a given specification with the results of a new run of the crawler on that specification. To run the crawl results merger: `merge-crawl-results [new crawl report] [reference crawl report] [crawl report to create]`
 
 The **spec checker** takes the URL of a spec, a reference crawl report and the name of the study report to create as inputs. It crawls and studies the given spec against the reference crawl report. Essentially, it applies the **crawler**, the **merger** and the **study** tool in order, to produces the anomalies report for the given spec. Note the URL can check multiple specs at once, provided the URLs are passed as a comma-separated value list without spaces. To run the spec checker: `check-specs [url] [reference crawl report] [study report to create]`
 
-
 For instance:
 
 ```bash
-parse-references https://w3c.github.io/presentation-api/
-extract-webidl https://www.w3.org/TR/webrtc/
-extract-cssdfn https://www.w3.org/TR/css-fonts-4/
-parse-webidl https://fetch.spec.whatwg.org/
+parse-webidl ed/idl/fetch.idl
 check-specs https://www.w3.org/TR/webstorage/ reports/ed/crawl.json reports/study-webstorage.json
 ```
 

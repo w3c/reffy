@@ -24,11 +24,13 @@
   },
   {
     "href": "./extract-webidl.mjs",
-    "property": "idl"
+    "property": "idl",
+    "extractsPerSeries": true
   },
   {
     "href": "./extract-cssdfn.mjs",
-    "property": "css"
+    "property": "css",
+    "extractsPerSeries": true
   },
   {
     "href": "./extract-dfns.mjs",

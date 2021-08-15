@@ -1,6 +1,6 @@
 {
   "name": "reffy",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "W3C/WHATWG spec dependencies exploration companion. Features a short set of tools to study spec references as well as WebIDL term definitions and references found in W3C specifications.",
   "repository": {
     "type": "git",
@@ -33,12 +33,9 @@
     "reffy": "./reffy.js",
     "check-specs": "./src/cli/check-specs.js",
     "crawl-specs": "./src/cli/crawl-specs.js",
-    "extract-webidl": "./src/cli/extract-webidl.js",
-    "extract-cssdfn": "./src/cli/extract-cssdfn.js",
     "generate-idlnames": "./src/cli/generate-idlnames.js",
     "generate-report": "./src/cli/generate-report.js",
     "merge-crawl-results": "./src/cli/merge-crawl-results.js",
-    "parse-references": "./src/cli/parse-references.js",
     "parse-webidl": "./src/cli/parse-webidl.js",
     "study-crawl": "./src/cli/study-crawl.js"
   },

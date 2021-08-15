@@ -209,7 +209,7 @@ function parseIdlAstTree(idlReport, contextName) {
         case "eof":
             break;
         default:
-            console.error("Unhandled IDL type: " + def.type + " in " +JSON.stringify(def));
+            throw new Error("Unhandled IDL type: " + def.type + " in " +JSON.stringify(def));
         }
     };
 }
@@ -405,15 +405,15 @@ module.exports.hasObsoleteIdl = hasObsoleteIdl;
 Code run if the code is run as a stand-alone module
 **************************************************/
 if (require.main === module) {
-    const url = process.argv[2];
-    if (!url) {
-        console.error("Required URL parameter missing");
+    const fs = require("fs");
+    const idlFile = process.argv[2];
+    if (!idlFile) {
+        console.error("No IDL file to parse");
         process.exit(2);
     }
-    const webidlExtract = require("./extract-webidl");
 
-    webidlExtract.extract(url)
-        .then(parse)
+    const idl = fs.readFileSync(idlFile, "utf8");
+    parse(idl)
         .then(function (data) {
             console.log(JSON.stringify(data, null, 2));
         })
