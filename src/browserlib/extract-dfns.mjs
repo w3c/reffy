@@ -201,6 +201,9 @@ export default function (spec, idToHeading = {}) {
   case "html":
     preProcessHTML();
     break;
+  case "ecmascript":
+    preProcessEcmascript();
+    break;
   case "SVG2":
     preProcessSVG2();
     break;
@@ -223,6 +226,173 @@ export default function (spec, idToHeading = {}) {
     })
     .filter(hasValidType)
     .map(node => definitionMapper(node, idToHeading));
+}
+
+function preProcessEcmascript() {
+  const sectionFilter= ":not([legacy])";
+
+  const wrapWithDfn = (el) => {
+    // wrap with a dfn
+    const dfn = document.createElement("dfn");
+    for (let child of [...el.childNodes]) {
+      dfn.appendChild(child);
+    }
+    el.appendChild(dfn);
+    // set id
+    dfn.setAttribute("id", el.parentNode.getAttribute("id"));
+    dfn.dataset.ltNodefault = true;
+    return dfn;
+  };
+
+  const cleanMethodName = (name) => {
+    return name.replace(/\[/g, '')
+      .replace(/\]/g, '') // removing brackets used to mark optional args
+      .replace(/ \( */, '(')
+      .replace(/ *\)/, ')')
+      .replace(/ *,/g, ','); // trimming internal spaces
+  };
+
+  let definitionNames = new Set();
+
+  const sectionNumberRegExp = /^([A-Z]\.)?[0-9\.]+ /;
+  // any rule needs its exception
+  const objectsIdsExceptions = ["sec-regexp-regular-expression-objects", "sec-weak-ref-objects"];
+  [...document.querySelectorAll(`${sectionFilter} h1`)].
+    forEach(el => {
+      let dfnName = el.textContent.replace(sectionNumberRegExp, '').trim() ;// remove section number
+
+      if (el.parentNode.id.match(/-objects?$/) && dfnName.match(/Object/)) {
+        // only keep ids that match a credible pattern for object names
+        if (!el.parentNode.id.match(/sec-[a-z]+-objects?/)
+            // any rule needs its exception
+            && !objectsIdsExceptions.includes(el.parentNode.id)
+           ) return;
+        const dfn = wrapWithDfn(el);
+        // set data-lt
+        dfn.dataset.lt = dfnName
+          .replace(/^The /, '')
+          .replace(/ Objects?$/, '')
+        // regexp def includes "(Regular Expression)"
+          .replace(/ \([^\)]*\)/, '') ;
+        if (dfn.dataset.lt.match(/^[A-Z]/)) {
+          // set dfn-type
+          dfn.dataset.dfnType = "interface";
+        }
+      } else if (el.parentNode.id.match(/[-\.]prototype[-\.]/)) {
+        // methods and attributes on objects
+
+        // Skip headings with a space and no parenthesis
+        // (they mention prototype but aren't a prototype property def)
+        if (!dfnName.match(/\(/) && dfnName.match(/ /)) return;
+
+        // Skip unscoped internal methods à la [[SetPrototypeOf]](V)
+        if (dfnName.match(/\[\[/)) return;
+
+        // Skip symbol-based property definitions;
+        // not clear they're useful as externally referenceable names
+      if (dfnName.match(/@@/)) return;
+
+        const dfn = wrapWithDfn(el);
+        // set definition scope
+        dfn.dataset.dfnFor = dfnName.replace(/\.prototype\..*/, '')
+          .replace(/^[gs]et /, ''); // remove "get"/"set" markers
+
+        // Remove parent object prototype (set as scope)
+        dfnName = dfnName.replace(/.*\.prototype\./, '');
+
+        dfn.dataset.lt = dfnName;
+        // set dfn-type
+        if (dfn.dataset.lt.match(/\(/)) {
+          dfnName = cleanMethodName(dfnName);
+          dfn.dataset.lt = dfnName;
+          dfn.dataset.dfnType = "method";
+        } else {
+          dfn.dataset.dfnType = "attribute";
+        }
+      } else {
+        // We handle other headings that look like a method / property
+        // on an object instance (rather than its prototype)
+        // or an abstract op
+
+        // if there is already a dfn element, we move on
+        if (el.querySelector("dfn")) return;
+
+        // only dealing with well-known patterns
+        if (!dfnName.match(/^[a-z]+\.[a-z]+/i) // à la JSON.parse
+            && !dfnName.match(/^([A-Z][a-z]+)+ *\(/) // à la ArrayCreate (
+           ) return;
+        // Skip symbol-based property definitions
+        if (dfnName.match(/@@/)) return;
+
+        // Skip headings where foo.bar appears as part of a longer phrase
+        if (!dfnName.match(/\(/) && dfnName.match(/ /)) return;
+
+        // redundant definitions of constructors on the global object
+        // e.g. "Array ( . . . )"
+        if (dfnName.match(/\. \. \./)) return;
+
+        const dfn = wrapWithDfn(el);
+
+        if (dfnName.match(/^[a-z]+\.[a-z]+/i)) {
+          // set definition scope
+          // This assumes that such methods and attributes are only defined
+          // one-level deep from the global scope
+          dfn.dataset.dfnFor = dfnName.replace(/\..*$/, '');
+          // FIXME Math.hypot
+          dfnName = dfnName.replace(dfn.dataset.dfnFor + ".", '');
+          if (dfnName.match(/\(/)) {
+            dfnName = cleanMethodName(dfnName);
+            dfn.dataset.lt = dfnName;
+            dfn.dataset.dfnType = "method";
+          } else {
+            dfn.dataset.lt = dfnName;
+            dfn.dataset.dfnType = "attribute";
+          }
+        } else { // Abstract ops à la ArrayCreate or global constructor
+          dfnName = cleanMethodName(dfnName);
+          dfn.dataset.lt = dfnName;
+          // distinguish global constructors from abstract operations
+          if ((dfn.closest("emu-clause")?.parentNode?.id || "").match(/-constructors?$/)) {
+            dfn.dataset.dfnType = "constructor";
+          } else {
+            dfn.dataset.dfnType = "abstract-op";
+          }
+        }
+        definitionNames.add(dfnName);
+      }
+    });
+
+  [...document.querySelectorAll(`${sectionFilter} dfn`)]
+    .forEach(el => {
+      // Skip definitions in conformance page and conventions page
+      if (el.closest('section[data-reffy-page$="conformance.html"]') ||
+         el.closest('section[data-reffy-page$="notational-conventions.html"]')) {
+        return;
+      }
+      // If the <dfn> has no id, we attach it the one from the closest
+      // <emu-clause> with an id
+      // Note that this means several definitions can share the same id
+      if (!el.getAttribute("id")) {
+        if (el.closest("emu-clause[id]")) {
+          el.setAttribute("id", el.closest("emu-clause").getAttribute("id"));
+        }
+      }
+      // Mark well-known intrinsic objects as "interface",
+      // for lack of a better type, and as the WebIDL spec has been doing
+      if (el.textContent.match(/^%[A-Z].*%$/)) {
+        el.dataset.dfnType = "interface";
+      }
+      // Mark well-known symbols as "const"
+      // for lack of a better type, and as the WebIDL spec has been doing
+      if (el.textContent.match(/^@@[a-z]*$/i)) {
+        el.dataset.dfnType = "const";
+      }
+      // Any generic <dfn> that doesn't repeat a term defined with a type
+      // is deemed to be exported
+      if (!el.dataset.dfnType && !definitionNames.has(el.textContent)) {
+        el.dataset.export = "";
+      }
+    });
 }
 
 function preProcessHTML() {
