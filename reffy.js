@@ -84,8 +84,7 @@ program
       case 'crawl':
         promise = promise
           .then(_ => crawlSpecs(
-            reportFolder,
-            { publishedVersion, debug }));
+            { publishedVersion, debug, output: reportFolder }));
         break;
 
       case 'study':

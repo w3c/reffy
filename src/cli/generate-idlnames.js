@@ -118,7 +118,7 @@ function generateIdlNames(results, options = {}) {
   const names = {};
 
   function defineIDLContent(spec) {
-    return spec.idl && spec.idl.idl;
+    return spec.idl && (spec.idl.idlNames || spec.idl.idlExtendedNames);
   }
 
   // Only keep latest version of specs and delta specs that define some IDL
@@ -141,7 +141,7 @@ function generateIdlNames(results, options = {}) {
         // IDL names are sometimes defined in multiple specs. Let's consider
         // that the "first" (in order of apparence in the report) apparence is
         // the main one, and let's ignore the second definition.
-        console.warn('[warn] IDL Names - Name defined more than once', name);
+        options.quiet ?? console.warn('[warn] IDL Names - Name defined more than once', name);
         return;
       }
       names[name] = {
@@ -168,7 +168,7 @@ function generateIdlNames(results, options = {}) {
           // That should never happen, and it does not in practice unless there
           // was a crawling error on the spec that normally defines the base
           // IDL name. Alas, such crawling errors do happen from time to time.
-          console.warn('[warn] IDL Names - No definition found', name);
+          options.quiet ?? console.warn('[warn] IDL Names - No definition found', name);
           names[name] = {
             extended: [],
             includes: []
@@ -199,7 +199,7 @@ function generateIdlNames(results, options = {}) {
     while (current) {
       current = current.inheritance;
       if (current && (current.name === name)) {
-        console.warn('[warn] IDL Names - Cyclic inheritance chain detected', name);
+        options.quiet ?? console.warn('[warn] IDL Names - Cyclic inheritance chain detected', name);
         current.inheritance = null;
       }
     }
@@ -302,7 +302,7 @@ function generateIdlNames(results, options = {}) {
 
 async function generateIdlNamesFromPath(crawlPath, options = {}) {
   const crawlIndex = requireFromWorkingDirectory(path.resolve(crawlPath, 'index.json'));
-  const crawlResults = await expandCrawlResult(crawlIndex, crawlPath);
+  const crawlResults = await expandCrawlResult(crawlIndex, crawlPath, ['idlparsed', 'dfns']);
   return generateIdlNames(crawlResults.results, options);
 }
 
