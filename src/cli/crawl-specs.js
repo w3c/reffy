@@ -192,7 +192,6 @@ async function crawlSpec(spec, crawlOptions) {
  *   "output" and "quiet". See CLI help (node crawl-specs.js --help) for
  *   details. The "modules" setting is mandatory and note that the function
  *   will not do anything if "output" is not set.
- * @param {Object} data The list of specification structures to save
  * @return {Promise<Object>} The promise to get an updated spec object that
  *   contains links to created extracts.
  */
