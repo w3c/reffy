@@ -288,7 +288,9 @@ function preProcessEcmascript() {
 
         // Skip headings with a space and no parenthesis
         // (they mention prototype but aren't a prototype property def)
-        if (!dfnName.match(/\(/) && dfnName.match(/ /)) return;
+        // with the exception of "set " and "get " headings
+        // (which describe setters and getters)
+        if (!dfnName.match(/\(/) && (dfnName.match(/ /) && !dfnName.match(/^[gs]et /))) return;
 
         // Skip unscoped internal methods à la [[SetPrototypeOf]](V)
         if (dfnName.match(/\[\[/)) return;
