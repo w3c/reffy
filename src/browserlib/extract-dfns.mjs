@@ -290,7 +290,7 @@ function preProcessEcmascript() {
 
         // Skip symbol-based property definitions;
         // not clear they're useful as externally referenceable names
-      if (dfnName.match(/@@/)) return;
+        if (dfnName.match(/@@/)) return;
 
         const dfn = wrapWithDfn(el);
         // set definition scope
