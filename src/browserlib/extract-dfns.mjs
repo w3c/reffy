@@ -255,16 +255,21 @@ function preProcessEcmascript() {
   let definitionNames = new Set();
 
   const sectionNumberRegExp = /^([A-Z]\.)?[0-9\.]+ /;
-  // any rule needs its exception
-  const objectsIdsExceptions = ["sec-regexp-regular-expression-objects", "sec-weak-ref-objects"];
   [...document.querySelectorAll(`${sectionFilter} h1`)].
     forEach(el => {
       let dfnName = el.textContent.replace(sectionNumberRegExp, '').trim() ;// remove section number
 
       if (el.parentNode.id.match(/-objects?$/) && dfnName.match(/Object/)) {
+
         // only keep ids that match a credible pattern for object names
+        // i.e. a single word
+
+        // there are exceptions to that simple rule
+        // RegExp includes its expansion (regular expansion) in the id
+        // WeakRef is translated into weak-ref in the id
+        const objectsIdsExceptions = ["sec-regexp-regular-expression-objects", "sec-weak-ref-objects"];
+
         if (!el.parentNode.id.match(/sec-[a-z]+-objects?/)
-            // any rule needs its exception
             && !objectsIdsExceptions.includes(el.parentNode.id)
            ) return;
         const dfn = wrapWithDfn(el);
