@@ -258,8 +258,11 @@ function preProcessEcmascript() {
   [...document.querySelectorAll(`${sectionFilter} h1`)].
     forEach(el => {
       let dfnName = el.textContent.replace(sectionNumberRegExp, '').trim() ;// remove section number
+      const dfnId = el.parentNode.id;
+      if (dfnId.match(/-objects?$/) && dfnName.match(/ Objects?$/)) {
 
-      if (el.parentNode.id.match(/-objects?$/) && dfnName.match(/Object/)) {
+        // Skip headings that look like object definitions, but aren't
+        if (dfnId === "sec-global-object" || dfnId === "sec-fundamental-objects") return;
 
         // only keep ids that match a credible pattern for object names
         // i.e. a single word
