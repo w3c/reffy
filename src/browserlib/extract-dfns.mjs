@@ -272,21 +272,30 @@ function preProcessEcmascript() {
         // WeakRef is translated into weak-ref in the id
         const objectsIdsExceptions = ["sec-regexp-regular-expression-objects", "sec-weak-ref-objects"];
 
-        if (!el.parentNode.id.match(/sec-[a-z]+-objects?/)
-            && !objectsIdsExceptions.includes(el.parentNode.id)
+        if (!dfnId.match(/sec-[a-z]+-objects?/)
+            && !objectsIdsExceptions.includes(dfnId)
            ) return;
         const dfn = wrapWithDfn(el);
         // set data-lt
-        dfn.dataset.lt = dfnName
+        dfnName = dfnName
           .replace(/^The /, '')
           .replace(/ Objects?$/, '')
         // regexp def includes "(Regular Expression)"
           .replace(/ \([^\)]*\)/, '') ;
-        if (dfn.dataset.lt.match(/^[A-Z]/)) {
+        dfn.dataset.lt = dfnName;
+        if (dfnName.match(/^[A-Z]/)) {
           // set dfn-type
-          dfn.dataset.dfnType = "interface";
+          if (dfnName.match(/Error$/)) {
+            dfn.dataset.dfnType = "exception";
+          } else {
+            dfn.dataset.dfnType = "interface";
+          }
         }
-      } else if (el.parentNode.id.match(/[-\.]prototype[-\.]/)) {
+      } else if (dfnId.match(/-[a-z]+error$/) && !dfnName.match(/\(/)) {
+        const dfn = wrapWithDfn(el);
+        dfn.dataset.lt = dfnName;
+        dfn.dataset.dfnType = "exception";
+      } else if (dfnId.match(/[-\.]prototype[-\.]/)) {
         // methods and attributes on objects
 
         // Skip headings with a space and no parenthesis
