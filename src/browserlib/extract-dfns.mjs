@@ -380,7 +380,16 @@ function preProcessEcmascript() {
         definitionNames.add(dfnName);
       }
     });
-
+  // Extract abstract operations from <emu-eqn> with aoid attribute
+  [...document.querySelectorAll(`${sectionFilter} emu-eqn[aoid`)]
+    .forEach(el => {
+      // Skip definitions of constant values (e.g. msPerDay)
+      if (el.textContent.match(/=/)) return;
+      const dfn = wrapWithDfn(el);
+      dfn.dataset.lt = el.getAttribute("aoid");
+      dfn.dataset.dfnType = "abstract-op";
+      dfn.id = el.id;
+    });
   [...document.querySelectorAll(`${sectionFilter} dfn`)]
     .forEach(el => {
       // Skip definitions in conformance page and conventions page
