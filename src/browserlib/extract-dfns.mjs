@@ -415,6 +415,9 @@ function preProcessEcmascript() {
       if (el.textContent.match(/^@@[a-z]*$/i)) {
         el.dataset.dfnType = "const";
       }
+      if (el.getAttribute("variants")) {
+        el.dataset.lt = (el.dataset.lt ? el.dataset.lt  : el.textContent.trim()) + "|" + el.getAttribute("variants");
+      }
       // Any generic <dfn> that doesn't repeat a term defined with a type
       // is deemed to be exported
       if (!el.dataset.dfnType && !definitionNames.has(el.textContent)) {
