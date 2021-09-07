@@ -200,7 +200,7 @@ const tests = [
   {
     title: 'assign ids to un-id’d definitions of the ecmascript spec',
     html: '<emu-clause id="foo"><h1><span class="secnum">9.4</span> Execution Contexts</h1><p>An <dfn variants="execution contexts">execution context</dfn> is a specification device that is used to track the runtime evaluation of code by an ECMAScript implementation.</p></emu-clause>',
-    changesToBaseDfn: [{linkingText: [ "execution context"], access: "public", definedIn: "prose", heading: { number: "9.4", id: "foo", href: "about:blank#foo", title: "Execution Contexts"}}],
+    changesToBaseDfn: [{linkingText: [ "execution context", "execution contexts"], access: "public", definedIn: "prose", heading: { number: "9.4", id: "foo", href: "about:blank#foo", title: "Execution Contexts"}}],
     spec: "ecmascript"
   },
   {
@@ -436,7 +436,7 @@ describe("Test definition extraction", function () {
     })).output;
     mapIdsToHeadingsCode = mapIdsToHeadingsOutput[0].code;
 
-    browser = await puppeteer.launch({ headless: true });
+    browser = await puppeteer.launch({ headless: true, executablePath: "/usr/bin/chromium-browser" });
   });
 
   tests.forEach(t => {
