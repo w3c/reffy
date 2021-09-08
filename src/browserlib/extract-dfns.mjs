@@ -359,6 +359,14 @@ function preProcessEcmascript() {
         } else {
           dfn.dataset.dfnType = "attribute";
         }
+      } else if (el.closest("#sec-value-properties-of-the-global-object")) {
+        // properties of the global object
+        if (el.id !== "#sec-value-properties-of-the-global-object"){
+          const dfn = wrapWithDfn(el);
+          dfn.dataset.lt = dfnName;
+          dfn.dataset.dfnType = "attribute";
+          dfn.dataset.dfnFor = "globalThis";
+        }
       } else {
         // We handle other headings that look like a method / property
         // on an object instance (rather than its prototype)
