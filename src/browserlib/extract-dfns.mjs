@@ -320,6 +320,9 @@ function preProcessEcmascript() {
         // not clear they're useful as externally referenceable names
         if (dfnName.match(/@@/)) return;
 
+        // Skip .constructor as that cannot be considered as an attribute
+        if (dfnName.match(/\.constructor$/)) return;
+
         const dfn = wrapWithDfn(el);
         // set definition scope
         dfn.dataset.dfnFor = dfnName.replace(/\.prototype\..*/, '')
@@ -351,6 +354,10 @@ function preProcessEcmascript() {
            ) return;
         // Skip symbol-based property definitions
         if (dfnName.match(/@@/)) return;
+
+        // Skip .prototype as that cannot be considered
+        // as an attribute
+        if (dfnName.match(/\.prototype$/)) return;
 
         // Skip headings where foo.bar appears as part of a longer phrase
         if (!dfnName.match(/\(/) && dfnName.match(/ /)) return;
