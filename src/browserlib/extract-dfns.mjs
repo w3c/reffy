@@ -255,6 +255,23 @@ function preProcessEcmascript() {
   let definitionNames = new Set();
   let idlTypes = {};
 
+  // We find the list of abstract methods
+  // to help with scoping abstract operations
+  let abstractMethods = {};
+  const abstractMethodCaptions = [...document.querySelectorAll("figcaption")]
+        .filter(el => el.textContent.match(/(abstract|additional) method/i) && el.parentNode.querySelector("emu-xref"));
+  for (let figcaption of abstractMethodCaptions) {
+    const scope = figcaption.querySelector("emu-xref").textContent;
+    const table = figcaption.parentNode.querySelector("tbody");
+    for (let td of table.querySelectorAll("tr td:first-child")) {
+      // We only consider the name of the method, not the potential parameters
+      // as they're not necessarily consistently names across
+      // the list and the definition
+      const methodName = td.textContent.trim().split('(')[0];
+      abstractMethods[methodName] = scope;
+    }
+  }
+
   const sectionNumberRegExp = /^([A-Z]\.)?[0-9\.]+ /;
   [...document.querySelectorAll(`${sectionFilter} h1`)].
     forEach(el => {
@@ -390,6 +407,13 @@ function preProcessEcmascript() {
           if ((dfn.closest("emu-clause")?.parentNode?.id || "").match(/-constructors?$/)) {
             dfn.dataset.dfnType = "constructor";
           } else {
+            // If the name is listed as an Abstract Method
+            // we set the dfn-for accordingly
+            const opName = dfnName.split('(')[0];
+            if (abstractMethods[opName]) {
+              dfn.dataset.dfnFor = abstractMethods[opName];
+            }
+
             dfn.dataset.dfnType = "abstract-op";
           }
         }
