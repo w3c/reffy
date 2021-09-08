@@ -449,6 +449,13 @@ function preProcessEcmascript() {
       if (el.textContent.match(/^%[A-Z].*%$/)) {
         el.dataset.dfnType = idlTypes[el.textContent.replace(/%/g, '')] || "interface";
       }
+
+      // %names% in the global object section are operations of the globalThis object
+      if (el.closest('[data-reffy-page$="global-object.html"]') && el.textContent.match(/^%[a-z]+%/i)) {
+        el.dataset.dfnFor = "globalThis";
+        el.dataset.dfnType = "method";
+      }
+
       // Mark well-known symbols as "const"
       // for lack of a better type, and as the WebIDL spec has been doing
       if (el.textContent.match(/^@@[a-z]*$/i)) {
