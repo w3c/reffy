@@ -262,7 +262,8 @@ function preProcessEcmascript() {
       if (dfnId.match(/-objects?$/) && dfnName.match(/ Objects?$/)) {
 
         // Skip headings that look like object definitions, but aren't
-        if (dfnId === "sec-global-object" || dfnId === "sec-fundamental-objects") return;
+        const notObjectIds = ["sec-global-object", "sec-fundamental-objects", "sec-waiterlist-objects"];
+        if (notObjectIds.includes(dfnId)) return;
 
         // only keep ids that match a credible pattern for object names
         // i.e. a single word
