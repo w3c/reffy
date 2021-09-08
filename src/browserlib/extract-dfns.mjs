@@ -253,6 +253,7 @@ function preProcessEcmascript() {
   };
 
   let definitionNames = new Set();
+  let idlTypes = {};
 
   const sectionNumberRegExp = /^([A-Z]\.)?[0-9\.]+ /;
   [...document.querySelectorAll(`${sectionFilter} h1`)].
@@ -288,9 +289,16 @@ function preProcessEcmascript() {
           // set dfn-type
           if (dfnName.match(/Error$/)) {
             dfn.dataset.dfnType = "exception";
+          } else if (!el.parentNode.querySelector('[id$="constructor"]')) {
+            // Objects without constructors match to the namespace type
+            dfn.dataset.dfnType = "namespace";
           } else {
             dfn.dataset.dfnType = "interface";
           }
+          // We keep track of types associated with a name
+          // to associate the same type to the relevant intrinsic object
+          // à la %Math%
+          idlTypes[dfnName] = dfn.dataset.dfnType;
         }
       } else if (dfnId.match(/-[a-z]+error$/) && !dfnName.match(/\(/)) {
         const dfn = wrapWithDfn(el);
@@ -406,10 +414,9 @@ function preProcessEcmascript() {
           el.setAttribute("id", el.closest("emu-clause").getAttribute("id"));
         }
       }
-      // Mark well-known intrinsic objects as "interface",
-      // for lack of a better type, and as the WebIDL spec has been doing
+      // Mark well-known intrinsic objects as the same type as their visible object (if set), defaulting to "interface"
       if (el.textContent.match(/^%[A-Z].*%$/)) {
-        el.dataset.dfnType = "interface";
+        el.dataset.dfnType = idlTypes[el.textContent.replace(/%/g, '')] || "interface";
       }
       // Mark well-known symbols as "const"
       // for lack of a better type, and as the WebIDL spec has been doing
