@@ -436,7 +436,7 @@ describe("Test definition extraction", function () {
     })).output;
     mapIdsToHeadingsCode = mapIdsToHeadingsOutput[0].code;
 
-    browser = await puppeteer.launch({ headless: true, executablePath: "/usr/bin/chromium-browser" });
+    browser = await puppeteer.launch({ headless: true });
   });
 
   tests.forEach(t => {
