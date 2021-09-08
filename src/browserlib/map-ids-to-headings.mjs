@@ -108,6 +108,10 @@ function esMapIdToHeadings() {
   [...document.querySelectorAll(`[id]:not(${ignoreTags.join(',')}`)]
     .forEach(el => {
       const section = el.closest(`${sectionTags.map(t => `${t}[id]`).join(',')}`);
+
+      // These are spec UI-related ids, so not a loss
+      if (!section) return;
+
       const heading = section.querySelector("h1");
       const trimmedText = heading.textContent.trim();
       const nodeid = getAbsoluteUrl(el, { singlePage });
