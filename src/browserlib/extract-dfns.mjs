@@ -317,10 +317,12 @@ function preProcessEcmascript() {
           // à la %Math%
           idlTypes[dfnName] = dfn.dataset.dfnType;
         }
+        definitionNames.add(dfnName);
       } else if (dfnId.match(/-[a-z]+error$/) && !dfnName.match(/\(/)) {
         const dfn = wrapWithDfn(el);
         dfn.dataset.lt = dfnName;
         dfn.dataset.dfnType = "exception";
+        definitionNames.add(dfnName);
       } else if (dfnId.match(/[-\.]prototype[-\.]/)) {
         // methods and attributes on objects
 
@@ -452,15 +454,9 @@ function preProcessEcmascript() {
          el.closest('section[data-reffy-page$="notational-conventions.html"]')) {
         return;
       }
+
       // If the <dfn> has no id, we attach it the one from the closest
       // <emu-clause> with an id
-      // Note that this means several definitions can share the same id
-      if (!el.getAttribute("id")) {
-        if (el.closest("emu-clause[id]")) {
-          el.setAttribute("id", el.closest("emu-clause").getAttribute("id"));
-        }
-      }
-
       // rely on the aoid attribute as a hint we're dealing
       // with an abstract-op
       if (el.getAttribute("aoid")) {
@@ -470,6 +466,7 @@ function preProcessEcmascript() {
       // Mark well-known intrinsic objects as the same type as their visible object (if set), defaulting to "interface"
       if (el.textContent.match(/^%[A-Z].*%$/)) {
         el.dataset.dfnType = idlTypes[el.textContent.replace(/%/g, '')] || "interface";
+        definitionNames.add(el.textContent.trim());
       }
 
       // %names% in the global object section are operations of the globalThis object
@@ -486,11 +483,41 @@ function preProcessEcmascript() {
       if (el.getAttribute("variants")) {
         el.dataset.lt = (el.dataset.lt ? el.dataset.lt  : el.textContent.trim()) + "|" + el.getAttribute("variants");
       }
-      // Any generic <dfn> that doesn't repeat a term defined with a type
+
+      // Skip definitions that have already been identified
+      // with a more specific typing
+      if (!el.dataset.dfnType) {
+        // we already have a matching typed definition
+        if (definitionNames.has(el.textContent.trim())) return;
+      }
+
+      // Note that this means several definitions can share the same id
+      if (!el.getAttribute("id")) {
+        if (el.closest("emu-clause[id]")) {
+          el.setAttribute("id", el.closest("emu-clause").getAttribute("id"));
+        }
+      }
+
+      // Any generic <dfn> not previously filtered out
       // is deemed to be exported
-      if (!el.dataset.dfnType && !definitionNames.has(el.textContent)) {
+      if (!el.dataset.dfnType) {
         el.dataset.export = "";
       }
+    });
+  // Another pass of clean up for duplicates
+  // This cannot be done in the first pass
+  // because %Foo.prototype% does not necessarily get identified before
+  // the equivalent " prototype object" dfn
+
+  [...document.querySelectorAll(`${sectionFilter} dfn[id][data-export`)]
+    .forEach(dfn => {
+      // we have the syntactic equivalent %x.prototype%
+      let m = dfn.textContent.trim().match(/^(.*) prototype( object)?$/);
+      if (m && definitionNames.has(`%${m[1].trim()}.prototype%`)) {
+        dfn.removeAttribute("id");
+        delete dfn.dataset.export;
+        return;
+        }
     });
 }
 
