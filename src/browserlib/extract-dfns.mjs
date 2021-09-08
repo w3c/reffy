@@ -459,7 +459,8 @@ function preProcessEcmascript() {
     .forEach(el => {
       // Skip definitions in conformance page and conventions page
       if (el.closest('section[data-reffy-page$="conformance.html"]') ||
-         el.closest('section[data-reffy-page$="notational-conventions.html"]')) {
+          el.closest('section[data-reffy-page$="notational-conventions.html"]')) {
+        el.removeAttribute("id");
         return;
       }
 
@@ -507,8 +508,11 @@ function preProcessEcmascript() {
       }
 
       // Any generic <dfn> not previously filtered out
-      // is deemed to be exported
+      // is deemed to be exported, scoped to ECMAScript
       if (!el.dataset.dfnType) {
+        if (!el.dataset.dfnFor) {
+          el.dataset.dfnFor = "ECMAScript";
+        }
         el.dataset.export = "";
       }
     });
