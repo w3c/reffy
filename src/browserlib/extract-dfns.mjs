@@ -431,6 +431,20 @@ function preProcessEcmascript() {
       dfn.dataset.dfnType = "abstract-op";
       dfn.id = el.id;
     });
+
+  // Extract State Components from tables
+  [...document.querySelectorAll(`${sectionFilter} figure > table`)]
+    .forEach(el => {
+      const title = el.parentNode.querySelector("figcaption")?.textContent || "";
+      if (!title.match(/state components for/i)) return;
+      const scope = title.replace(/^.*state components for/i, '').trim();
+      for (let td of el.querySelectorAll("tr td:first-child")) {
+        const dfn = wrapWithDfn(td);
+        dfn.dataset.dfnFor = scope;
+        dfn.id = el.closest("emu-table[id],emu-clause[id]").id;
+      }
+    });
+
   [...document.querySelectorAll(`${sectionFilter} dfn`)]
     .forEach(el => {
       // Skip definitions in conformance page and conventions page
