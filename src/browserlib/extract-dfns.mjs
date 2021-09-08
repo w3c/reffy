@@ -289,7 +289,7 @@ function preProcessEcmascript() {
         // there are exceptions to that simple rule
         // RegExp includes its expansion (regular expansion) in the id
         // WeakRef is translated into weak-ref in the id
-        const objectsIdsExceptions = ["sec-regexp-regular-expression-objects", "sec-weak-ref-objects"];
+        const objectsIdsExceptions = ["sec-regexp-regular-expression-objects", "sec-weak-ref-objects", "sec-aggregate-error-objects", "sec-finalization-registry-objects", "sec-async-function-objects"];
 
         if (!dfnId.match(/sec-[a-z]+-objects?/)
             && !objectsIdsExceptions.includes(dfnId)
@@ -403,13 +403,14 @@ function preProcessEcmascript() {
         } else { // Abstract ops à la ArrayCreate or global constructor
           dfnName = cleanMethodName(dfnName);
           dfn.dataset.lt = dfnName;
+          const opName = dfnName.split('(')[0];
+
           // distinguish global constructors from abstract operations
-          if ((dfn.closest("emu-clause")?.parentNode?.id || "").match(/-constructors?$/)) {
+          if (idlTypes[opName]) {
             dfn.dataset.dfnType = "constructor";
           } else {
             // If the name is listed as an Abstract Method
             // we set the dfn-for accordingly
-            const opName = dfnName.split('(')[0];
             if (abstractMethods[opName]) {
               dfn.dataset.dfnFor = abstractMethods[opName];
             }
@@ -445,6 +446,13 @@ function preProcessEcmascript() {
           el.setAttribute("id", el.closest("emu-clause").getAttribute("id"));
         }
       }
+
+      // rely on the aoid attribute as a hint we're dealing
+      // with an abstract-op
+      if (el.getAttribute("aoid")) {
+        el.dataset.dfnType = "abstract-op";
+      }
+
       // Mark well-known intrinsic objects as the same type as their visible object (if set), defaulting to "interface"
       if (el.textContent.match(/^%[A-Z].*%$/)) {
         el.dataset.dfnType = idlTypes[el.textContent.replace(/%/g, '')] || "interface";
