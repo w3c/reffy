@@ -156,15 +156,27 @@ const tests = [
    changesToBaseDfn: [{ linkingText: [ 'Foo()' ], type: "method", access: "public"}]
   },
   {
-    title: "extracts definitions of ES-level objects in ecmascript spec",
+    title: "extracts definitions of namespace objects in ecmascript spec",
     html: '<emu-clause id="sec-foo-object"><h1>The Foo Object</h1></emu-clause>',
     changesToBaseDfn: [{type: "namespace", access: "public", definedIn: "heading", id: "sec-foo-object", heading: { id: "sec-foo-object", href: "about:blank#sec-foo-object", title: "The Foo Object"}}],
     spec: "ecmascript"
   },
   {
-    title: "extracts definitions of ES-level objects in ecmascript spec that don't follow the regular rule",
+    title: "extracts definitions of interface objects in ecmascript spec",
+    html: '<emu-clause id="sec-foo-object"><h1>The Foo Object</h1><emu-clause id="sec-foo-constructor"><h1>The Foo Constructor</h1></emu-clause></emu-clause>',
+    changesToBaseDfn: [{type: "interface", access: "public", definedIn: "heading", id: "sec-foo-object", heading: { id: "sec-foo-object", href: "about:blank#sec-foo-object", title: "The Foo Object"}}],
+    spec: "ecmascript"
+  },
+  {
+    title: "extracts definitions of ES-level objects in ecmascript spec that don't follow the regular id heuristic",
     html: '<emu-clause id="sec-regexp-regular-expression-objects"><h1>The RegExp (Regular Expression) Object</h1><emu-clause id="sec-regexp-constructor"><h1>RegExp Constructor</h1></emu-clause></emu-clause>',
     changesToBaseDfn: [{linkingText: [ "RegExp"], type: "interface", access: "public", definedIn: "heading", id: "sec-regexp-regular-expression-objects", heading: { id: "sec-regexp-regular-expression-objects", href: "about:blank#sec-regexp-regular-expression-objects", title: "The RegExp (Regular Expression) Object"}}],
+    spec: "ecmascript"
+  },
+  {
+    title: "extracts definitions of exceptions objects in ecmascript spec",
+    html: '<emu-clause id="sec-fooerror-object"><h1>The FooError Object</h1><emu-clause id="sec-fooerror-constructor"><h1>The FooError Constructor</h1></emu-clause></emu-clause>',
+    changesToBaseDfn: [{linkingText: ["FooError"], type: "exception", access: "public", definedIn: "heading", id: "sec-fooerror-object", heading: { id: "sec-fooerror-object", href: "about:blank#sec-fooerror-object", title: "The FooError Object"}}],
     spec: "ecmascript"
   },
   {
@@ -180,6 +192,12 @@ const tests = [
     spec: "ecmascript"
   },
   {
+    title: "extracts  properties of the globalThis object in ecmascript spec",
+    html: '<emu-clause id="sec-value-properties-of-the-global-object"><h1><span class="secnum">25.1.5.1</span> Value Properties of the Global Object</h1><emu-clause id="foo"> <h1>Foo</h1></emu-clause></emu-clause>',
+    changesToBaseDfn: [ {type: "attribute", "for": ["globalThis"], access: "public", definedIn: "heading", heading: { id: "foo", href: "about:blank#foo", title: "Foo"}}],
+    spec: "ecmascript"
+  },
+  {
     title: 'extracts instance-level methods from objects in ecmascript spec',
     html: '<emu-clause id="sec-json.parse"><h1><span class="secnum">25.5.1</span> JSON.parse ( <var>text</var> [ , <var>reviver</var> ] )</h1></emu-clause>',
     changesToBaseDfn: [{linkingText: [ "parse(text, reviver)"], type: "method", "for": ["JSON"], access: "public", definedIn: "heading", id: "sec-json.parse", heading: { number: "25.5.1", id: "sec-json.parse", href: "about:blank#sec-json.parse", title: "JSON.parse ( text [ , reviver ] )"}}],
@@ -192,9 +210,37 @@ const tests = [
     spec: "ecmascript"
   },
   {
+    title: 'extracts constructors from ecmascript spec',
+    // This requires also defining the associated interface
+    html: '<emu-clause id="sec-object-object"><h1>The Object Object</h1><emu-clause id="sec-object-constructor"><h1>Object ( [ value ] )</h1></emu-clause></emu-clause>',
+    changesToBaseDfn: [
+      {linkingText: [ "Object"], type: "interface", access: "public", definedIn: "heading", id: "sec-object-object", heading: { id: "sec-object-object", href: "about:blank#sec-object-object", title: "The Object Object"}},
+      {linkingText: [ "Object(value)"], type: "constructor", "for": ["Object"], access: "public", definedIn: "heading", id: "sec-object-constructor", heading: { id: "sec-object-constructor", href: "about:blank#sec-object-constructor", title: "Object ( [ value ] )"}}
+    ],
+    spec: "ecmascript"
+  },
+  {
     title: 'extracts abstract operations from ecmascript spec',
     html: '<emu-clause id="sec-toprimitive" oldids="table-9" aoid="ToPrimitive"><span id="table-9"></span><h1><span class="secnum">7.1.1</span> ToPrimitive ( <var>input</var> [ , <var>preferredType</var> ] )</h1>',
     changesToBaseDfn: [{linkingText: [ "ToPrimitive(input, preferredType)"], type: "abstract-op", access: "public", definedIn: "heading", id: "sec-toprimitive", heading: { number: "7.1.1", id: "sec-toprimitive", href: "about:blank#sec-toprimitive", title: "ToPrimitive ( input [ , preferredType ] )"}}],
+    spec: "ecmascript"
+  },
+  {
+    title: 'extracts abstract methods (scoped abstract ops) from ecmascript spec',
+    html: '<emu-clause id="bar"><h1>Heading</h1><figure><figcaption>Abstract Methods for <emu-xref>Scope</emu-xref></figcaption><table><tbody><tr><td>AbstractMethod()</td></tr></tbody></table></figure></emu-clause><emu-clause id="foo"><h1>AbstractMethod(param)</h1></emu-clause>',
+    changesToBaseDfn: [{linkingText: [ "AbstractMethod(param)"], type: "abstract-op", "for": ["Scope"], access: "public", definedIn: "heading", heading: { id: "foo", href: "about:blank#foo", title: "AbstractMethod(param)"}}],
+    spec: "ecmascript"
+  },
+  {
+    title: 'extracts abstract operations marked as <emu-eqn> from ecmascript spec',
+    html: '<emu-clause id="id"><h1>heading</h1><emu-eqn aoid="Foo" id="foo">foo</emu-eqn> is an abstract-op, but <emu-eqn aoid="bar">bar = 25*12</emu-eqn> is not</emu-clause>',
+    changesToBaseDfn: [{ type: "abstract-op", access: "public", heading: { id: "id", href:"about:blank#id", title: "heading"} }],
+    spec: "ecmascript"
+  },
+  {
+    title: 'extracts state components from ecmascript spec',
+    html: '<emu-clause id="foo"><h1>Heading</h1><figure><figcaption>State Components for ECMAScript Execution Contexts</figcaption><table><tbody><tr><td>Function</td></tr></tbody></table></figure></emu-clause>',
+    changesToBaseDfn: [{linkingText: [ "Function"], type: "dfn", "for": ["ECMAScript Execution Contexts"], access: "public", definedIn: "table", heading: { id: "foo", href: "about:blank#foo", title: "Heading"}}],
     spec: "ecmascript"
   },
   {

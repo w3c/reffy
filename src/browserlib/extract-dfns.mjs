@@ -464,8 +464,6 @@ function preProcessEcmascript() {
         return;
       }
 
-      // If the <dfn> has no id, we attach it the one from the closest
-      // <emu-clause> with an id
       // rely on the aoid attribute as a hint we're dealing
       // with an abstract-op
       if (el.getAttribute("aoid")) {
@@ -500,6 +498,8 @@ function preProcessEcmascript() {
         if (definitionNames.has(el.textContent.trim())) return;
       }
 
+      // If the <dfn> has no id, we attach it the one from the closest
+      // <emu-clause> with an id
       // Note that this means several definitions can share the same id
       if (!el.getAttribute("id")) {
         if (el.closest("emu-clause[id]")) {
