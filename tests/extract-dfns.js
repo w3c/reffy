@@ -158,12 +158,12 @@ const tests = [
   {
     title: "extracts definitions of ES-level objects in ecmascript spec",
     html: '<emu-clause id="sec-foo-object"><h1>The Foo Object</h1></emu-clause>',
-    changesToBaseDfn: [{type: "interface", access: "public", definedIn: "heading", id: "sec-foo-object", heading: { id: "sec-foo-object", href: "about:blank#sec-foo-object", title: "The Foo Object"}}],
+    changesToBaseDfn: [{type: "namespace", access: "public", definedIn: "heading", id: "sec-foo-object", heading: { id: "sec-foo-object", href: "about:blank#sec-foo-object", title: "The Foo Object"}}],
     spec: "ecmascript"
   },
   {
     title: "extracts definitions of ES-level objects in ecmascript spec that don't follow the regular rule",
-    html: '<emu-clause id="sec-regexp-regular-expression-objects"><h1>The RegExp (Regular Expression) Object</h1></emu-clause>',
+    html: '<emu-clause id="sec-regexp-regular-expression-objects"><h1>The RegExp (Regular Expression) Object</h1><emu-clause id="sec-regexp-constructor"><h1>RegExp Constructor</h1></emu-clause></emu-clause>',
     changesToBaseDfn: [{linkingText: [ "RegExp"], type: "interface", access: "public", definedIn: "heading", id: "sec-regexp-regular-expression-objects", heading: { id: "sec-regexp-regular-expression-objects", href: "about:blank#sec-regexp-regular-expression-objects", title: "The RegExp (Regular Expression) Object"}}],
     spec: "ecmascript"
   },
@@ -187,8 +187,8 @@ const tests = [
   },
   {
     title: 'extracts instance-level properties from objects in ecmascript spec',
-    html: '<emu-clause id="sec-object.prototype"><h1><span class="secnum">20.1.2.19</span> Object.prototype</h1></emu-clause>',
-    changesToBaseDfn: [{linkingText: [ "prototype"], type: "attribute", "for": ["Object"], access: "public", definedIn: "heading", id: "sec-object.prototype", heading: { number: "20.1.2.19", id: "sec-object.prototype", href: "about:blank#sec-object.prototype", title: "Object.prototype"}}],
+    html: '<emu-clause id="sec-number.epsilon"><h1><span class="secnum">20.1.2.19</span> Number.EPSILON</h1></emu-clause>',
+    changesToBaseDfn: [{linkingText: [ "EPSILON"], type: "attribute", "for": ["Number"], access: "public", definedIn: "heading", id: "sec-number.epsilon", heading: { number: "20.1.2.19", id: "sec-number.epsilon", href: "about:blank#sec-number.epsilon", title: "Number.EPSILON"}}],
     spec: "ecmascript"
   },
   {
@@ -200,7 +200,7 @@ const tests = [
   {
     title: 'assign ids to un-id’d definitions of the ecmascript spec',
     html: '<emu-clause id="foo"><h1><span class="secnum">9.4</span> Execution Contexts</h1><p>An <dfn variants="execution contexts">execution context</dfn> is a specification device that is used to track the runtime evaluation of code by an ECMAScript implementation.</p></emu-clause>',
-    changesToBaseDfn: [{linkingText: [ "execution context", "execution contexts"], access: "public", definedIn: "prose", heading: { number: "9.4", id: "foo", href: "about:blank#foo", title: "Execution Contexts"}}],
+    changesToBaseDfn: [{linkingText: [ "execution context", "execution contexts"], "for": ["ECMAScript"], access: "public", definedIn: "prose", heading: { number: "9.4", id: "foo", href: "about:blank#foo", title: "Execution Contexts"}}],
     spec: "ecmascript"
   },
   {
