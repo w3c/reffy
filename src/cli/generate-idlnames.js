@@ -146,6 +146,7 @@ function generateIdlNames(results, options = {}) {
       }
       names[name] = {
         name: name,
+        type: idl.type,
         defined: desc,
         extended: [],
         inheritance: idl.inheritance,
