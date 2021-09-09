@@ -495,9 +495,36 @@ async function saveResults(data, settings) {
  */
 function crawlSpecs(options) {
     function prepareListOfSpecs(list) {
-        return list.map(spec => (typeof spec !== 'string') ? spec :
-            specs.find(s => s.url === spec || s.shortname === spec) ??
-            { url: spec, nightly: spec, shortname: spec.replace(/[:\/\.]/g, '') });
+        return list.map(spec => {
+            if (typeof spec !== 'string') {
+                return spec;
+            }
+            const match = specs.find(s => s.url === spec || s.shortname === spec);
+            if (match) {
+                return match;
+            }
+
+            let url = null;
+            try {
+                url = (new URL(spec)).href;
+            }
+            catch {
+                if (spec.endsWith('.html')) {
+                    url = (new URL(spec, `file://${process.cwd()}/`)).href;
+                }
+                else {
+                    throw new Error(`Spec ID "${spec}" can neither be interpreted as a URL, a valid shortname or a relative path to an HTML file`);
+                }
+            }
+            return {
+                url,
+                nightly: { url },
+                shortname: spec.replace(/[:\/\\\.]/g, ''),
+                series: {
+                    shortname: spec.replace(/[:\/\\\.]/g, ''),
+                }
+            };
+        });
     }
 
     const requestedList = (options && options.specs) ?
