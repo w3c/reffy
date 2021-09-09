@@ -125,9 +125,7 @@
         ],
         "localLinkingText": [],
         "type": "interface",
-        "for": [
-          "Foo"
-        ],
+        "for": [],
         "access": "public",
         "informative": true,
         "heading": {
