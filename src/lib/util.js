@@ -314,12 +314,6 @@ async function processSpecification(spec, processFunction, args, options) {
     function interceptRequest(cdp, controller) {
         return async function ({ requestId, request }) {
             try {
-                if ((request.method !== 'GET') ||
-                    (!request.url.startsWith('http:') && !request.url.startsWith('https:'))) {
-                    await cdp.send('Fetch.continueRequest', { requestId });
-                    return;
-                }
-
                 // Abort network requests to common image formats
                 if (/\.(gif|ico|jpg|jpeg|png|ttf|woff)$/i.test(request.url)) {
                     await cdp.send('Fetch.failRequest', { requestId, errorReason: 'Failed' });
@@ -377,6 +371,12 @@ async function processSpecification(spec, processFunction, args, options) {
                     });
                 }
                 else {
+                    if ((request.method !== 'GET') ||
+                        (!request.url.startsWith('http:') && !request.url.startsWith('https:'))) {
+                        await cdp.send('Fetch.continueRequest', { requestId });
+                        return;
+                    }
+
                     const response = await fetch(request.url, { signal: controller.signal });
                     const body = await response.buffer();
                     await cdp.send('Fetch.fulfillRequest', {

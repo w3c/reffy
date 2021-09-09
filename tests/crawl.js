@@ -1,6 +1,8 @@
-const { crawlList } = require("../src/cli/crawl-specs");
+const { crawlList, crawlSpecs } = require("../src/cli/crawl-specs");
 const nock = require('../src/lib/nock-server');
 const fs = require("fs");
+const path = require("path");
+const os = require("os");
 
 const specs = [
   {url: "https://www.w3.org/TR/WOFF2/", nightly: {url: "https://w3c.github.io/woff/woff2/", pages:["https://w3c.github.io/woff/woff2/page.html"]}},
@@ -30,9 +32,48 @@ if (global.describe && describe instanceof Function) {
         }
       }
       assert.deepEqual(refResults, results);
-      nock.isDone();
     });
   });
+
+  describe("The crawler", function() {
+    this.slow(10000);
+    this.timeout(20000);
+
+    it("supports 'file' URLs", async() => {
+      const fileurl = (new URL('crawl-spec.html', `file://${__dirname}/`)).href;
+      const results = await crawlList([{
+        url: fileurl,
+        nightly: { url: fileurl }
+      }]);
+      assert.equal(results[0].title, 'A test spec');
+    });
+
+    it("matches spec shortnames", async() => {
+      const output = fs.mkdtempSync(path.join(os.tmpdir(), 'reffy-'));
+      const refResults = JSON.parse(fs.readFileSync(__dirname + "/crawl-test.json", "utf-8"))
+        .find(res => res.url === 'https://www.w3.org/TR/accelerometer/');
+      await crawlSpecs({
+        specs: ['accelerometer'],
+        output: output
+      });
+      const results = require(path.resolve(output, 'index.json'));
+      assert.equal(refResults.title, results.results[0].title);
+    });
+
+    it("interprets filenames relative to the current folder", async() => {
+      const output = fs.mkdtempSync(path.join(os.tmpdir(), 'reffy-'));
+      await crawlSpecs({
+        specs: [path.join(path.relative(process.cwd(), __dirname), 'crawl-spec.html')],
+        output: output
+      });
+      const results = require(path.resolve(output, 'index.json'));
+      assert.equal(results.results[0].title, 'A test spec');
+    });
+  });
+
+  after(() => {
+    nock.isDone();
+  })
 } else if (require.main === module) {
   // when called directly, we update the fixture file used for comparison
   (async function () {
