@@ -400,7 +400,6 @@ function preProcessEcmascript() {
           // This assumes that such methods and attributes are only defined
           // one-level deep from the global scope
           dfn.dataset.dfnFor = dfnName.replace(/\..*$/, '');
-          // FIXME Math.hypot
           dfnName = dfnName.replace(dfn.dataset.dfnFor + ".", '');
           if (dfnName.match(/\(/)) {
             dfnName = cleanMethodName(dfnName);
@@ -418,6 +417,7 @@ function preProcessEcmascript() {
           // distinguish global constructors from abstract operations
           if (idlTypes[opName]) {
             dfn.dataset.dfnType = "constructor";
+            dfn.dataset.dfnFor = opName;
           } else {
             // If the name is listed as an Abstract Method
             // we set the dfn-for accordingly
