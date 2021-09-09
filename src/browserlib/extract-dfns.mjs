@@ -273,7 +273,7 @@ function preProcessEcmascript() {
   }
 
   const sectionNumberRegExp = /^([A-Z]\.)?[0-9\.]+ /;
-  [...document.querySelectorAll(`${sectionFilter} h1`)].
+  document.querySelectorAll(`${sectionFilter} h1`).
     forEach(el => {
       let dfnName = el.textContent.replace(sectionNumberRegExp, '').trim() ;// remove section number
       const dfnId = el.parentNode.id;
@@ -432,7 +432,7 @@ function preProcessEcmascript() {
       }
     });
   // Extract abstract operations from <emu-eqn> with aoid attribute
-  [...document.querySelectorAll(`${sectionFilter} emu-eqn[aoid`)]
+  document.querySelectorAll(`${sectionFilter} emu-eqn[aoid`)
     .forEach(el => {
       // Skip definitions of constant values (e.g. msPerDay)
       if (el.textContent.match(/=/)) return;
@@ -443,7 +443,7 @@ function preProcessEcmascript() {
     });
 
   // Extract State Components from tables
-  [...document.querySelectorAll(`${sectionFilter} figure > table`)]
+  document.querySelectorAll(`${sectionFilter} figure > table`)
     .forEach(el => {
       const title = el.parentNode.querySelector("figcaption")?.textContent || "";
       if (!title.match(/state components for/i)) return;
@@ -455,7 +455,7 @@ function preProcessEcmascript() {
       }
     });
 
-  [...document.querySelectorAll(`${sectionFilter} dfn`)]
+  document.querySelectorAll(`${sectionFilter} dfn`)
     .forEach(el => {
       // Skip definitions in conformance page and conventions page
       if (el.closest('section[data-reffy-page$="conformance.html"]') ||
@@ -521,7 +521,7 @@ function preProcessEcmascript() {
   // because %Foo.prototype% does not necessarily get identified before
   // the equivalent " prototype object" dfn
 
-  [...document.querySelectorAll(`${sectionFilter} dfn[id][data-export`)]
+  document.querySelectorAll(`${sectionFilter} dfn[id][data-export`)
     .forEach(dfn => {
       // we have the syntactic equivalent %x.prototype%
       let m = dfn.textContent.trim().match(/^(.*) prototype( object)?$/);
@@ -543,7 +543,7 @@ function preProcessHTML() {
   ].join(',');
 
   // we copy the id on the dfn when it is set on the surrounding heading
-  [...document.querySelectorAll(headingSelector)]
+  document.querySelectorAll(headingSelector)
     .forEach(el => {
       const headingId = el.closest("h2, h3, h4, h5, h6").id;
       if (!el.id) {
@@ -554,11 +554,12 @@ function preProcessHTML() {
   // all the definitions in indices.html are non-normative, so we skip them
   // to avoid having to properly type them
   // they're not all that interesting
-  [...document.querySelectorAll('section[data-reffy-page$="indices.html"] dfn[id]')].forEach(el => {
-    el.dataset.dfnSkip = true;
-  });
+  document.querySelectorAll('section[data-reffy-page$="indices.html"] dfn[id]')
+    .forEach(el => {
+      el.dataset.dfnSkip = true;
+    });
 
-  [...document.querySelectorAll("dfn[id]:not([data-dfn-type]):not([data-skip])")]
+  document.querySelectorAll("dfn[id]:not([data-dfn-type]):not([data-skip])")
     .forEach(el => {
       // Hard coded rules for special ids
       // dom-style is defined elsewhere
@@ -589,7 +590,7 @@ function preProcessSVG2() {
     linkHeading.dataset.lt = "link";
   }
 
-  [...document.querySelectorAll(".attrdef dfn[id]:not([data-dfn-type]):not([data-skip])")]
+  document.querySelectorAll(".attrdef dfn[id]:not([data-dfn-type]):not([data-skip])")
     .forEach(el => {
       el.dataset.dfnType = "element-attr";
       const attrDesc = document.querySelector('[data-reffy-page$="attindex.html"] th span.attr-name a[href$="#' + el.id + '"]');
@@ -599,7 +600,8 @@ function preProcessSVG2() {
         console.error("Could not find description for " + el.textContent);
       }
     });
-  [...document.querySelectorAll("dt[id] > .adef, dt[id] > .property")].forEach(el => {
+  document.querySelectorAll("dt[id] > .adef, dt[id] > .property")
+    .forEach(el => {
     const dt = el.parentNode;
     const newDt = document.createElement("dt");
     const dfn = document.createElement("dfn");
@@ -617,7 +619,7 @@ function preProcessSVG2() {
     newDt.appendChild(dfn);
     dt.replaceWith(newDt);
   });
-  [...document.querySelectorAll('b[id^="__svg__"]')].forEach(el => {
+  document.querySelectorAll('b[id^="__svg__"]').forEach(el => {
     const [,, containername, membername] = el.id.split('__');
     if (containername && membername) {
       let container = idlTree.find(i => i.name === containername);
@@ -634,14 +636,14 @@ function preProcessSVG2() {
       }
     }
   });
-  [...document.querySelectorAll('h3[id^="Interface"]:not([data-dfn-type])')].forEach(el => {
+  document.querySelectorAll('h3[id^="Interface"]:not([data-dfn-type])').forEach(el => {
     const name = el.id.slice("Interface".length);
     if (idlTree.find(i => i.name === name && i.type === "interface")) {
       el.dataset.dfnType = "interface";
       el.dataset.lt = name;
     }
   });
-  [...document.querySelectorAll('b[id]:not([data-dfn-type])')].forEach(el => {
+  document.querySelectorAll('b[id]:not([data-dfn-type])').forEach(el => {
     const name = el.textContent;
     const idlItem = idlTree.find(i => i.name === name) ;
     if (idlItem) {
