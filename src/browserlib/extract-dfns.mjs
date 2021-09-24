@@ -285,7 +285,6 @@ function preProcessEcmascript() {
 
         // only keep ids that match a credible pattern for object names
         // i.e. a single word
-
         // there are exceptions to that simple rule
         // RegExp includes its expansion (regular expansion) in the id
         // WeakRef is translated into weak-ref in the id
@@ -407,7 +406,11 @@ function preProcessEcmascript() {
             dfn.dataset.dfnType = "method";
           } else {
             dfn.dataset.lt = dfnName;
-            dfn.dataset.dfnType = "attribute";
+            if (dfnName.match(/^[A-Z]+$/)) {
+              dfn.dataset.dfnType = "const";
+            } else {
+              dfn.dataset.dfnType = "attribute";
+            }
           }
         } else { // Abstract ops à la ArrayCreate or global constructor
           dfnName = cleanMethodName(dfnName);
