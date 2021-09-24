@@ -229,7 +229,8 @@ export default function (spec, idToHeading = {}) {
 }
 
 function preProcessEcmascript() {
-  const sectionFilter= ":not([legacy])";
+  // Skip elements in sections marked as legacy
+  const legacySectionFilter= n => !n.closest("[legacy]");
 
   const wrapWithDfn = (el) => {
     // wrap with a dfn
@@ -273,8 +274,9 @@ function preProcessEcmascript() {
   }
 
   const sectionNumberRegExp = /^([A-Z]\.)?[0-9\.]+ /;
-  document.querySelectorAll(`${sectionFilter} h1`).
-    forEach(el => {
+  [...document.querySelectorAll("h1")]
+    .filter(legacySectionFilter)
+    .forEach(el => {
       let dfnName = el.textContent.replace(sectionNumberRegExp, '').trim() ;// remove section number
       const dfnId = el.parentNode.id;
       if (dfnId.match(/-objects?$/) && dfnName.match(/ Objects?$/)) {
@@ -435,7 +437,8 @@ function preProcessEcmascript() {
       }
     });
   // Extract abstract operations from <emu-eqn> with aoid attribute
-  document.querySelectorAll(`${sectionFilter} emu-eqn[aoid`)
+  [...document.querySelectorAll("emu-eqn[aoid]")]
+    .filter(legacySectionFilter)
     .forEach(el => {
       // Skip definitions of constant values (e.g. msPerDay)
       if (el.textContent.match(/=/)) return;
@@ -446,7 +449,8 @@ function preProcessEcmascript() {
     });
 
   // Extract State Components from tables
-  document.querySelectorAll(`${sectionFilter} figure > table`)
+  [...document.querySelectorAll("figure > table")]
+    .filter(legacySectionFilter)
     .forEach(el => {
       const title = el.parentNode.querySelector("figcaption")?.textContent || "";
       if (!title.match(/state components for/i)) return;
@@ -458,7 +462,8 @@ function preProcessEcmascript() {
       }
     });
 
-  document.querySelectorAll(`${sectionFilter} dfn`)
+  [...document.querySelectorAll("dfn")]
+    .filter(legacySectionFilter)
     .forEach(el => {
       // Skip definitions in conformance page and conventions page
       if (el.closest('section[data-reffy-page$="conformance.html"]') ||
@@ -524,7 +529,8 @@ function preProcessEcmascript() {
   // because %Foo.prototype% does not necessarily get identified before
   // the equivalent " prototype object" dfn
 
-  document.querySelectorAll(`${sectionFilter} dfn[id][data-export`)
+  [...document.querySelectorAll("dfn[id][data-export]")]
+    .filter(legacySectionFilter)
     .forEach(dfn => {
       // we have the syntactic equivalent %x.prototype%
       let m = dfn.textContent.trim().match(/^(.*) prototype( object)?$/);
