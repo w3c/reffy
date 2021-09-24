@@ -302,6 +302,18 @@ function preProcessEcmascript() {
           .replace(/ Objects?$/, '')
         // regexp def includes "(Regular Expression)"
           .replace(/ \([^\)]*\)/, '') ;
+
+        // FIXME
+        // These interfaces are also defined in WebIDL, which in general is
+        // the prefered source for these terms
+        // Because bikeshed does not yet support spec-specific imports,
+        // we hide these terms as not exported
+        // cf https://github.com/w3c/reffy/pull/732#issuecomment-925950287
+        const exportExceptions = [ "Promise", "DataView", "ArrayBuffer" ];
+        if (exportExceptions.includes(dfnName)) {
+          dfn.dataset.noexport = "";
+        }
+
         dfn.dataset.lt = dfnName;
         if (dfnName.match(/^[A-Z]/)) {
           // set dfn-type
@@ -492,6 +504,7 @@ function preProcessEcmascript() {
       // %names% in the global object section are operations of the globalThis object
       if (el.closest('[data-reffy-page$="global-object.html"]') && el.textContent.match(/^%[a-z]+%/i)) {
         el.dataset.dfnFor = "globalThis";
+        // TODO: this doesn't capture the arguments
         el.dataset.dfnType = "method";
       }
 
