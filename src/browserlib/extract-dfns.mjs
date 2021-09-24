@@ -378,7 +378,7 @@ function preProcessEcmascript() {
 
         // only dealing with well-known patterns
         if (!dfnName.match(/^[a-z]+\.[a-z]+/i) // à la JSON.parse
-            && !dfnName.match(/^([A-Z][a-z]+)+ *\(/) // à la ArrayCreate (
+            && !dfnName.match(/^([a-z]+)+ *\(/i) // à la ArrayCreate ( or decodeURI (
            ) return;
         // Skip symbol-based property definitions
         if (dfnName.match(/@@/)) return;
@@ -414,7 +414,7 @@ function preProcessEcmascript() {
               dfn.dataset.dfnType = "attribute";
             }
           }
-        } else { // Abstract ops à la ArrayCreate or global constructor
+        } else if (dfnName.match(/^([A-Z]+[a-z]*)+ *\(/)) { // Abstract ops à la ArrayCreate or global constructor
           dfnName = cleanMethodName(dfnName);
           dfn.dataset.lt = dfnName;
           const opName = dfnName.split('(')[0];
@@ -432,6 +432,11 @@ function preProcessEcmascript() {
 
             dfn.dataset.dfnType = "abstract-op";
           }
+        } else { // methods of the global object
+          dfnName = cleanMethodName(dfnName);
+          dfn.dataset.lt = dfnName;
+          dfn.dataset.dfnType = "method";
+          dfn.dataset.dfnFor = "globalThis";
         }
         definitionNames.add(dfnName);
       }
