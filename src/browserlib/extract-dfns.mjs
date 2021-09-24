@@ -336,6 +336,7 @@ function preProcessEcmascript() {
         dfn.dataset.lt = dfnName;
         dfn.dataset.dfnType = "exception";
         definitionNames.add(dfnName);
+        idlTypes[dfnName] = dfn.dataset.dfnType;
       } else if (dfnId.match(/[-\.]prototype[-\.]/)) {
         // methods and attributes on objects
 
