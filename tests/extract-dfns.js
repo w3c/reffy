@@ -204,9 +204,9 @@ const tests = [
     spec: "ecmascript"
   },
   {
-    title: 'extracts instance-level properties from objects in ecmascript spec',
+    title: 'extracts instance-level constants from objects in ecmascript spec',
     html: '<emu-clause id="sec-number.epsilon"><h1><span class="secnum">20.1.2.19</span> Number.EPSILON</h1></emu-clause>',
-    changesToBaseDfn: [{linkingText: [ "EPSILON"], type: "attribute", "for": ["Number"], access: "public", definedIn: "heading", id: "sec-number.epsilon", heading: { number: "20.1.2.19", id: "sec-number.epsilon", href: "about:blank#sec-number.epsilon", title: "Number.EPSILON"}}],
+    changesToBaseDfn: [{linkingText: [ "EPSILON"], type: "const", "for": ["Number"], access: "public", definedIn: "heading", id: "sec-number.epsilon", heading: { number: "20.1.2.19", id: "sec-number.epsilon", href: "about:blank#sec-number.epsilon", title: "Number.EPSILON"}}],
     spec: "ecmascript"
   },
   {
