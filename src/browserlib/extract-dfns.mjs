@@ -302,6 +302,7 @@ function preProcessEcmascript() {
           .replace(/ Objects?$/, '')
         // regexp def includes "(Regular Expression)"
           .replace(/ \([^\)]*\)/, '') ;
+        dfn.dataset.lt = dfnName;
 
         // FIXME
         // These interfaces are also defined in WebIDL, which in general is
@@ -314,7 +315,6 @@ function preProcessEcmascript() {
           dfn.dataset.noexport = "";
         }
 
-        dfn.dataset.lt = dfnName;
         if (dfnName.match(/^[A-Z]/)) {
           // set dfn-type
           if (dfnName.match(/Error$/)) {
