@@ -230,7 +230,7 @@ export default function (spec, idToHeading = {}) {
 
 function preProcessEcmascript() {
   // Skip elements in sections marked as legacy
-  const legacySectionFilter= n => !n.closest("[legacy]");
+  const legacySectionFilter = n => !n.closest("[legacy]");
 
   const wrapWithDfn = (el) => {
     // wrap with a dfn
@@ -261,12 +261,12 @@ function preProcessEcmascript() {
   let abstractMethods = {};
   const abstractMethodCaptions = [...document.querySelectorAll("figcaption")]
         .filter(el => el.textContent.match(/(abstract|additional) method/i) && el.parentNode.querySelector("emu-xref"));
-  for (let figcaption of abstractMethodCaptions) {
+  for (const figcaption of abstractMethodCaptions) {
     const scope = figcaption.querySelector("emu-xref").textContent;
     const table = figcaption.parentNode.querySelector("tbody");
     for (let td of table.querySelectorAll("tr td:first-child")) {
       // We only consider the name of the method, not the potential parameters
-      // as they're not necessarily consistently names across
+      // as they're not necessarily consistently named across
       // the list and the definition
       const methodName = td.textContent.trim().split('(')[0];
       abstractMethods[methodName] = scope;
@@ -473,7 +473,7 @@ function preProcessEcmascript() {
       const title = el.parentNode.querySelector("figcaption")?.textContent || "";
       if (!title.match(/state components for/i)) return;
       const scope = title.replace(/^.*state components for/i, '').trim();
-      for (let td of el.querySelectorAll("tr td:first-child")) {
+      for (const td of el.querySelectorAll("tr td:first-child")) {
         const dfn = wrapWithDfn(td);
         dfn.dataset.dfnFor = scope;
         dfn.id = el.closest("emu-table[id],emu-clause[id]").id;
@@ -515,7 +515,7 @@ function preProcessEcmascript() {
         el.dataset.dfnType = "const";
       }
       if (el.getAttribute("variants")) {
-        el.dataset.lt = (el.dataset.lt ? el.dataset.lt  : el.textContent.trim()) + "|" + el.getAttribute("variants");
+        el.dataset.lt = (el.dataset.lt ?? el.textContent.trim()) + "|" + el.getAttribute("variants");
       }
 
       // Skip definitions that have already been identified
