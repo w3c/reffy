@@ -1,6 +1,12 @@
 import createOutline from './create-outline.mjs';
 import getAbsoluteUrl from './get-absolute-url.mjs';
 
+// Regular expression to capture the numbering of a heading. The expression
+// extracts numbers such as "1.", "A.", "A.3", "13.3.4.". Note: a top-level
+// number always ends with a ".", but there may be no final "." in sublevels
+// (Bikeshed adds one, ReSpec does not).
+const reNumber = /^([A-Z0-9]\.|[A-Z](\.[0-9]+)+\.?|[0-9]+(\.[0-9]+)+\.?)\s/;
+
 /**
  * Generate a mapping between elements that have an ID and the closest heading
  * (that also has an ID) under which these elements appear in the DOM tree.
@@ -21,11 +27,12 @@ import getAbsoluteUrl from './get-absolute-url.mjs';
  *   such a heading.
  */
 export default function () {
-  // Regular expression to capture the numbering of a heading. The expression
-  // extracts numbers such as "1.", "A.", "A.3", "13.3.4.". Note: a top-level
-  // number always ends with a ".", but there may be no final "." in sublevels
-  // (Bikeshed adds one, ReSpec does not).
-  const reNumber = /^([A-Z0-9]\.|[A-Z](\.[0-9]+)+\.?|[0-9]+(\.[0-9]+)+\.?)\s/;
+  // Special-casing ecmascript specs which use special markup for sections
+  // <emu-clause>
+  if (document.querySelector("emu-clause")) {
+    return esMapIdToHeadings();
+  }
+
 
   // Get a flat list of all conceptual sections
   function flattenSections(outline) {
@@ -85,5 +92,45 @@ export default function () {
     }
   });
 
+  return mappingTable;
+}
+
+function esMapIdToHeadings() {
+  // Based on https://tc39.es/ecmarkup/
+  // and actual emu-* tags used in the ecmascript spec with ids
+  const ignoreTags = ["emu-xref"];
+  const sectionTags = ["emu-intro", "emu-clause", "emu-annex"];
+
+  // Compute once whether we created a single page version out of multiple pages
+  const singlePage = !document.querySelector('[data-reffy-page]');
+
+  let mappingTable = {};
+  [...document.querySelectorAll(`[id]:not(${ignoreTags.join(',')}`)]
+    .forEach(el => {
+      const section = el.closest(`${sectionTags.map(t => `${t}[id]`).join(',')}`);
+
+      // These are spec UI-related ids, so not a loss
+      if (!section) return;
+
+      const heading = section.querySelector("h1");
+      const trimmedText = heading.textContent.trim();
+      const nodeid = getAbsoluteUrl(el, { singlePage });
+      const href = getAbsoluteUrl(section, { singlePage });
+
+      const match = trimmedText.match(reNumber);
+      const number = match ? match[1] : null;
+
+      mappingTable[nodeid] = {
+        id: section.id,
+        href,
+        title: trimmedText.replace(reNumber, '').trim().replace(/\s+/g, ' ')
+      };
+
+      if (number) {
+        // Store the number without the final "."
+        mappingTable[nodeid].number = number.replace(/\.$/, '');
+      }
+
+    });
   return mappingTable;
 }
