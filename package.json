@@ -42,7 +42,7 @@
   "dependencies": {
     "abortcontroller-polyfill": "1.7.3",
     "browser-specs": "2.12.0",
-    "commander": "8.1.0",
+    "commander": "8.2.0",
     "fetch-filecache-for-crawling": "4.0.2",
     "node-pandoc": "0.3.0",
     "puppeteer": "10.2.0",
