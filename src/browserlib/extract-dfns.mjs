@@ -264,7 +264,7 @@ function preProcessEcmascript() {
   for (const figcaption of abstractMethodCaptions) {
     const scope = figcaption.querySelector("emu-xref").textContent;
     const table = figcaption.parentNode.querySelector("tbody");
-    for (let td of table.querySelectorAll("tr td:first-child")) {
+    for (const td of table.querySelectorAll("tr td:first-child")) {
       // We only consider the name of the method, not the potential parameters
       // as they're not necessarily consistently named across
       // the list and the definition
