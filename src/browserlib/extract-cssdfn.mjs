@@ -182,6 +182,13 @@ const extractDlDfns = (doc, className, options) =>
 const extractValueSpaces = doc => {
   let res = {};
 
+  const cloneWithoutAnnotations = el => {
+    const cleanedEl = el.cloneNode(true);
+    const annotations = cleanedEl.querySelectorAll('aside, .mdn-anno');
+    annotations.forEach(n => n.remove());
+    return cleanedEl;
+  };
+
   const parseProductionRules = rules =>
     rules
       .map(val => val.split(/\n(?=[^\n]*\s?=\s)/m))
@@ -221,19 +228,21 @@ const extractValueSpaces = doc => {
   // https://drafts.csswg.org/css-transforms/#funcdef-transform-matrix
   parseProductionRules([...doc.querySelectorAll('dt > dfn.css, dt > span.prod > dfn.css')]
     .filter(el => !el.closest(informativeSelector))
-    .filter(el => el.parentNode.textContent.match(/\s?=\s/))
-    .map(el => el.parentNode.textContent));
+    .map(el => cloneWithoutAnnotations(el.parentNode))
+    .filter(el => el.textContent.match(/\s?=\s/))
+    .map(el => el.textContent));
 
   // Complete with function values defined in `dt` tags where definition and
   // value are mixed together, as in:
   // https://drafts.csswg.org/css-overflow-4/#funcdef-text-overflow-fade
   parseProductionRules([...doc.querySelectorAll('dt > dfn.css')]
     .filter(el => !el.closest(informativeSelector))
-    .filter(el => el.parentNode.textContent.trim().match(/^[a-zA-Z_][a-zA-Z0-9_\-]+\([^\)]*\)$/))
+    .map(el => cloneWithoutAnnotations(el.parentNode))
+    .filter(el => el.textContent.trim().match(/^[a-zA-Z_][a-zA-Z0-9_\-]+\([^\)]*\)$/))
     .map(el => {
-      let fn = el.parentNode.textContent.trim()
+      let fn = el.textContent.trim()
         .match(/^([a-zA-Z_][a-zA-Z0-9_\-]+)\([^\)]*\)$/)[1];
-      return fn + '() = ' + el.parentNode.textContent;
+      return fn + '() = ' + el.textContent;
     }));
 
 
@@ -242,8 +251,9 @@ const extractValueSpaces = doc => {
   // https://svgwg.org/svg2-draft/painting.html#DataTypeDasharray
   parseProductionRules([...doc.querySelectorAll('.definition > dfn')]
     .filter(el => !el.closest(informativeSelector))
-    .filter(el => el.parentNode.textContent.match(/\s?=\s/))
-    .map(el => el.parentNode.textContent));
+    .map(el => cloneWithoutAnnotations(el.parentNode))
+    .filter(el => el.textContent.match(/\s?=\s/))
+    .map(el => el.textContent));
 
   // Complete with non-terminal value spaces defined in simple paragraphs,
   // as in:
@@ -251,8 +261,9 @@ const extractValueSpaces = doc => {
   // https://drafts.csswg.org/css-transitions/#single-transition-property
   parseProductionRules([...doc.querySelectorAll('p > dfn, div.prod > dfn')]
     .filter(el => !el.closest(informativeSelector))
-    .filter(el => el.parentNode.textContent.trim().match(/^<.*>\s?=\s/))
-    .map(el => el.parentNode.textContent));
+    .map(el => cloneWithoutAnnotations(el.parentNode))
+    .filter(el => el.textContent.trim().match(/^<.*>\s?=\s/))
+    .map(el => el.textContent));
 
   // Complete with non-terminal value spaces defined in `dt` tags with
   // production rules (or prose) in `dd` tags, as in:
