@@ -9,7 +9,7 @@
  * `node generate-idlnames.js [crawl report] [dfns] [save folder]`
  *
  * where `crawl report` is the path to the folder that contains the
- * `index.json` file and all other crawl results produced by crawl-specs.js,
+ * `index.json` file and all other crawl results produced by specs-crawler.js,
  * `dfns` a param to set to "true" or "dfns" to embed dfns in the generated
  * report, and `save folder` is an optional folder (which must exist) where IDL
  * name extracts are to be saved. In the absence of this parameter, the report
