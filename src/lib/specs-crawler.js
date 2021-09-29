@@ -7,42 +7,25 @@
  * reference, and links to external specs), and produces a crawl report with the
  * results of these investigations.
  *
- * The spec crawler can be called directly through:
- *
- * `node crawl-specs.js [options]`
- *
- * Use `--help` option for usage instructions.
- *
- * The JSON file that contains the list of specs to crawl must be an array whose
- * individual items are either:
- * 1. a string that gets interpreted as the URL or the shortname of the spec to
- * crawl. The spec must exist in w3c/browser-specs
- * 2. an object that follows the w3c/browser-specs model:
- * https://github.com/w3c/browser-specs#spec-object
- *
  * @module crawler
  */
 
-const commander = require('commander');
-const version = require('../../package.json').version;
 const fs = require('fs');
 const path = require('path');
 const specs = require('browser-specs');
-const webidlParser = require('./parse-webidl');
-const cssDfnParser = require('../lib/css-grammar-parser');
-const { generateIdlNames, saveIdlNames } = require('./generate-idlnames');
+const webidlParser = require('../cli/parse-webidl');
+const cssDfnParser = require('./css-grammar-parser');
+const { generateIdlNames, saveIdlNames } = require('../cli/generate-idlnames');
 const {
     completeWithAlternativeUrls,
-    fetch,
     expandBrowserModules,
     expandCrawlResult,
     getGeneratedIDLNamesByCSSProperty,
     isLatestLevelThatPasses,
     processSpecification,
-    requireFromWorkingDirectory,
     setupBrowser,
     teardownBrowser
-} = require('../lib/util');
+} = require('./util');
 
 
 /**
@@ -189,9 +172,9 @@ async function crawlSpec(spec, crawlOptions) {
  *   metadata about the spec and the crawl processing results in appropriate
  *   properties.
  * @param {Object} settings Crawl settings. Recognized settings: "modules",
- *   "output" and "quiet". See CLI help (node crawl-specs.js --help) for
- *   details. The "modules" setting is mandatory and note that the function
- *   will not do anything if "output" is not set.
+ *   "output" and "quiet". See CLI help (node reffy.js --help) for details.
+ *   The "modules" setting is mandatory and note that the function will not do
+ *   anything if "output" is not set.
  * @return {Promise<Object>} The promise to get an updated spec object that
  *   contains links to created extracts.
  */
@@ -490,7 +473,7 @@ async function saveResults(data, settings) {
  * @function
  * @param {Object} options Crawl options. Possible options are:
  *   publishedVersion, debug, output, terse, modules and specs.
- *   See CLI help (node crawl-specs.js --help) for details.
+ *   See CLI help (node reffy.js --help) for details.
  * @return {Promise<void>} The promise that the crawl will have been made
  */
 function crawlSpecs(options) {
@@ -584,188 +567,3 @@ Export methods for use as module
 **************************************************/
 module.exports.crawlList = crawlList;
 module.exports.crawlSpecs = crawlSpecs;
-
-
-/**************************************************
-Code run if the code is run as a stand-alone module
-**************************************************/
-if (require.main === module) {
-
-    function parseModuleOption(input) {
-        const parts = input.split(':');
-        if (parts.length > 2) {
-            console.error('Module input cannot have more than one ":" character');
-            process.exit(2);
-        }
-        if (parts.length === 2) {
-            return {
-                href: parts[1],
-                property: parts[0]
-            };
-        }
-        else {
-            return parts[0];
-        }
-    }
-
-    function parseSpecOption(input) {
-        if (input === 'all') {
-            return specs.map(s => s.shortname);
-        }
-        else {
-            const list = requireFromWorkingDirectory(input);
-            return list ?? input;
-        }
-    }
-
-    const program = new commander.Command();
-    program
-        .version(version)
-        .usage('[options]')
-        .description('Crawls and processes a list of Web specifications')
-        .option('-d, --debug', 'debug mode, crawl one spec at a time')
-        .option('-m, --module <modules...>', 'spec processing modules')
-        .option('-o, --output <folder>', 'existing folder/file where crawl results are to be saved')
-        .option('-q, --quiet', 'do not report progress and other warnings to the console')
-        .option('-r, --release', 'crawl release (TR) version of specs')
-        .option('-s, --spec <specs...>', 'specs to crawl')
-        .option('-t, --terse', 'output crawl results without metadata')
-        .action(options => {
-            const crawlOptions = {
-                debug: options.debug,
-                output: options.output,
-                publishedVersion: options.release,
-                quiet: options.quiet,
-                terse: options.terse
-            };
-            if (options.module) {
-                crawlOptions.modules = options.module.map(parseModuleOption);
-            }
-            if (options.spec) {
-                crawlOptions.specs = options.spec.map(parseSpecOption).flat();
-            }
-
-            if (crawlOptions.terse && crawlOptions.output) {
-                console.error('The --terse option cannot be combined with the --output option');
-                process.exit(2);
-            }
-            if (crawlOptions.terse && (!crawlOptions.modules || crawlOptions.modules.length === 0 || crawlOptions.modules.length > 1)) {
-                console.error('The --terse option can be only be set when only one core processing module runs');
-                process.exit(2);
-            }
-            crawlSpecs(crawlOptions)
-                .then(_ => {
-                    process.exit(0);
-                })
-                .catch(err => {
-                    console.error(err);
-                    process.exit(1);
-                });
-        })
-        .showHelpAfterError('(run with --help for usage information)')
-        .addHelpText('after', `
-Minimal usage example:
-  $ node crawl-specs.js reports/test
-
-Description:
-  Crawls a set of specifications and runs processing modules against each of
-  them to generate extracts.
-
-  Crawl results are written to the console as a serialized JSON array with one
-  entry per spec by default. The order of the specs in the array matches the
-  order of the specs provided as input (or the order of the specs in
-  browser-specs if no explicit spec was provided).
-
-  Resulting array may be large. Crawling all specs with core processing module
-  produces ~100MB of serialized JSON for instance. To avoid janking the console
-  or running into possible memory issues, setting the --output option is
-  strongly recommended.
-
-Usage notes for some of the options:
--m, --module <modules...>
-  If processing modules are not specified, the crawler runs all core processing
-  modules defined in:
-    https://github.com/w3c/reffy/tree/main/src/reffy.json
-
-  Modules must be specified using a relative path to an ".mjs" file that defines
-  the processing logic to run on the spec's page in a browser context. For
-  instance:
-    $ node crawl-specs.js reports/test --module extract-editors.mjs
-
-  Absolute paths to modules are not properly handled and will likely result in a
-  crawling error.
-
-  Multiple modules can be specified, repeating the option name or not:
-    $ node crawl-specs.js reports/test -m extract-words.mjs extract-editors.mjs
-    $ node crawl-specs.js reports/test -m extract-words.mjs -m extract-editors.mjs
-
-  The option cannot appear before <folder>, unless you use "--" to flag the end
-  of the list:
-    $ node crawl-specs.js --module extract-editors.mjs -- reports/test
-
-  Core processing modules may be referenced using the name of the extract folder
-  or property that they would create:
-    $ node crawl-specs.js reports/test --module dfns
-
-  To run all core processing modules, use "core". For instance, to apply a
-  processing module on top of core processing modules, use:
-    $ node crawl-specs.js reports/test --module core extract-editors.mjs
-
-  Each module must export a function that takes a spec object as input and
-  return a result that can be serialized as JSON. A typical module code looks
-  like:
-    https://github.com/w3c/reffy/blob/main/src/browserlib/extract-ids.mjs
-
-  Individual extracts will be created under "<folder>/[camelCaseModule]" where
-  "[camelCaseModule]" is derived from the module's filename. For instance:
-    "extract-editors.mjs" creates extracts under "<folder>/extractEditors"
-
-  The name of the folder where extracts get created may be specified for custom
-  modules by prefixing the path to the module with the folder name followed by
-  ":". For instance, to save extracts to "reports/test/editors", use:
-    $ node crawl-specs.js reports/test --module editors:extract-editors.mjs
-
--o, --output <folder>
-  By default, crawl results are written to the console as a serialized JSON
-  array with one entry per spec, and module processing results attached as
-  property values in each of these entries.
-
-  If an output <folder> is specified, crawl results are rather saved to that
-  folder, with module processing results created under subfolders (see the
-  --module option) and linked from an index.json file created under <folder>.
-
-  Additionally, if an output <folder> is specified and if the IDL processing
-  module is run, the crawler will also creates an index of IDL names named
-  "idlnames.json" that links to relevant extracts in subfolders.
-
--r, --release
-  If the flag is not set, the crawler defaults to crawl nightly versions of the
-  specs.
-
--s, --spec <specs...>
-  If specs to crawl are not specified, all specs in browser-specs get crawled:
-    https://github.com/w3c/browser-specs/
-
-  Valid spec values may be a shortname, a URL, or a relative path to a file that
-  contains a list of spec URLs and/or shortnames. All shortnames must exist in
-  browser-specs.
-
-  Use "all" to include all specs in browser-specs in the crawl. For instance, to
-  crawl all specs plus one custom spec that does not exist in browser-specs:
-    $ node crawl-specs.js reports/test -s all https://example.org/myspec
-
--t, --terse
-  This flag cannot be combined with the --output option and cannot be set if
-  more than one processing module gets run. When set, the crawler writes the
-  processing module results to the console directly without wrapping them with
-  spec metadata. In other words, the spec entry in the crawl results directly
-  contains the outcome of the processing module when the flag is set.
-
-  Additionally, if crawl runs on a single specification, the array is omitted
-  and the processing module results are thus written to the console directly.
-  For instance:
-    $ node crawl-specs.js --spec fetch --module idl --terse
-`);
-
-    program.parse(process.argv);
-}

@@ -28,7 +28,7 @@ const path = require('path');
 const browserSpecs = require('browser-specs');
 const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
 const expandCrawlResult = require('../lib/util').expandCrawlResult;
-const crawlList = require('./crawl-specs').crawlList;
+const crawlList = require('../lib/specs-crawler').crawlList;
 const mergeCrawlResults = require('./merge-crawl-results').mergeCrawlResults;
 const studyCrawl = require('./study-crawl').studyCrawl;
 

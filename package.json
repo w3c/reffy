@@ -1,6 +1,6 @@
 {
   "name": "reffy",
-  "version": "3.1.0",
+  "version": "4.0.0",
   "description": "W3C/WHATWG spec dependencies exploration companion. Features a short set of tools to study spec references as well as WebIDL term definitions and references found in W3C specifications.",
   "repository": {
     "type": "git",
@@ -29,16 +29,7 @@
     "node": ">=14"
   },
   "main": "index.js",
-  "bin": {
-    "reffy": "./reffy.js",
-    "check-specs": "./src/cli/check-specs.js",
-    "crawl-specs": "./src/cli/crawl-specs.js",
-    "generate-idlnames": "./src/cli/generate-idlnames.js",
-    "generate-report": "./src/cli/generate-report.js",
-    "merge-crawl-results": "./src/cli/merge-crawl-results.js",
-    "parse-webidl": "./src/cli/parse-webidl.js",
-    "study-crawl": "./src/cli/study-crawl.js"
-  },
+  "bin": "./reffy.js",
   "dependencies": {
     "abortcontroller-polyfill": "1.7.3",
     "browser-specs": "2.12.0",
@@ -57,23 +48,23 @@
     "rollup": "2.57.0"
   },
   "scripts": {
-    "all": "node reffy.js run ed all && node reffy.js run tr all",
-    "diff": "node reffy.js run ed diff && node reffy.js run tr diff",
-    "diffnew": "node reffy.js run ed diffnew && node reffy.js run tr diffnew",
-    "tr": "node reffy.js run tr all",
-    "tr-crawl": "node reffy.js run tr crawl",
-    "tr-study": "node reffy.js run tr study",
-    "tr-markdown": "node reffy.js run tr markdown",
-    "tr-html": "node reffy.js run tr html",
-    "tr-diff": "node reffy.js run tr diff",
-    "tr-diffnew": "node reffy.js run tr diffnew",
-    "ed": "node reffy.js run ed all",
-    "ed-crawl": "node --max-old-space-size=8192 reffy.js run ed crawl",
-    "ed-study": "node reffy.js run ed study",
-    "ed-markdown": "node reffy.js run ed markdown",
-    "ed-html": "node reffy.js run ed html",
-    "ed-diff": "node reffy.js run ed diff",
-    "ed-diffnew": "node reffy.js run ed diffnew",
+    "all": "node src/cli/crawl-and-study.js run ed all && node src/cli/crawl-and-study.js run tr all",
+    "diff": "node src/cli/crawl-and-study.js run ed diff && node src/cli/crawl-and-study.js run tr diff",
+    "diffnew": "node src/cli/crawl-and-study.js run ed diffnew && node src/cli/crawl-and-study.js run tr diffnew",
+    "tr": "node src/cli/crawl-and-study.js run tr all",
+    "tr-crawl": "node src/cli/crawl-and-study.js run tr crawl",
+    "tr-study": "node src/cli/crawl-and-study.js run tr study",
+    "tr-markdown": "node src/cli/crawl-and-study.js run tr markdown",
+    "tr-html": "node src/cli/crawl-and-study.js run tr html",
+    "tr-diff": "node src/cli/crawl-and-study.js run tr diff",
+    "tr-diffnew": "node src/cli/crawl-and-study.js run tr diffnew",
+    "ed": "node src/cli/crawl-and-study.js run ed all",
+    "ed-crawl": "node --max-old-space-size=8192 src/cli/crawl-and-study.js run ed crawl",
+    "ed-study": "node src/cli/crawl-and-study.js run ed study",
+    "ed-markdown": "node src/cli/crawl-and-study.js run ed markdown",
+    "ed-html": "node src/cli/crawl-and-study.js run ed html",
+    "ed-diff": "node src/cli/crawl-and-study.js run ed diff",
+    "ed-diffnew": "node src/cli/crawl-and-study.js run ed diffnew",
     "test": "mocha --recursive tests/"
   }
 }

@@ -1,4 +1,4 @@
-const { crawlList, crawlSpecs } = require("../src/cli/crawl-specs");
+const { crawlList, crawlSpecs } = require("../src/lib/specs-crawler");
 const nock = require('../src/lib/nock-server');
 const fs = require("fs");
 const path = require("path");
