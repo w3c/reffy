@@ -68,6 +68,19 @@ program
     .option('-s, --spec <specs...>', 'specs to crawl')
     .option('-t, --terse', 'output crawl results without metadata')
     .action(options => {
+        if (!(options.output || options.module || options.spec)) {
+          console.error(`
+At least one of the --output, --module or --spec options needs to be specified.
+For usage notes, run:
+  reffy --help
+
+If you really want to crawl all specs, run all processing modules and report the
+JSON outcome to the console, you may run the following command but note that it
+will dump ~100MB of data to the console:
+  reffy --spec all
+`);
+          process.exit(2);
+        }
         const crawlOptions = {
             debug: options.debug,
             output: options.output,
@@ -102,7 +115,9 @@ program
     .showHelpAfterError('(run with --help for usage information)')
     .addHelpText('after', `
 Minimal usage example:
-  $ reffy reports/test
+  To crawl all known specs, run all processing modules, and save generated
+  extracts to the current folder, run:
+    $ reffy -o .
 
 Description:
   Crawls a set of specifications and runs processing modules against each of
@@ -174,6 +189,8 @@ Usage notes for some of the options:
   Additionally, if an output <folder> is specified and if the IDL processing
   module is run, the crawler will also creates an index of IDL names named
   "idlnames.json" that links to relevant extracts in subfolders.
+
+  The folder targeted by <folder> must exist.
 
 -r, --release
   If the flag is not set, the crawler defaults to crawl nightly versions of the
