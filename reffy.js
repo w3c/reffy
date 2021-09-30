@@ -202,7 +202,10 @@ Usage notes for some of the options:
 
   Valid spec values may be a shortname, a URL, or a relative path to a file that
   contains a list of spec URLs and/or shortnames. All shortnames must exist in
-  browser-specs.
+  browser-specs. Shortname may be the shortname of the spec series, in which
+  case the spec identified as the current specification in the series is used.
+  For instance, as of September 2021, "pointerlock" will map to "pointerlock-2"
+  because Pointer Lock 2.0 is the current level in the series.
 
   Use "all" to include all specs in browser-specs in the crawl. For instance, to
   crawl all specs plus one custom spec that does not exist in browser-specs:

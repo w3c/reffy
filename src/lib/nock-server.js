@@ -36,7 +36,8 @@ const mockSpecs = {
     }
   },
   "/mediacapture-output/": `<script>respecConfig = { shortName: 'test' };</script><script src='https://www.w3.org/Tools/respec/respec-w3c'></script><div id=abstract></div><pre class='idl'>[Exposed=Window] interface Foo { attribute DOMString bar; };</pre>`,
-  "/accelerometer/": `<html><h2>Normative references</h2><dl><dt>FOO</dt><dd><a href='https://www.w3.org/TR/Foo'>Foo</a></dd></dl>`
+  "/accelerometer/": `<html><h2>Normative references</h2><dl><dt>FOO</dt><dd><a href='https://www.w3.org/TR/Foo'>Foo</a></dd></dl>`,
+  "/pointerlock/": `<html><h1>Pointer Lock 2.0`
 };
 
 nock.disableNetConnect();
