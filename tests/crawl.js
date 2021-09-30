@@ -60,6 +60,16 @@ if (global.describe && describe instanceof Function) {
       assert.equal(refResults.title, results.results[0].title);
     });
 
+    it("matches spec series shortnames", async() => {
+      const output = fs.mkdtempSync(path.join(os.tmpdir(), 'reffy-'));
+      await crawlSpecs({
+        specs: ['pointerlock'],
+        output: output
+      });
+      const results = require(path.resolve(output, 'index.json'));
+      assert.equal(results.results[0].url, 'https://www.w3.org/TR/pointerlock-2/');
+    });
+
     it("interprets filenames relative to the current folder", async() => {
       const output = fs.mkdtempSync(path.join(os.tmpdir(), 'reffy-'));
       await crawlSpecs({

@@ -482,7 +482,12 @@ function crawlSpecs(options) {
             if (typeof spec !== 'string') {
                 return spec;
             }
-            const match = specs.find(s => s.url === spec || s.shortname === spec);
+            let match = specs.find(s => s.url === spec || s.shortname === spec);
+            if (!match) {
+                match = specs.find(s => s.series &&
+                    s.series.shortname === spec &&
+                    s.series.currentSpecification === s.shortname);
+            }
             if (match) {
                 return match;
             }
@@ -496,7 +501,8 @@ function crawlSpecs(options) {
                     url = (new URL(spec, `file://${process.cwd()}/`)).href;
                 }
                 else {
-                    throw new Error(`Spec ID "${spec}" can neither be interpreted as a URL, a valid shortname or a relative path to an HTML file`);
+                    const msg = `Spec ID "${spec}" can neither be interpreted as a URL, a valid shortname or a relative path to an HTML file`;
+                    throw new Error(msg);
                 }
             }
             return {
