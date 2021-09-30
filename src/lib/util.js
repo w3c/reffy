@@ -15,6 +15,21 @@ const reffyModules = require('../browserlib/reffy.json');
 
 
 /**
+ * Maximum depth difference supported between Reffy's install path and custom
+ * modules that may be provided on the command-line
+ *
+ * TODO: Find a way to get right of that, there should be no limit
+ */
+const maxPathDepth = 20;
+
+
+/**
+ * Returns a range array from 0 to the number provided (not included)
+ */
+const range = n => Array.from(Array(n).keys());
+
+
+/**
  * Shortcut that returns a property extractor iterator
  */
 const prop = p => x => x[p];
@@ -356,7 +371,7 @@ async function processSpecification(spec, processFunction, args, options) {
                         let depth = requestPath.lastIndexOf('__/') / 3;
                         const filename = requestPath.substring(requestPath.lastIndexOf('__/') + 3);
                         let filePath = path.resolve(__dirname, '..', 'browserlib');
-                        while (depth < 7) {
+                        while (depth < maxPathDepth - 1) {
                             filePath = path.resolve(filePath, '..');
                             depth += 1;
                         }
@@ -547,7 +562,7 @@ async function processSpecification(spec, processFunction, args, options) {
         // "../../node_modules/[...]" and may import other scripts that are
         // higher in the folder tree.
         await page.addScriptTag({
-            url: 'reffy/scripts/__/__/__/__/__/__/__/__/reffy.mjs',
+            url: `reffy/scripts/${range(maxPathDepth).map(n => '__').join('/')}/reffy.mjs`,
             type: 'module'
         });
 
