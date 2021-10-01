@@ -5,6 +5,7 @@
  * @module finder
  */
 
+const os = require('os');
 const path = require('path');
 const baseFetch = require('fetch-filecache-for-crawling');
 
@@ -41,6 +42,11 @@ async function fetch(url, options) {
     });
     if (!options.refresh) {
         options.refresh = 'once';
+    }
+
+    // Use cache folder in tmp folder by default
+    if (!options.cacheFolder) {
+        options.cacheFolder = path.resolve(os.tmpdir(), 'reffy-cache');
     }
 
     return baseFetch(url, options);
