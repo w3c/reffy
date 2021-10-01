@@ -43,6 +43,11 @@ async function fetch(url, options) {
         options.refresh = 'once';
     }
 
+    // Use cache folder where Reffy was installed, not where it is run
+    if (!options.cacheFolder) {
+        options.cacheFolder = path.resolve(__dirname, '..', '..', '.cache');
+    }
+
     return baseFetch(url, options);
 }
 
