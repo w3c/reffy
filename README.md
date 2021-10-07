@@ -18,7 +18,7 @@ To install Reffy, you need [Node.js](https://nodejs.org/en/).
 Reffy is available as an NPM package. To install the package globally, run:
 
 ```bash
-npm install -g reffy`
+npm install -g reffy
 ```
 
 This will install Reffy as a command-line interface tool.
