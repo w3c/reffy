@@ -52,7 +52,7 @@ The crawler can be fully parameterized to crawl a specific list of specs and run
   ```
 - To retrieve the list of specs that the HTML spec references, run (noting that crawling the HTML spec takes some time due to it being a multipage spec):
   ```bash
-  reffy --spec html --module refs`
+  reffy --spec html --module refs
   ```
 - To extract the list of CSS properties defined in CSS Flexible Box Layout Module Level 1, run:
   ```bash
