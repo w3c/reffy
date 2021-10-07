@@ -119,8 +119,9 @@ function studyCrawlResults(results, options = {}) {
             isLatestLevelThatPasses(spec, results, s =>
                 s.idl && s.idl.idlNames && s.idl.idlNames[name])));
 
-    // TODO: we may end up with different variants of the WebIDL spec
-    var WebIDLSpec = results.find(spec => (spec.shortname === 'WebIDL-1')) || {};
+    // WebIDL-1 only kept for historical reasons to process old crawl results
+    var WebIDLSpec = results.find(spec =>
+        spec.shortname === 'webidl' || spec.shortname === 'WebIDL-1') || {};
 
     var sortedResults = results.sort(byTitle);
 
