@@ -22,10 +22,18 @@
  */
 
 const commander = require('commander');
-const version = require('./package.json').version;
+const satisfies = require('semver/functions/satisfies');
 const specs = require('browser-specs');
+const { version, engines } = require('./package.json');
 const { requireFromWorkingDirectory } = require('./src/lib/util');
 const { crawlSpecs } = require('./src/lib/specs-crawler');
+
+// Warn if version of Node.js does not satisfy requirements
+if (engines && engines.node && !satisfies(process.version, engines.node)) {
+  console.warn(`
+[WARNING] Node.js ${process.version} detected but Reffy needs Node.js ${engines.node}.
+          Please consider upgrading Node.js if the program crashes!`);
+}
 
 
 function parseModuleOption(input) {
@@ -54,6 +62,7 @@ function parseSpecOption(input) {
         return list ?? input;
     }
 }
+
 
 const program = new commander.Command();
 program

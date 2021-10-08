@@ -37,6 +37,7 @@
     "fetch-filecache-for-crawling": "4.0.2",
     "node-pandoc": "0.3.0",
     "puppeteer": "10.4.0",
+    "semver": "^7.3.5",
     "webidl2": "24.1.2"
   },
   "devDependencies": {
