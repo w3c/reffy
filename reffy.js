@@ -146,7 +146,7 @@ Usage notes for some of the options:
 -m, --module <modules...>
   If processing modules are not specified, the crawler runs all core processing
   modules defined in:
-    https://github.com/w3c/reffy/tree/main/src/reffy.json
+    https://github.com/w3c/reffy/blob/main/src/browserlib/reffy.json
 
   Modules must be specified using a relative path to an ".mjs" file that defines
   the processing logic to run on the spec's page in a browser context. For
