@@ -11,7 +11,7 @@ The code also currently includes a set of individual tools to study extracts and
 
 ### Pre-requisites
 
-To install Reffy, you need [Node.js](https://nodejs.org/en/).
+To install Reffy, you need [Node.js](https://nodejs.org/en/) 14 or greater.
 
 ### Installation
 
