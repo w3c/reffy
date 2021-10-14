@@ -1,5 +1,7 @@
 # Reffy
 
+<img align="right" width="256" height="256" src="images/reffy-512.gif" alt="Reffy, represented as a brave little worm with a construction helmet, ready to crawl specs">
+
 Reffy is a **Web spec crawler** tool. It is notably used to update [Webref](https://github.com/w3c/webref#webref) every 6 hours.
 
 The code features a generic crawler that can fetch Web specifications and generate machine-readable extracts out of them. Created extracts include lists of CSS properties, definitions, IDL, links and references contained in the specification.
