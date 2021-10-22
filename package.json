@@ -33,7 +33,7 @@
   "dependencies": {
     "abortcontroller-polyfill": "1.7.3",
     "browser-specs": "2.15.1",
-    "commander": "8.2.0",
+    "commander": "8.3.0",
     "fetch-filecache-for-crawling": "4.0.2",
     "puppeteer": "10.4.0",
     "semver": "^7.3.5",
