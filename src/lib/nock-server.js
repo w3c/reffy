@@ -74,9 +74,9 @@ nock("https://api.specref.org")
 
 nock("https://www.w3.org")
   .persist()
-  .get("/scripts/TR/2016/fixup.js").reply(200, '')
-  .get("/StyleSheets/TR/2016/logos/W3C").reply(200, '')
-  .get("/StyleSheets/TR/2016/base.css").reply(200, '')
+  .get("/scripts/TR/2021/fixup.js").reply(200, '')
+  .get("/StyleSheets/TR/2021/logos/W3C").reply(200, '')
+  .get("/StyleSheets/TR/2021/base.css").reply(200, '')
   .get("/Tools/respec/respec-highlight").replyWithFile(200, path.join(modulesFolder, "respec-hljs", "dist", "respec-highlight.js"), {"Content-Type": "application/js"})
   .get("/Tools/respec/respec-w3c").replyWithFile(200, path.join(modulesFolder, "respec", "builds", "respec-w3c.js"), {"Content-Type": "application/js"});
 

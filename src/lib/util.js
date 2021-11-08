@@ -525,8 +525,8 @@ async function processSpecification(spec, processFunction, args, options) {
                 if (counter > 60) {
                     throw new Error('Respec generation took too long');
                 }
-                if (window.document.respecIsReady) {
-                    await window.document.respecIsReady;
+                if (window.document.respec?.ready) {
+                    await window.document.respec.ready;
                 }
                 else if (usesRespec) {
                     await sleep(1000);

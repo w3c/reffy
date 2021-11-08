@@ -190,6 +190,7 @@
     "ids": [
       "https://w3c.github.io/mediacapture-output/#initialUserConfig",
       "https://w3c.github.io/mediacapture-output/#title",
+      "https://w3c.github.io/mediacapture-output/#w3c-state",
       "https://w3c.github.io/mediacapture-output/#abstract",
       "https://w3c.github.io/mediacapture-output/#toc",
       "https://w3c.github.io/mediacapture-output/#table-of-contents",
