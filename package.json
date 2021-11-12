@@ -45,7 +45,7 @@
     "nock": "13.2.0",
     "respec": "28.0.1",
     "respec-hljs": "2.1.1",
-    "rollup": "2.59.0"
+    "rollup": "2.60.0"
   },
   "scripts": {
     "test": "mocha --recursive tests/"
