@@ -306,8 +306,12 @@ async function teardownBrowser() {
  *   These arguments typically make it possible to pass contextual information
  *   to the processing function (such as the spec object that describes the
  *   spec being processed, or the list of processing modules to run)
- * @param {Object} options Processing options. The only supported option is
- *   "quiet", which tells the function not to report warnings to the console
+ * @param {Object} options Processing options. The "quiet" flag tells the
+ *   function not to report warnings to the console. The "forceLocalFetch"
+ *   flag tells the function that all network requests need to be only handled
+ *   by Node.js's "fetch" function (as opposed to falling back to Puppeteer's
+ *   network and caching logic), which is useful to keep full control of network
+ *   requests in tests.
  * @return {Promise} The promise to get the results of the processing function
  */
 async function processSpecification(spec, processFunction, args, options) {
@@ -416,15 +420,22 @@ async function processSpecification(spec, processFunction, args, options) {
                     return;
                 }
 
-                // Fetch from file cache failed somehow, report a warning
-                // and let Puppeteer handle the request as fallback
-                options.quiet ?? console.warn(`[warn] Fall back to regular network request for ${request.url}`, err);
-                try {
-                    await cdp.send('Fetch.continueRequest', { requestId });
+                // Fetch from file cache failed somehow
+                // Let Puppeteer handle the request as fallback unless
+                // calling function asked us not to do that
+                if (options.forceLocalFetch) {
+                    options.quiet ?? console.warn(`[warn] Network request for ${request.url} failed`, err);
+                    await cdp.send('Fetch.failRequest', { requestId, errorReason: 'Failed' });
                 }
-                catch (err) {
-                    if (!controller.signal.aborted) {
-                        options.quiet ?? console.warn(`[warn] Fall back to regular network request for ${request.url} failed`, err);
+                else {
+                    options.quiet ?? console.warn(`[warn] Fall back to regular network request for ${request.url}`, err);
+                    try {
+                        await cdp.send('Fetch.continueRequest', { requestId });
+                    }
+                    catch (err) {
+                        if (!controller.signal.aborted) {
+                            options.quiet ?? console.warn(`[warn] Fall back to regular network request for ${request.url} failed`, err);
+                        }
                     }
                 }
             }
@@ -433,6 +444,9 @@ async function processSpecification(spec, processFunction, args, options) {
 
     try {
         const page = await browser.newPage();
+
+        // Disable cache if caller wants to handle all network requests
+        await page.setCacheEnabled(!options.forceLocalFetch);
 
         // Intercept all network requests to use our own version of "fetch"
         // that makes use of the local file cache.
@@ -462,17 +476,17 @@ async function processSpecification(spec, processFunction, args, options) {
         // network connections in the past 500ms. This should be enough to
         // handle "redirection" through JS or meta refresh (which would not
         // have time to run if we used "load").
-        const options = {
+        const loadOptions = {
             timeout: 120000,
             waitUntil: 'networkidle0'
         };
 
         // Load the page
         if (spec.html) {
-            await page.setContent(spec.html, options);
+            await page.setContent(spec.html, loadOptions);
         }
         else {
-            await page.goto(spec.url, options);
+            await page.goto(spec.url, loadOptions);
         }
 
         // Handle multi-page specs
@@ -483,11 +497,12 @@ async function processSpecification(spec, processFunction, args, options) {
             for (const url of pageUrls) {
                 const subAbort = new AbortController();
                 const subPage = await browser.newPage();
+                await subPage.setCacheEnabled(!options.forceLocalFetch);
                 const subCdp = await subPage.target().createCDPSession();
                 await subCdp.send('Fetch.enable');
                 subCdp.on('Fetch.requestPaused', interceptRequest(subCdp, subAbort));
                 try {
-                    await subPage.goto(url, options);
+                    await subPage.goto(url, loadOptions);
                     const html = await subPage.evaluate(() => {
                         return document.body.outerHTML
                             .replace(/<body/, '<section')

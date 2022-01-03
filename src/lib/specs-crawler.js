@@ -62,7 +62,8 @@ async function crawlSpec(spec, crawlOptions) {
                 return res;
             },
             [spec, crawlOptions.modules],
-            { quiet: crawlOptions.quiet }
+            { quiet: crawlOptions.quiet,
+              forceLocalFetch: crawlOptions.forceLocalFetch }
         );
 
         // Specific rule for IDL extracts:

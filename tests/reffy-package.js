@@ -35,7 +35,7 @@ describe("The npm package of Reffy", function () {
     const clidir = path.join(tmpdir, 'node_modules', 'reffy', 'src', 'lib');
     const { crawlList } = require(path.join(clidir, 'specs-crawler'));
     const refResults = JSON.parse(fs.readFileSync(__dirname + "/crawl-test.json", "utf-8"));
-    const results = await crawlList(specs);
+    const results = await crawlList(specs, { forceLocalFetch: true });
     for (const result of results) {
       if (result?.ids?.length) {
         result.ids = result.ids.filter(id => !id.match(/\#respec\-/));
@@ -44,7 +44,6 @@ describe("The npm package of Reffy", function () {
     // to avoid reporting bogus diff on updated date
     results.forEach(s => delete s.date);
     assert.deepEqual(refResults, results);
-    nock.isDone();
   });
 
   after(async () => {
@@ -53,7 +52,9 @@ describe("The npm package of Reffy", function () {
       // files, let's give it some time to release the handles so that we can
       // delete the tmp folder
       await sleep(1000);
-      await fs.promises.rmdir(tmpdir, { recursive: true });
+      try {
+        await fs.promises.rmdir(tmpdir, { recursive: true });
+      } catch {}
     }
   });
 });
