@@ -84,6 +84,14 @@ const modulesFolder = getModulesFolder();
 let browser = null;
 
 /**
+ * Promise resolved when there is no running instance of Puppeteer. This allows
+ * to serialize calls to setupBrowser (and thus to crawlList and crawlSpecs in
+ * specs-crawler.js)
+ */
+let browserClosed = Promise.resolve();
+let resolveBrowserClosed = null;
+
+/**
  * The browser JS library that will be loaded onto every crawled page
  */
 let browserlib = null;
@@ -228,9 +236,13 @@ window.reffy.${module.name} = ${module.name};
  * @public
  */
 async function setupBrowser(modules) {
-    // Create browser instance (one per specification. Switch "headless" to
-    // "false" (and commenting out the call to "browser.close()") is typically
-    // useful when something goes wrong to access dev tools and debug)
+    // There can be only one crawl running at a time
+    await browserClosed;
+    browserClosed = new Promise(resolve => resolveBrowserClosed = resolve);
+
+    // Create browser instance
+    // Note: switch "headless" to "false" (and comment out the call to
+    // "browser.close()") to access dev tools in debug mode
     browser = await puppeteer.launch({ headless: true });
     setupBrowserlib(modules);
 }
@@ -248,6 +260,8 @@ async function teardownBrowser() {
     if (browser) {
         await browser.close();
         browser = null;
+        resolveBrowserClosed();
+        resolveBrowserClosed = null;
     }
 }
 
