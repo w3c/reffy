@@ -28,7 +28,8 @@ const path = require('path');
 const webidlParser = require('../cli/parse-webidl');
 const {
   expandCrawlResult,
-  requireFromWorkingDirectory
+  requireFromWorkingDirectory,
+  createFolderIfNeeded
 } = require('../lib/util');
 
 
@@ -47,19 +48,15 @@ async function generateIdlParsed(spec) {
   if (!spec?.idl) {
     return spec;
   }
-  const rawIdl = spec.idl.idl ?? spec.idl;
   try {
-    const parsedIdl = await webidlParser.parse(rawIdl);
-    parsedIdl.hasObsoleteIdl = webidlParser.hasObsoleteIdl(rawIdl);
-    parsedIdl.idl = rawIdl;
-    spec.idl = parsedIdl;
+    spec.idlparsed = await webidlParser.parse(spec.idl);
+    spec.idlparsed.hasObsoleteIdl = webidlParser.hasObsoleteIdl(spec.idl);
   }
   catch (err) {
     // IDL content is invalid and cannot be parsed.
     // Let's return the error, along with the raw IDL
     // content so that it may be saved to a file.
-    err.idl = rawIdl;
-    spec.idl = err;
+    spec.idlparsed = err;
   }
   return spec;
 }
@@ -70,18 +67,6 @@ async function generateIdlParsedFromPath(crawlPath) {
   const crawlResults = await expandCrawlResult(crawlIndex, crawlPath, ['idl']);
   await Promise.all(crawlResults.results.map(generateIdlParsed));
   return crawlResults;
-}
-
-
-async function createFolderIfNeeded(name) {
-  try {
-    await fs.promises.mkdir(name);
-  }
-  catch (err) {
-    if (err.code !== 'EEXIST') {
-      throw err;
-    }
-  }
 }
 
 
@@ -110,13 +95,12 @@ async function saveIdlParsed(spec, folder) {
   const subfolder = path.join(folder, 'idlparsed');
   await createFolderIfNeeded(subfolder);
 
-  if (!spec?.idl?.idl) {
+  if (!spec?.idlparsed) {
     return;
   }
 
-  delete spec.idl.idl;
   const json = JSON.stringify(
-    Object.assign(specInfo(spec), { idlparsed: spec.idl }),
+    Object.assign(specInfo(spec), { idlparsed: spec.idlparsed }),
     null, 2);
   const filename = path.join(subfolder, spec.shortname + '.json');
   await fs.promises.writeFile(filename, json);

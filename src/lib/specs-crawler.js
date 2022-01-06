@@ -24,7 +24,8 @@ const {
     isLatestLevelThatPasses,
     processSpecification,
     setupBrowser,
-    teardownBrowser
+    teardownBrowser,
+    createFolderIfNeeded
 } = require('./util');
 
 
@@ -138,6 +139,9 @@ async function crawlSpec(spec, crawlOptions) {
         crawlOptions.modules.forEach(mod => {
             if (result[mod.property]) {
                 spec[mod.property] = result[mod.property];
+                if (mod.property === 'idl') {
+                    spec.idlparsed = result.idlparsed;
+                }
             }
         });
     }
@@ -173,14 +177,7 @@ async function saveSpecResults(spec, settings) {
 
     async function getSubfolder(name) {
         let subfolder = path.join(settings.output, name);
-        try {
-            await fs.promises.mkdir(subfolder);
-        }
-        catch (err) {
-            if (err.code !== 'EEXIST') {
-                throw err;
-            }
-        }
+        await createFolderIfNeeded(subfolder);
         return subfolder;
     }
 
@@ -229,13 +226,14 @@ async function saveSpecResults(spec, settings) {
             // (https://github.com/w3c/webref)
             // Source: ${spec.title} (${spec.crawled})`;
         idlHeader = idlHeader.replace(/^\s+/gm, '').trim() + '\n\n';
-        let idl = spec.idl.idl
+        let idl = spec.idl
             .replace(/\s+$/gm, '\n')
             .replace(/\t/g, '  ')
             .trim();
         idl = idlHeader + idl + '\n';
         await fs.promises.writeFile(
             path.join(folders.idl, spec.shortname + '.idl'), idl);
+        return `idl/${spec.shortname}.idl`;
     };
 
     async function saveCss(spec) {
@@ -252,17 +250,15 @@ async function saveSpecResults(spec, settings) {
         }, 2) + '\n';
         const pathname = path.join(folders.css, spec.shortname + '.json')
         await fs.promises.writeFile(pathname, json);
-        spec.css = `css/${spec.shortname}.json`;
+        return `css/${spec.shortname}.json`;
     };
 
     // Save IDL dumps
-    if (spec.idl && spec.idl.idl) {
-        await saveIdl(spec);
-        spec.idlparsed = await saveIdlParsed(spec, settings.output);
-        spec.idl = `idl/${spec.shortname}.idl`;
+    if (spec.idl) {
+        spec.idl = await saveIdl(spec);
     }
-    else if (spec.idl) {
-        delete spec.idl;
+    if (spec.idlparsed) {
+        spec.idlparsed = await saveIdlParsed(spec, settings.output);
     }
 
     // Save CSS dumps
@@ -273,7 +269,7 @@ async function saveSpecResults(spec, settings) {
             (Object.keys(spec.css.valuespaces || {}).length > 0));
     }
     if (defineCSSContent(spec)) {
-        await saveCss(spec);
+        spec.css = await saveCss(spec);
     }
 
     // Specs that define CSS now have a "css" key that point to the CSS extract.

@@ -399,7 +399,7 @@ function checkSpecDefinitions(spec, options = {}) {
     (spec.css || {});
   const idl = (typeof spec.idlparsed === "string") ?
     require(path.resolve(options.rootFolder, spec.idlparsed)).idlparsed :
-    spec.idl;
+    spec.idlparsed;
 
   // Make sure that all expected CSS definitions exist in the dfns extract
   const expectedCSSDfns = getExpectedDfnsFromCSS(css);
