@@ -28,7 +28,8 @@ const { matchIdlDfn, getExpectedDfnFromIdlDesc } = require('./check-missing-dfns
 const {
   expandCrawlResult,
   isLatestLevelThatPasses,
-  requireFromWorkingDirectory
+  requireFromWorkingDirectory,
+  createFolderIfNeeded
 } = require('../lib/util');
 
 
@@ -118,7 +119,7 @@ function generateIdlNames(results, options = {}) {
   const names = {};
 
   function defineIDLContent(spec) {
-    return spec.idl && (spec.idl.idlNames || spec.idl.idlExtendedNames);
+    return spec.idlparsed?.idlNames || spec.idlparsed?.idlExtendedNames;
   }
 
   // Only keep latest version of specs and delta specs that define some IDL
@@ -129,10 +130,10 @@ function generateIdlNames(results, options = {}) {
   // Add main definitions of all IDL names
   // (using the latest version of a spec that defines some IDL)
   results.forEach(spec => {
-    if (!spec.idl || !spec.idl.idlNames) {
+    if (!spec.idlparsed.idlNames) {
       return;
     }
-    Object.entries(spec.idl.idlNames).forEach(([name, idl]) => {
+    Object.entries(spec.idlparsed.idlNames).forEach(([name, idl]) => {
       const desc = Object.assign(specInfo(spec), { fragment: idl.fragment });
       fragments[idl.fragment] = idl;
 
@@ -157,10 +158,10 @@ function generateIdlNames(results, options = {}) {
 
   // Add definitions that extend base definitions
   results.forEach(spec => {
-    if (!spec.idl || !spec.idl.idlExtendedNames) {
+    if (!spec.idlparsed.idlExtendedNames) {
       return;
     }
-    Object.entries(spec.idl.idlExtendedNames).forEach(([name, extensions]) =>
+    Object.entries(spec.idlparsed.idlExtendedNames).forEach(([name, extensions]) =>
       extensions.forEach(idl => {
         const desc = Object.assign(specInfo(spec), { fragment: idl.fragment });
         fragments[idl.fragment] = idl;
@@ -305,18 +306,6 @@ async function generateIdlNamesFromPath(crawlPath, options = {}) {
   const crawlIndex = requireFromWorkingDirectory(path.resolve(crawlPath, 'index.json'));
   const crawlResults = await expandCrawlResult(crawlIndex, crawlPath, ['idlparsed', 'dfns']);
   return generateIdlNames(crawlResults.results, options);
-}
-
-
-async function createFolderIfNeeded(name) {
-  try {
-    await fs.promises.mkdir(name);
-  }
-  catch (err) {
-    if (err.code !== 'EEXIST') {
-      throw err;
-    }
-  }
 }
 
 

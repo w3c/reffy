@@ -717,30 +717,6 @@ async function expandCrawlResult(crawl, baseFolder, properties) {
     baseFolder = baseFolder || '';
 
     async function expandSpec(spec) {
-        // Special case for "idl" that must be processed first
-        if (spec.idl && (typeof spec.idl === 'string') &&
-                (!properties || properties.includes('idl') || properties.includes('idlparsed'))) {
-            if (baseFolder.startsWith('https:')) {
-                const url = (new URL(spec.idl, baseFolder)).toString();
-                let response = await fetch(url, { nolog: true });
-                spec.idl = {
-                    idl: await response.text()
-                };
-            }
-            else {
-                spec.idl = {
-                    idl: await fs.readFile(path.join(baseFolder, spec.idl), 'utf8')
-                };
-            }
-
-            // Drop IDL header comment that got added when IDL content was
-            // serialized to a file.
-            if (spec.idl.idl.startsWith('// GENERATED CONTENT - DO NOT EDIT')) {
-                const endOfHeader = spec.idl.idl.indexOf('\n\n');
-                spec.idl.idl = spec.idl.idl.substring(endOfHeader + 2);
-            }
-        }
-
         await Promise.all(Object.keys(spec).map(async property => {
             // Only consider properties explicitly requested
             if (properties && !properties.includes(property)) {
@@ -774,14 +750,15 @@ async function expandCrawlResult(crawl, baseFolder, properties) {
                 delete css.spec;
                 spec[property] = css;
             }
-            else if (property === 'idlparsed') {
-                // Special case for parsed IDL extracts, as result needs to be
-                // attached to "idl"
-                if (!spec.idl) {
-                    spec.idl = {};
+            else if (property === 'idl') {
+                // Special case for raw IDL extracts, which are text extracts.
+                // Also drop header that may have been added when extract was
+                // serialized.
+                if (contents.startsWith('// GENERATED CONTENT - DO NOT EDIT')) {
+                    const endOfHeader = contents.indexOf('\n\n');
+                    contents = contents.substring(endOfHeader + 2);
                 }
-                Object.assign(spec.idl, contents[property]);
-                delete spec.idlparsed;
+                spec.idl = contents;
             }
             else {
                 spec[property] = contents[property];
@@ -846,6 +823,26 @@ function getGeneratedIDLNamesByCSSProperty(property) {
 };
 
 
+/**
+ * Creates the given folder if it does not exist yet.
+ *
+ * @function
+ * @public
+ * @param {String} folder Path to folder to create
+ *   (from current working directory)
+ */
+async function createFolderIfNeeded(folder) {
+    try {
+        await fs.mkdir(folder);
+    }
+    catch (err) {
+        if (err.code !== 'EEXIST') {
+            throw err;
+        }
+    }
+}
+
+
 module.exports = {
     fetch,
     requireFromWorkingDirectory,
@@ -856,5 +853,6 @@ module.exports = {
     completeWithAlternativeUrls,
     isLatestLevelThatPasses,
     expandCrawlResult,
-    getGeneratedIDLNamesByCSSProperty
+    getGeneratedIDLNamesByCSSProperty,
+    createFolderIfNeeded
 };
