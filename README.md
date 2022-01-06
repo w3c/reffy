@@ -93,6 +93,10 @@ To create the WebIDL extract in the first place, you will need to run the `idl` 
 reffy --spec fetch --module idl > fetch.idl
 ```
 
+### Parsed WebIDL generator
+
+The **Parsed WebIDL generator** takes the results of a crawl as input and applies the WebIDL parser to all specs it contains to create JSON extracts in an `idlparsed` folder. To run the generator: `node src/cli/generate-idlparsed.js [crawl folder] [save folder]`
+
 
 ### WebIDL names generator
 

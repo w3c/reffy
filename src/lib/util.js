@@ -732,6 +732,13 @@ async function expandCrawlResult(crawl, baseFolder, properties) {
                     idl: await fs.readFile(path.join(baseFolder, spec.idl), 'utf8')
                 };
             }
+
+            // Drop IDL header comment that got added when IDL content was
+            // serialized to a file.
+            if (spec.idl.idl.startsWith('// GENERATED CONTENT - DO NOT EDIT')) {
+                const endOfHeader = spec.idl.idl.indexOf('\n\n');
+                spec.idl.idl = spec.idl.idl.substring(endOfHeader + 2);
+            }
         }
 
         await Promise.all(Object.keys(spec).map(async property => {

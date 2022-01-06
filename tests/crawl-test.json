@@ -17,20 +17,6 @@
         "baz"
       ]
     },
-    "idl": {
-      "jsNames": {
-        "constructors": {},
-        "functions": {}
-      },
-      "idlNames": {},
-      "idlExtendedNames": {},
-      "globals": {},
-      "exposed": {},
-      "dependencies": {},
-      "externalDependencies": [],
-      "hasObsoleteIdl": false,
-      "idl": ""
-    },
     "title": "WOFF2",
     "css": {
       "properties": {},
@@ -94,20 +80,6 @@
           "url": "https://webidl.spec.whatwg.org/"
         }
       ]
-    },
-    "idl": {
-      "jsNames": {
-        "constructors": {},
-        "functions": {}
-      },
-      "idlNames": {},
-      "idlExtendedNames": {},
-      "globals": {},
-      "exposed": {},
-      "dependencies": {},
-      "externalDependencies": [],
-      "hasObsoleteIdl": false,
-      "idl": ""
     },
     "title": "No Title",
     "generator": "respec",
@@ -229,20 +201,6 @@
         }
       ],
       "informative": []
-    },
-    "idl": {
-      "jsNames": {
-        "constructors": {},
-        "functions": {}
-      },
-      "idlNames": {},
-      "idlExtendedNames": {},
-      "globals": {},
-      "exposed": {},
-      "dependencies": {},
-      "externalDependencies": [],
-      "hasObsoleteIdl": false,
-      "idl": ""
     },
     "title": "[No title found for https://w3c.github.io/accelerometer/]",
     "css": {

@@ -13,8 +13,8 @@
 const fs = require('fs');
 const path = require('path');
 const specs = require('browser-specs');
-const webidlParser = require('../cli/parse-webidl');
 const cssDfnParser = require('./css-grammar-parser');
+const { generateIdlParsed, saveIdlParsed } = require('../cli/generate-idlparsed');
 const { generateIdlNames, saveIdlNames } = require('../cli/generate-idlnames');
 const {
     completeWithAlternativeUrls,
@@ -68,21 +68,7 @@ async function crawlSpec(spec, crawlOptions) {
 
         // Specific rule for IDL extracts:
         // parse the extracted WebIdl content
-        if (result.idl !== undefined) {
-            try {
-                const parsedIdl = await webidlParser.parse(result.idl);
-                parsedIdl.hasObsoleteIdl = webidlParser.hasObsoleteIdl(result.idl);
-                parsedIdl.idl = result.idl;
-                result.idl = parsedIdl;
-            }
-            catch (err) {
-                // IDL content is invalid and cannot be parsed.
-                // Let's return the error, along with the raw IDL
-                // content so that it may be saved to a file.
-                err.idl = result.idl;
-                result.idl = err;
-            }
-        }
+        await generateIdlParsed(result);
 
         if (result.css) {
             // Specific rule for CSS properties:
@@ -272,10 +258,8 @@ async function saveSpecResults(spec, settings) {
     // Save IDL dumps
     if (spec.idl && spec.idl.idl) {
         await saveIdl(spec);
-        delete spec.idl.idl;
-        spec.idlparsed = spec.idl;
+        spec.idlparsed = await saveIdlParsed(spec, settings.output);
         spec.idl = `idl/${spec.shortname}.idl`;
-        await saveExtract(spec, 'idlparsed', spec => spec.idlparsed);
     }
     else if (spec.idl) {
         delete spec.idl;
