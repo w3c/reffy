@@ -32,7 +32,14 @@ if (global.describe && describe instanceof Function) {
           result.ids = result.ids.filter(id => !id.match(/\#respec\-/));
         }
       }
-      assert.deepEqual(refResults, results);
+      for (let i in refResults) {
+        for (let prop in refResults[i]) {
+          assert.deepEqual(results[i][prop], refResults[i][prop],
+          `Unexpected crawl results for ${refResults[i].url} (property "${prop}")`);
+        }
+        assert.deepEqual(results[i], refResults[i],
+          `Unexpected properties found in crawl result for ${refResults[i].url}`);
+      }
     });
 
     it("supports 'file' URLs", async () => {
