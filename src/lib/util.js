@@ -741,7 +741,7 @@ async function expandCrawlResult(crawl, baseFolder, properties) {
                 contents = await fs.readFile(filename, 'utf8');
             }
 
-            // Force Linux-style line endings
+            // Force UNIX-style line endings
             // (Git may auto-convert LF to CRLF on Windows machines and we
             // want to store multiline IDL fragments as values of properties
             // in parsed IDL trees)
