@@ -500,7 +500,10 @@ async function processSpecification(spec, processFunction, args, options) {
             await page.setContent(spec.html, loadOptions);
         }
         else {
-            await page.goto(spec.url, loadOptions);
+          const result = await page.goto(spec.url, loadOptions);
+          if (result.status() !== 200) {
+            throw new Error(`Loading ${spec.url} triggered HTTP status ${result.status()}`);
+          }
         }
 
         // Handle multi-page specs

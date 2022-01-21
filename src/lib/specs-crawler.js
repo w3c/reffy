@@ -166,10 +166,12 @@ async function crawlSpec(spec, crawlOptions) {
  *   "output" and "quiet". See CLI help (node reffy.js --help) for details.
  *   The "modules" setting is mandatory and note that the function will not do
  *   anything if "output" is not set.
+ * @param {Object} fallback Source of fallback data used to replace crawled
+     data when the crawl generated an error.
  * @return {Promise<Object>} The promise to get an updated spec object that
  *   contains links to created extracts.
  */
-async function saveSpecResults(spec, settings) {
+async function saveSpecResults(spec, settings, fallback) {
     settings = settings || {};
     if (!settings.output) {
         return spec;
@@ -179,6 +181,10 @@ async function saveSpecResults(spec, settings) {
         let subfolder = path.join(settings.output, name);
         await createFolderIfNeeded(subfolder);
         return subfolder;
+    }
+
+    if (fallback && spec.error) {
+        spec = fallback.find(s => s.shortname === spec.shortname);
     }
 
     const modules = settings.modules;
@@ -316,6 +322,16 @@ async function crawlList(speclist, crawlOptions) {
 
     // Prepare Puppeteer instance
     crawlOptions.modules = expandBrowserModules(crawlOptions.modules);
+
+    let fallback;
+    if (crawlOptions.fallback) {
+        try {
+            fallback = JSON.parse(await fs.promises.readFile(crawlOptions.fallback));
+        } catch (e) {
+            console.error(`Could not parse fallback data file ${crawlOptions.fallback}`);
+        }
+    }
+
     await setupBrowser(crawlOptions.modules);
 
     const list = speclist.map(completeWithAlternativeUrls);
@@ -351,7 +367,7 @@ async function crawlList(speclist, crawlOptions) {
         const logCounter = ('' + (idx + 1)).padStart(nbStr.length, ' ') + '/' + nbStr;
         crawlOptions.quiet ?? console.warn(`${logCounter} - ${spec.url} - crawling`);
         let result = await crawlSpec(spec, crawlOptions);
-        result = await saveSpecResults(result, crawlOptions);
+        result = await saveSpecResults(result, crawlOptions, fallback?.results);
         crawlOptions.quiet ?? console.warn(`${logCounter} - ${spec.url} - done`);
         flagNextSpecAsReadyToCrawl();
 
