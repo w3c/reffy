@@ -740,6 +740,13 @@ async function expandCrawlResult(crawl, baseFolder, properties) {
                 const filename = path.join(baseFolder, spec[property]);
                 contents = await fs.readFile(filename, 'utf8');
             }
+
+            // Force UNIX-style line endings
+            // (Git may auto-convert LF to CRLF on Windows machines and we
+            // want to store multiline IDL fragments as values of properties
+            // in parsed IDL trees)
+            contents = contents.replace(/\r\n/g, '\n');
+
             if (spec[property].endsWith('.json')) {
                 contents = JSON.parse(contents);
             }
