@@ -226,11 +226,7 @@ async function saveSpecResults(spec, settings) {
             // (https://github.com/w3c/webref)
             // Source: ${spec.title} (${spec.crawled})`;
         idlHeader = idlHeader.replace(/^\s+/gm, '').trim() + '\n\n';
-        let idl = spec.idl
-            .replace(/\s+$/gm, '\n')
-            .replace(/\t/g, '  ')
-            .trim();
-        idl = idlHeader + idl + '\n';
+        const idl = idlHeader + spec.idl + '\n';
         await fs.promises.writeFile(
             path.join(folders.idl, spec.shortname + '.idl'), idl);
         return `idl/${spec.shortname}.idl`;
