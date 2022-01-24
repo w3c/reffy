@@ -11,19 +11,28 @@ import informativeSelector from './informative-selector.mjs';
  */
 export default function () {
     const generator = getGenerator();
+    let idl = '';
     if (generator === 'bikeshed') {
-        return extractBikeshedIdl();
+        idl = extractBikeshedIdl();
     }
     else if (document.title.startsWith('Web IDL')) {
         // IDL content in the Web IDL spec are... examples,
         // not real definitions
-        return '';
     }
     else {
         // Most non-ReSpec specs still follow the ReSpec conventions
         // for IDL definitions
-        return extractRespecIdl();
+        idl = extractRespecIdl();
     }
+
+    if (idl) {
+        // Remove trailing spaces and use spaces throughout
+        idl = idl
+            .replace(/\s+$/gm, '\n')
+            .replace(/\t/g, '  ')
+            .trim();
+    }
+    return idl;
 }
 
 
