@@ -261,8 +261,14 @@ function parseInterfaceOrDictionary(def, idlReport) {
 
     const exposedEA = def.extAttrs.find(ea => ea.name === "Exposed");
     if (exposedEA && exposedEA.rhs) {
-        const exposedNames = (exposedEA.rhs.type === "identifier") ?
-            [exposedEA.rhs.value] : exposedEA.rhs.value.map(c => c.value);
+        let exposedNames = [];
+        if (exposedEA.rhs.type === "*") {
+            exposedNames.push("*");
+        } else if (exposedEA.rhs.type === "identifier") {
+            exposedNames.push(rhs.value)
+        } else {
+          exposedNames = exposedEA.rhs.value.map(c => c.value);
+        }
         exposedNames.forEach(name => {
             if (!exposed[name]) {
                 exposed[name] = [];
