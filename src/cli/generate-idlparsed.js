@@ -56,7 +56,7 @@ async function generateIdlParsed(spec) {
     // IDL content is invalid and cannot be parsed.
     // Let's return the error, along with the raw IDL
     // content so that it may be saved to a file.
-    spec.idlparsed = err;
+    spec.idlparsed = err.toString();
   }
   return spec;
 }
