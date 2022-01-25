@@ -261,8 +261,14 @@ function parseInterfaceOrDictionary(def, idlReport) {
 
     const exposedEA = def.extAttrs.find(ea => ea.name === "Exposed");
     if (exposedEA && exposedEA.rhs) {
-        const exposedNames = (exposedEA.rhs.type === "identifier") ?
-            [exposedEA.rhs.value] : exposedEA.rhs.value.map(c => c.value);
+        let exposedNames = [];
+        if (exposedEA.rhs.type === "*") {
+            exposedNames.push("*");
+        } else if (exposedEA.rhs.type === "identifier") {
+            exposedNames.push(exposedEA.rhs.value);
+        } else {
+          exposedNames = exposedEA.rhs.value.map(c => c.value);
+        }
         exposedNames.forEach(name => {
             if (!exposed[name]) {
                 exposed[name] = [];
@@ -313,7 +319,9 @@ function addToJSContext(eas, jsNames, name, type) {
     var exposed = eas && eas.some(ea => ea.name === "Exposed");
     if (exposed) {
         var exposedEa = eas.find(ea => ea.name === "Exposed");
-        if (exposedEa.rhs.type === "identifier") {
+        if (exposedEa.rhs.type === "*") {
+            contexts = ["*"];
+        } else if (exposedEa.rhs.type === "identifier") {
             contexts = [exposedEa.rhs.value];
         } else {
             contexts = exposedEa.rhs.value.map(c => c.value);
