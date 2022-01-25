@@ -265,7 +265,7 @@ function parseInterfaceOrDictionary(def, idlReport) {
         if (exposedEA.rhs.type === "*") {
             exposedNames.push("*");
         } else if (exposedEA.rhs.type === "identifier") {
-            exposedNames.push(rhs.value)
+            exposedNames.push(exposedEA.rhs.value);
         } else {
           exposedNames = exposedEA.rhs.value.map(c => c.value);
         }
