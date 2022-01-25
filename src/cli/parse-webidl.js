@@ -319,7 +319,9 @@ function addToJSContext(eas, jsNames, name, type) {
     var exposed = eas && eas.some(ea => ea.name === "Exposed");
     if (exposed) {
         var exposedEa = eas.find(ea => ea.name === "Exposed");
-        if (exposedEa.rhs.type === "identifier") {
+        if (exposedEa.rhs.type === "*") {
+            contexts = ["*"];
+        } else if (exposedEa.rhs.type === "identifier") {
             contexts = [exposedEa.rhs.value];
         } else {
             contexts = exposedEa.rhs.value.map(c => c.value);
