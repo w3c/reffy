@@ -32,7 +32,7 @@
   "bin": "./reffy.js",
   "dependencies": {
     "abortcontroller-polyfill": "1.7.3",
-    "browser-specs": "2.22.0",
+    "browser-specs": "2.23.0",
     "commander": "8.3.0",
     "fetch-filecache-for-crawling": "4.0.2",
     "puppeteer": "13.1.2",
