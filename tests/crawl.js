@@ -86,6 +86,24 @@ if (global.describe && describe instanceof Function) {
       assert.equal(results.results[0].title, 'A test spec');
     });
 
+    it("reports HTTP error statuses", async () => {
+      const url = "https://www.w3.org/TR/idontexist/";
+      const results = await crawlList(
+        [{ url, nightly: { url } }],
+        { forceLocalFetch: true });
+      assert.equal(results[0].title, "[Could not be determined, see error]");
+      assert.include(results[0].error, "Loading https://www.w3.org/TR/idontexist/ triggered HTTP status 404");
+    });
+
+    it("reports draft CSS server issues", async () => {
+      const url = "https://drafts.csswg.org/server-hiccup/";
+      const results = await crawlList(
+        [{ url, nightly: { url } }],
+        { forceLocalFetch: true });
+      assert.equal(results[0].title, "[Could not be determined, see error]");
+      assert.include(results[0].error, "CSS server issue detected");
+    });
+
     after(() => {
       if (!nock.isDone()) {
         throw new Error("Additional network requests expected: " + nock.pendingMocks());

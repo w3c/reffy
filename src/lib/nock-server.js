@@ -97,7 +97,15 @@ nock("https://www.w3.org")
     { "Content-Type": "application/js" })
   .get("/Tools/respec/respec-w3c").replyWithFile(200,
     path.join(modulesFolder, "respec", "builds", "respec-w3c.js"),
-    { "Content-Type": "application/js" });
+    { "Content-Type": "application/js" })
+  .get("/TR/idontexist/").reply(404, '');
+
+nock("https://drafts.csswg.org")
+  .persist()
+  .get("/server-hiccup/").reply(200,
+    `<html><title>Server hiccup</title>
+    <h1> Index of Server Hiccup Module Level 42 </h1>`,
+    { 'Content-Type': 'text/html' });
 
 nock.emitter.on('error', function (err) {
   console.error(err);

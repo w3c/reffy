@@ -496,14 +496,15 @@ async function processSpecification(spec, processFunction, args, options) {
         };
 
         // Load the page
+        // (note HTTP status is 0 when `file://` URLs are loaded)
         if (spec.html) {
             await page.setContent(spec.html, loadOptions);
         }
         else {
-          const result = await page.goto(spec.url, loadOptions);
-          if (result.status() !== 200) {
-            throw new Error(`Loading ${spec.url} triggered HTTP status ${result.status()}`);
-          }
+            const result = await page.goto(spec.url, loadOptions);
+            if ((result.status() !== 200) && (!spec.url.startsWith('file://') || (result.status() !== 0))) {
+                throw new Error(`Loading ${spec.url} triggered HTTP status ${result.status()}`);
+            }
         }
 
         // Handle multi-page specs
@@ -519,7 +520,11 @@ async function processSpecification(spec, processFunction, args, options) {
                 await subCdp.send('Fetch.enable');
                 subCdp.on('Fetch.requestPaused', interceptRequest(subCdp, subAbort));
                 try {
-                    await subPage.goto(url, loadOptions);
+                    // (Note HTTP status is 0 when `file://` URLs are loaded)
+                    const subresult = await subPage.goto(url, loadOptions);
+                    if ((subresult.status() !== 200) && (!url.startsWith('file://') || (subresult.status() !== 0))) {
+                        throw new Error(`Loading ${spec.url} triggered HTTP status ${result.status()}`);
+                    }
                     const html = await subPage.evaluate(() => {
                         return document.body.outerHTML
                             .replace(/<body/, '<section')
@@ -545,6 +550,14 @@ async function processSpecification(spec, processFunction, args, options) {
 
         // Wait until the generation of the spec is completely over
         await page.evaluate(async () => {
+            // Detect draft CSS server hiccups as done in browser-specs:
+            // https://github.com/w3c/browser-specs/blob/b31fc0b03ba67a19162883afc30e01fcec3c600d/src/fetch-info.js#L292
+            const title = (window.document.querySelector('h1')?.textContent || '')
+                .replace(/\n/g, '').trim();
+            if (title.startsWith('Index of ')) {
+                throw new Error(`CSS server issue detected`);
+            }
+
             const usesRespec = (window.respecConfig || window.eval('typeof respecConfig !== "undefined"')) &&
                 window.document.head.querySelector("script[src*='respec']");
 
