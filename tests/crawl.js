@@ -95,6 +95,18 @@ if (global.describe && describe instanceof Function) {
       assert.include(results[0].error, "Loading https://www.w3.org/TR/idontexist/ triggered HTTP status 404");
     });
 
+    it("reports errors and returns fallback data when possible", async () => {
+      const url = "https://www.w3.org/TR/idontexist/";
+      const results = await crawlList(
+        [{ url, nightly: { url } }],
+        {
+          forceLocalFetch: true,
+          fallback: path.resolve(__dirname, 'crawl-fallback.json')
+        });
+      assert.equal(results[0].title, "On the Internet, nobody knows you don't exist");
+      assert.include(results[0].error, "Loading https://www.w3.org/TR/idontexist/ triggered HTTP status 404");
+    });
+
     it("reports draft CSS server issues", async () => {
       const url = "https://drafts.csswg.org/server-hiccup/";
       const results = await crawlList(

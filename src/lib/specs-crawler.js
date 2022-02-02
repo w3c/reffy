@@ -30,6 +30,31 @@ const {
 
 
 /**
+ * Return the spec if crawl succeeded or crawl result from given fallback list
+ * if crawl yielded an error (and fallback does exist).
+ *
+ * The function keeps the "error" property on the crawl result it returns so
+ * that the error does not get entirely lost.
+ *
+ * @function
+ * @param {Object} spec Actual spec crawl result
+ * @param {Array<Object>} fallbackList A list of crawl results to use as
+ *   fallback when needed
+ * @return {Object} The given crawl result or a new one that reuses fallback
+ *   content if needed
+ */
+function specOrFallback(spec, fallbackList) {
+    if (spec.error && fallbackList) {
+        const fallback = fallbackList.find(s => s.url === spec.url);
+        if (fallback) {
+            return Object.assign({}, fallback, { error: spec.error });
+        }
+    }
+    return spec;
+}
+
+
+/**
  * Load and parse the given spec.
  *
  * @function
@@ -45,7 +70,7 @@ async function crawlSpec(spec, crawlOptions) {
         spec.nightly;
 
     if (spec.error) {
-        return spec;
+        return specOrFallback(spec, crawlOptions.fallback);
     }
 
     try {
@@ -150,7 +175,7 @@ async function crawlSpec(spec, crawlOptions) {
         spec.error = err.toString() + (err.stack ? ' ' + err.stack : '');
     }
 
-    return spec;
+    return specOrFallback(spec, crawlOptions.fallback);
 }
 
 
@@ -166,12 +191,10 @@ async function crawlSpec(spec, crawlOptions) {
  *   "output" and "quiet". See CLI help (node reffy.js --help) for details.
  *   The "modules" setting is mandatory and note that the function will not do
  *   anything if "output" is not set.
- * @param {Object} fallback Source of fallback data used to replace crawled
-     data when the crawl generated an error.
  * @return {Promise<Object>} The promise to get an updated spec object that
  *   contains links to created extracts.
  */
-async function saveSpecResults(spec, settings, fallback) {
+async function saveSpecResults(spec, settings) {
     settings = settings || {};
     if (!settings.output) {
         return spec;
@@ -181,10 +204,6 @@ async function saveSpecResults(spec, settings, fallback) {
         let subfolder = path.join(settings.output, name);
         await createFolderIfNeeded(subfolder);
         return subfolder;
-    }
-
-    if (fallback && spec.error) {
-        spec = fallback.find(s => s.shortname === spec.shortname);
     }
 
     const modules = settings.modules;
@@ -318,20 +337,23 @@ async function saveSpecResults(spec, settings, fallback) {
  *   specification descriptions
  */
 async function crawlList(speclist, crawlOptions) {
-    crawlOptions = crawlOptions || {};
+    // Make a shallow copy of crawl options object since we're going
+    // to modify properties in place
+    crawlOptions = Object.assign({}, crawlOptions);
 
-    // Prepare Puppeteer instance
+    // Expand list of processing modules to use if not already done
     crawlOptions.modules = expandBrowserModules(crawlOptions.modules);
 
-    let fallback;
+    // Load fallback data if necessary
     if (crawlOptions.fallback) {
         try {
-            fallback = JSON.parse(await fs.promises.readFile(crawlOptions.fallback));
+            crawlOptions.fallback = JSON.parse(await fs.promises.readFile(crawlOptions.fallback)).results;
         } catch (e) {
-            console.error(`Could not parse fallback data file ${crawlOptions.fallback}`);
+            throw new Error(`Could not parse fallback data file ${crawlOptions.fallback}`);
         }
     }
 
+    // Prepare Puppeteer instance
     await setupBrowser(crawlOptions.modules);
 
     const list = speclist.map(completeWithAlternativeUrls);
@@ -367,7 +389,7 @@ async function crawlList(speclist, crawlOptions) {
         const logCounter = ('' + (idx + 1)).padStart(nbStr.length, ' ') + '/' + nbStr;
         crawlOptions.quiet ?? console.warn(`${logCounter} - ${spec.url} - crawling`);
         let result = await crawlSpec(spec, crawlOptions);
-        result = await saveSpecResults(result, crawlOptions, fallback?.results);
+        result = await saveSpecResults(result, crawlOptions);
         crawlOptions.quiet ?? console.warn(`${logCounter} - ${spec.url} - done`);
         flagNextSpecAsReadyToCrawl();
 
@@ -513,9 +535,14 @@ function crawlSpecs(options) {
         });
     }
 
-    const requestedList = (options && options.specs) ?
+    const requestedList = options?.specs ?
         prepareListOfSpecs(options.specs) :
         specs;
+
+    // Make a shallow copy of passed options parameter and expand modules
+    // in place.
+    options = Object.assign({}, options);
+    options.modules = expandBrowserModules(options.modules);
 
     return crawlList(requestedList, options)
         .then(async results => {
