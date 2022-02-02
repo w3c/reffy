@@ -20,6 +20,7 @@ const {
     completeWithAlternativeUrls,
     expandBrowserModules,
     expandCrawlResult,
+    expandSpecResult,
     getGeneratedIDLNamesByCSSProperty,
     isLatestLevelThatPasses,
     processSpecification,
@@ -38,16 +39,21 @@ const {
  *
  * @function
  * @param {Object} spec Actual spec crawl result
- * @param {Array<Object>} fallbackList A list of crawl results to use as
+ * * @param {Object} spec Actual spec crawl result
+ * @param {String} fallbackFolder The folder that contains fallback extracts
+ * @param {Array<Object>} fallbackData A list of crawl results to use as
  *   fallback when needed
  * @return {Object} The given crawl result or a new one that reuses fallback
  *   content if needed
  */
-function specOrFallback(spec, fallbackList) {
-    if (spec.error && fallbackList) {
-        const fallback = fallbackList.find(s => s.url === spec.url);
+async function specOrFallback(spec, fallbackFolder, fallbackData) {
+    if (spec.error && fallbackData) {
+        const fallback = fallbackData.find(s => s.url === spec.url);
         if (fallback) {
-            return Object.assign({}, fallback, { error: spec.error });
+            const copy = Object.assign({}, fallback);
+            const result = await expandSpecResult(copy, fallbackFolder);
+            result.error = spec.error;
+            return result;
         }
     }
     return spec;
@@ -68,9 +74,11 @@ async function crawlSpec(spec, crawlOptions) {
     spec.crawled = crawlOptions.publishedVersion ?
         (spec.release ? spec.release : spec.nightly) :
         spec.nightly;
+    const fallbackFolder = crawlOptions.fallback ?
+        path.dirname(crawlOptions.fallback) : '';
 
     if (spec.error) {
-        return specOrFallback(spec, crawlOptions.fallback);
+        return specOrFallback(spec, fallbackFolder, crawlOptions.fallbackData);
     }
 
     try {
@@ -175,7 +183,7 @@ async function crawlSpec(spec, crawlOptions) {
         spec.error = err.toString() + (err.stack ? ' ' + err.stack : '');
     }
 
-    return specOrFallback(spec, crawlOptions.fallback);
+    return specOrFallback(spec, fallbackFolder, crawlOptions.fallbackData);
 }
 
 
@@ -347,7 +355,7 @@ async function crawlList(speclist, crawlOptions) {
     // Load fallback data if necessary
     if (crawlOptions.fallback) {
         try {
-            crawlOptions.fallback = JSON.parse(await fs.promises.readFile(crawlOptions.fallback)).results;
+            crawlOptions.fallbackData = JSON.parse(await fs.promises.readFile(crawlOptions.fallback)).results;
         } catch (e) {
             throw new Error(`Could not parse fallback data file ${crawlOptions.fallback}`);
         }

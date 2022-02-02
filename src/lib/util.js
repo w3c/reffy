@@ -711,6 +711,79 @@ function isLatestLevelThatPasses(spec, list, predicate) {
 
 
 /**
+ * Takes the results of a crawl for a given spec and expands it to include the
+ * contents of referenced files.
+ *
+ * The function handles both files and HTTPS resources, using either filesystem
+ * functions (for files) or fetch (for HTTPS resources).
+ *
+ * Note the spec object is expanded in place.
+ *
+ * @function
+ * @public
+ * @param {Object} spec Spec crawl result that needs to be expanded
+ * @param {string} baseFolder The base folder that contains the crawl file, or
+ *   the base HTTPS URI to resolve relative links in the crawl object.
+ * @param {Array(string)} properties An explicit list of properties to expand
+ *   (no value means "expand all possible properties")
+ * @return {Promise(object)} The promise to get an expanded crawl object that
+ *   contains the contents of referenced files and no longer references external
+ *   files (for the requested properties)
+ */
+async function expandSpecResult(spec, baseFolder, properties) {
+    baseFolder = baseFolder || '';
+    await Promise.all(Object.keys(spec).map(async property => {
+        // Only consider properties explicitly requested
+        if (properties && !properties.includes(property)) {
+            return;
+        }
+
+        // Only consider properties that link to an extract, i.e. an IDL
+        // or JSON file in subfolder.
+        if (!spec[property] ||
+                (typeof spec[property] !== 'string') ||
+                !spec[property].match(/^[^\/]+\/[^\/]+\.(json|idl)$/)) {
+            return;
+        }
+        let contents = null;
+        if (baseFolder.startsWith('https:')) {
+            const url = (new URL(spec[property], baseFolder)).toString();
+            const response = await fetch(url, { nolog: true });
+            contents = await response.text();
+        }
+        else {
+            const filename = path.join(baseFolder, spec[property]);
+            contents = await fs.readFile(filename, 'utf8');
+        }
+        if (spec[property].endsWith('.json')) {
+            contents = JSON.parse(contents);
+        }
+        if (property === 'css') {
+            // Special case for CSS where the "css" level does not exist
+            // in the generated files
+            const css = Object.assign({}, contents);
+            delete css.spec;
+            spec[property] = css;
+        }
+        else if (property === 'idl') {
+            // Special case for raw IDL extracts, which are text extracts.
+            // Also drop header that may have been added when extract was
+            // serialized.
+            if (contents.startsWith('// GENERATED CONTENT - DO NOT EDIT')) {
+                const endOfHeader = contents.indexOf('\n\n');
+                contents = contents.substring(endOfHeader + 2);
+            }
+            spec.idl = contents;
+        }
+        else {
+            spec[property] = contents[property];
+        }
+    }));
+    return spec;
+}
+
+
+/**
  * Takes the results of a crawl (typically the contents of the index.json file)
  * and expands it to include the contents of all referenced files.
  *
@@ -724,66 +797,16 @@ function isLatestLevelThatPasses(spec, list, predicate) {
  * @param {Object} crawl Crawl index object that needs to be expanded
  * @param {string} baseFolder The base folder that contains the crawl file, or
  *   the base HTTPS URI to resolve relative links in the crawl object.
- * @param {Array(string)} An explicit list of properties to expand (no value
- *   means "expand all possible properties")
+ * @param {Array(string)} properties An explicit list of properties to expand
+ *   (no value means "expand all possible properties")
  * @return {Promise(object)} The promise to get an expanded crawl object that
  *   contains the entire crawl report (and no longer references external files)
  */
 async function expandCrawlResult(crawl, baseFolder, properties) {
     baseFolder = baseFolder || '';
-
-    async function expandSpec(spec) {
-        await Promise.all(Object.keys(spec).map(async property => {
-            // Only consider properties explicitly requested
-            if (properties && !properties.includes(property)) {
-                return;
-            }
-
-            // Only consider properties that link to an extract, i.e. an IDL
-            // or JSON file in subfolder.
-            if (!spec[property] ||
-                    (typeof spec[property] !== 'string') ||
-                    !spec[property].match(/^[^\/]+\/[^\/]+\.(json|idl)$/)) {
-                return;
-            }
-            let contents = null;
-            if (baseFolder.startsWith('https:')) {
-                const url = (new URL(spec[property], baseFolder)).toString();
-                const response = await fetch(url, { nolog: true });
-                contents = await response.text();
-            }
-            else {
-                const filename = path.join(baseFolder, spec[property]);
-                contents = await fs.readFile(filename, 'utf8');
-            }
-            if (spec[property].endsWith('.json')) {
-                contents = JSON.parse(contents);
-            }
-            if (property === 'css') {
-                // Special case for CSS where the "css" level does not exist
-                // in the generated files
-                const css = Object.assign({}, contents);
-                delete css.spec;
-                spec[property] = css;
-            }
-            else if (property === 'idl') {
-                // Special case for raw IDL extracts, which are text extracts.
-                // Also drop header that may have been added when extract was
-                // serialized.
-                if (contents.startsWith('// GENERATED CONTENT - DO NOT EDIT')) {
-                    const endOfHeader = contents.indexOf('\n\n');
-                    contents = contents.substring(endOfHeader + 2);
-                }
-                spec.idl = contents;
-            }
-            else {
-                spec[property] = contents[property];
-            }
-        }));
-        return spec;
-    }
-
-    crawl.results = await Promise.all(crawl.results.map(expandSpec));
+    crawl.results = await Promise.all(
+        crawl.results.map(spec => expandSpecResult(spec, baseFolder, properties))
+    );
     return crawl;
 }
 
@@ -869,6 +892,7 @@ module.exports = {
     completeWithAlternativeUrls,
     isLatestLevelThatPasses,
     expandCrawlResult,
+    expandSpecResult,
     getGeneratedIDLNamesByCSSProperty,
     createFolderIfNeeded
 };

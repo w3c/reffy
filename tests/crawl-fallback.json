@@ -31,9 +31,9 @@
       "nightly": {
         "url": "https://www.w3.org/TR/idontexist/"
       },
-      "shortname": "httpswwww3orgTRidontexist",
+      "shortname": "idontexist",
       "series": {
-        "shortname": "httpswwww3orgTRidontexist"
+        "shortname": "idontexist"
       },
       "versions": [
         "https://www.w3.org/TR/idontexist/"
@@ -41,7 +41,8 @@
       "crawled": {
         "url": "https://www.w3.org/TR/idontexist/"
       },
-      "title": "On the Internet, nobody knows you don't exist"
+      "title": "On the Internet, nobody knows you don't exist",
+      "refs": "extracts/crawl-refs.json"
     }
   ]
 }
