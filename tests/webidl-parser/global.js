@@ -77,4 +77,13 @@ describe('For Global/Exposed attributes, the WebIDL parser', () => {
     expect(data.jsNames.functions).not.to.have.property('sameInterface');
     expect(data.jsNames.functions.theInterface).to.contain('anInterface');
   });
+
+  it('parses the Exposed=* extended attribute correctly', async () => {
+    const data = await parse(`
+      [Exposed=*]
+      interface anInterface {};
+    `);
+    expect(data).to.have.property('exposed');
+    expect(data.exposed).to.have.property('*');
+  });
 });
