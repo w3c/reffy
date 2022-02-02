@@ -149,6 +149,12 @@ Usage notes for some of the options:
   Provides an existing JSON crawl data file to use as a source of fallback data
   for specs that fail to be crawled.
 
+  The fallback data gets copied as-is. It is the responsibility of the caller
+  to make sure that extracts it may link to actually exist and match the ones
+  that the crawl would produce in the absence of errors (e.g. same modules).
+
+  The "error" property is set on specs for which fallback data was used.
+
 -m, --module <modules...>
   If processing modules are not specified, the crawler runs all core processing
   modules defined in:
