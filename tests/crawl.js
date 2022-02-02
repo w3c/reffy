@@ -86,6 +86,54 @@ if (global.describe && describe instanceof Function) {
       assert.equal(results.results[0].title, 'A test spec');
     });
 
+    it("reports HTTP error statuses", async () => {
+      const url = "https://www.w3.org/TR/idontexist/";
+      const results = await crawlList(
+        [{ url, nightly: { url } }],
+        { forceLocalFetch: true });
+      assert.equal(results[0].title, "[Could not be determined, see error]");
+      assert.include(results[0].error, "Loading https://www.w3.org/TR/idontexist/ triggered HTTP status 404");
+    });
+
+    it("reports errors and returns fallback data when possible", async () => {
+      const url = "https://www.w3.org/TR/idontexist/";
+      const results = await crawlList(
+        [{ url, nightly: { url } }],
+        {
+          forceLocalFetch: true,
+          fallback: path.resolve(__dirname, 'crawl-fallback.json')
+        });
+      assert.equal(results[0].title, "On the Internet, nobody knows you don't exist");
+      assert.include(results[0].error, "Loading https://www.w3.org/TR/idontexist/ triggered HTTP status 404");
+      assert.equal(results[0].refs, "A useful list of refs");
+    });
+
+    it("saves fallback extracts in target folder", async () => {
+      const output = fs.mkdtempSync(path.join(os.tmpdir(), "reffy-"));
+      const url = "https://www.w3.org/TR/idontexist/";
+      await crawlSpecs({
+        specs: [{ url, nightly: { url } }],
+        output: output,
+        forceLocalFetch: true,
+        fallback: path.resolve(__dirname, "crawl-fallback.json")
+      });
+      const results = require(path.resolve(output, "index.json"));
+      assert.equal(results.results[0].url, "https://www.w3.org/TR/idontexist/");
+      assert.include(results.results[0].error, "Loading https://www.w3.org/TR/idontexist/ triggered HTTP status 404");
+      assert.equal(results.results[0].refs, "refs/idontexist.json");
+      const refs = require(path.resolve(output, "refs", "idontexist.json"));
+      assert.equal(refs.refs, "A useful list of refs");
+    });
+
+    it("reports draft CSS server issues", async () => {
+      const url = "https://drafts.csswg.org/server-hiccup/";
+      const results = await crawlList(
+        [{ url, nightly: { url } }],
+        { forceLocalFetch: true });
+      assert.equal(results[0].title, "[Could not be determined, see error]");
+      assert.include(results[0].error, "CSS server issue detected");
+    });
+
     after(() => {
       if (!nock.isDone()) {
         throw new Error("Additional network requests expected: " + nock.pendingMocks());

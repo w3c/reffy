@@ -70,6 +70,7 @@ program
     .usage('[options]')
     .description('Crawls and processes a list of Web specifications')
     .option('-d, --debug', 'debug mode, crawl one spec at a time')
+    .option('-f, --fallback <json>', 'fallback data to use when a spec crawl fails')
     .option('-m, --module <modules...>', 'spec processing modules')
     .option('-o, --output <folder>', 'existing folder/file where crawl results are to be saved')
     .option('-q, --quiet', 'do not report progress and other warnings to the console')
@@ -92,6 +93,7 @@ will dump ~100MB of data to the console:
         }
         const crawlOptions = {
             debug: options.debug,
+            fallback: options.fallback,
             output: options.output,
             publishedVersion: options.release,
             quiet: options.quiet,
@@ -143,6 +145,16 @@ Description:
   strongly recommended.
 
 Usage notes for some of the options:
+-f, --fallback <jsondata>
+  Provides an existing JSON crawl data file to use as a source of fallback data
+  for specs that fail to be crawled.
+
+  The fallback data gets copied as-is. It is the responsibility of the caller
+  to make sure that extracts it may link to actually exist and match the ones
+  that the crawl would produce in the absence of errors (e.g. same modules).
+
+  The "error" property is set on specs for which fallback data was used.
+
 -m, --module <modules...>
   If processing modules are not specified, the crawler runs all core processing
   modules defined in:

@@ -1,0 +1,48 @@
+{
+  "type": "crawl",
+  "title": "Reffy crawl",
+  "date": "2022-02-02T10:45:00.000Z",
+  "options": {
+    "output": "tests",
+    "specs": [
+      "httpswwww3orgTRidontexist"
+    ],
+    "modules": [
+      "title",
+      "generator",
+      "date",
+      "links",
+      "refs",
+      "idl",
+      "css",
+      "dfns",
+      "elements",
+      "headings",
+      "ids"
+    ]
+  },
+  "stats": {
+    "crawled": 1,
+    "errors": 0
+  },
+  "results": [
+    {
+      "url": "https://www.w3.org/TR/idontexist/",
+      "nightly": {
+        "url": "https://www.w3.org/TR/idontexist/"
+      },
+      "shortname": "idontexist",
+      "series": {
+        "shortname": "idontexist"
+      },
+      "versions": [
+        "https://www.w3.org/TR/idontexist/"
+      ],
+      "crawled": {
+        "url": "https://www.w3.org/TR/idontexist/"
+      },
+      "title": "On the Internet, nobody knows you don't exist",
+      "refs": "extracts/crawl-refs.json"
+    }
+  ]
+}
