@@ -52,7 +52,9 @@ async function specOrFallback(spec, fallbackFolder, fallbackData) {
         if (fallback) {
             const copy = Object.assign({}, fallback);
             const result = await expandSpecResult(copy, fallbackFolder);
-            result.error = spec.error;
+            if (!spec.ignoreError) {
+              result.error = spec.error;
+            }
             return result;
         }
     }
@@ -82,6 +84,9 @@ async function crawlSpec(spec, crawlOptions) {
     }
 
     try {
+        const fallback = (crawlOptions.fallbackData || []).find(s => s.url === spec.url);
+        const etag = fallback?.crawlCacheInfo?.etag;
+        const lastModified = fallback?.crawlCacheInfo?.lastModified;
         const result = await processSpecification(
             spec.crawled,
             (spec, modules) => {
@@ -97,7 +102,8 @@ async function crawlSpec(spec, crawlOptions) {
             },
             [spec, crawlOptions.modules],
             { quiet: crawlOptions.quiet,
-              forceLocalFetch: crawlOptions.forceLocalFetch }
+              forceLocalFetch: crawlOptions.forceLocalFetch,
+              etag, lastModified}
         );
 
         // Specific rule for IDL extracts:
@@ -169,6 +175,7 @@ async function crawlSpec(spec, crawlOptions) {
 
         // Copy results back into initial spec object
         spec.crawled = result.crawled;
+        spec.crawlCacheInfo = result.crawlCacheInfo;
         crawlOptions.modules.forEach(mod => {
             if (result[mod.property]) {
                 spec[mod.property] = result[mod.property];
@@ -180,6 +187,10 @@ async function crawlSpec(spec, crawlOptions) {
     }
     catch (err) {
         spec.title = spec.title || '[Could not be determined, see error]';
+        if (err.name === "ReuseExistingData") {
+          crawlOptions.quiet ?? console.warn(`${crawlOptions.logCounter} - ${spec.url} - skipping, no change`);
+          spec.ignoreError = true;
+        }
         spec.error = err.toString() + (err.stack ? ' ' + err.stack : '');
     }
 
@@ -392,6 +403,7 @@ async function crawlList(speclist, crawlOptions) {
         const spec = specAndPromise.spec;
         const logCounter = ('' + (idx + 1)).padStart(nbStr.length, ' ') + '/' + nbStr;
         crawlOptions.quiet ?? console.warn(`${logCounter} - ${spec.url} - crawling`);
+        crawlOptions.logCounter = logCounter;
         let result = await crawlSpec(spec, crawlOptions);
         result = await saveSpecResults(result, crawlOptions);
         crawlOptions.quiet ?? console.warn(`${logCounter} - ${spec.url} - done`);

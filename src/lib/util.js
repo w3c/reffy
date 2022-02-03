@@ -13,7 +13,6 @@ const specEquivalents = require('../specs/spec-equivalents.json');
 
 const reffyModules = require('../browserlib/reffy.json');
 
-
 /**
  * Maximum depth difference supported between Reffy's install path and custom
  * modules that may be provided on the command-line
@@ -21,6 +20,13 @@ const reffyModules = require('../browserlib/reffy.json');
  * TODO: Find a way to get right of that, there should be no limit
  */
 const maxPathDepth = 20;
+
+class ReuseExistingData extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "ReuseExistingData";
+  }
+}
 
 
 /**
@@ -325,7 +331,8 @@ async function teardownBrowser() {
  *   flag tells the function that all network requests need to be only handled
  *   by Node.js's "fetch" function (as opposed to falling back to Puppeteer's
  *   network and caching logic), which is useful to keep full control of network
- *   requests in tests.
+ *   requests in tests. The "etag" and "lastModified" options give input
+ *   to the conditional fetch request sent for the primary crawled URL
  * @return {Promise} The promise to get the results of the processing function
  */
 async function processSpecification(spec, processFunction, args, options) {
@@ -333,6 +340,7 @@ async function processSpecification(spec, processFunction, args, options) {
     processFunction = processFunction || function () {};
     args = args || [];
     options = options || {};
+    let reuseExistingData = false;
 
     if (!browser) {
         throw new Error('Browser instance not initialized, setupBrowser() must be called before processSpecification().');
@@ -410,16 +418,37 @@ async function processSpecification(spec, processFunction, args, options) {
                         return;
                     }
 
-                    const response = await fetch(request.url, { signal: controller.signal });
+                    // If we have a fallback data source
+                    // with a defined cache target for the said url,
+                    // we set a conditional request header
+                    if (options.etag) {
+                      request.headers["If-None-Match"] = options.etag;
+                    } else if (options.lastModified) {
+                      request.headers["If-Modified-Since"] = options.lastModified;
+                    }
+
+                    const response = await fetch(request.url, { signal: controller.signal, headers: request.headers });
+
+                    // If we hit a 304, skip any fetching and processing
+                    // failing the request triggers the error path in
+                    // page.goto()
+                    if (response.status === 304) {
+                       await cdp.send('Fetch.failRequest', {
+                         requestId,
+                         errorReason: "Failed"
+                       });
+                       reuseExistingData = true;
+                       return;
+                    }
                     const body = await response.buffer();
                     await cdp.send('Fetch.fulfillRequest', {
                         requestId,
                         responseCode: response.status,
                         responseHeaders: Object.keys(response.headers.raw()).map(header => {
-                            return {
-                                name: header,
-                                value: response.headers.raw()[header].join(',')
-                            };
+                          return {
+                            name: header,
+                            value: response.headers.raw()[header].join(',')
+                          };
                         }),
                         body: body.toString('base64')
                     });
@@ -442,8 +471,11 @@ async function processSpecification(spec, processFunction, args, options) {
                     await cdp.send('Fetch.failRequest', { requestId, errorReason: 'Failed' });
                 }
                 else {
-                    options.quiet ?? console.warn(`[warn] Fall back to regular network request for ${request.url}`, err);
                     try {
+                        if (reuseExistingData) {
+                            await cdp.send('Fetch.failRequest', { requestId, errorReason: 'Failed' });
+                        }
+                        options.quiet ?? console.warn(`[warn] Fall back to regular network request for ${request.url}`, err);
                         await cdp.send('Fetch.continueRequest', { requestId });
                     }
                     catch (err) {
@@ -497,14 +529,27 @@ async function processSpecification(spec, processFunction, args, options) {
 
         // Load the page
         // (note HTTP status is 0 when `file://` URLs are loaded)
+        let cacheInfo;
         if (spec.html) {
             await page.setContent(spec.html, loadOptions);
         }
         else {
+          try {
             const result = await page.goto(spec.url, loadOptions);
             if ((result.status() !== 200) && (!spec.url.startsWith('file://') || (result.status() !== 0))) {
-                throw new Error(`Loading ${spec.url} triggered HTTP status ${result.status()}`);
+              throw new Error(`Loading ${spec.url} triggered HTTP status ${result.status()}`);
             }
+            const responseHeaders = result.headers();
+            if (responseHeaders.etag) {
+              cacheInfo = {etag: responseHeaders.etag};
+            } else if (responseHeaders['last-modified']) {
+              cacheInfo = {lastModified: responseHeaders['last-modified']};
+            }
+          } catch (err) {
+            if (reuseExistingData) {
+              throw new ReuseExistingData(`${spec.url} hasn't changed`);
+            }
+          }
         }
 
         // Handle multi-page specs
@@ -613,7 +658,7 @@ async function processSpecification(spec, processFunction, args, options) {
 
         // Run the processFunction method in the browser context
         const results = await page.evaluate(processFunction, ...args);
-
+        results.crawlCacheInfo = cacheInfo;
         // Pending network requests may still be in the queue, flag the page
         // as closed not to send commands on a CDP session that's no longer
         // attached to anything

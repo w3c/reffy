@@ -8,6 +8,7 @@
 const os = require('os');
 const path = require('path');
 const baseFetch = require('fetch-filecache-for-crawling');
+const baseBaseFetch = require('node-fetch');
 
 // Read configuration parameters from `config.json` file
 let config = null;
@@ -33,7 +34,7 @@ catch (err) {
  * @return {Promise(Response)} Promise to get an HTTP response
  */
 async function fetch(url, options) {
-    options = Object.assign({}, options);
+    options = Object.assign({headers: {}}, options);
     ['cacheFolder', 'resetCache', 'cacheRefresh', 'logToConsole'].forEach(param => {
         let fetchParam = (param === 'cacheRefresh') ? 'refresh' : param;
         if (config[param] && !options.hasOwnProperty(fetchParam)) {
@@ -42,6 +43,10 @@ async function fetch(url, options) {
     });
     if (!options.refresh) {
         options.refresh = 'once';
+    }
+    // If conditional headers are sent in, ignore any local caching
+    if (options.headers['If-Modified-Since'] || options.headers['If-None-Match']) {
+        return baseBaseFetch(url, options);
     }
 
     // Use cache folder in tmp folder by default
