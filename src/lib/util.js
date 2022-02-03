@@ -771,7 +771,9 @@ async function expandSpecResult(spec, baseFolder, properties) {
             // serialized.
             if (contents.startsWith('// GENERATED CONTENT - DO NOT EDIT')) {
                 const endOfHeader = contents.indexOf('\n\n');
-                contents = contents.substring(endOfHeader + 2);
+                contents = contents.substring(endOfHeader + 2)
+                // remove trailing newline added in saveIdl
+                  .slice(0, -1);
             }
             spec.idl = contents;
         }
