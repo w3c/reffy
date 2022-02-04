@@ -178,7 +178,9 @@ async function crawlSpec(spec, crawlOptions) {
 
         // Copy results back into initial spec object
         spec.crawled = result.crawled;
-        spec.crawlCacheInfo = result.crawlCacheInfo;
+        if (result.crawlCacheInfo) {
+          spec.crawlCacheInfo = result.crawlCacheInfo;
+        }
         crawlOptions.modules.forEach(mod => {
             if (result[mod.property]) {
                 spec[mod.property] = result[mod.property];
