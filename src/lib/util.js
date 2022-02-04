@@ -21,14 +21,6 @@ const reffyModules = require('../browserlib/reffy.json');
  */
 const maxPathDepth = 20;
 
-class ReuseExistingData extends Error {
-  constructor(message) {
-    super(message);
-    this.name = "ReuseExistingData";
-  }
-}
-
-
 /**
  * Returns a range array from 0 to the number provided (not included)
  */
@@ -547,7 +539,7 @@ async function processSpecification(spec, processFunction, args, options) {
             }
           } catch (err) {
             if (reuseExistingData) {
-              throw new ReuseExistingData(`${spec.url} hasn't changed`);
+              return {error: "reuseexistingdata"};
             }
           }
         }

@@ -105,6 +105,10 @@ async function crawlSpec(spec, crawlOptions) {
               forceLocalFetch: crawlOptions.forceLocalFetch,
               etag, lastModified}
         );
+        if (result.error === "reuseexistingdata" && fallback) {
+          crawlOptions.quiet ?? console.warn(`skipping ${spec.url}, no change`);          const copy = Object.assign({}, fallback);
+          return expandSpecResult(copy, fallbackFolder);
+        }
 
         // Specific rule for IDL extracts:
         // parse the extracted WebIdl content
@@ -187,10 +191,6 @@ async function crawlSpec(spec, crawlOptions) {
     }
     catch (err) {
         spec.title = spec.title || '[Could not be determined, see error]';
-        if (err.name === "ReuseExistingData") {
-          crawlOptions.quiet ?? console.warn(`${crawlOptions.logCounter} - ${spec.url} - skipping, no change`);
-          spec.ignoreError = true;
-        }
         spec.error = err.toString() + (err.stack ? ' ' + err.stack : '');
     }
 
