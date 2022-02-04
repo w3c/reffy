@@ -425,10 +425,15 @@ async function processSpecification(spec, processFunction, args, options) {
 
                     const response = await fetch(request.url, { signal: controller.signal, headers: request.headers });
 
-                    // If we hit a 304, skip any fetching and processing
+                    // If we hit a 304, or
+                    // If the response Last-Modified / ETag header match
+                    // what is already known (the server is drunk)
                     // failing the request triggers the error path in
                     // page.goto()
-                    if (response.status === 304) {
+                    if (response.status === 304 ||
+                        (options.lastModified && response.headers['last-modified'] === options.lastModified) ||
+                        (options.etag && response.headers.etag === options.etag)
+                       ) {
                        await cdp.send('Fetch.failRequest', {
                          requestId,
                          errorReason: "Failed"
@@ -437,6 +442,7 @@ async function processSpecification(spec, processFunction, args, options) {
                        return;
                     }
                     const body = await response.buffer();
+
                     await cdp.send('Fetch.fulfillRequest', {
                         requestId,
                         responseCode: response.status,
