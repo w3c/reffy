@@ -403,7 +403,6 @@ async function crawlList(speclist, crawlOptions) {
         const spec = specAndPromise.spec;
         const logCounter = ('' + (idx + 1)).padStart(nbStr.length, ' ') + '/' + nbStr;
         crawlOptions.quiet ?? console.warn(`${logCounter} - ${spec.url} - crawling`);
-        crawlOptions.logCounter = logCounter;
         let result = await crawlSpec(spec, crawlOptions);
         result = await saveSpecResults(result, crawlOptions);
         crawlOptions.quiet ?? console.warn(`${logCounter} - ${spec.url} - done`);
