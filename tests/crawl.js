@@ -96,7 +96,6 @@ if (global.describe && describe instanceof Function) {
           fallback: path.resolve(__dirname, 'crawl-cache.json')
         });
       assert.equal(results[0].title, "Change is the only constant");
-      console.error(results);
       assert.isUndefined(results[0].error);
       assert.equal(results[0].refs, "A useful list of refs");
     })

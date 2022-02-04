@@ -543,7 +543,7 @@ async function processSpecification(spec, processFunction, args, options) {
               if (reuseExistingData) {
                 return {error: "reuseexistingdata"};
               }
-              throw new Error(`Loading ${spec.url} triggered network error ${result.status()}`);
+              throw new Error(`Loading ${spec.url} triggered network error ${err}`);
             }
             if ((result.status() !== 200) && (!spec.url.startsWith('file://') || (result.status() !== 0))) {
               throw new Error(`Loading ${spec.url} triggered HTTP status ${result.status()}`);
