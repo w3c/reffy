@@ -52,6 +52,7 @@ async function specOrFallback(spec, fallbackFolder, fallbackData) {
         if (fallback) {
             const copy = Object.assign({}, fallback);
             const result = await expandSpecResult(copy, fallbackFolder);
+            result.error = spec.error;
             return result;
         }
     }

@@ -536,9 +536,11 @@ async function processSpecification(spec, processFunction, args, options) {
             await page.setContent(spec.html, loadOptions);
         }
         else {
-          try {
             const result = await page.goto(spec.url, loadOptions);
             if ((result.status() !== 200) && (!spec.url.startsWith('file://') || (result.status() !== 0))) {
+              if (reuseExistingData) {
+                return {error: "reuseexistingdata"};
+              }
               throw new Error(`Loading ${spec.url} triggered HTTP status ${result.status()}`);
             }
             const responseHeaders = result.headers();
@@ -549,11 +551,6 @@ async function processSpecification(spec, processFunction, args, options) {
             } else if (responseHeaders.etag) {
               cacheInfo = {etag: responseHeaders.etag};
             }
-          } catch (err) {
-            if (reuseExistingData) {
-              return {error: "reuseexistingdata"};
-            }
-          }
         }
 
         // Handle multi-page specs
