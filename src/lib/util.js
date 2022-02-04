@@ -465,6 +465,7 @@ async function processSpecification(spec, processFunction, args, options) {
         // if we have a fallback data source
         // with a defined cache target for the spec
         if (!spec.url.startsWith('file://')) {
+          let response;
           // We set a conditional request header
           // Use If-Modified-Since in preference as it is in practice
           // more reliable for conditional requests
@@ -475,13 +476,16 @@ async function processSpecification(spec, processFunction, args, options) {
             headers["If-None-Match"] = options.etag;
           }
           try {
-            const response = await fetch(spec.url, {headers});
+            response = await fetch(spec.url, {headers});
             if (response.status === 304) {
               return {status: "notmodified"};
             }
             prefetchedResponses[spec.url] = response;
           } catch (err) {
             throw new Error(`Loading ${spec.url} triggered network error ${err}`);
+          }
+          if (response.status !== 200) {
+            throw new Error(`Loading ${spec.url} triggered HTTP status ${response.status}`);
           }
         }
         const page = await browser.newPage();
