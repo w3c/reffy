@@ -410,7 +410,6 @@ async function processSpecification(spec, processFunction, args, options) {
                         await cdp.send('Fetch.continueRequest', { requestId });
                         return;
                     }
-
                     const response = prefetchedResponses[request.url] ?? await fetch(request.url, { signal: controller.signal, headers: request.headers });
 
                     const body = await response.buffer();
@@ -469,7 +468,7 @@ async function processSpecification(spec, processFunction, args, options) {
           // We set a conditional request header
           // Use If-Modified-Since in preference as it is in practice
           // more reliable for conditional requests
-          let headers = {};
+          let headers = {'Accept-Encoding': 'gzip, deflate, br', 'Upgrade-Insecure-Requests': 1, 'User-Agent': browser.userAgent()};
           if (options.lastModified) {
             headers["If-Modified-Since"] = options.lastModified;
           } else if (options.etag) {
