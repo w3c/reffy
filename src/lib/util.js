@@ -411,12 +411,16 @@ async function processSpecification(spec, processFunction, args, options) {
                     }
 
                     // If we have a fallback data source
-                    // with a defined cache target for the said url,
+                    // with a defined cache target for the primary url of the spec
                     // we set a conditional request header
-                    if (options.etag) {
-                      request.headers["If-None-Match"] = options.etag;
-                    } else if (options.lastModified) {
-                      request.headers["If-Modified-Since"] = options.lastModified;
+                    if (request.url === spec.url) {
+                      // Use If-Modified-Since in preference as it is in practice
+                      // more reliable for conditional requests
+                      if (options.lastModified) {
+                        request.headers["If-Modified-Since"] = options.lastModified;
+                      } else if (options.etag) {
+                        request.headers["If-None-Match"] = options.etag;
+                      }
                     }
 
                     const response = await fetch(request.url, { signal: controller.signal, headers: request.headers });
@@ -532,10 +536,12 @@ async function processSpecification(spec, processFunction, args, options) {
               throw new Error(`Loading ${spec.url} triggered HTTP status ${result.status()}`);
             }
             const responseHeaders = result.headers();
-            if (responseHeaders.etag) {
-              cacheInfo = {etag: responseHeaders.etag};
-            } else if (responseHeaders['last-modified']) {
+            // Use Last-Modified in preference as it is in practice
+            // more reliable for conditional requests
+            if (responseHeaders['last-modified']) {
               cacheInfo = {lastModified: responseHeaders['last-modified']};
+            } else if (responseHeaders.etag) {
+              cacheInfo = {etag: responseHeaders.etag};
             }
           } catch (err) {
             if (reuseExistingData) {
