@@ -84,7 +84,7 @@ async function crawlSpec(spec, crawlOptions) {
     }
 
     try {
-        const fallback = (crawlOptions.fallbackData || []).find(s => s.url === spec.url);
+        const fallback = crawlOptions.fallbackData?.find(s => s.url === spec.url);
         const etag = fallback?.crawlCacheInfo?.etag;
         const lastModified = fallback?.crawlCacheInfo?.lastModified;
         const result = await processSpecification(
