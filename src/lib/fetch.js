@@ -8,7 +8,6 @@
 const os = require('os');
 const path = require('path');
 const baseFetch = require('fetch-filecache-for-crawling');
-const baseBaseFetch = require('node-fetch');
 
 // Read configuration parameters from `config.json` file
 let config = null;
@@ -43,10 +42,6 @@ async function fetch(url, options) {
     });
     if (!options.refresh) {
         options.refresh = 'once';
-    }
-    // If conditional headers are sent in, ignore any local caching
-    if (options.headers['If-Modified-Since'] || options.headers['If-None-Match']) {
-        return baseBaseFetch(url, options);
     }
 
     // Use cache folder in tmp folder by default
