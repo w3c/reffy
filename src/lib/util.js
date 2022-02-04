@@ -536,11 +536,16 @@ async function processSpecification(spec, processFunction, args, options) {
             await page.setContent(spec.html, loadOptions);
         }
         else {
-            const result = await page.goto(spec.url, loadOptions);
-            if ((result.status() !== 200) && (!spec.url.startsWith('file://') || (result.status() !== 0))) {
+            let result;
+            try {
+              result = await page.goto(spec.url, loadOptions);
+            } catch (err) {
               if (reuseExistingData) {
                 return {error: "reuseexistingdata"};
               }
+              throw new Error(`Loading ${spec.url} triggered network error ${result.status()}`);
+            }
+            if ((result.status() !== 200) && (!spec.url.startsWith('file://') || (result.status() !== 0))) {
               throw new Error(`Loading ${spec.url} triggered HTTP status ${result.status()}`);
             }
             const responseHeaders = result.headers();

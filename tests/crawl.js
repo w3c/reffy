@@ -86,6 +86,21 @@ if (global.describe && describe instanceof Function) {
       assert.equal(results.results[0].title, 'A test spec');
     });
 
+
+    it("skips processing and reuse fallback data when spec cache info indicates it has not changed", async () => {
+      const url = "https://www.w3.org/TR/ididnotchange/";
+      const results = await crawlList(
+        [{ url, nightly: { url } }],
+        {
+          forceLocalFetch: true,
+          fallback: path.resolve(__dirname, 'crawl-cache.json')
+        });
+      assert.equal(results[0].title, "Change is the only constant");
+      console.error(results);
+      assert.isUndefined(results[0].error);
+      assert.equal(results[0].refs, "A useful list of refs");
+    })
+
     it("reports HTTP error statuses", async () => {
       const url = "https://www.w3.org/TR/idontexist/";
       const results = await crawlList(

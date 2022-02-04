@@ -1,0 +1,51 @@
+{
+  "type": "crawl",
+  "title": "Reffy crawl",
+  "date": "2022-02-02T10:45:00.000Z",
+  "options": {
+    "output": "tests",
+    "specs": [
+      "httpswwww3orgTRididnotchange"
+    ],
+    "modules": [
+      "title",
+      "generator",
+      "date",
+      "links",
+      "refs",
+      "idl",
+      "css",
+      "dfns",
+      "elements",
+      "headings",
+      "ids"
+    ]
+  },
+  "stats": {
+    "crawled": 1,
+    "errors": 0
+  },
+  "results": [
+    {
+      "url": "https://www.w3.org/TR/ididnotchange/",
+      "nightly": {
+        "url": "https://www.w3.org/TR/ididnotchange/"
+      },
+      "shortname": "ididnotchange",
+      "series": {
+        "shortname": "ididnotchange"
+      },
+      "versions": [
+        "https://www.w3.org/TR/ididnotchange/"
+      ],
+      "crawled": {
+        "url": "https://www.w3.org/TR/ididnotchange/"
+      },
+      "crawlCacheInfo": {
+        "lastModified": "Fri, 11 Feb 2022 00:00:42 GMT"
+      },
+      "title": "Change is the only constant",
+      "refs": "extracts/crawl-refs.json"
+    }
+  ]
+}

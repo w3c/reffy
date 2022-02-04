@@ -98,7 +98,14 @@ nock("https://www.w3.org")
   .get("/Tools/respec/respec-w3c").replyWithFile(200,
     path.join(modulesFolder, "respec", "builds", "respec-w3c.js"),
     { "Content-Type": "application/js" })
-  .get("/TR/idontexist/").reply(404, '');
+  .get("/TR/idontexist/").reply(404, '')
+  .get("/TR/ididnotchange/").reply(function() {
+    if (this.req.headers['if-modified-since'][0] === "Fri, 11 Feb 2022 00:00:42 GMT") {
+      return [304, ''];
+    } else {
+      return [200, 'Unexpected path'];
+    }
+  });
 
 nock("https://drafts.csswg.org")
   .persist()
