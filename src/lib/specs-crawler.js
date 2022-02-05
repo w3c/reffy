@@ -455,10 +455,9 @@ async function adjustExtractsPerSeries(data, property, settings) {
         }
         else if (spec[property]) {
             // Not the right full level in the series, drop created extract
-            // and link to the series extract instead
             const pathname = path.resolve(settings.output, spec[property]);
             fs.unlinkSync(pathname);
-            spec[property] = `${property}/${spec.series.shortname}${path.extname(spec[property])}`;
+            delete spec[property];
         }
     });
 
@@ -566,6 +565,9 @@ function crawlSpecs(options) {
             for (const mod of options.modules) {
                 if (mod.extractsPerSeries) {
                     await adjustExtractsPerSeries(results, mod.property, options);
+                    if (mod.property === 'idl') {
+                        await adjustExtractsPerSeries(results, 'idlparsed', options);
+                    }
                 }
             }
             return results;
