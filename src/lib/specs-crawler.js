@@ -29,6 +29,7 @@ const {
     createFolderIfNeeded
 } = require('./util');
 
+const {version: reffyVersion} = require('../../package.json');
 
 /**
  * Return the spec if crawl succeeded or crawl result from given fallback list
@@ -78,13 +79,16 @@ async function crawlSpec(spec, crawlOptions) {
         path.dirname(crawlOptions.fallback) : '';
 
     if (spec.error) {
-        return specOrFallback(spec, fallbackFolder, crawlOptions.fallbackData);
+        return specOrFallback(spec, fallbackFolder, crawlOptions.fallbackData?.results);
     }
 
     try {
-        const fallback = crawlOptions.fallbackData?.find(s => s.url === spec.url);
-        const etag = fallback?.crawlCacheInfo?.etag;
-        const lastModified = fallback?.crawlCacheInfo?.lastModified;
+        let fallback;
+        let cacheInfo = {};
+        if (crawlOptions.fallbackData?.crawler === `reffy-${reffyVersion}`) {
+          fallback = crawlOptions.fallbackData?.results?.find(s => s.url === spec.url);
+          cacheInfo = Object.assign({}, fallback?.crawlCacheInfo);
+        }
         const result = await processSpecification(
             spec.crawled,
             (spec, modules) => {
@@ -101,7 +105,7 @@ async function crawlSpec(spec, crawlOptions) {
             [spec, crawlOptions.modules],
             { quiet: crawlOptions.quiet,
               forceLocalFetch: crawlOptions.forceLocalFetch,
-              etag, lastModified}
+              ...cacheInfo}
         );
         if (result.status === "notmodified" && fallback) {
           crawlOptions.quiet ?? console.warn(`skipping ${spec.url}, no change`);
@@ -195,7 +199,7 @@ async function crawlSpec(spec, crawlOptions) {
         spec.error = err.toString() + (err.stack ? ' ' + err.stack : '');
     }
 
-    return specOrFallback(spec, fallbackFolder, crawlOptions.fallbackData);
+    return specOrFallback(spec, fallbackFolder, crawlOptions.fallbackData?.results);
 }
 
 
@@ -363,7 +367,7 @@ async function crawlList(speclist, crawlOptions) {
     // Load fallback data if necessary
     if (crawlOptions.fallback) {
         try {
-            crawlOptions.fallbackData = JSON.parse(await fs.promises.readFile(crawlOptions.fallback)).results;
+            crawlOptions.fallbackData = JSON.parse(await fs.promises.readFile(crawlOptions.fallback));
         } catch (e) {
             throw new Error(`Could not parse fallback data file ${crawlOptions.fallback}`);
         }
@@ -481,12 +485,14 @@ async function saveResults(data, settings) {
 
     // Save all results to an index.json file
     const indexFilename = path.join(settings.output, 'index.json');
+
     const contents = {
         type: 'crawl',
         title: 'Reffy crawl',
         date: (new Date()).toJSON(),
         options: settings,
         stats: {},
+        crawler: `reffy-${reffyVersion}`,
         results: data
     };
     contents.options.modules = contents.options.modules.map(mod => mod.property);
