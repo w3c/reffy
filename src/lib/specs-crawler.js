@@ -83,10 +83,9 @@ async function crawlSpec(spec, crawlOptions) {
     }
 
     try {
-        let fallback;
+        const fallback = crawlOptions.fallbackData?.results?.find(s => s.url === spec.url);
         let cacheInfo = {};
         if (crawlOptions.fallbackData?.crawler === `reffy-${reffyVersion}`) {
-          fallback = crawlOptions.fallbackData?.results?.find(s => s.url === spec.url);
           cacheInfo = Object.assign({}, fallback?.crawlCacheInfo);
         }
         const result = await processSpecification(
