@@ -33,7 +33,7 @@ catch (err) {
  * @return {Promise(Response)} Promise to get an HTTP response
  */
 async function fetch(url, options) {
-    options = Object.assign({}, options);
+    options = Object.assign({headers: {}}, options);
     ['cacheFolder', 'resetCache', 'cacheRefresh', 'logToConsole'].forEach(param => {
         let fetchParam = (param === 'cacheRefresh') ? 'refresh' : param;
         if (config[param] && !options.hasOwnProperty(fetchParam)) {

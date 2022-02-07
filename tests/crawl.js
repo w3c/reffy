@@ -4,6 +4,8 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 
+const {version: reffyVersion} = require('../package.json');
+
 const specs = [
   {url: "https://www.w3.org/TR/WOFF2/", nightly: {url: "https://w3c.github.io/woff/woff2/", pages:["https://w3c.github.io/woff/woff2/page.html"]}},
   {url: "https://www.w3.org/TR/audio-output/", nightly: {url: "https://w3c.github.io/mediacapture-output/"}},
@@ -15,6 +17,16 @@ async function crawl() {
   // to avoid reporting bogus diff on updated date
   results.forEach(s => delete s.date);
   return results;
+}
+
+async function runWithAnnotatedCrawlData(path, fn) {
+  const rawCrawlData = fs.readFileSync(path);
+  let crawlData = JSON.parse(rawCrawlData);
+  crawlData.crawler = `reffy-${reffyVersion}`;
+  fs.writeFileSync(path, JSON.stringify(crawlData));
+  const res = await fn();
+  fs.writeFileSync(path, rawCrawlData);
+  return res;
 }
 
 if (global.describe && describe instanceof Function) {
@@ -86,6 +98,21 @@ if (global.describe && describe instanceof Function) {
       assert.equal(results.results[0].title, 'A test spec');
     });
 
+
+    it("skips processing and reuse fallback data when spec cache info indicates it has not changed", async () => {
+      const url = "https://www.w3.org/TR/ididnotchange/";
+      const fallback = path.resolve(__dirname, 'crawl-cache.json');
+      const results = await runWithAnnotatedCrawlData(fallback, async () => crawlList(
+        [{ url, nightly: { url } }],
+        {
+          forceLocalFetch: true,
+          fallback
+        }));
+      assert.equal(results[0].title, "Change is the only constant");
+      assert.isUndefined(results[0].error);
+      assert.equal(results[0].refs, "A useful list of refs");
+    })
+
     it("reports HTTP error statuses", async () => {
       const url = "https://www.w3.org/TR/idontexist/";
       const results = await crawlList(
@@ -97,11 +124,12 @@ if (global.describe && describe instanceof Function) {
 
     it("reports errors and returns fallback data when possible", async () => {
       const url = "https://www.w3.org/TR/idontexist/";
+      const fallback = path.resolve(__dirname, 'crawl-fallback.json');
       const results = await crawlList(
         [{ url, nightly: { url } }],
         {
           forceLocalFetch: true,
-          fallback: path.resolve(__dirname, 'crawl-fallback.json')
+          fallback
         });
       assert.equal(results[0].title, "On the Internet, nobody knows you don't exist");
       assert.include(results[0].error, "Loading https://www.w3.org/TR/idontexist/ triggered HTTP status 404");

@@ -13,7 +13,6 @@ const specEquivalents = require('../specs/spec-equivalents.json');
 
 const reffyModules = require('../browserlib/reffy.json');
 
-
 /**
  * Maximum depth difference supported between Reffy's install path and custom
  * modules that may be provided on the command-line
@@ -21,7 +20,6 @@ const reffyModules = require('../browserlib/reffy.json');
  * TODO: Find a way to get right of that, there should be no limit
  */
 const maxPathDepth = 20;
-
 
 /**
  * Returns a range array from 0 to the number provided (not included)
@@ -325,7 +323,8 @@ async function teardownBrowser() {
  *   flag tells the function that all network requests need to be only handled
  *   by Node.js's "fetch" function (as opposed to falling back to Puppeteer's
  *   network and caching logic), which is useful to keep full control of network
- *   requests in tests.
+ *   requests in tests. The "etag" and "lastModified" options give input
+ *   to the conditional fetch request sent for the primary crawled URL
  * @return {Promise} The promise to get the results of the processing function
  */
 async function processSpecification(spec, processFunction, args, options) {
@@ -333,6 +332,7 @@ async function processSpecification(spec, processFunction, args, options) {
     processFunction = processFunction || function () {};
     args = args || [];
     options = options || {};
+    let reuseExistingData = false;
 
     if (!browser) {
         throw new Error('Browser instance not initialized, setupBrowser() must be called before processSpecification().');
@@ -410,16 +410,47 @@ async function processSpecification(spec, processFunction, args, options) {
                         return;
                     }
 
-                    const response = await fetch(request.url, { signal: controller.signal });
+                    // If we have a fallback data source
+                    // with a defined cache target for the primary url of the spec
+                    // we set a conditional request header
+                    if (request.url === spec.url) {
+                      // Use If-Modified-Since in preference as it is in practice
+                      // more reliable for conditional requests
+                      if (options.lastModified) {
+                        request.headers["If-Modified-Since"] = options.lastModified;
+                      } else if (options.etag) {
+                        request.headers["If-None-Match"] = options.etag;
+                      }
+                    }
+
+                    const response = await fetch(request.url, { signal: controller.signal, headers: request.headers });
+
+                    // If we hit a 304, or
+                    // If the response Last-Modified / ETag header match
+                    // what is already known (the server is drunk)
+                    // failing the request triggers the error path in
+                    // page.goto()
+                    if (response.status === 304 ||
+                        (options.lastModified && response.headers['last-modified'] === options.lastModified) ||
+                        (options.etag && response.headers.etag === options.etag)
+                       ) {
+                       await cdp.send('Fetch.failRequest', {
+                         requestId,
+                         errorReason: "Failed"
+                       });
+                       reuseExistingData = true;
+                       return;
+                    }
                     const body = await response.buffer();
+
                     await cdp.send('Fetch.fulfillRequest', {
                         requestId,
                         responseCode: response.status,
                         responseHeaders: Object.keys(response.headers.raw()).map(header => {
-                            return {
-                                name: header,
-                                value: response.headers.raw()[header].join(',')
-                            };
+                          return {
+                            name: header,
+                            value: response.headers.raw()[header].join(',')
+                          };
                         }),
                         body: body.toString('base64')
                     });
@@ -442,8 +473,11 @@ async function processSpecification(spec, processFunction, args, options) {
                     await cdp.send('Fetch.failRequest', { requestId, errorReason: 'Failed' });
                 }
                 else {
-                    options.quiet ?? console.warn(`[warn] Fall back to regular network request for ${request.url}`, err);
                     try {
+                        if (reuseExistingData) {
+                            await cdp.send('Fetch.failRequest', { requestId, errorReason: 'Failed' });
+                        }
+                        options.quiet ?? console.warn(`[warn] Fall back to regular network request for ${request.url}`, err);
                         await cdp.send('Fetch.continueRequest', { requestId });
                     }
                     catch (err) {
@@ -497,13 +531,30 @@ async function processSpecification(spec, processFunction, args, options) {
 
         // Load the page
         // (note HTTP status is 0 when `file://` URLs are loaded)
+        let cacheInfo;
         if (spec.html) {
             await page.setContent(spec.html, loadOptions);
         }
         else {
-            const result = await page.goto(spec.url, loadOptions);
+            let result;
+            try {
+              result = await page.goto(spec.url, loadOptions);
+            } catch (err) {
+              if (reuseExistingData) {
+                return {status: "notmodified"};
+              }
+              throw new Error(`Loading ${spec.url} triggered network error ${err}`);
+            }
             if ((result.status() !== 200) && (!spec.url.startsWith('file://') || (result.status() !== 0))) {
-                throw new Error(`Loading ${spec.url} triggered HTTP status ${result.status()}`);
+              throw new Error(`Loading ${spec.url} triggered HTTP status ${result.status()}`);
+            }
+            const responseHeaders = result.headers();
+            // Use Last-Modified in preference as it is in practice
+            // more reliable for conditional requests
+            if (responseHeaders['last-modified']) {
+              cacheInfo = {lastModified: responseHeaders['last-modified']};
+            } else if (responseHeaders.etag) {
+              cacheInfo = {etag: responseHeaders.etag};
             }
         }
 
@@ -613,7 +664,7 @@ async function processSpecification(spec, processFunction, args, options) {
 
         // Run the processFunction method in the browser context
         const results = await page.evaluate(processFunction, ...args);
-
+        results.crawlCacheInfo = cacheInfo;
         // Pending network requests may still be in the queue, flag the page
         // as closed not to send commands on a CDP session that's no longer
         // attached to anything
