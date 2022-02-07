@@ -541,7 +541,7 @@ async function processSpecification(spec, processFunction, args, options) {
               result = await page.goto(spec.url, loadOptions);
             } catch (err) {
               if (reuseExistingData) {
-                return {error: "reuseexistingdata"};
+                return {status: "notmodified"};
               }
               throw new Error(`Loading ${spec.url} triggered network error ${err}`);
             }

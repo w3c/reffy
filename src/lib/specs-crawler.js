@@ -103,7 +103,7 @@ async function crawlSpec(spec, crawlOptions) {
               forceLocalFetch: crawlOptions.forceLocalFetch,
               etag, lastModified}
         );
-        if (result.error === "reuseexistingdata" && fallback) {
+        if (result.status === "notmodified" && fallback) {
           crawlOptions.quiet ?? console.warn(`skipping ${spec.url}, no change`);
           const copy = Object.assign({}, fallback);
           return expandSpecResult(copy, fallbackFolder);
