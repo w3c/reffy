@@ -23,7 +23,7 @@
 
 const commander = require('commander');
 const satisfies = require('semver/functions/satisfies');
-const specs = require('browser-specs');
+const specs = require('web-specs');
 const { version, engines } = require('./package.json');
 const { requireFromWorkingDirectory } = require('./src/lib/util');
 const { crawlSpecs } = require('./src/lib/specs-crawler');
