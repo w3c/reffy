@@ -21,8 +21,6 @@ const reffyModules = require('../browserlib/reffy.json');
  */
 const maxPathDepth = 20;
 
-let prefetchedResponses = {};
-
 /**
  * Returns a range array from 0 to the number provided (not included)
  */
@@ -334,6 +332,7 @@ async function processSpecification(spec, processFunction, args, options) {
     processFunction = processFunction || function () {};
     args = args || [];
     options = options || {};
+    let prefetchedResponse = {};
 
     if (!browser) {
         throw new Error('Browser instance not initialized, setupBrowser() must be called before processSpecification().');
@@ -410,7 +409,7 @@ async function processSpecification(spec, processFunction, args, options) {
                         await cdp.send('Fetch.continueRequest', { requestId });
                         return;
                     }
-                    const response = prefetchedResponses[request.url] ?? await fetch(request.url, { signal: controller.signal, headers: request.headers });
+                    const response = prefetchedResponse[request.url] ?? await fetch(request.url, { signal: controller.signal, headers: request.headers });
 
                     const body = await response.buffer();
 
@@ -479,7 +478,7 @@ async function processSpecification(spec, processFunction, args, options) {
             if (response.status === 304) {
               return {status: "notmodified"};
             }
-            prefetchedResponses[spec.url] = response;
+            prefetchedResponse[spec.url] = response;
           } catch (err) {
             throw new Error(`Loading ${spec.url} triggered network error ${err}`);
           }
