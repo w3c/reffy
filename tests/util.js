@@ -1,6 +1,6 @@
 const { assert } = require('chai');
 
-const specs = require('browser-specs');
+const specs = require('web-specs');
 const {
   getGeneratedIDLNamesByCSSProperty,
   isLatestLevelThatPasses

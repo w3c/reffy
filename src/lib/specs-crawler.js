@@ -12,7 +12,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const specs = require('browser-specs');
+const specs = require('web-specs');
 const cssDfnParser = require('./css-grammar-parser');
 const { generateIdlParsed, saveIdlParsed } = require('../cli/generate-idlparsed');
 const { generateIdlNames, saveIdlNames } = require('../cli/generate-idlnames');
