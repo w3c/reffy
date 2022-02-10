@@ -139,12 +139,6 @@
         "title": "No Title"
       },
       {
-        "id": "abstract",
-        "href": "https://w3c.github.io/mediacapture-output/#abstract",
-        "level": 2,
-        "title": "Abstract"
-      },
-      {
         "id": "toc",
         "href": "https://w3c.github.io/mediacapture-output/#toc",
         "level": 2,
@@ -170,7 +164,6 @@
       "https://w3c.github.io/mediacapture-output/#title",
       "https://w3c.github.io/mediacapture-output/#w3c-state",
       "https://w3c.github.io/mediacapture-output/#abstract",
-      "https://w3c.github.io/mediacapture-output/#abstract-0",
       "https://w3c.github.io/mediacapture-output/#toc",
       "https://w3c.github.io/mediacapture-output/#table-of-contents",
       "https://w3c.github.io/mediacapture-output/#webidl-187362828",
