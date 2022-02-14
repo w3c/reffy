@@ -72,10 +72,6 @@
       "normative": [],
       "informative": [
         {
-          "name": "HTML",
-          "url": ""
-        },
-        {
           "name": "webidl",
           "url": "https://webidl.spec.whatwg.org/"
         }
@@ -175,7 +171,6 @@
       "https://w3c.github.io/mediacapture-output/#a-references",
       "https://w3c.github.io/mediacapture-output/#informative-references",
       "https://w3c.github.io/mediacapture-output/#a-1-informative-references",
-      "https://w3c.github.io/mediacapture-output/#bib-html",
       "https://w3c.github.io/mediacapture-output/#bib-webidl",
       "https://w3c.github.io/mediacapture-output/#back-to-top"
     ]
