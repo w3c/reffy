@@ -68,6 +68,7 @@ function hasValidType(el) {
     'setlike',
     'extended-attribute',
     'event',
+    'permission',
 
     // Element types
     'element',
