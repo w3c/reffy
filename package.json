@@ -34,7 +34,7 @@
     "abortcontroller-polyfill": "1.7.3",
     "commander": "9.0.0",
     "fetch-filecache-for-crawling": "4.1.0",
-    "puppeteer": "13.3.2",
+    "puppeteer": "13.4.0",
     "semver": "^7.3.5",
     "web-specs": "1.2.0",
     "webidl2": "24.2.0"
