@@ -34,7 +34,7 @@ function normalize(str) {
 }
 
 // Valid types defined in https://tabatkins.github.io/bikeshed/#dfn-types
-// (+ "namespace" and "event" which are not yet in the doc)
+// (+ "namespace", "event" and "permission" which are not yet in the doc)
 function hasValidType(el) {
   const validDfnTypes = [
     // CSS types
@@ -68,6 +68,7 @@ function hasValidType(el) {
     'setlike',
     'extended-attribute',
     'event',
+    'permission',
 
     // Element types
     'element',
