@@ -447,11 +447,20 @@ async function adjustExtractsPerSeries(data, property, settings) {
 
     data.forEach(spec => {
         if (fullLevels.includes(spec)) {
-            // Full level, rename the extract after the series' shortname
-            const pathname = path.resolve(settings.output, spec[property]);
-            spec[property] = `${property}/${spec.series.shortname}${path.extname(spec[property])}`;
-            const newpathname = path.resolve(settings.output, spec[property]);
-            fs.renameSync(pathname, newpathname);
+            // Full level, rename the extract after the series' shortname,
+            // unless we're dealing with a fork spec, in which case, we'll
+            // drop the created extract (not to run into IDL duplication issues)
+            if (spec.seriesComposition === 'fork') {
+                const pathname = path.resolve(settings.output, spec[property]);
+                fs.unlinkSync(pathname);
+                delete spec[property];
+            }
+            else {
+                const pathname = path.resolve(settings.output, spec[property]);
+                spec[property] = `${property}/${spec.series.shortname}${path.extname(spec[property])}`;
+                const newpathname = path.resolve(settings.output, spec[property]);
+                fs.renameSync(pathname, newpathname);
+            }
         }
         else if (deltaLevels.includes(spec)) {
             // Delta level, need to keep the extract as-is
