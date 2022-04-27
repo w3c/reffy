@@ -184,6 +184,7 @@ const extractValueSpaces = doc => {
 
   const parseProductionRules = rules =>
     rules
+      .map(val => val.replace(/\/\*[^]*?\*\//gm, ''))  // Drop comments
       .map(val => val.split(/\n(?=[^\n]*\s?=\s)/m))
       .reduce((acc, val) => acc.concat(val), [])
       .map(line => line.split(/\s?=\s/).map(s => s.trim().replace(/\s+/g, ' ')))

@@ -391,6 +391,31 @@ const tests = [
      </td></tr></tbody></table>`,
     css: {}
   },
+
+  {
+    title: "ignores comments",
+    html: `<pre class="prod">&lt;page-selector-list> = &lt;page-selector>#
+/* A comment */
+&lt;page-selector> = [ &lt;ident-token>? &lt;pseudo-page>* ]!
+&lt;pseudo-page> = ':' [ left | right | first | blank ] /* Another comment */
+
+/* Yet another one
+that spans multiple lines */
+@top-left-corner = @top-left-corner { &lt;declaration-list> };
+</pre>`,
+    propertyName: "valuespaces",
+    css: {
+      "<page-selector-list>": {
+        value: "<page-selector>#"
+      },
+      "<page-selector>": {
+        value: "[ <ident-token>? <pseudo-page>* ]!"
+      },
+      "<pseudo-page>": {
+        value: "':' [ left | right | first | blank ]"
+      }
+    }
+  },
 ];
 
 describe("Test CSS properties extraction", function() {
