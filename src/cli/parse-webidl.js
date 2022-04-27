@@ -294,9 +294,7 @@ function parseInterfaceOrDictionary(def, idlReport) {
     } else if (def.members.find(member => member.type === 'constructor')) {
         addToJSContext(def.extAttrs, jsNames, def.name, "constructors");
     } else if (def.type === "interface") {
-        if (!def.extAttrs.some(ea => ea.name === "NoInterfaceObject")) {
-            addToJSContext(def.extAttrs, jsNames, def.name, "functions");
-        }
+        addToJSContext(def.extAttrs, jsNames, def.name, "functions");
     }
     def.members.forEach(parseIdlAstTree(idlReport, def.name));
 }
