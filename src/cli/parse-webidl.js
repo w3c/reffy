@@ -355,8 +355,16 @@ function parseType(idltype, idlReport, contextName) {
         parseType(idltype.idlType, idlReport, contextName);
         return;
     }
-    var wellKnownTypes = ["undefined", "any", "boolean", "byte", "octet", "short", "unsigned short", "long", "unsigned long", "long long", "unsigned long long", "float", "unrestricted float", "double", "unrestricted double", "DOMString", "ByteString", "USVString", "object",
-                          "RegExp", "Error", "DOMException"];
+    var wellKnownTypes = [
+            "undefined", "any",
+            "boolean",
+            "byte", "octet",
+            "short", "unsigned short",
+            "long", "unsigned long", "long long", "unsigned long long",
+            "float", "unrestricted float", "double", "unrestricted double",
+            "DOMString", "ByteString", "USVString",
+            "object"
+    ];
     if (wellKnownTypes.indexOf(idltype.idlType) === -1) {
         addDependency(idltype.idlType, idlReport.idlNames, idlReport.externalDependencies);
         if (contextName) {
