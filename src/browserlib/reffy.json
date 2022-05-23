@@ -23,6 +23,10 @@
     "property": "refs"
   },
   {
+    "href": "./extract-events.mjs",
+    "property": "events"
+  },
+  {
     "href": "./extract-webidl.mjs",
     "property": "idl",
     "extractsPerSeries": true
