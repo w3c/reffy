@@ -1,16 +1,49 @@
-function fromEventElementToTargetInterfaces(eventEl) {
-  if (eventEl && (eventEl.dataset?.dfnFor || eventEl.dataset?.linkFor)) {
-    return (eventEl.dataset.dfnFor || eventEl.dataset.linkFor).split(",").map(t => t.trim());
-  } else if (eventEl.getAttribute("href")?.startsWith("#")) {
-    const dfn = document.getElementById(eventEl.getAttribute("href").slice(1));
-    if (dfn && dfn.dataset?.dfnFor) {
-      return dfn.dataset.dfnFor.split(",").map(t => t.trim());
-    }
-  }
-}
+import informativeSelector from './informative-selector.mjs';
+import extractWebIdl from './extract-webidl.mjs';
+import {parse} from "../../node_modules/webidl2/index.js";
+
+const isSameEvent = (e1, e2) => e1.type === e2.type && e1.targets?.sort()?.join("|") === e2.targets?.sort()?.join("|");
+
 
 export default function (spec) {
+  // Used to find eventhandler attributes
+  const idl = extractWebIdl();
+  const idlTree = parse(idl);
+  const idlInterfaces = idlTree.filter(item => item.type === "interface" || item.type === "interface mixin");
+
+  // associate event names from event handlers to interfaces with such an handler
+  const handledEventNames = idlInterfaces.map(iface => iface.members.filter(m => m.idlType?.idlType === "EventHandler" && m.type === "attribute" && m.name?.startsWith("on")).map(m => [m.name.slice(2), iface.name])).flat().reduce((acc, b) => {
+    if (!acc[b[0]]) acc[b[0]] = [];
+    acc[b[0]].push(b[1]);
+    return acc;
+  }, {});
+
+
+  function fromEventElementToTargetInterfaces(eventEl) {
+    if (!eventEl) return;
+    // TODO: if target is a mixin, point to the including interfaces?
+    if (eventEl.dataset?.dfnFor || eventEl.dataset?.linkFor) {
+      return (eventEl.dataset.dfnFor || eventEl.dataset.linkFor).split(",").map(t => t.trim());
+    } else if (eventEl.getAttribute("href")?.startsWith("#")) {
+      const dfn = document.getElementById(eventEl.getAttribute("href").slice(1));
+      if (dfn && dfn.dataset?.dfnFor) {
+	return dfn.dataset.dfnFor.split(",").map(t => t.trim());
+      }
+    } else if (handledEventNames[eventEl.textContent]?.length) {
+      // Search for on<event> EventHandler in IDL
+    const matchingInterfaces = handledEventNames[eventEl.textContent];
+      if (matchingInterfaces.length === 1) {
+	// only one such handler, we assume it's a match
+	return matchingInterfaces;
+      } else {
+	console.error("[reffy] Multiple event handler named " + eventEl.textContent + ", cannot associate reliably to an interface in " + spec.title);
+      }
+    }
+  }
+
+  
   let events = [];
+  // Look for event summary tables
   // ignore DOM spec which uses a matching table format
   // to map to legacy event types
   if (spec.shortname !== "dom") {
@@ -39,7 +72,10 @@ export default function (spec) {
   if (events.length === 0) {
     // Look for the DOM-suggested sentence "Fire an event named X"
     // or the Service Worker extension of "fire a functional event named"
-    [...document.querySelectorAll("a")].filter(a => a.href === "https://dom.spec.whatwg.org/#concept-event-fire" || a.href === "https://w3c.github.io/ServiceWorker/#fire-functional-event").forEach(a => {
+    [...document.querySelectorAll("a")].filter(a => !a.closest(informativeSelector)
+					       && (a.href === "https://dom.spec.whatwg.org/#concept-event-fire"
+						   || a.href === "https://w3c.github.io/ServiceWorker/#fire-functional-event")
+					      ).forEach(a => {
       const container = a.parentNode;
       let m = container.textContent.match(/fir(e|ing)\sa(n|\s+functional)\s+event\s+named\s+"?(?<eventName>[a-z]+)/i);
       if (m) {
@@ -51,9 +87,13 @@ export default function (spec) {
 	} else {
 	  event.type = name;
 	  const eventEl = [...container.querySelectorAll("a,dfn")].find(n => n.textContent.trim() === event.type);
-	  event.targets = fromEventElementToTargetInterfaces(eventEl);
+	  if (eventEl) {
+	    // If the event being fired is from another spec, let's skip it
+	    if (eventEl.tagName === "A" && eventEl.getAttribute("href").startsWith("https://")) return;
+	    event.targets = fromEventElementToTargetInterfaces(eventEl);
+	  }
 	  // if we have already detected this combination, skip it
-	  if (events.find(e => e.type === name && e.targets.sort().join("|") === event.targets.sort().join("|"))) {
+	  if (events.find(e => isSameEvent(event, e))) {
 	    return;
 	  }
 	}
@@ -65,11 +105,47 @@ export default function (spec) {
       }
     });
   }
+
+  // find events via IDL on<event> attributes with type EventHandler
+  for (let eventName of Object.keys(handledEventNames)) {
+    const matchingEvents = events.filter(e => e.type === eventName);
+    if (matchingEvents.length === 0) {
+      // We have not encountered such an event so far
+      for (let iface of handledEventNames[eventName]) {
+	events.push({type: eventName, targets: [iface.name], interface: null});
+      }
+    } else if (matchingEvents.length === 1) {
+      // A single matching event, we assume all event handlers relate to it
+      const [matchingEvent] = matchingEvents;
+      // assign all interfaces at once if none is set
+      // but don't add to existing interfaces otherwise
+      if (!matchingEvent.targets) {
+	matchingEvent.targets = handledEventNames[eventName];
+      } else {
+	const missingIface = handledEventNames[eventName].find(iface => !matchingEvent.targets.includes(iface));
+	if (missingIface) {
+	  console.warn("[reffy] More event handlers matching name " + eventName + ", e.g. on " + missingIface + " than ones identified in spec definitions");
+	}
+      }
+    } else {
+      // More than one event with that name
+      // we can only check if this matches known information
+      // to warn of the gap otherwise
+      for (let iface of handledEventNames[eventName]) {
+	if (!matchingEvents.find(e => e.targets.includes(iface))) {
+	  console.warn("[reffy] Could not determine which event named " + eventName + " match EventHandler of " + iface + " interface in " + spec.title); 
+	}
+      }
+    }
+  }
+
+  // Find definitions marked as of event type
   [...document.querySelectorAll('dfn[data-dfn-type="event"')].forEach(dfn => {
     const type = dfn.textContent.trim();
-    if (!events.find(e => e.type === type && e.targets.sort().join("|") === fromEventElementToTargetInterfaces(dfn)?.sort()?.join("|"))) {
-      events.push({type, interface: null, targets: fromEventElementToTargetInterfaces(dfn)});
-      console.error("[reffy] No interface hint found in " + spec.title);
+    const event = {type, interface: null, targets: fromEventElementToTargetInterfaces(dfn)};
+    if (!events.find(e => isSameEvent(event, e))) {
+      events.push();
+      console.error("[reffy] No interface hint found for event definition " + event.type + " in " + spec.title);
     }
   });
   return events;
