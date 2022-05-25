@@ -66,6 +66,22 @@ export default function (spec) {
 	    events.push(event);
 	  }
 	});
+      } else if (table.className === "event-definition") {
+	// Format used e.g. in uievents
+	const eventName = table.querySelector("tbody tr:first-child td:nth-child(2)")?.textContent.trim();
+	let iface = table.querySelector("tbody tr:nth-child(2) td:nth-child(2)")?.textContent.trim();
+	// Prose description, we skip it
+	if (iface.match(/\s/)) {
+	  iface = null;
+	}
+	let targets = table.querySelector("tbody tr:nth-child(5) td:nth-child(2)")?.textContent.split(",").map(t => t.trim());
+	if (targets.find(t => t.match(/\s/))) {
+	  // Prose description, skip it
+	  targets = null;
+	}
+	if (eventName) {
+	  events.push({type: eventName, interface: iface, targets});
+	}
       }
     });
   }
