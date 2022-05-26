@@ -41,15 +41,17 @@ export default function (spec) {
     }
   }
 
-  
+
   let events = [];
   // Look for event summary tables
   // ignore DOM spec which uses a matching table format
   // to map to legacy event types
+  let hasStructuredData = false;
   if (spec.shortname !== "dom") {
     document.querySelectorAll("table").forEach(table => {
       const firstHeading = table.querySelector("thead tr th")?.textContent?.trim();
       if (firstHeading && firstHeading.match(/^Event/) && firstHeading !== "Event handler") {
+	hasStructuredData = true;
 	table.querySelectorAll("tbody tr").forEach(tr => {
 	  const event = {};
 	  const eventEl = tr.querySelector("*:first-child");
@@ -67,6 +69,7 @@ export default function (spec) {
 	  }
 	});
       } else if (table.className === "event-definition") {
+	hasStructuredData = true;
 	// Format used e.g. in uievents
 	const eventName = table.querySelector("tbody tr:first-child td:nth-child(2)")?.textContent.trim();
 	let iface = table.querySelector("tbody tr:nth-child(2) td:nth-child(2)")?.textContent.trim();
@@ -125,7 +128,7 @@ export default function (spec) {
   // find events via IDL on<event> attributes with type EventHandler
   for (let eventName of Object.keys(handledEventNames)) {
     const matchingEvents = events.filter(e => e.type === eventName);
-    if (matchingEvents.length === 0) {
+    if (matchingEvents.length === 0 && !hasStructuredData) {
       // We have not encountered such an event so far
       for (let iface of handledEventNames[eventName]) {
 	events.push({type: eventName, targets: [iface.name], interface: null});
@@ -137,7 +140,7 @@ export default function (spec) {
       // but don't add to existing interfaces otherwise
       if (!matchingEvent.targets) {
 	matchingEvent.targets = handledEventNames[eventName];
-      } else {
+      } else if (!hasStructuredData) {
 	const missingIface = handledEventNames[eventName].find(iface => !matchingEvent.targets.includes(iface));
 	if (missingIface) {
 	  console.warn("[reffy] More event handlers matching name " + eventName + ", e.g. on " + missingIface + " than ones identified in spec definitions");
