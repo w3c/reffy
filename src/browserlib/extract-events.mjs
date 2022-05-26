@@ -139,7 +139,7 @@ export default function (spec) {
     if (matchingEvents.length === 0 && !hasStructuredData) {
       // We have not encountered such an event so far
       for (let iface of handledEventNames[eventName]) {
-	events.push({type: eventName, targets: [iface.name], interface: null});
+	events.push({type: eventName, targets: [iface], interface: null});
       }
     } else if (matchingEvents.length === 1) {
       // A single matching event, we assume all event handlers relate to it
@@ -171,7 +171,7 @@ export default function (spec) {
     const type = dfn.textContent.trim();
     const event = {type, interface: null, targets: fromEventElementToTargetInterfaces(dfn)};
     if (!events.find(e => isSameEvent(event, e))) {
-      events.push();
+      events.push(event);
       console.error("[reffy] No interface hint found for event definition " + event.type + " in " + spec.title);
     }
   });
