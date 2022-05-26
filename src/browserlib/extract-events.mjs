@@ -64,7 +64,7 @@ export default function (spec) {
 	    event.type = eventEl.textContent.trim();
 	    event.targets = fromEventElementToTargetInterfaces(eventEl.querySelector("dfn,a[href^='#']"));
 
-	    event.interface = tr.querySelector("td:nth-child(2) a")?.textContent;
+	    event.interface = tr.querySelector("td:nth-child(2) a")?.textContent ?? tr.querySelector("td:nth-child(2) code")?.textContent;
 	    events.push(event);
 	  }
 	});
