@@ -119,6 +119,14 @@ export default function (spec) {
 	const iface = [...container.querySelectorAll("a[href]")].find(n => n.textContent.match(/^([A-Z]+[a-z0-9]*)+Event$/));
 	if (iface) {
 	  event.interface = iface.textContent.trim();
+	} else {
+	  // Fire an event ⇒ Event interface
+	  if (m[2] === "n") {
+	    event.interface = "Event";
+	  } else {
+	    // Functional event ⇒ Extendable interface
+	    event.interface = "ExtendableEvent";
+	  }
 	}
 	events.push(event);
       }
