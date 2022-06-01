@@ -1,9 +1,13 @@
 import informativeSelector from './informative-selector.mjs';
 import extractWebIdl from './extract-webidl.mjs';
 import {parse} from "../../node_modules/webidl2/index.js";
+import getAbsoluteUrl from './get-absolute-url.mjs';
 
 const isSameEvent = (e1, e2) => e1.type === e2.type && e1.targets?.sort()?.join("|") === e2.targets?.sort()?.join("|");
 
+const singlePage = !document.querySelector('[data-reffy-page]');
+
+const href = el => getAbsoluteUrl(el || document.body.querySelector("*[id]"), {singlePage});
 
 export default function (spec) {
   // Used to find eventhandler attributes
@@ -52,6 +56,9 @@ export default function (spec) {
       const firstHeading = table.querySelector("thead tr th")?.textContent?.trim();
       if (firstHeading && firstHeading.match(/^Event/) && firstHeading !== "Event handler") {
 	hasStructuredData = true;
+	// Useful e.g. for pointerevents
+	const bubblingInfoColumn = [...table.querySelectorAll("thead th")].findIndex(n => n.textContent.trim().match(/^bubbl/i));
+	const interfaceColumn = [...table.querySelectorAll("thead th")].findIndex(n => n.textContent.trim().match(/^interface/i));
 	table.querySelectorAll("tbody tr").forEach(tr => {
 	  const event = {};
 	  const eventEl = tr.querySelector("*:first-child");
@@ -60,11 +67,16 @@ export default function (spec) {
 	  // if we find a <dfn>, or a <a> pointing to an internal anchor
 	  // (the latter is needed since the HTML spec table includes
 	  // links to pointer events)
-	  if (eventEl.querySelector("dfn,a[href^='#']")) {
+	  if (eventEl.querySelector("dfn,a[href^='#'],code")) {
+	    event.src = { format: "summary table", href: href(eventEl.closest('*[id]')) };
 	    event.type = eventEl.textContent.trim();
 	    event.targets = fromEventElementToTargetInterfaces(eventEl.querySelector("dfn,a[href^='#']"));
-
-	    event.interface = tr.querySelector("td:nth-child(2) a")?.textContent ?? tr.querySelector("td:nth-child(2) code")?.textContent;
+	    if (bubblingInfoColumn >= 0) {
+	      event.bubbles = tr.querySelector(`td:nth-child(${bubblingInfoColumn + 1})`)?.textContent?.trim() === "Yes";
+	    }
+	    if (interfaceColumn >= 0) {
+	      event.interface = tr.querySelector(`td:nth-child(${interfaceColumn + 1}) a`)?.textContent ?? tr.querySelector(`td:nth-child(${interfaceColumn + 1}) code`)?.textContent;
+	    }
 	    events.push(event);
 	  }
 	});
@@ -73,6 +85,7 @@ export default function (spec) {
 	// Format used e.g. in uievents
 	const eventName = table.querySelector("tbody tr:first-child td:nth-child(2)")?.textContent.trim();
 	let iface = table.querySelector("tbody tr:nth-child(2) td:nth-child(2)")?.textContent.trim();
+	let bubbles = table.querySelector("tbody tr:nth-child(4) td:nth-child(2)")?.textContent.trim() === "Yes";
 	// Prose description, we skip it
 	if (iface.match(/\s/)) {
 	  iface = null;
@@ -83,23 +96,24 @@ export default function (spec) {
 	  targets = null;
 	}
 	if (eventName) {
-	  events.push({type: eventName, interface: iface, targets});
+	  events.push({type: eventName, interface: iface, targets, bubbles, src: { format: "definition table", href: href(table.closest('*[id]')) } });
 	}
       }
     });
   }
-  if (events.length === 0) {
-    // Look for the DOM-suggested sentence "Fire an event named X"
-    // or the Service Worker extension of "fire a functional event named"
-    [...document.querySelectorAll("a")].filter(a => !a.closest(informativeSelector)
-					       && (a.href === "https://dom.spec.whatwg.org/#concept-event-fire"
-						   || a.href === "https://w3c.github.io/ServiceWorker/#fire-functional-event")
-					      ).forEach(a => {
+  // Look for the DOM-suggested sentence "Fire an event named X"
+  // or the Service Worker extension of "fire a functional event named"
+  [...document.querySelectorAll("a")].filter(a => !a.closest(informativeSelector)
+					     && (a.href === "https://dom.spec.whatwg.org/#concept-event-fire"
+						 || (a.href === "#concept-event-fire"  && spec.shortname === "dom")
+						 || a.href === "https://w3c.github.io/ServiceWorker/#fire-functional-event")
+					    ).forEach(a => {
       const container = a.parentNode;
       let m = container.textContent.match(/fir(e|ing)\sa(n|\s+functional)\s+event\s+named\s+"?(?<eventName>[a-z]+)/i);
       if (m) {
 	const name = m.groups.eventName;
-	const event = {};
+	let newEvent = true;
+	let event = {src: { format: "fire an event phrasing", href: href(a.closest('*[id]')) } };
 	// this matches "fire an event named eventName" in battery-status and media capture main, named type in fullscreen
 	if (name === 'eventName' || name === 'type') {
 	  event.type = null;
@@ -113,11 +127,12 @@ export default function (spec) {
 	  }
 	  // if we have already detected this combination, skip it
 	  if (events.find(e => isSameEvent(event, e))) {
-	    return;
+	    newEvent = false;
+	    event = events.find(e => isSameEvent(event, e));
 	  }
 	}
 	const iface = [...container.querySelectorAll("a[href]")].find(n => n.textContent.match(/^([A-Z]+[a-z0-9]*)+Event$/));
-	if (iface) {
+	if (iface && !event.interface) {
 	  event.interface = iface.textContent.trim();
 	} else {
 	  // Fire an event ⇒ Event interface
@@ -128,10 +143,24 @@ export default function (spec) {
 	    event.interface = "ExtendableEvent";
 	  }
 	}
-	events.push(event);
+	if (event.bubbles === undefined) {
+	  if (container.textContent.match(/bubbles attribute/)) {
+	    if (container.textContent.match(/true/)) {
+	      event.bubbles = true;
+	    } else if (container.textContent.match(/false/)) {
+	      event.bubbles = false;
+	    }
+	  } else if (container.textContent.match(/bubbles/) || container.textContent.match(/bubbling/)) {
+	    event.bubbles = true;
+	  } else if (container.textContent.match(/not bubble/)) {
+	    event.bubbles = false;
+	  }
+	}
+	if (newEvent) {
+	  events.push(event);
+	}
       }
     });
-  }
 
   // find events via IDL on<event> attributes with type EventHandler
   for (let eventName of Object.keys(handledEventNames)) {
@@ -139,7 +168,7 @@ export default function (spec) {
     if (matchingEvents.length === 0 && !hasStructuredData) {
       // We have not encountered such an event so far
       for (let iface of handledEventNames[eventName]) {
-	events.push({type: eventName, targets: [iface], interface: null});
+	events.push({type: eventName, targets: [iface], interface: null, src: { format: "IDL eventHandler", href: href(document.body) } }); // FIXME: find id of the IDL fragment
       }
     } else if (matchingEvents.length === 1) {
       // A single matching event, we assume all event handlers relate to it
@@ -159,7 +188,7 @@ export default function (spec) {
       // we can only check if this matches known information
       // to warn of the gap otherwise
       for (let iface of handledEventNames[eventName]) {
-	if (!matchingEvents.find(e => e.targets.includes(iface))) {
+	if (!matchingEvents.find(e => e.targets?.includes(iface))) {
 	  console.warn("[reffy] Could not determine which event named " + eventName + " match EventHandler of " + iface + " interface in " + spec.title); 
 	}
       }
@@ -169,10 +198,26 @@ export default function (spec) {
   // Find definitions marked as of event type
   [...document.querySelectorAll('dfn[data-dfn-type="event"')].forEach(dfn => {
     const type = dfn.textContent.trim();
-    const event = {type, interface: null, targets: fromEventElementToTargetInterfaces(dfn)};
-    if (!events.find(e => isSameEvent(event, e))) {
+    const container = dfn.parentNode;
+    const event = {type, interface: null, targets: fromEventElementToTargetInterfaces(dfn), src: { format: "dfn", href: href(dfn.closest("*[id]")) } };
+    // CSS Animations & Transitions uses dt/dd to describe events
+    // and uses a ul in the dd to describe bubbling behavior
+    let bubbles;
+    if (container.tagName === "DT") {
+      const bubbleItem = [...container.nextElementSibling.querySelectorAll("li")].find(li => li.textContent.startsWith("Bubbles:"));
+      if (bubbleItem) {
+	bubbles = !!bubbleItem.textContent.match(/yes/i);
+      }
+    }
+    const ev = events.find(e => isSameEvent(event, e));
+    if (!ev) {
+      event.bubbles = bubbles;
       events.push(event);
       console.error("[reffy] No interface hint found for event definition " + event.type + " in " + spec.title);
+    } else {
+      if (bubbles !== undefined) {
+	ev.bubbles = bubbles;
+      }
     }
   });
   return events;
