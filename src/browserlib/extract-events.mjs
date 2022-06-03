@@ -3,7 +3,7 @@ import extractWebIdl from './extract-webidl.mjs';
 import {parse} from "../../node_modules/webidl2/index.js";
 import getAbsoluteUrl from './get-absolute-url.mjs';
 
-const isSameEvent = (e1, e2) => e1.type === e2.type && e1.targets?.sort()?.join("|") === e2.targets?.sort()?.join("|");
+const isSameEvent = (e1, e2) => (e1.href && e1.href === e2.href) || (e1.type === e2.type && e1.targets?.sort()?.join("|") === e2.targets?.sort()?.join("|"));
 
 const singlePage = !document.querySelector('[data-reffy-page]');
 
@@ -25,7 +25,7 @@ export default function (spec) {
 
   function fromEventElementToTargetInterfaces(eventEl) {
     if (!eventEl) return;
-    // TODO: if target is a mixin, point to the including interfaces?
+
     if (eventEl.dataset?.dfnFor || eventEl.dataset?.linkFor) {
       return (eventEl.dataset.dfnFor || eventEl.dataset.linkFor).split(",").map(t => t.trim());
     } else if (eventEl.getAttribute("href")?.startsWith("#")) {
@@ -64,11 +64,24 @@ export default function (spec) {
 	  const eventEl = tr.querySelector("*:first-child");
 	  const annotations = eventEl.querySelectorAll("aside, .mdn-anno");
 	  annotations.forEach(n => n.remove());
-	  // if we find a <dfn>, or a <a> pointing to an internal anchor
-	  // (the latter is needed since the HTML spec table includes
-	  // links to pointer events)
-	  if (eventEl.querySelector("dfn,a[href^='#'],code")) {
-	    event.src = { format: "summary table", href: href(eventEl.closest('*[id]')) };
+
+	  let el = eventEl.querySelector("dfn,a");
+	  if (el.tagName === "A" && el.getAttribute("href").startsWith("https:")) {
+	    // we skip when we hit a link pointing to an external spec
+	    // (this is needed since the HTML spec table includes
+	    // links to pointer events)
+	    return;
+	  }
+	  if (!el) {
+	    el = eventEl.querySelector("code");
+	  }
+	  if (el) {
+	    if (el.tagName === "DFN" && el.id) {
+	      event.href = href(el);
+	    } else if (el.tagName === "A") {
+	      event.href = href(document.getElementById(el.getAttribute("href").slice(1)));
+	    }
+	    event.src = { format: "summary table", href: href(el.closest('*[id]')) };
 	    event.type = eventEl.textContent.trim();
 	    event.targets = fromEventElementToTargetInterfaces(eventEl.querySelector("dfn,a[href^='#']"));
 	    if (bubblingInfoColumn >= 0) {
@@ -114,15 +127,23 @@ export default function (spec) {
 	const name = m.groups.eventName;
 	let newEvent = true;
 	let event = {src: { format: "fire an event phrasing", href: href(a.closest('*[id]')) } };
-	// this matches "fire an event named eventName" in battery-status and media capture main, named type in fullscreen
-	if (name === 'eventName' || name === 'type') {
-	  event.type = null;
+	// this matches "fire an event named eventName" in battery-status and media capture main, named type in fullscreen, named e, event in html
+	if (name === 'eventName' || name === 'type' || name === 'e' || name === 'event') {
+	  return;
 	} else {
 	  event.type = name;
-	  const eventEl = [...container.querySelectorAll("a,dfn")].find(n => n.textContent.trim() === event.type);
+	  // looking preferably for a or dfn elements, falling back to code
+	  const eventEl = [...container.querySelectorAll("a,dfn")].find(n => n.textContent.trim() === event.type) || [...container.querySelectorAll("code")].find(n => n.textContent.trim() === event.type);
 	  if (eventEl) {
-	    // If the event being fired is from another spec, let's skip it
-	    if (eventEl.tagName === "A" && eventEl.getAttribute("href").startsWith("https://")) return;
+	    if (eventEl.tagName === "A" && eventEl.getAttribute("href")) {
+	      // If the event being fired is from another spec, let's skip it
+	      if (eventEl.getAttribute("href").startsWith("https://")) return;
+
+	      // otherwise, use the target of the link as our href
+	      event.href = eventEl.href;
+	    } else if (eventEl.tagName === "DFN" && eventEl.id) {
+	      eventEl.href = href(eventEl);
+	    }
 	    event.targets = fromEventElementToTargetInterfaces(eventEl);
 	  }
 	  // if we have already detected this combination, skip it
@@ -131,16 +152,18 @@ export default function (spec) {
 	    event = events.find(e => isSameEvent(event, e));
 	  }
 	}
-	const iface = [...container.querySelectorAll("a[href]")].find(n => n.textContent.match(/^([A-Z]+[a-z0-9]*)+Event$/));
-	if (iface && !event.interface) {
-	  event.interface = iface.textContent.trim();
-	} else {
-	  // Fire an event ⇒ Event interface
-	  if (m[2] === "n") {
-	    event.interface = "Event";
+	if (!event.interface) {
+	  const iface = [...container.querySelectorAll("a[href]")].find(n => n.textContent.match(/^([A-Z]+[a-z0-9]*)+Event$/));
+	  if (iface) {
+	    event.interface = iface.textContent.trim();
 	  } else {
+	    // Fire an event ⇒ Event interface
+	    if (m[2] === "n") {
+	      event.interface = "Event";
+	    } else {
 	    // Functional event ⇒ Extendable interface
-	    event.interface = "ExtendableEvent";
+	      event.interface = "ExtendableEvent";
+	    }
 	  }
 	}
 	if (event.bubbles === undefined) {
@@ -199,7 +222,7 @@ export default function (spec) {
   [...document.querySelectorAll('dfn[data-dfn-type="event"')].forEach(dfn => {
     const type = dfn.textContent.trim();
     const container = dfn.parentNode;
-    const event = {type, interface: null, targets: fromEventElementToTargetInterfaces(dfn), src: { format: "dfn", href: href(dfn.closest("*[id]")) } };
+    const event = {type, interface: null, targets: fromEventElementToTargetInterfaces(dfn), src: { format: "dfn", href: href(dfn.closest("*[id]")) }, href: href(dfn) };
     // CSS Animations & Transitions uses dt/dd to describe events
     // and uses a ul in the dd to describe bubbling behavior
     let bubbles;
