@@ -111,19 +111,47 @@ export default function (spec) {
 	if (eventName) {
 	  events.push({type: eventName, interface: iface, targets, bubbles, src: { format: "definition table", href: href(table.closest('*[id]')) } });
 	}
+      } else if (table.className === "def") {
+	// Used in https://drafts.csswg.org/css-nav-1/
+	const rowHeadings = [...table.querySelectorAll("tbody th")];
+	if (rowHeadings.find(th => th.textContent.trim() === "Bubbles")) {
+	  const eventTypeRow = [...table.querySelectorAll("tbody th")].findIndex(n => n.textContent.trim().match(/^type/i));
+	  const bubblingInfoRow = [...table.querySelectorAll("tbody th")].findIndex(n => n.textContent.trim().match(/^bubbl/i));
+	  const interfaceRow = [...table.querySelectorAll("tbody th")].findIndex(n => n.textContent.trim().match(/^interface/i));
+	  const eventName = table.querySelector(`tr:nth-child(${eventTypeRow + 1}) td:nth-child(2)`)?.textContent?.trim();
+	  const bubbles = table.querySelector(`tr:nth-child(${bubblingInfoRow + 1}) td:nth-child(2)`)?.textContent?.trim();
+	  const iface = table.querySelector(`tr:nth-child(${interfaceRow + 1}) td:nth-child(2)`)?.textContent?.trim();
+	  if (eventName) {
+	    events.push({type: eventName, interface: iface, bubbles, src: { format: "definition table", href: href(table.closest('*[id]')) } });
+	  }
+	}
       }
     });
   }
   // Look for the DOM-suggested sentence "Fire an event named X"
-  // or the Service Worker extension of "fire a functional event named"
+  // or the Service Worker extension of "fire (a) functional event named"
   [...document.querySelectorAll("a")].filter(a => !a.closest(informativeSelector)
 					     && (a.href === "https://dom.spec.whatwg.org/#concept-event-fire"
-						 || (a.href === "#concept-event-fire"  && spec.shortname === "dom")
-						 || a.href === "https://w3c.github.io/ServiceWorker/#fire-functional-event")
-					    ).forEach(a => {
+						 || a.href === "https://w3c.github.io/ServiceWorker/#fire-functional-event" || a.href === "https://www.w3.org/TR/service-workers-1/#fire-functional-event-algorithm" || a.href === "https://www.w3.org/TR/service-workers-1/#fire-functional-event"
+						|| a.href === "https://w3c.github.io/pointerevents/#dfn-fire-a-pointer-event")
+					    )
+    .forEach(a => {
       const container = a.parentNode;
-      let m = container.textContent.match(/fir(e|ing)\sa(n|\s+functional)\s+event\s+named\s+"?(?<eventName>[a-z]+)/i);
+      let phrasing;
+      let m = container.textContent.match(/fir(e|ing)\s+a(n|\s+pointer)\s+event\s+named\s+"?(?<eventName>[a-z]+)/i);
       if (m) {
+	if (m[2] === "n") {
+	  phrasing = "fire an event";
+	} else {
+	  phrasing = "fire a pointer event";
+	}
+      } else {
+	m = container.textContent.match(/fir(e|ing)\sa?\s*functional\s+event\s+(named\s+)?"?(?<eventName>[a-z]+)/i);
+	if (m) {
+	  phrasing = "fire functional event";
+	}
+      }
+      if (phrasing) {
 	const name = m.groups.eventName;
 	let newEvent = true;
 	let event = {src: { format: "fire an event phrasing", href: href(a.closest('*[id]')) } };
@@ -158,8 +186,11 @@ export default function (spec) {
 	    event.interface = iface.textContent.trim();
 	  } else {
 	    // Fire an event ⇒ Event interface
-	    if (m[2] === "n") {
+	    if (phrasing === "fire an event") {
 	      event.interface = "Event";
+	    } else if (phrasing === "fire a pointer event") {
+	      // Fire a pointerevent ⇒ PointerEvent interface
+	      event.interface = "PointerEvent";
 	    } else {
 	    // Functional event ⇒ Extendable interface
 	      event.interface = "ExtendableEvent";
