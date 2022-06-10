@@ -66,7 +66,7 @@ export default function (spec) {
 	  annotations.forEach(n => n.remove());
 
 	  let el = eventEl.querySelector("dfn,a");
-	  if (el.tagName === "A" && el.getAttribute("href").startsWith("https:")) {
+	  if (el && el.tagName === "A" && el.getAttribute("href").startsWith("https:")) {
 	    // we skip when we hit a link pointing to an external spec
 	    // (this is needed since the HTML spec table includes
 	    // links to pointer events)
@@ -104,25 +104,25 @@ export default function (spec) {
 	  iface = null;
 	}
 	let targets = table.querySelector("tbody tr:nth-child(5) td:nth-child(2)")?.textContent.split(",").map(t => t.trim());
-	if (targets.find(t => t.match(/\s/))) {
+	if (targets && targets.find(t => t.match(/\s/))) {
 	  // Prose description, skip it
 	  targets = null;
 	}
 	if (eventName) {
-	  events.push({type: eventName, interface: iface, targets, bubbles, src: { format: "definition table", href: href(table.closest('*[id]')) } });
+	  events.push({type: eventName, interface: iface, targets, bubbles, src: { format: "definition table", href: href(table.closest('*[id]')) }, href: href(table.closest('*[id]')) });
 	}
       } else if (table.className === "def") {
 	// Used in https://drafts.csswg.org/css-nav-1/
 	const rowHeadings = [...table.querySelectorAll("tbody th")];
 	if (rowHeadings.find(th => th.textContent.trim() === "Bubbles")) {
 	  const eventTypeRow = [...table.querySelectorAll("tbody th")].findIndex(n => n.textContent.trim().match(/^type/i));
-	  const bubblingInfoRow = [...table.querySelectorAll("tbody th")].findIndex(n => n.textContent.trim().match(/^bubbl/i));
+	  const bubblingInfoRow = [...table.querySelectorAll("tbody th")].findIndex(n => n.textContent.trim() === "Bubbles");
 	  const interfaceRow = [...table.querySelectorAll("tbody th")].findIndex(n => n.textContent.trim().match(/^interface/i));
 	  const eventName = table.querySelector(`tr:nth-child(${eventTypeRow + 1}) td:nth-child(2)`)?.textContent?.trim();
-	  const bubbles = table.querySelector(`tr:nth-child(${bubblingInfoRow + 1}) td:nth-child(2)`)?.textContent?.trim();
+	  const bubbles = table.querySelector(`tr:nth-child(${bubblingInfoRow + 1}) td:nth-child(2)`)?.textContent?.trim() === "Yes";
 	  const iface = table.querySelector(`tr:nth-child(${interfaceRow + 1}) td:nth-child(2)`)?.textContent?.trim();
 	  if (eventName) {
-	    events.push({type: eventName, interface: iface, bubbles, src: { format: "definition table", href: href(table.closest('*[id]')) } });
+	    events.push({type: eventName, interface: iface, bubbles, src: { format: "css definition table", href: href(table.closest('*[id]')) }, href: href(table.closest('*[id]')) });
 	  }
 	}
       }
@@ -154,7 +154,7 @@ export default function (spec) {
       if (phrasing) {
 	const name = m.groups.eventName;
 	let newEvent = true;
-	let event = {src: { format: "fire an event phrasing", href: href(a.closest('*[id]')) } };
+	let event = {src: { format: "fire an event phrasing", href: href(a.closest('*[id]')) }, href: href(a.closest('*[id]')) };
 	// this matches "fire an event named eventName" in battery-status and media capture main, named type in fullscreen, named e, event in html
 	if (name === 'eventName' || name === 'type' || name === 'e' || name === 'event') {
 	  return;
