@@ -39,6 +39,7 @@
       }
     ],
     "elements": [],
+    "events": [],
     "headings": [
       {
         "id": "bar",
@@ -127,6 +128,7 @@
       }
     ],
     "elements": [],
+    "events": [],
     "headings": [
       {
         "id": "title",
@@ -205,6 +207,7 @@
     },
     "dfns": [],
     "elements": [],
+    "events": [],
     "headings": [],
     "ids": []
   }
