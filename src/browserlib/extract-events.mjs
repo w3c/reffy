@@ -61,7 +61,7 @@ export default function (spec) {
 	const interfaceColumn = [...table.querySelectorAll("thead th")].findIndex(n => n.textContent.trim().match(/^interface/i));
 	table.querySelectorAll("tbody tr").forEach(tr => {
 	  const event = {};
-	  const eventEl = tr.querySelector("*:first-child");
+	  const eventEl = tr.querySelector("*:first-child").cloneNode(true);
 	  const annotations = eventEl.querySelectorAll("aside, .mdn-anno");
 	  annotations.forEach(n => n.remove());
 
