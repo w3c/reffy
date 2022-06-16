@@ -100,7 +100,7 @@ export default function (spec) {
 	let iface = table.querySelector("tbody tr:nth-child(2) td:nth-child(2)")?.textContent.trim();
 	let bubbles = table.querySelector("tbody tr:nth-child(4) td:nth-child(2)")?.textContent.trim() === "Yes";
 	// Prose description, we skip it
-	if (iface.match(/\s/)) {
+	if (iface?.match(/\s/)) {
 	  iface = null;
 	}
 	let targets = table.querySelector("tbody tr:nth-child(5) td:nth-child(2)")?.textContent?.split(",")?.map(t => t.trim());
