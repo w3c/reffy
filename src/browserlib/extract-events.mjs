@@ -98,7 +98,7 @@ export default function (spec) {
 	// Format used e.g. in uievents
 	const eventName = table.querySelector("tbody tr:first-child td:nth-child(2)")?.textContent.trim();
 	let iface = table.querySelector("tbody tr:nth-child(2) td:nth-child(2)")?.textContent.trim();
-	let bubbles = table.querySelector("tbody tr:nth-child(4) td:nth-child(2)")?.textContent.trim() === "Yes";
+	let bubbles = table.querySelector("tbody tr:nth-child(4) td:nth-child(2)")?.textContent?.trim() === "Yes";
 	// Prose description, we skip it
 	if (iface?.match(/\s/)) {
 	  iface = null;
