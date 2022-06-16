@@ -119,7 +119,8 @@ export default function (spec) {
 	  const bubblingInfoRow = [...table.querySelectorAll("tbody th")].findIndex(n => n.textContent.trim() === "Bubbles");
 	  const interfaceRow = [...table.querySelectorAll("tbody th")].findIndex(n => n.textContent.trim().match(/^interface/i));
 	  const eventName = table.querySelector(`tr:nth-child(${eventTypeRow + 1}) td:nth-child(2)`)?.textContent?.trim();
-	  const bubbles = table.querySelector(`tr:nth-child(${bubblingInfoRow + 1}) td:nth-child(2)`)?.textContent?.trim() === "Yes";
+          const bubblesCell = table.querySelector(`tr:nth-child(${bubblingInfoRow + 1}) td:nth-child(2)`);
+	  const bubbles = bubblesCell ? bubblesCell.textContent.trim() === "Yes" : null;
 	  const iface = table.querySelector(`tr:nth-child(${interfaceRow + 1}) td:nth-child(2)`)?.textContent?.trim();
 	  if (eventName) {
 	    events.push({type: eventName, interface: iface, bubbles, src: { format: "css definition table", href: href(table.closest('*[id]')) }, href: href(table.closest('*[id]')) });
