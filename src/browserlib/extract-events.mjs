@@ -3,13 +3,13 @@ import extractWebIdl from './extract-webidl.mjs';
 import {parse} from "../../node_modules/webidl2/index.js";
 import getAbsoluteUrl from './get-absolute-url.mjs';
 
-const isSameEvent = (e1, e2) =>
-  (e1.href && e1.href === e2.href) ||
-  (e1.type === e2.type && e1.targets?.sort()?.join("|") === e2.targets?.sort()?.join("|"));
+const isSameEvent = (e1, e2) => e1.type === e2.type &&
+      ((e1.href && e1.href === e2.href ) ||
+       (e1.targets?.sort()?.join("|") === e2.targets?.sort()?.join("|")));
 
 const singlePage = !document.querySelector('[data-reffy-page]');
-
 const href = el => el?.getAttribute("id") ? getAbsoluteUrl(el, {singlePage}) : null;
+
 
 export default function (spec) {
   // Used to find eventhandler attributes
@@ -72,7 +72,13 @@ export default function (spec) {
           .findIndex(n => n.textContent.trim().match(/^interface/i));
         table.querySelectorAll("tbody tr").forEach(tr => {
           const event = {};
-          const eventEl = tr.querySelector("*:first-child").cloneNode(true);
+	  // clean up possible MDN annotations
+	  // but keeping the original to swap it back in after processing
+	  // to leave the DOM intact for other processing scripts
+	  // (we need the clean up node in-tree to compute the proper href)
+	  const origEventEl = tr.querySelector("*:first-child");
+          const eventEl = origEventEl.cloneNode(true);
+	  origEventEl.replaceWith(eventEl);
           const annotations = eventEl.querySelectorAll("aside, .mdn-anno");
           annotations.forEach(n => n.remove());
 
@@ -87,6 +93,7 @@ export default function (spec) {
             el = eventEl.querySelector("code");
           }
           if (!el) {
+	    eventEl.replaceWith(origEventEl);
             return;
           }
           if (el.tagName === "DFN" && el.id) {
@@ -106,6 +113,7 @@ export default function (spec) {
               tr.querySelector(`td:nth-child(${interfaceColumn + 1}) code`)?.textContent;
           }
           events.push(event);
+	  eventEl.replaceWith(origEventEl);
         });
       } else if (table.className === "event-definition") {
         hasStructuredData = true;

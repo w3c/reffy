@@ -114,6 +114,25 @@ ${defaultIdl}`,
 	href:"about:blank#success"
       }
     ]
+  },
+  {
+    title: "Associate events href to correct url in multipage spec",
+    html: `<section data-reffy-page='https://example.org/indices.html'><table>
+<thead>
+  <tr><th>Event type</th><th>Interface</th><th>Bubbles</th></tr>
+</thead>
+<tbody>
+  <tr><th><dfn id=success>success</dfn></th><td><a href=''>SuccessEvent</a></td><td>Yes</td></tr></tbody></table>`,
+    spec: 'html',
+    res: [
+      {
+	bubbles: true,
+	type: "success",
+	interface: "SuccessEvent",
+	src: { format: "summary table", href:"https://example.org/indices.html#success"},
+	href:"https://example.org/indices.html#success"
+      }
+    ]
   }
 ];
 
