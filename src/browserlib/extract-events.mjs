@@ -72,13 +72,13 @@ export default function (spec) {
           .findIndex(n => n.textContent.trim().match(/^interface/i));
         table.querySelectorAll("tbody tr").forEach(tr => {
           const event = {};
-	  // clean up possible MDN annotations
-	  // but keeping the original to swap it back in after processing
-	  // to leave the DOM intact for other processing scripts
-	  // (we need the clean up node in-tree to compute the proper href)
-	  const origEventEl = tr.querySelector("*:first-child");
+          // clean up possible MDN annotations
+          // but keeping the original to swap it back in after processing
+          // to leave the DOM intact for other processing scripts
+          // (we need the clean up node in-tree to compute the proper href)
+          const origEventEl = tr.querySelector("*:first-child");
           const eventEl = origEventEl.cloneNode(true);
-	  origEventEl.replaceWith(eventEl);
+          origEventEl.replaceWith(eventEl);
           const annotations = eventEl.querySelectorAll("aside, .mdn-anno");
           annotations.forEach(n => n.remove());
 
@@ -87,13 +87,14 @@ export default function (spec) {
             // we skip when we hit a link pointing to an external spec
             // (this is needed since the HTML spec table includes
             // links to pointer events)
+            eventEl.replaceWith(origEventEl);
             return;
           }
           if (!el) {
             el = eventEl.querySelector("code");
           }
           if (!el) {
-	    eventEl.replaceWith(origEventEl);
+            eventEl.replaceWith(origEventEl);
             return;
           }
           if (el.tagName === "DFN" && el.id) {
@@ -113,7 +114,7 @@ export default function (spec) {
               tr.querySelector(`td:nth-child(${interfaceColumn + 1}) code`)?.textContent;
           }
           events.push(event);
-	  eventEl.replaceWith(origEventEl);
+          eventEl.replaceWith(origEventEl);
         });
       } else if (table.className === "event-definition") {
         hasStructuredData = true;
@@ -192,7 +193,7 @@ export default function (spec) {
         };
         // this matches "fire an event named eventName" in battery-status and
         // media capture main, named type in fullscreen, named e, event in html
-	// name in notifications API
+        // name in notifications API
         if (name === 'eventName' || name === 'type' || name === 'e' || name === 'event' || name === 'name') {
           return;
         } else {
@@ -232,7 +233,7 @@ export default function (spec) {
               // Fire a pointerevent ⇒ PointerEvent interface
               event.interface = "PointerEvent";
             } else {
-            // Functional event ⇒ Extendable interface
+              // Functional event ⇒ Extendable interface
               event.interface = "ExtendableEvent";
             }
           }
