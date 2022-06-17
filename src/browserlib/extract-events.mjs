@@ -192,7 +192,8 @@ export default function (spec) {
         };
         // this matches "fire an event named eventName" in battery-status and
         // media capture main, named type in fullscreen, named e, event in html
-        if (name === 'eventName' || name === 'type' || name === 'e' || name === 'event') {
+	// name in notifications API
+        if (name === 'eventName' || name === 'type' || name === 'e' || name === 'event' || name === 'name') {
           return;
         } else {
           event.type = name;
