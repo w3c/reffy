@@ -178,143 +178,132 @@ const extractDlDfns = (doc, className, options) =>
 
 /**
  * Extract value spaces (non-terminal values) defined in the specification
+ *
+ * From a definitions data model perspective, non-terminal values are those
+ * defined with a `data-dfn-type` attribute equal to `type` or `function`. They
+ * form (at least in theory) a single namespace across CSS specs.
+ *
+ * Definitions with `data-dfn-type` attribute set to `value` are not extracted
+ * on purpose as they are typically namespaced to another construct (through a
+ * `data-dfn-for` attribute.
  */
 const extractValueSpaces = doc => {
   let res = {};
 
-  const parseProductionRules = rules =>
-    rules
-      .map(val => val.replace(/\/\*[^]*?\*\//gm, ''))  // Drop comments
-      .map(val => val.split(/\n(?=[^\n]*\s?=\s)/m))
-      .reduce((acc, val) => acc.concat(val), [])
-      .map(line => line.split(/\s?=\s/).map(s => s.trim().replace(/\s+/g, ' ')))
-      .filter(val => val[0].match(/^<.*>$|^.*\(\)$/))
-      .filter(val => !!val[1])
-      .forEach(val => {
-        const name = val[0].replace(/^(.*\(\))$/, '<$1>')
-        if (!(name in res)) {
-          res[name] = { value: val[1] };
-        }
-      });
+  const parseProductionRule = rule => {
+    const nameAndValue = rule
+      .replace(/\/\*[^]*?\*\//gm, '')  // Drop comments
+      .split(/\s?=\s/)
+      .map(s => s.trim().replace(/\s+/g, ' '));
+    if (nameAndValue[0].match(/^<.*>$|^.*\(\)$/)) {
+      const name = nameAndValue[0].replace(/^(.*\(\))$/, '<$1>');
+      if (!(name in res)) {
+        res[name] = {};
+      }
+      if (!res[name].value) {
+        res[name].value = nameAndValue[1];
+      }
+    }
+  };
 
-  // Extract non-terminal value spaces defined in `pre` tags
-  // (remove note references as in:
-  // https://drafts.csswg.org/css-syntax-3/#the-anb-type)
-  parseProductionRules([...doc.querySelectorAll('pre.prod,span.prod')]
+  // Extract all dfns with data-dfn-type="type" or data-dfn-type="function"
+  // but ignore definitions in <pre> as they do not always use dfns, as in
+  // https://drafts.csswg.org/css-values-4/#calc-syntax
+  [...doc.querySelectorAll(
+      'dfn[data-dfn-type=type],dfn[data-dfn-type=function]')]
     .filter(el => !el.closest(informativeSelector))
+    .filter(el => !el.closest('pre'))
+    .forEach(dfn => {
+      const parent = dfn.parentNode.cloneNode(true);
+
+      // Remove note references as in:
+      // https://drafts.csswg.org/css-syntax-3/#the-anb-type
+      // and remove MDN annotations as well
+      [...parent.querySelectorAll('sup')]
+        .map(sup => sup.parentNode.removeChild(sup));
+      [...parent.querySelectorAll('aside, .mdn-anno')]
+        .map(annotation => annotation.parentNode.removeChild(annotation));
+
+      const text = parent.textContent.trim();
+      if (text.match(/\s?=\s/)) {
+        // Format is "prod = foo", that's all good
+        parseProductionRule(text);
+      }
+      else if (text.match(/^[a-zA-Z_][a-zA-Z0-9_\-]+\([^\)]*\)$/)) {
+        // Format is "prod(foo bar)", create a "prod() = prod(foo bar)" entry
+        const fn = text.match(/^([a-zA-Z_][a-zA-Z0-9_\-]+)\([^\)]*\)$/)[1];
+        parseProductionRule(`${fn}() = ${text}`);
+      }
+      else if (parent.nodeName === 'DT') {
+        // Format is "prod", parent is a <dt>, look for value in following <dd>
+        let dd = dfn.parentNode;
+        while (dd && (dd.nodeName !== 'DD')) {
+          dd = dd.nextSibling;
+        }
+        if (!dd) {
+          return;
+        }
+        let code = dd.querySelector('p > code, pre.prod');
+        if (code) {
+          if (code.textContent.startsWith(`${text} = `) ||
+              code.textContent.startsWith(`<${text}> = `)) {
+            parseProductionRule(code.textContent);
+          }
+          else {
+            parseProductionRule(`${text} = ${code.textContent}`);
+          }
+        }
+        else {
+          // Remove notes, details sections that link to tests, and subsections
+          // that go too much into details
+          dd = dd.cloneNode(true);
+          [...dd.children].forEach(c => {
+            if (c.tagName === 'DETAILS' ||
+                c.tagName === 'DL' ||
+                c.classList.contains('note')) {
+              c.remove();
+            }
+          });
+
+          if (!(text in res)) {
+            res[text] = {};
+          }
+          if (!res[text].prose) {
+            res[text].prose = dd.textContent.trim().replace(/\s+/g, ' ');
+          }
+        }
+      }
+      else if (parent.nodeName === 'P') {
+        // Format is "prod", parent is a <p>, extract value from prose.
+        const name = dfn.textContent.trim().replace(/^<?(.*?)>?$/, '<$1>');;
+        if (!(name in res)) {
+          res[name] = {
+            prose: parent.textContent.trim().replace(/\s+/g, ' ')
+          };
+        }
+      }
+    });
+
+  // Complete with production rules defined in <pre class=prod> tags (some of
+  // which use dfns, while others don't, but all of them are actual production
+  // rules). For <pre> tags that don't have a "prod" class (e.g. in HTML and
+  // css-namespaces), make sure they contain a <dfn> to avoid parsing things
+  // that are not production rules
+  [...doc.querySelectorAll('pre.prod')]
+    .concat([...doc.querySelectorAll('pre:not(.idl)')]
+      .filter(el => el.querySelector('dfn')))
+    .filter(el => !el.closest(informativeSelector))
+    .map(el => el.cloneNode(true))
     .map(el => {
       [...el.querySelectorAll('sup')]
         .map(sup => sup.parentNode.removeChild(sup));
       return el;
     })
-    .map(el => el.textContent));
-
-  // Complete with non-terminal value spaces defined in `pre` tags without
-  // an explicit class, as in:
-  // https://drafts.fxtf.org/compositing-1/#ltblendmodegt
-  parseProductionRules([...doc.querySelectorAll('pre:not(.idl)')]
-    .filter(el => !el.closest(informativeSelector))
-    .filter(el => el.querySelector('dfn'))
-    .map(el => el.textContent));
-
-  // Complete with non-terminal value spaces defined in `dt` tags, as in:
-  // https://drafts.csswg.org/css-shapes-1/#funcdef-inset
-  // https://drafts.csswg.org/css-transforms/#funcdef-transform-matrix
-  parseProductionRules([...doc.querySelectorAll('dt > dfn.css, dt > span.prod > dfn.css')]
-    .filter(el => !el.closest(informativeSelector))
-    .filter(el => el.parentNode.textContent.match(/\s?=\s/))
-    .map(el => el.parentNode.textContent));
-
-  // Complete with function values defined in `dt` tags where definition and
-  // value are mixed together, as in:
-  // https://drafts.csswg.org/css-overflow-4/#funcdef-text-overflow-fade
-  parseProductionRules([...doc.querySelectorAll('dt > dfn.css')]
-    .filter(el => !el.closest(informativeSelector))
-    .filter(el => el.parentNode.textContent.trim().match(/^[a-zA-Z_][a-zA-Z0-9_\-]+\([^\)]*\)$/))
-    .map(el => {
-      let fn = el.parentNode.textContent.trim()
-        .match(/^([a-zA-Z_][a-zA-Z0-9_\-]+)\([^\)]*\)$/)[1];
-      return fn + '() = ' + el.parentNode.textContent;
-    }));
-
-
-  // Complete with non-terminal value spaces defined in `.definition`
-  // paragraphs, as in:
-  // https://svgwg.org/svg2-draft/painting.html#DataTypeDasharray
-  parseProductionRules([...doc.querySelectorAll('.definition > dfn')]
-    .filter(el => !el.closest(informativeSelector))
-    .filter(el => el.parentNode.textContent.match(/\s?=\s/))
-    .map(el => el.parentNode.textContent));
-
-  // Complete with non-terminal value spaces defined in simple paragraphs,
-  // as in:
-  // https://drafts.csswg.org/css-animations-2/#typedef-single-animation-composition
-  // https://drafts.csswg.org/css-transitions/#single-transition-property
-  parseProductionRules([...doc.querySelectorAll('p > dfn, div.prod > dfn')]
-    .filter(el => !el.closest(informativeSelector))
-    .filter(el => el.parentNode.textContent.trim().match(/^<.*>\s?=\s/))
-    .map(el => el.parentNode.textContent));
-
-  // Complete with non-terminal value spaces defined in `dt` tags with
-  // production rules (or prose) in `dd` tags, as in:
-  // https://drafts.csswg.org/css-fonts/#absolute-size-value
-  // https://drafts.csswg.org/css-content/#typedef-content-content-list
-  [...doc.querySelectorAll('dt > dfn, dt > var')]
-    .filter(el => !el.closest(informativeSelector))
-    .filter(el => el.textContent.trim().match(/^<.*>$/))
-    .filter(el => {
-      let link = el.querySelector('a[href]');
-      if (!link) {
-        return true;
-      }
-      let href = (link ? link.getAttribute('href') : null);
-      return (href === '#' + el.getAttribute('id'));
-    })
-    .map(el => {
-      let dd = el.parentNode;
-      while (dd && (dd.nodeName !== 'DD')) {
-        dd = dd.nextSibling;
-      }
-      if (!dd) {
-        return null;
-      }
-      let code = dd.querySelector('p > code, pre.prod');
-      if (code) {
-        return {
-          name: el.textContent.trim(),
-          value: code.textContent.trim().replace(/\s+/g, ' ')
-        }
-      }
-      else {
-        // Remove notes, details sections that link to tests, and subsections
-        // that go too much into details
-        dd = dd.cloneNode(true);
-        [...dd.children].forEach(c => {
-          if (c.tagName === 'DETAILS' ||
-              c.tagName === 'DL' ||
-              c.classList.contains('note')) {
-            c.remove();
-          }
-        });
-        return {
-          name: el.textContent.trim(),
-          prose: dd.textContent.trim().replace(/\s+/g, ' ')
-        };
-      }
-    })
-    .filter(space => !!space)
-    .forEach(space => {
-      if (!(space.name in res)) {
-        res[space.name] = {};
-      }
-
-      if (!res[space.name].prose && space.prose) {
-        res[space.name].prose = space.prose;
-      }
-      if (!res[space.name].value && space.value) {
-        res[space.name].value = space.value;
-      }
-    });
+    .map(el => el.textContent)
+    .map(val => val.replace(/\/\*[^]*?\*\//gm, ''))  // Drop comments
+    .map(val => val.split(/\n(?=[^\n]*\s?=\s)/m))    // Separate definitions
+    .flat()
+    .map(text => parseProductionRule(text));
 
   return res;
 }
