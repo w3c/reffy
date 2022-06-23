@@ -157,7 +157,7 @@ const tests = [
   {
     title: "parses a valuespace prose definition",
     html: `<dl>
-    <dt><dfn class="css" data-dfn-for="text-indent" data-dfn-type="value" data-export="" id="valdef-text-indent-percentage">&lt;percentage&gt;<a class="self-link" href="#valdef-text-indent-percentage"></a></dfn> 
+    <dt><dfn class="css" data-dfn-for="text-indent" data-dfn-type="type" data-export="" id="valdef-text-indent-percentage">&lt;percentage&gt;<a class="self-link" href="#valdef-text-indent-percentage"></a></dfn> 
     </dt><dd>
       Gives the amount of the indent
       as a percentage of the block container’s own <a data-link-type="dfn" href="https://drafts.csswg.org/css-writing-modes-4/#logical-width" id="ref-for-logical-width">logical width</a>. 
@@ -189,7 +189,7 @@ const tests = [
   {
     title: "parses a valuespace prose definition, excluding tests and notes",
     html: `<dl>
-    <dt><dfn class="css" data-dfn-for="text-indent" data-dfn-type="value" data-export="" id="valdef-text-indent-percentage">&lt;percentage&gt;<a class="self-link" href="#valdef-text-indent-percentage"></a></dfn> 
+    <dt><dfn class="css" data-dfn-for="text-indent" data-dfn-type="type" data-export="" id="valdef-text-indent-percentage">&lt;percentage&gt;<a class="self-link" href="#valdef-text-indent-percentage"></a></dfn> 
     </dt><dd>
       Gives the amount of the indent
       as a percentage of the block container’s own <a data-link-type="dfn" href="https://drafts.csswg.org/css-writing-modes-4/#logical-width" id="ref-for-logical-width">logical width</a>. 
@@ -221,7 +221,7 @@ const tests = [
   {
     title: "parses a valuespace prose definition, excluding subsections",
     html: `<dl>
-     <dt data-md=""><dfn class="css" data-dfn-for="ray()" data-dfn-type="value" data-export="" id="valdef-ray-size">&lt;size&gt;<a class="self-link" href="#valdef-ray-size"></a></dfn>
+     <dt data-md=""><dfn class="css" data-dfn-for="ray()" data-dfn-type="type" data-export="" id="valdef-ray-size">&lt;size&gt;<a class="self-link" href="#valdef-ray-size"></a></dfn>
       </dt><dd data-md="">
        <p>Decides the path length used when <a class="property" data-link-type="propdesc" href="#propdef-offset-distance" id="ref-for-propdef-offset-distance②">offset-distance</a> is expressed as a percentage, using the distance to the containing box. For <a class="production css" data-link-type="type" href="https://drafts.csswg.org/css-images-3/#typedef-size" id="ref-for-typedef-size①" title="Expands to: <length-percentage>{2} | <length> | closest-corner | closest-side | farthest-corner | farthest-side | sides">&lt;size&gt;</a> values other than <a href="#size-sides" id="ref-for-size-sides">sides</a>, the path length is independent of <a class="production css" data-link-type="type" href="https://drafts.csswg.org/css-values-3/#angle-value" id="ref-for-angle-value④" title="Expands to: deg | grad | rad | turn">&lt;angle&gt;</a>.</p>
        <p>It is defined as:</p>
@@ -250,6 +250,21 @@ const tests = [
         "prose": "Decides the path length used when offset-distance is expressed as a percentage, using the distance to the containing box. For <size> values other than sides, the path length is independent of <angle>. It is defined as: <size> = [ closest-side | closest-corner | farthest-side | farthest-corner | sides ]"
       }
     }
+  },
+
+
+  {
+    title: "ignores a valuespace definition when data-dfn-type is not correct",
+    html: `<div class="note"><dl>
+    <dt><dfn class="css" data-dfn-type="value">value</dfn></dt>
+    <dd>Value</dd>
+    <dt><dfn class="css" data-dfn-type="selector">selector</dfn></dt>
+    <dd>Selector</dd>
+    <dt><dfn class="css" data-dfn-type="at-rule">at-rule</dfn></dt>
+    <dd>Selector</dd>
+    </dl></div>`,
+    propertyName: "valuespaces",
+    css: {}
   },
 
 
