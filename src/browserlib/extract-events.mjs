@@ -13,11 +13,17 @@ const href = el => el?.getAttribute("id") ? getAbsoluteUrl(el, {singlePage}) : n
 
 export default function (spec) {
   // Used to find eventhandler attributes
-  const idl = extractWebIdl();
-  const idlTree = parse(idl);
-  const idlInterfaces = idlTree.filter(item =>
-    item.type === "interface" ||
-    item.type === "interface mixin");
+  let idlInterfaces = [];
+  try {
+    const idl = extractWebIdl();
+    const idlTree = parse(idl);
+    idlInterfaces = idlTree.filter(item =>
+      item.type === "interface" ||
+      item.type === "interface mixin");
+  }
+  catch {
+    // Spec defines some invalid Web IDL, proceed without it
+  }
 
   // associate event names from event handlers to interfaces with such an handler
   const handledEventNames = idlInterfaces

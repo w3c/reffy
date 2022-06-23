@@ -103,6 +103,15 @@ ${defaultIdl}`,
     res: defaultResults("fire an event phrasing", {successIface: "ExtendableEvent"})
   },
   {
+    title: "ignores invalid IDL fragments",
+    html: `<p id=success><a href='https://w3c.github.io/ServiceWorker/#fire-functional-event'>Fire Functional Event</a> <code>success</code> with the <code>bubbles</code> attribute initialized to <code>true</code></p>${defaultIdl.replace(/attribute/, 'allezbut')}`,
+    res: [ {
+      type: "success", interface: "ExtendableEvent", bubbles: true,
+      href: "about:blank#success",
+      src: { format: "fire an event phrasing", href: "about:blank#success" }
+    } ]
+  },
+  {
     title: "extracts events from event definitions",
     html: `<p><dfn id=success data-dfn-type=event data-dfn-for=Example>success</dfn> is an event, not a state.</p>`,
     res: [
