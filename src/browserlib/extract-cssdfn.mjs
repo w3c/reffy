@@ -226,16 +226,16 @@ const extractValueSpaces = doc => {
 
       const text = parent.textContent.trim();
       if (text.match(/\s?=\s/)) {
-        // Format is "prod = foo", that's all good
+        // Definition appears in a "prod = foo" text, that's all good
         parseProductionRule(text);
       }
-      else if (text.match(/^[a-zA-Z_][a-zA-Z0-9_\-]+\([^\)]*\)$/)) {
-        // Format is "prod(foo bar)", create a "prod() = prod(foo bar)" entry
-        const fn = text.match(/^([a-zA-Z_][a-zA-Z0-9_\-]+)\([^\)]*\)$/)[1];
-        parseProductionRule(`${fn}() = ${text}`);
+      else if (dfn.textContent.trim().match(/^[a-zA-Z_][a-zA-Z0-9_\-]+\([^\)]+\)$/)) {
+        // Definition is "prod(foo bar)", create a "prod() = prod(foo bar)" entry
+        const fn = dfn.textContent.trim().match(/^([a-zA-Z_][a-zA-Z0-9_\-]+)\([^\)]+\)$/)[1];
+        parseProductionRule(`${fn}() = ${dfn.textContent.trim()}`);
       }
       else if (parent.nodeName === 'DT') {
-        // Format is "prod", parent is a <dt>, look for value in following <dd>
+        // Definition is in a <dt>, look for value in following <dd>
         let dd = dfn.parentNode;
         while (dd && (dd.nodeName !== 'DD')) {
           dd = dd.nextSibling;
@@ -265,17 +265,20 @@ const extractValueSpaces = doc => {
             }
           });
 
-          if (!(text in res)) {
-            res[text] = {};
+          const name = (dfn.getAttribute('data-lt') ?? dfn.textContent)
+            .trim().replace(/^<?(.*?)>?$/, '<$1>');
+          if (!(name in res)) {
+            res[name] = {};
           }
-          if (!res[text].prose) {
-            res[text].prose = dd.textContent.trim().replace(/\s+/g, ' ');
+          if (!res[name].prose) {
+            res[name].prose = dd.textContent.trim().replace(/\s+/g, ' ');
           }
         }
       }
       else if (parent.nodeName === 'P') {
-        // Format is "prod", parent is a <p>, extract value from prose.
-        const name = dfn.textContent.trim().replace(/^<?(.*?)>?$/, '<$1>');;
+        // Definition is in regular prose, extract value from prose.
+        const name = (dfn.getAttribute('data-lt') ?? dfn.textContent)
+          .trim().replace(/^<?(.*?)>?$/, '<$1>');
         if (!(name in res)) {
           res[name] = {
             prose: parent.textContent.trim().replace(/\s+/g, ' ')
