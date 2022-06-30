@@ -190,7 +190,13 @@ const extractDlDfns = (doc, className, options) =>
 const extractValueSpaces = doc => {
   let res = {};
 
-  const parseProductionRule = rule => {
+  // Helper function to parse a production rule. The "pureSyntax" parameter
+  // should be set to indicate that the rule comes from a pure syntactic block
+  // and should have precedence over another value definition that may be
+  // extracted from the prose. For instance, this makes it possible to extract
+  // `<abs()> = abs( <calc-sum> )` from the syntax part in CSS Values instead
+  // of `<abs()> = abs(A)` which is how the function is defined in prose.
+  const parseProductionRule = (rule, { pureSyntax = false }) => {
     const nameAndValue = rule
       .replace(/\/\*[^]*?\*\//gm, '')  // Drop comments
       .split(/\s?=\s/)
@@ -200,8 +206,9 @@ const extractValueSpaces = doc => {
       if (!(name in res)) {
         res[name] = {};
       }
-      if (!res[name].value) {
+      if (!res[name].value || (pureSyntax && !res[name].pureSyntax)) {
         res[name].value = nameAndValue[1];
+        res[name].pureSyntax = pureSyntax;
       }
     }
   };
@@ -227,12 +234,12 @@ const extractValueSpaces = doc => {
       const text = parent.textContent.trim();
       if (text.match(/\s?=\s/)) {
         // Definition appears in a "prod = foo" text, that's all good
-        parseProductionRule(text);
+        parseProductionRule(text, { pureSyntax: true });
       }
       else if (dfn.textContent.trim().match(/^[a-zA-Z_][a-zA-Z0-9_\-]+\([^\)]+\)$/)) {
         // Definition is "prod(foo bar)", create a "prod() = prod(foo bar)" entry
         const fn = dfn.textContent.trim().match(/^([a-zA-Z_][a-zA-Z0-9_\-]+)\([^\)]+\)$/)[1];
-        parseProductionRule(`${fn}() = ${dfn.textContent.trim()}`);
+        parseProductionRule(`${fn}() = ${dfn.textContent.trim()}`, { pureSyntax: false });
       }
       else if (parent.nodeName === 'DT') {
         // Definition is in a <dt>, look for value in following <dd>
@@ -247,10 +254,10 @@ const extractValueSpaces = doc => {
         if (code) {
           if (code.textContent.startsWith(`${text} = `) ||
               code.textContent.startsWith(`<${text}> = `)) {
-            parseProductionRule(code.textContent);
+            parseProductionRule(code.textContent, { pureSyntax: true });
           }
           else {
-            parseProductionRule(`${text} = ${code.textContent}`);
+            parseProductionRule(`${text} = ${code.textContent}`, { pureSyntax: false });
           }
         }
         else {
@@ -306,7 +313,10 @@ const extractValueSpaces = doc => {
     .map(val => val.replace(/\/\*[^]*?\*\//gm, ''))  // Drop comments
     .map(val => val.split(/\n(?=[^\n]*\s?=\s)/m))    // Separate definitions
     .flat()
-    .map(text => parseProductionRule(text));
+    .map(text => parseProductionRule(text, { pureSyntax: true }));
+
+  // Don't keep the info 
+  Object.values(res).map(value => delete value.pureSyntax);
 
   return res;
 }

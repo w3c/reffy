@@ -431,6 +431,24 @@ that spans multiple lines */
       }
     }
   },
+
+  {
+    title: "parses syntax value preferably",
+    html: `<div>
+      <p>
+        <dfn data-dfn-type="function" data-lt="&lt;toto()>">&lt;toto(A)></dfn> is a super function.</dfn>
+      </p>
+      <pre class="prod"><code>
+        &lt;toto()> = toto( &lt;integer> )
+      </code></pre>`,
+    propertyName: "valuespaces",
+    css: {
+      "<toto()>": {
+        prose: "<toto(A)> is a super function.",
+        value: "toto( <integer> )"
+      }
+    }
+  },
 ];
 
 describe("Test CSS properties extraction", function() {
