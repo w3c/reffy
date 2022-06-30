@@ -126,12 +126,8 @@ export default function (spec) {
         hasStructuredData = true;
         // Format used e.g. in uievents
         const eventName = table.querySelector("tbody tr:first-child td:nth-child(2)")?.textContent.trim();
-        let iface = table.querySelector("tbody tr:nth-child(2) td:nth-child(2)")?.textContent.trim();
+        let iface = table.querySelector("tbody tr:nth-child(2) td:nth-child(2) a")?.textContent.trim();
         let bubbles = table.querySelector("tbody tr:nth-child(4) td:nth-child(2)")?.textContent?.trim() === "Yes";
-        // Prose description, we skip it
-        if (iface?.match(/\s/)) {
-          iface = null;
-        }
         let targets = table.querySelector("tbody tr:nth-child(5) td:nth-child(2)")?.textContent?.split(",")?.map(t => t.trim());
         if (targets && targets.find(t => t.match(/\s/))) {
           // Prose description, skip it
