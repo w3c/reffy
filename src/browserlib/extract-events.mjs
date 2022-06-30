@@ -310,20 +310,37 @@ export default function (spec) {
     };
     // CSS Animations & Transitions uses dt/dd to describe events
     // and uses a ul in the dd to describe bubbling behavior
-    let bubbles;
+    let bubbles, iface;
     if (container.tagName === "DT") {
       const bubbleItem = [...container.nextElementSibling.querySelectorAll("li")]
         .find(li => li.textContent.startsWith("Bubbles:"));
       if (bubbleItem) {
         bubbles = !!bubbleItem.textContent.match(/yes/i);
       }
+      // CSS Animation & Transitions document the event in the heading
+      // of the section where the definitions are located
+      let currentEl = container.parentNode;
+      while(currentEl) {
+	if (currentEl.tagName.match(/^H[1-6]$/)) {
+	  break;
+	}
+	currentEl = currentEl.previousElementSibling;
+      }
+      const interfaceEl = currentEl.querySelector("code");
+      if (interfaceEl?.textContent?.match(/^[A-Z][a-z]+Event$/)) {
+	iface = interfaceEl.textContent;
+      }
     }
     const ev = events.find(e => isSameEvent(event, e));
     if (!ev) {
+      if (iface) {
+	event.interface = iface;
+      }
       event.bubbles = bubbles;
       events.push(event);
       console.error(`[reffy] No interface hint found for event definition ${event.type} in ${spec.title}`);
     } else {
+      ev.interface = iface;
       if (bubbles !== undefined) {
         ev.bubbles = bubbles;
       }
