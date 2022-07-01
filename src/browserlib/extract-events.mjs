@@ -326,7 +326,7 @@ export default function (spec) {
 	}
 	currentEl = currentEl.previousElementSibling;
       }
-      const interfaceEl = currentEl.querySelector("code");
+      const interfaceEl = currentEl?.querySelector("code");
       if (interfaceEl?.textContent?.match(/^[A-Z][a-z]+Event$/)) {
 	iface = interfaceEl.textContent;
       }
@@ -338,9 +338,13 @@ export default function (spec) {
       }
       event.bubbles = bubbles;
       events.push(event);
-      console.error(`[reffy] No interface hint found for event definition ${event.type} in ${spec.title}`);
+      if (!iface) {
+        console.error(`[reffy] No interface hint found for event definition ${event.type} in ${spec.title}`);
+      }
     } else {
-      ev.interface = iface;
+      if (iface) {
+        ev.interface = iface;
+      }
       if (bubbles !== undefined) {
         ev.bubbles = bubbles;
       }
