@@ -204,10 +204,9 @@ export default function (spec) {
           return;
         } else {
           event.type = name;
-          // looking preferably for a or dfn elements, falling back to code
-          const eventEl =
-            [...container.querySelectorAll("a,dfn")].find(n => n.textContent.trim() === event.type) ||
-            [...container.querySelectorAll("code")].find(n => n.textContent.trim() === event.type);
+          // looking at the element following the link
+	  // if its content match the name of the event
+	  const eventEl = a.nextElementSibling?.textContent?.trim() === event.type ? a.nextElementSibling : null;
           if (eventEl) {
             if (eventEl.tagName === "A" && eventEl.getAttribute("href")) {
               // If the event being fired is from another spec, let's skip it
