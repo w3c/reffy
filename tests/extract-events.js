@@ -154,7 +154,8 @@ ${defaultIdl}`,
 	type: "success",
 	interface: "SuccessEvent",
 	src: { format: "summary table", href:"https://example.org/indices.html#success"},
-	href:"https://example.org/indices.html#success"
+	href:"https://example.org/indices.html#success",
+	isExtension: true
       }
     ]
   }
@@ -182,7 +183,7 @@ describe("Events extraction", function () {
   tests.forEach(t => {
     it(t.title, async () => {
       const page = await browser.newPage();
-      const pageContent = t.html + "<script>let spec = '" + (t.spec || "example") + "';</script>";
+      const pageContent = t.html + "<script>let spec = {shortname: '" + (t.spec || "example") + "', crawled: {url: 'about:blank'}};</script>";
       page.setContent(pageContent);
       await page.addScriptTag({ content: extractEventsCode });
 

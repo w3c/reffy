@@ -89,13 +89,6 @@ export default function (spec) {
           annotations.forEach(n => n.remove());
 
           let el = eventEl.querySelector("dfn,a");
-          if (el?.tagName === "A" && el?.getAttribute("href")?.startsWith("https:")) {
-            // we skip when we hit a link pointing to an external spec
-            // (this is needed since the HTML spec table includes
-            // links to pointer events)
-            eventEl.replaceWith(origEventEl);
-            return;
-          }
           if (!el) {
             el = eventEl.querySelector("code");
           }
@@ -202,13 +195,10 @@ export default function (spec) {
           event.type = name;
           // looking at the element following the link
 	  // if its content match the name of the event
-	  const eventEl = a.nextElementSibling?.textContent?.trim() === event.type ? a.nextElementSibling : null;
+	  const eventEl = a.nextElementSibling?.textContent?.trim() === event.type ? a.nextElementSibling.querySelector("a,dfn") || a.nextElementSibling : null;
           if (eventEl) {
             if (eventEl.tagName === "A" && eventEl.getAttribute("href")) {
-              // If the event being fired is from another spec, let's skip it
-              if (eventEl.getAttribute("href").startsWith("https://")) return;
-
-              // otherwise, use the target of the link as our href
+              // use the target of the link as our href
               event.href = eventEl.href;
             } else if (eventEl.tagName === "DFN" && eventEl.id) {
               eventEl.href = href(eventEl);
@@ -345,5 +335,5 @@ export default function (spec) {
       }
     }
   });
-  return events;
+  return events.map(e => e.href && !e.href.startsWith(spec.crawled.url) ? Object.assign(e, {isExtension: true}) : e) ;
 }
