@@ -29,6 +29,18 @@ export default function () {
 
 
 /**
+ * Normalize value definitions extracted from specs
+ *
+ * In particular, replace minus characters that may appear in values:
+ * https://github.com/tabatkins/bikeshed/issues/2308
+ *
+ * @param {String} value Value to normalize
+ * @return {String} Normalized value
+ */
+const normalize = value => value.trim().replace(/\s+/g, ' ').replace(/−/g, '-');
+
+
+/**
  * Converts a definition label as it appears in a CSS spec to a lower camel
  * case property name.
  *
@@ -58,7 +70,7 @@ const extractTableDfn = table => {
       annotations.forEach(n => n.remove());
       return {
         name: dfnLabel2Property(cleanedLine.querySelector(':first-child').textContent),
-        value: cleanedLine.querySelector('td:last-child').textContent.trim().replace(/\s+/g, ' ')
+        value: normalize(cleanedLine.querySelector('td:last-child').textContent)
       };
     });
   for (let prop of lines) {
@@ -79,7 +91,7 @@ const extractDlDfn = dl => {
   const lines = [...dl.querySelectorAll('dd table tr')]
     .map(line => Object.assign({
       name: dfnLabel2Property(line.querySelector(':first-child').textContent),
-      value: line.querySelector('td:last-child').textContent.trim().replace(/\s+/g, ' ')
+      value: normalize(line.querySelector('td:last-child').textContent)
     }));
   for (let prop of lines) {
     res[prop.name] = prop.value;
@@ -116,10 +128,10 @@ const mergeDfns = (dfn1, dfn2) => {
 
   const merged = Object.assign(baseDfn);
   if (merged.value) {
-    merged.value += ` | ${partialDfn.newValues}`;
+    merged.value += ` | ${normalize(partialDfn.newValues)}`;
   }
   else {
-    merged.newValues += ` | ${partialDfn.newValues}`;
+    merged.newValues += ` | ${normalize(partialDfn.newValues)}`;
   }
 
   return merged;
@@ -207,7 +219,7 @@ const extractValueSpaces = doc => {
         res[name] = {};
       }
       if (!res[name].value || (pureSyntax && !res[name].pureSyntax)) {
-        res[name].value = nameAndValue[1];
+        res[name].value = normalize(nameAndValue[1]);
         res[name].pureSyntax = pureSyntax;
       }
     }
@@ -315,7 +327,7 @@ const extractValueSpaces = doc => {
     .flat()
     .map(text => parseProductionRule(text, { pureSyntax: true }));
 
-  // Don't keep the info 
+  // Don't keep the info on whether value comes from a pure syntax section
   Object.values(res).map(value => delete value.pureSyntax);
 
   return res;
