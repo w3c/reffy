@@ -75,7 +75,10 @@ export default function (spec) {
         const bubblingInfoColumn = [...table.querySelectorAll("thead th")]
           .findIndex(n => n.textContent.trim().match(/^bubbl/i));
         const interfaceColumn = [...table.querySelectorAll("thead th")]
-          .findIndex(n => n.textContent.trim().match(/^interface/i));
+          .findIndex(n => n.textContent.trim().match(/^(dom )?interface/i));
+        const targetsColumn = [...table.querySelectorAll("thead th")]
+          .findIndex(n => n.textContent.trim().match(/target/i));
+
         table.querySelectorAll("tbody tr").forEach(tr => {
           const event = {};
           // clean up possible MDN annotations
@@ -119,26 +122,12 @@ export default function (spec) {
               tr.querySelector(`td:nth-child(${interfaceColumn + 1}) a`)?.textContent ??
               tr.querySelector(`td:nth-child(${interfaceColumn + 1}) code`)?.textContent;
           }
+	  if (targetsColumn >= 0 && !event.targets) {
+	    event.targets = tr.querySelector(`td:nth-child(${targetsColumn + 1})`)?.textContent?.split(',').map(t => t.trim());
+	  }
           events.push(event);
           eventEl.replaceWith(origEventEl);
         });
-      } else if (table.className === "event-definition") {
-        hasStructuredData = true;
-        // Format used e.g. in uievents
-        const eventName = table.querySelector("tbody tr:first-child td:nth-child(2)")?.textContent.trim();
-        let iface = table.querySelector("tbody tr:nth-child(2) td:nth-child(2) a")?.textContent.trim();
-        let bubbles = table.querySelector("tbody tr:nth-child(4) td:nth-child(2)")?.textContent?.trim() === "Yes";
-        let targets = table.querySelector("tbody tr:nth-child(5) td:nth-child(2)")?.textContent?.split(",")?.map(t => t.trim());
-        if (targets && targets.find(t => t.match(/\s/))) {
-          // Prose description, skip it
-          targets = null;
-        }
-        if (eventName) {
-          events.push({
-            type: eventName, interface: iface, targets, bubbles,
-            src: { format: "definition table", href: href(table.closest('*[id]')) },
-            href: href(table.closest('*[id]')) });
-        }
       } else if (table.className === "def") {
         // Used in https://drafts.csswg.org/css-nav-1/
         const rowHeadings = [...table.querySelectorAll("tbody th")];
