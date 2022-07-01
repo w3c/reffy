@@ -91,6 +91,21 @@ ${defaultIdl}`,
     res: defaultResults("css definition table")
   },
   {
+    title: "extracts events from an event described by a CSS dl list",
+    html: `<h3>Types of <code>ErrorEvent</code></h3>
+<dl>
+<dt><dfn data-dfn-for=Example data-dfn-type=event id=success>success</dfn></dt>
+<dd><ul>
+<li>Bubbles: Yes</li>
+</ul></dd>
+<dt><dfn data-dfn-for=Example data-dfn-type=event id=error>error</dfn></dt>
+<dd><ul>
+<li>Bubbles: No</li>
+</ul></dd>
+`,
+    res: defaultResults("dfn", {successIface: "ErrorEvent"})
+  },
+  {
     title: "extracts events from an event mentioned in a 'Fire an event' context, completed by an IDL fragment",
     html: `<p id=success><a href='https://dom.spec.whatwg.org/#concept-event-fire'>Fire an event</a> named <code>success</code> using <a href=''>SuccessEvent</a> with the <code>bubbles</code> attribute initialized to <code>true</code></p>
 <p id=error><a href='https://dom.spec.whatwg.org/#concept-event-fire'>Fire an event</a> named <code>error</code> using <a href=''>ErrorEvent</a> with the <code>bubbles</code> attribute initialized to <code>false</code></p>${defaultIdl}`,
