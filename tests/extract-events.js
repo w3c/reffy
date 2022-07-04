@@ -47,31 +47,6 @@ const tests = [
     res: defaultResults("summary table")
   },
   {
-    title: "extracts events from an event described by a  table with data spread across rows",
-    html: `
-<section>
-<h3><code>success</code> Event</h3>
-<table class="event-definition" id='success'>
-<tbody>
-<tr><th>Type</th><td><code>success</code></td>
-<tr><th>Interface</th><td><a><code>SuccessEvent</code></a></td>
-<tr><th>Stuff</th><td></td>
-<tr><th>Bubbles</th><td><code>Yes</code></td>
-<tr><th>Targets</th><td><code>Example</code></td>
-</section>
-<section>
-<h3><code>error</code> Event</h3>
-<table class="event-definition" id=error>
-<tbody>
-<tr><th>Type</th><td><code>error</code></td>
-<tr><th>Interface</th><td><a><code>ErrorEvent</code></a></td>
-<tr><th>Stuff</th><td></td>
-<tr><th>Bubbles</th><td><code>No</code></td>
-<tr><th>Targets</th><td><code>Example</code></td>
-</section>`,
-    res: defaultResults("definition table")
-  },
-  {
     title: "extracts events from an event described by a CSS def table with data spread across rows, completed by an IDL fragment",
     html: `<h3><code>success</code> Event</h3>
 <table class="def" id='success'>
