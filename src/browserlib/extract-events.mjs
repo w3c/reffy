@@ -211,7 +211,7 @@ export default function (spec) {
               // otherwise, use the target of the link as our href
               event.href = eventEl.href;
             } else if (eventEl.tagName === "DFN" && eventEl.id) {
-              eventEl.href = href(eventEl);
+              event.href = href(eventEl);
             }
             event.targets = fromEventElementToTargetInterfaces(eventEl);
           }
