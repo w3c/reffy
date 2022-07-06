@@ -145,17 +145,34 @@ export default function (spec) {
   }
   // Look for the DOM-suggested sentence "Fire an event named X"
   // or the Service Worker extension of "fire (a) functional event named"
-  [...document.querySelectorAll("a")]
-    .filter(a => !a.closest(informativeSelector) &&
-        (a.href === "https://dom.spec.whatwg.org/#concept-event-fire" ||
+  const isFiringLink = a => a.href === "https://dom.spec.whatwg.org/#concept-event-fire" ||
           a.href === "https://w3c.github.io/ServiceWorker/#fire-functional-event" ||
           a.href === "https://www.w3.org/TR/service-workers-1/#fire-functional-event-algorithm" ||
           a.href === "https://www.w3.org/TR/service-workers-1/#fire-functional-event" ||
-          a.href === "https://w3c.github.io/pointerevents/#dfn-fire-a-pointer-event"))
+        a.href === "https://w3c.github.io/pointerevents/#dfn-fire-a-pointer-event";
+  [...document.querySelectorAll("a")]
+    .filter(a => !a.closest(informativeSelector) && isFiringLink(a))
     .forEach(a => {
       const container = a.parentNode;
+      // There can be multiple "fire an event" links in a container
+      // limiting our text parsing to content in between two such links
+      // (or the end of the container if there is only one such link)
+      const range = document.createRange();
+      range.selectNode(container);
+      range.setStart(a, 0);
+
+      let nextFiringLink, curEl = a;
+      while ((curEl = curEl.nextElementSibling)) {
+        if (curEl.tagName === "A" && isFiringLink(curEl)) {
+          nextFiringLink = curEl;
+        }
+      }
+      if (nextFiringLink) {
+        range.setEndBefore(nextFiringLink);
+      }
+      const parsedText = range.toString();
       let phrasing;
-      let m = container.textContent.match(/fir(e|ing)\s+a(n|\s+pointer)\s+event\s+named\s+"?(?<eventName>[a-z]+)/i);
+      let m = parsedText.match(/fir(e|ing)\s+a(n|\s+pointer)\s+event\s+named\s+"?(?<eventName>[a-z]+)/i);
       if (m) {
         if (m[2] === "n") {
           phrasing = "fire an event";
@@ -163,7 +180,7 @@ export default function (spec) {
           phrasing = "fire a pointer event";
         }
       } else {
-        m = container.textContent.match(/fir(e|ing)\sa?\s*functional\s+event\s+(named\s+)?"?(?<eventName>[a-z]+)/i);
+        m = parsedText.match(/fir(e|ing)\sa?\s*functional\s+event\s+(named\s+)?"?(?<eventName>[a-z]+)/i);
         if (m) {
           phrasing = "fire functional event";
         }
@@ -201,10 +218,14 @@ export default function (spec) {
           }
         }
         if (!event.interface) {
-          const iface = [...container.querySelectorAll("a[href]")]
-            .find(n => n.textContent.match(/^([A-Z]+[a-z0-9]*)+Event$/));
+          let curEl = a, iface;
+          while ((curEl = curEl.nextElementSibling)) {
+            if (curEl.textContent.match(/^([A-Z]+[a-z0-9]*)+Event$/)) {
+              iface = curEl.textContent.trim();
+            }
+          }
           if (iface) {
-            event.interface = iface.textContent.trim();
+            event.interface = iface;
           } else {
             // Fire an event ⇒ Event interface
             if (phrasing === "fire an event") {
@@ -219,15 +240,15 @@ export default function (spec) {
           }
         }
         if (event.bubbles === undefined) {
-          if (container.textContent.match(/bubbles attribute/)) {
-            if (container.textContent.match(/true/)) {
+          if (parsedText.match(/bubbles attribute/)) {
+            if (parsedText.match(/true/)) {
               event.bubbles = true;
-            } else if (container.textContent.match(/false/)) {
+            } else if (parsedText.match(/false/)) {
               event.bubbles = false;
             }
-          } else if (container.textContent.match(/bubbles/) || container.textContent.match(/bubbling/)) {
+          } else if (parsedText.match(/bubbles/) || parsedText.match(/bubbling/)) {
             event.bubbles = true;
-          } else if (container.textContent.match(/not bubble/)) {
+          } else if (parsedText.match(/not bubble/)) {
             event.bubbles = false;
           }
         }

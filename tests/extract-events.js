@@ -133,6 +133,30 @@ ${defaultIdl}`,
 	isExtension: true
       }
     ]
+  },
+  {
+    title: "Extract multiple events fired from a single container element",
+    html: `<p id='multievents'>If there is an error, <a href='https://dom.spec.whatwg.org/#concept-event-fire'>fire an event</a> named <dfn id='error'>error</dfn> using <a href=''>ErrorEvent</a>, otherwise <a href='https://dom.spec.whatwg.org/#concept-event-fire'>fire an event</a> named <dfn id=success>success</dfn> using <a href=''>Event</a></p>`,
+    res: [
+      {
+        "href": "about:blank#error",
+        "interface": "ErrorEvent",
+        "src": {
+          "format": "fire an event phrasing",
+          "href": "about:blank#multievents"
+        },
+        "type": "error"
+      },
+      {
+        "href": "about:blank#success",
+        "interface": "Event",
+        "src": {
+          "format": "fire an event phrasing",
+          "href": "about:blank#multievents"
+        },
+        "type": "success"
+      }
+    ]
   }
 ];
 
