@@ -325,6 +325,7 @@ const extractValueSpaces = doc => {
     .map(val => val.replace(/\/\*[^]*?\*\//gm, ''))  // Drop comments
     .map(val => val.split(/\n(?=[^\n]*\s?=\s)/m))    // Separate definitions
     .flat()
+    .filter(text => text.match(/\s?=\s/))
     .map(text => parseProductionRule(text, { pureSyntax: true }));
 
   // Don't keep the info on whether value comes from a pure syntax section
