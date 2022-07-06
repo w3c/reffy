@@ -102,7 +102,12 @@ export default function (spec) {
           if (el.tagName === "DFN" && el.id) {
             event.href = href(el);
           } else if (el.tagName === "A") {
-            event.href = href(document.getElementById(el.getAttribute("href").slice(1)));
+	    if (!el.getAttribute("href").startsWith("https://")) {
+	      const url = new URL(el.href);
+              event.href = href(document.getElementById(url.hash.slice(1)));
+	    } else {
+	      event.href = el.href;
+	    }
           }
           event.src = { format: "summary table", href: href(el.closest('*[id]')) };
           event.type = eventEl.textContent.trim();
