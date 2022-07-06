@@ -345,6 +345,9 @@ export default function (spec) {
       if (iface) {
         ev.interface = iface;
       }
+      if (!ev.href && event.href) {
+	ev.href = event.href;
+      }
       if (bubbles !== undefined) {
         ev.bubbles = bubbles;
       }
