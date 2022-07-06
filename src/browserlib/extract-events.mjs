@@ -227,6 +227,7 @@ export default function (spec) {
           while ((curEl = curEl.nextElementSibling)) {
             if (curEl.textContent.match(/^([A-Z]+[a-z0-9]*)+Event$/)) {
               iface = curEl.textContent.trim();
+	      break;
             }
           }
           if (iface) {
