@@ -24,7 +24,7 @@
   },
   {
     "href": "./extract-events.mjs",
-    "property": "events"
+    "property": "spec-events"
   },
   {
     "href": "./extract-webidl.mjs",
