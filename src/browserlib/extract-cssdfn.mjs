@@ -225,6 +225,12 @@ const extractValueSpaces = doc => {
     }
   };
 
+  // Regular expression to use to split production rules:
+  // Split on the space that precedes a term immediately before an equal sign
+  // that is not wrapped in quotes (an equal sign wrapped in quotes is part of
+  // actual value syntax)
+  const reSplitRules = /\s(?=[^\s]+?\s*?=[^'])/;
+
   // Extract all dfns with data-dfn-type="type" or data-dfn-type="function"
   // but ignore definitions in <pre> as they do not always use dfns, as in
   // https://drafts.csswg.org/css-values-4/#calc-syntax
@@ -246,7 +252,15 @@ const extractValueSpaces = doc => {
       const text = parent.textContent.trim();
       if (text.match(/\s?=\s/)) {
         // Definition appears in a "prod = foo" text, that's all good
-        parseProductionRule(text, { pureSyntax: true });
+        // ... except in css-easing-2 draft where text also contains another
+        // production rule as a child of the first one:
+        // https://drafts.csswg.org/css-easing-2/#typedef-step-easing-function
+        const prod = text.split(reSplitRules)
+            .find(p => p.trim().startsWith(dfn.textContent.trim()));
+        if (!prod) {
+          throw new Error(`Production rule for ${dfn.textContent.trim()} found has unexpected format`);
+        }
+        parseProductionRule(prod, { pureSyntax: true });
       }
       else if (dfn.textContent.trim().match(/^[a-zA-Z_][a-zA-Z0-9_\-]+\([^\)]+\)$/)) {
         // Definition is "prod(foo bar)", create a "prod() = prod(foo bar)" entry
@@ -323,7 +337,7 @@ const extractValueSpaces = doc => {
     })
     .map(el => el.textContent)
     .map(val => val.replace(/\/\*[^]*?\*\//gm, ''))  // Drop comments
-    .map(val => val.split(/\n(?=[^\n]*\s?=\s)/m))    // Separate definitions
+    .map(val => val.split(reSplitRules))             // Separate definitions
     .flat()
     .filter(text => text.match(/\s?=\s/))
     .map(text => parseProductionRule(text, { pureSyntax: true }));
