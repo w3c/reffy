@@ -449,6 +449,56 @@ that spans multiple lines */
       }
     }
   },
+
+  {
+    title: "sorts out multiple production rules in prose",
+    html: `<div class="prod">
+        <dfn data-dfn-type="type">
+          &lt;step-easing-function&gt;
+        </dfn> = step-start | step-end | steps(&lt;integer&gt;[, &lt;step-position&gt;]?)
+        <p><dfn data-dfn-type="type">
+          &lt;step-position&gt;</dfn> = jump-start | jump-end | jump-none | jump-both | start | end
+        </p>
+      </div>
+      <div class="prod">
+        <dfn data-dfn-type="type">&lt;same-level&gt;</dfn> = &lt;other-at-same-level&gt;
+        <br/>
+        <dfn data-dfn-type="type">&lt;other-at-same-level&gt;</dfn> = foo`,
+    propertyName: "valuespaces",
+    css: {
+      "<step-easing-function>": {
+        value: "step-start | step-end | steps(<integer>[, <step-position>]?)"
+      },
+      "<step-position>": {
+        value: "jump-start | jump-end | jump-none | jump-both | start | end"
+      },
+      "<same-level>": {
+        value: "<other-at-same-level>"
+      },
+      "<other-at-same-level>": {
+        value: "foo"
+      }
+    }
+  },
+
+  {
+    title: "detects equal signs that are not production rules",
+    html: `<div class="prod">
+        <dfn data-dfn-type="type">&lt;equal&gt;</dfn>
+          = equal | '='
+        <br/>
+        <dfn data-dfn-type="type">&lt;also-equal&gt;</dfn> = '=' | equal
+      </div>`,
+    propertyName: "valuespaces",
+    css: {
+      "<equal>": {
+        value: "equal | '='"
+      },
+      "<also-equal>": {
+        value: "'=' | equal"
+      }
+    }
+  }
 ];
 
 describe("Test CSS properties extraction", function() {
