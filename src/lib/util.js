@@ -741,10 +741,10 @@ function isLatestLevelThatPasses(spec, list, predicate) {
         return true;
     }
     while (spec.seriesNext) {
+        spec = list.find(s => s.shortname === spec.seriesNext);
         if (!spec) {
             break;
         }
-        spec = list.find(s => s.shortname === spec.seriesNext);
         if ((spec.seriesComposition === 'full') && predicate(spec)) {
             return false;
         }

@@ -27,6 +27,7 @@ const specs = require('web-specs');
 const { version, engines } = require('./package.json');
 const { requireFromWorkingDirectory } = require('./src/lib/util');
 const { crawlSpecs } = require('./src/lib/specs-crawler');
+const { modules } = require('./src/lib/post-processor');
 
 // Warn if version of Node.js does not satisfy requirements
 if (engines && engines.node && !satisfies(process.version, engines.node)) {
@@ -63,25 +64,36 @@ function parseSpecOption(input) {
     }
 }
 
+function parsePostOption(input) {
+    if (input === 'core') {
+      return modules;
+    }
+    else {
+      return input;
+    }
+}
+
 
 const program = new commander.Command();
 program
     .version(version)
     .usage('[options]')
     .description('Crawls and processes a list of Web specifications')
+    .option('-c, --crawl <folder>', 'crawl result folder to use as input for post-processing')
     .option('-d, --debug', 'debug mode, crawl one spec at a time')
     .option('-f, --fallback <json>', 'fallback data to use when a spec crawl fails')
     .option('-m, --module <modules...>', 'spec processing modules')
     .option('-o, --output <folder>', 'existing folder/file where crawl results are to be saved')
+    .option('-p, --post <modules...>', 'post-processing modules')
     .option('-q, --quiet', 'do not report progress and other warnings to the console')
     .option('-r, --release', 'crawl release (TR) version of specs')
     .option('-s, --spec <specs...>', 'specs to crawl')
     .option('-t, --terse', 'output crawl results without metadata')
     .action(options => {
-        if (!(options.output || options.module || options.spec)) {
+        if (!(options.crawl || options.output || options.module || options.spec)) {
           console.error(`
-At least one of the --output, --module or --spec options needs to be specified.
-For usage notes, run:
+At least one of the --crawl, --output, --module or --spec options needs to be
+specified. For usage notes, run:
   reffy --help
 
 If you really want to crawl all specs, run all processing modules and report the
@@ -97,13 +109,17 @@ will dump ~100MB of data to the console:
             output: options.output,
             publishedVersion: options.release,
             quiet: options.quiet,
-            terse: options.terse
+            terse: options.terse,
+            crawl: options.crawl
         };
         if (options.module) {
             crawlOptions.modules = options.module.map(parseModuleOption);
         }
         if (options.spec) {
             crawlOptions.specs = options.spec.map(parseSpecOption).flat();
+        }
+        if (options.post) {
+            crawlOptions.post = options.post.map(parsePostOption).flat();
         }
 
         if (crawlOptions.terse && crawlOptions.output) {
@@ -145,6 +161,13 @@ Description:
   strongly recommended.
 
 Usage notes for some of the options:
+-c, --crawl <folder>
+  Tells Reffy to skip the crawl part and only run requested post-processing
+  modules on the crawl results present in the specified folder.
+
+  If post-processing modules are not specified, Reffy will merely copy the crawl
+  results to the output folder (or to the console).
+
 -f, --fallback <jsondata>
   Provides an existing JSON crawl data file to use as a source of fallback data
   for specs that fail to be crawled.
@@ -163,26 +186,22 @@ Usage notes for some of the options:
   Modules must be specified using a relative path to an ".mjs" file that defines
   the processing logic to run on the spec's page in a browser context. For
   instance:
-    $ reffy reports/test --module extract-editors.mjs
+    $ reffy --output reports/test --module extract-editors.mjs
 
   Absolute paths to modules are not properly handled and will likely result in a
   crawling error.
 
   Multiple modules can be specified, repeating the option name or not:
-    $ reffy reports/test -m extract-words.mjs extract-editors.mjs
-    $ reffy reports/test -m extract-words.mjs -m extract-editors.mjs
-
-  The option cannot appear before <folder>, unless you use "--" to flag the end
-  of the list:
-    $ reffy --module extract-editors.mjs -- reports/test
+    $ reffy -o reports/test -m extract-words.mjs extract-editors.mjs
+    $ reffy -o reports/test -m extract-words.mjs -m extract-editors.mjs
 
   Core processing modules may be referenced using the name of the extract folder
   or property that they would create:
-    $ reffy reports/test --module dfns
+    $ reffy --output reports/test --module dfns
 
   To run all core processing modules, use "core". For instance, to apply a
   processing module on top of core processing modules, use:
-    $ reffy reports/test --module core extract-editors.mjs
+    $ reffy --output reports/test --module core extract-editors.mjs
 
   Each module must export a function that takes a spec object as input and
   return a result that can be serialized as JSON. A typical module code looks
@@ -196,7 +215,7 @@ Usage notes for some of the options:
   The name of the folder where extracts get created may be specified for custom
   modules by prefixing the path to the module with the folder name followed by
   ":". For instance, to save extracts to "reports/test/editors", use:
-    $ reffy reports/test --module editors:extract-editors.mjs
+    $ reffy --output reports/test --module editors:extract-editors.mjs
 
 -o, --output <folder>
   By default, crawl results are written to the console as a serialized JSON
@@ -212,6 +231,33 @@ Usage notes for some of the options:
   "idlnames.json" that links to relevant extracts in subfolders.
 
   The folder targeted by <folder> must exist.
+
+-p, --post <modules...>
+  Post-processing modules either run after a spec is done crawling or after the
+  entire crawl is over. They allow developers to complete data based on other
+  extracts that were not available when extraction ran.
+
+  To run all core post-processing modules, use "core". Core post-processing
+  modules are defined in:
+    https://github.com/w3c/reffy/blob/main/src/postprocessing.js
+
+  The crawler does not run any post-processing modules by default.
+
+  Custom post-processing modules may be specified using a relative path to a
+  ".js" file that defines the post-processing logic. For instance:
+    $ reffy --output reports/test --post mypostprocessing.js
+
+  Each module must export a "run" function. See the post-processor's code for
+  details:
+    https://github.com/w3c/reffy/blob/main/src/lib/post-processor.js
+
+  Absolute paths to modules are not properly handled and will likely result in a
+  crawling error.
+
+  Multiple post-processing modules can be specified, repeating the option name
+  or not:
+    $ reffy -o reports/test -p cssdfns cssidl events
+    $ reffy -o reports/test -p events -p idlparsed -p idlnames
 
 -r, --release
   If the flag is not set, the crawler defaults to crawl nightly versions of the
@@ -230,7 +276,7 @@ Usage notes for some of the options:
 
   Use "all" to include all specs in browser-specs in the crawl. For instance, to
   crawl all specs plus one custom spec that does not exist in browser-specs:
-    $ reffy reports/test -s all https://example.org/myspec
+    $ reffy -o reports/test -s all https://example.org/myspec
 
 -t, --terse
   This flag cannot be combined with the --output option and cannot be set if

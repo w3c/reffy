@@ -14,16 +14,15 @@ const fs = require('fs');
 const path = require('path');
 const specs = require('web-specs');
 const cssDfnParser = require('./css-grammar-parser');
-const { generateIdlParsed, saveIdlParsed } = require('../cli/generate-idlparsed');
-const { generateIdlNames, saveIdlNames } = require('../cli/generate-idlnames');
+const postProcessor = require('./post-processor');
 const {
     completeWithAlternativeUrls,
     expandBrowserModules,
     expandCrawlResult,
     expandSpecResult,
-    getGeneratedIDLNamesByCSSProperty,
     isLatestLevelThatPasses,
     processSpecification,
+    requireFromWorkingDirectory,
     setupBrowser,
     teardownBrowser,
     createFolderIfNeeded
@@ -72,7 +71,8 @@ async function specOrFallback(spec, fallbackFolder, fallbackData) {
  */
 async function crawlSpec(spec, crawlOptions) {
     crawlOptions = crawlOptions || {};
-    spec.crawled = crawlOptions.publishedVersion ?
+
+    const urlToCrawl = crawlOptions.publishedVersion ?
         (spec.release ? spec.release : spec.nightly) :
         spec.nightly;
     const fallbackFolder = crawlOptions.fallback ?
@@ -88,95 +88,39 @@ async function crawlSpec(spec, crawlOptions) {
         if (crawlOptions.fallbackData?.crawler === `reffy-${reffyVersion}`) {
           cacheInfo = Object.assign({}, fallback?.crawlCacheInfo);
         }
-        const result = await processSpecification(
-            spec.crawled,
-            (spec, modules) => {
-                const idToHeading = modules.find(m => m.needsIdToHeadingMap) ?
-                    window.reffy.mapIdsToHeadings() : null;
-                const res = {
-                    crawled: window.location.toString()
-                };
-                modules.forEach(mod => {
-                    res[mod.property] = window.reffy[mod.name](spec, idToHeading);
-                });
-                return res;
-            },
-            [spec, crawlOptions.modules],
-            { quiet: crawlOptions.quiet,
-              forceLocalFetch: crawlOptions.forceLocalFetch,
-              ...cacheInfo}
-        );
-        if (result.status === "notmodified" && fallback) {
-          crawlOptions.quiet ?? console.warn(`skipping ${spec.url}, no change`);
-          const copy = Object.assign({}, fallback);
-          return expandSpecResult(copy, fallbackFolder);
+        let result = null;
+        if (crawlOptions.crawl) {
+            result = await expandSpecResult(spec, crawlOptions.crawl);
+        }
+        else {
+            result = await processSpecification(
+                urlToCrawl,
+                (spec, modules) => {
+                    const idToHeading = modules.find(m => m.needsIdToHeadingMap) ?
+                        window.reffy.mapIdsToHeadings() : null;
+                    const res = {
+                        crawled: window.location.toString()
+                    };
+                    modules.forEach(mod => {
+                        res[mod.property] = window.reffy[mod.name](spec, idToHeading);
+                    });
+                    return res;
+                },
+                [spec, crawlOptions.modules],
+                { quiet: crawlOptions.quiet,
+                  forceLocalFetch: crawlOptions.forceLocalFetch,
+                  ...cacheInfo}
+            );
+            if (result.status === "notmodified" && fallback) {
+              crawlOptions.quiet ?? console.warn(`skipping ${spec.url}, no change`);
+              const copy = Object.assign({}, fallback);
+              return expandSpecResult(copy, fallbackFolder);
+            }
         }
 
-        // Specific rule for IDL extracts:
-        // parse the extracted WebIdl content
-        await generateIdlParsed(result);
-
-        if (result.css) {
-            // Specific rule for CSS properties:
-            // Add CSS property definitions that weren't in a table
-            if (result.dfns) {
-                result.dfns
-                    .filter(dfn => dfn.type == "property" && !dfn.informative)
-                    .forEach(propDfn => {
-                        propDfn.linkingText.forEach(lt => {
-                            if (!result.css.properties.hasOwnProperty(lt)) {
-                                result.css.properties[lt] = {
-                                    name: lt
-                                };
-                            }
-                        });
-                    });
-            }
-
-            // Specific rule for CSS properties:
-            // Ideally, the sample definition (property-name) in CSS2 and the custom
-            // property definition (--*) in CSS Variables would not be flagged as
-            // real CSS properties. In practice, they are. Let's remove them from
-            // the extract.
-            ['property-name', '--*'].forEach(prop => {
-                if ((result.css.properties || {})[prop]) {
-                    delete result.css.properties[prop];
-                }
-            });
-
-            // Specific rule for CSS extracts:
-            // Parse extracted CSS definitions and add generated IDL attribute names
-            Object.entries(result.css.properties || {}).forEach(([prop, dfn]) => {
-                if (dfn.value || dfn.newValues) {
-                    try {
-                        dfn.parsedValue = cssDfnParser.parsePropDefValue(
-                            dfn.value || dfn.newValues);
-                    } catch (e) {
-                        dfn.valueParseError = e.message;
-                    }
-                }
-                dfn.styleDeclaration = getGeneratedIDLNamesByCSSProperty(prop);
-            });
-            Object.entries(result.css.descriptors || {}).forEach(([desc, dfn]) => {
-                if (dfn.value) {
-                    try {
-                        dfn.parsedValue = cssDfnParser.parsePropDefValue(
-                            dfn.value);
-                    } catch (e) {
-                        dfn.valueParseError = e.message;
-                    }
-                }
-            });
-            Object.entries(result.css.valuespaces || {}).forEach(([vs, dfn]) => {
-                if (dfn.value) {
-                    try {
-                        dfn.parsedValue = cssDfnParser.parsePropDefValue(
-                            dfn.value);
-                    } catch (e) {
-                        dfn.valueParseError = e.message;
-                    }
-                }
-            });
+        // Run post-processing modules at the spec level
+        for (const mod of (crawlOptions.post ?? [])) {
+            await postProcessor.run(mod, result, crawlOptions);
         }
 
         // Copy results back into initial spec object
@@ -187,9 +131,12 @@ async function crawlSpec(spec, crawlOptions) {
         crawlOptions.modules.forEach(mod => {
             if (result[mod.property]) {
                 spec[mod.property] = result[mod.property];
-                if (mod.property === 'idl') {
-                    spec.idlparsed = result.idlparsed;
-                }
+            }
+        });
+        crawlOptions.post?.forEach(mod => {
+            const prop = mod.property ?? mod.name;
+            if (result[prop]) {
+                spec[prop] = result[prop];
             }
         });
     }
@@ -236,12 +183,6 @@ async function saveSpecResults(spec, settings) {
             continue;
         }
         folders[mod.property] = await getSubfolder(mod.property);
-
-        // Specific rule for IDL:
-        // Raw IDL goes to "idl" subfolder, parsed IDL goes to "idlparsed"
-        if (mod.property === 'idl') {
-            folders.idlparsed = await getSubfolder('idlparsed');
-        }
     }
 
     function getBaseJSON(spec) {
@@ -301,9 +242,6 @@ async function saveSpecResults(spec, settings) {
     if (spec.idl) {
         spec.idl = await saveIdl(spec);
     }
-    if (spec.idlparsed) {
-        spec.idlparsed = await saveIdlParsed(spec, settings.output);
-    }
 
     // Save CSS dumps
     function defineCSSContent(spec) {
@@ -331,14 +269,16 @@ async function saveSpecResults(spec, settings) {
             (typeof thing == 'object') && (Object.keys(thing).length === 0);
     }
 
-    // Save all other extracts
+    // Save all other extracts from crawling modules
     const remainingModules = modules.filter(mod =>
         !mod.metadata && mod.property !== 'css' && mod.property !== 'idl');
     for (const mod of remainingModules) {
         await saveExtract(spec, mod.property, spec => !isEmpty(spec[mod.property]));
-        if (spec[mod.property] && typeof spec[mod.property] !== 'string') {
-            delete spec[mod.property];
-        }
+    }
+
+    // Save extracts from post-processing modules that run at the spec level
+    for (const mod of (settings.post ?? [])) {
+        await postProcessor.save(mod, spec, settings);
     }
 
     return spec;
@@ -372,10 +312,17 @@ async function crawlList(speclist, crawlOptions) {
         }
     }
 
-    // Prepare Puppeteer instance
-    await setupBrowser(crawlOptions.modules);
+    // Prepare Puppeteer instance unless we already have crawl results and
+    // we're only interested in post-processing
+    let list = null;
+    if (crawlOptions.crawl) {
+        list = speclist;
+    }
+    else {
+        await setupBrowser(crawlOptions.modules);
+        list = speclist.map(completeWithAlternativeUrls);
+    }
 
-    const list = speclist.map(completeWithAlternativeUrls);
     const listAndPromise = list.map(spec => {
         let resolve = null;
         let reject = null;
@@ -418,7 +365,9 @@ async function crawlList(speclist, crawlOptions) {
     const results = await Promise.all(listAndPromise.map(crawlSpecAndPromise));
 
     // Close Puppeteer instance
-    teardownBrowser();
+    if (!crawlOptions.crawl) {
+        teardownBrowser();
+    }
 
     return results;
 }
@@ -564,8 +513,12 @@ function crawlSpecs(options) {
         });
     }
 
-    const requestedList = options?.specs ?
-        prepareListOfSpecs(options.specs) :
+    const crawlIndex = options?.crawl ?
+        requireFromWorkingDirectory(options.crawl) :
+        null;
+
+    const requestedList = crawlIndex ? crawlIndex.results :
+        options?.specs ? prepareListOfSpecs(options.specs) :
         specs;
 
     // Make a shallow copy of passed options parameter and expand modules
@@ -579,9 +532,11 @@ function crawlSpecs(options) {
             for (const mod of options.modules) {
                 if (mod.extractsPerSeries) {
                     await adjustExtractsPerSeries(results, mod.property, options);
-                    if (mod.property === 'idl') {
-                        await adjustExtractsPerSeries(results, 'idlparsed', options);
-                    }
+                }
+            }
+            for (const mod of options.post ?? []) {
+                if (postProcessor.extractsPerSeries(mod)) {
+                    await adjustExtractsPerSeries(results, mod.property, options);
                 }
             }
             return results;
@@ -612,14 +567,21 @@ function crawlSpecs(options) {
             }
         })
         .then(async crawlIndex => {
-            // Generate IDL names extracts from IDL extracts
-            // (and dfns extracts to create links to definitions)
-            if (!options.output || !crawlIndex?.options?.modules?.find(mod => mod === 'idl')) {
-                return;
+            // Run post-processing modules at the crawl level
+            for (const mod of (options.post ?? [])) {
+                if (!postProcessor.appliesAtLevel(mod, 'crawl')) {
+                    continue;
+                }
+                const crawlResults = await expandCrawlResult(
+                    crawlIndex, options.output, postProcessor.dependsOn(mod));
+                const result = await postProcessor.run(mod, crawlResults, options);
+                await postProcessor.save(mod, result, options);
+
+                if (!options.output) {
+                    console.log();
+                    console.log(JSON.stringify(result, null, 2));
+                }
             }
-            const crawlResults = await expandCrawlResult(crawlIndex, options.output, ['idlparsed', 'dfns']);
-            const idlNames = generateIdlNames(crawlResults.results, options);
-            await saveIdlNames(idlNames, options.output);
         });
 }
 
