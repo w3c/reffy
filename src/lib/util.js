@@ -605,7 +605,7 @@ async function processSpecification(spec, processFunction, args, options) {
                 window.document.head.querySelector("script[src*='respec']");
 
             function sleep(ms) {
-                return new Promise(resolve => setTimeout(resolve, ms));
+                return new Promise(resolve => setTimeout(resolve, ms, 'slept'));
             }
 
             async function isReady(counter) {
@@ -614,7 +614,10 @@ async function processSpecification(spec, processFunction, args, options) {
                     throw new Error('Respec generation took too long');
                 }
                 if (window.document.respec?.ready) {
-                    await window.document.respec.ready;
+                    const res = await Promise.race([window.document.respec.ready, sleep(60000)]);
+                    if (res === 'slept') {
+                        throw new Error('Respec generation took too long');
+                    }
                 }
                 else if (usesRespec) {
                     await sleep(1000);
