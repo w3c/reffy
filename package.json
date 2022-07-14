@@ -1,6 +1,6 @@
 {
   "name": "reffy",
-  "version": "7.2.9",
+  "version": "7.2.10",
   "description": "W3C/WHATWG spec dependencies exploration companion. Features a short set of tools to study spec references as well as WebIDL term definitions and references found in W3C specifications.",
   "repository": {
     "type": "git",
@@ -34,7 +34,7 @@
     "abortcontroller-polyfill": "1.7.3",
     "commander": "9.3.0",
     "fetch-filecache-for-crawling": "4.1.0",
-    "puppeteer": "15.3.2",
+    "puppeteer": "15.4.0",
     "semver": "^7.3.5",
     "web-specs": "2.17.0",
     "webidl2": "24.2.2"
