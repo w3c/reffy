@@ -120,7 +120,7 @@ async function run(mod, crawlResult, options) {
   mod = getModule(mod);
 
   if (mod.input === 'crawl') {
-    if (crawlResult.shortname) {
+    if (crawlResult.crawled) {
       // Post-processing module runs at the crawl level and we received
       // a spec crawl result
       return;
@@ -131,7 +131,7 @@ async function run(mod, crawlResult, options) {
     // typically signals that the crawler was called with incompatible settings.
   }
   else {
-    if (!crawlResult.shortname) {
+    if (!crawlResult.crawled) {
       // Post-processing module runs at the spec level and we received
       // a full crawl result
       return;
