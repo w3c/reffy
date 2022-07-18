@@ -32,6 +32,8 @@ npm update -g reffy
 
 Reffy crawls requested specifications and runs a set of processing modules on the content fetched to create relevant extracts from each spec. Which specs get crawled, and which processing modules get run depend on how the crawler gets called. By default, the crawler crawls all specs defined in [browser-specs](https://github.com/w3c/browser-specs/) and runs all core processing modules defined in the [`browserlib`](https://github.com/w3c/reffy/tree/main/src/browserlib) folder.
 
+Reffy can also run post-processing modules on the results of the crawl to create additional views of the data extracted from the spec during the crawl.
+
 Crawl results will either be returned to the console or saved in individual files in a report folder when the `--output` parameter is set.
 
 Examples of information that can be extracted from the specs:
@@ -92,15 +94,6 @@ To create the WebIDL extract in the first place, you will need to run the `idl` 
 ```bash
 reffy --spec fetch --module idl > fetch.idl
 ```
-
-### Parsed WebIDL generator
-
-The **Parsed WebIDL generator** takes the results of a crawl as input and applies the WebIDL parser to all specs it contains to create JSON extracts in an `idlparsed` folder. To run the generator: `node src/cli/generate-idlparsed.js [crawl folder] [save folder]`
-
-
-### WebIDL names generator
-
-The **WebIDL names generator** takes the results of a crawl as input and creates a report per referenceable IDL name, that details the complete parsed IDL structure that defines the name across all specs. To run the generator: `node src/cli/generate-idlnames.js [crawl folder] [save folder]`
 
 
 ### Crawl results merger

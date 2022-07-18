@@ -182,7 +182,7 @@ describe("Events extraction", function () {
   tests.forEach(t => {
     it(t.title, async () => {
       const page = await browser.newPage();
-      const pageContent = t.html + "<script>let spec = {shortname: '" + (t.spec || "example") + "', crawled: {url: 'about:blank'}};</script>";
+      const pageContent = t.html + "<script>let spec = {shortname: '" + (t.spec || "example") + "', crawled: 'about:blank'};</script>";
       page.setContent(pageContent);
       await page.addScriptTag({ content: extractEventsCode });
 

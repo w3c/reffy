@@ -4,8 +4,6 @@ module.exports = {
   expandCrawlResult: require("./src/lib/util").expandCrawlResult,
   mergeCrawlResults: require("./src/lib/util").mergeCrawlResults,
   isLatestLevelThatPasses: require("./src/lib/util").isLatestLevelThatPasses,
-  generateIdlNames: require("./src/cli/generate-idlnames").generateIdlNames,
-  saveIdlNames: require("./src/cli/generate-idlnames").saveIdlNames,
-  generateIdlParsed: require("./src/cli/generate-idlparsed").generateIdlParsed,
-  saveIdlParsed: require("./src/cli/generate-idlparsed").saveIdlParsed
+  getTreeInfo: require("./src/lib/util").getTreeInfo,
+  postProcessor: require("./src/lib/post-processor")
 };

@@ -102,12 +102,12 @@ export default function (spec) {
           if (el.tagName === "DFN" && el.id) {
             event.href = href(el);
           } else if (el.tagName === "A") {
-	    if (!el.getAttribute("href").startsWith("https://")) {
-	      const url = new URL(el.href);
-              event.href = href(document.getElementById(url.hash.slice(1)));
-	    } else {
-	      event.href = el.href;
-	    }
+            if (!el.getAttribute("href").startsWith("https://")) {
+              const url = new URL(el.href);
+                    event.href = href(document.getElementById(url.hash.slice(1)));
+            } else {
+              event.href = el.href;
+            }
           }
           event.src = { format: "summary table", href: href(el.closest('*[id]')) };
           event.type = eventEl.textContent.trim();
@@ -120,9 +120,9 @@ export default function (spec) {
               tr.querySelector(`td:nth-child(${interfaceColumn + 1}) a`)?.textContent ??
               tr.querySelector(`td:nth-child(${interfaceColumn + 1}) code`)?.textContent;
           }
-	  if (targetsColumn >= 0 && !event.targets) {
-	    event.targets = tr.querySelector(`td:nth-child(${targetsColumn + 1})`)?.textContent?.split(',').map(t => t.trim());
-	  }
+          if (targetsColumn >= 0 && !event.targets) {
+            event.targets = tr.querySelector(`td:nth-child(${targetsColumn + 1})`)?.textContent?.split(',').map(t => t.trim());
+          }
           events.push(event);
           eventEl.replaceWith(origEventEl);
         });
@@ -205,8 +205,8 @@ export default function (spec) {
         } else {
           event.type = name;
           // looking at the element following the link
-	  // if its content match the name of the event
-	  const eventEl = a.nextElementSibling?.textContent?.trim() === event.type ? a.nextElementSibling.querySelector("a,dfn") || a.nextElementSibling : null;
+          // if its content match the name of the event
+          const eventEl = a.nextElementSibling?.textContent?.trim() === event.type ? a.nextElementSibling.querySelector("a,dfn") || a.nextElementSibling : null;
           if (eventEl) {
             if (eventEl.tagName === "A" && eventEl.getAttribute("href")) {
               // use the target of the link as our href
@@ -227,7 +227,7 @@ export default function (spec) {
           while ((curEl = curEl.nextElementSibling)) {
             if (curEl.textContent.match(/^([A-Z]+[a-z0-9]*)+Event$/)) {
               iface = curEl.textContent.trim();
-	      break;
+              break;
             }
           }
           if (iface) {
@@ -322,20 +322,20 @@ export default function (spec) {
       // of the section where the definitions are located
       let currentEl = container.parentNode;
       while(currentEl) {
-	if (currentEl.tagName.match(/^H[1-6]$/)) {
-	  break;
-	}
-	currentEl = currentEl.previousElementSibling;
+        if (currentEl.tagName.match(/^H[1-6]$/)) {
+          break;
+        }
+        currentEl = currentEl.previousElementSibling;
       }
       const interfaceEl = currentEl?.querySelector("code");
       if (interfaceEl?.textContent?.match(/^[A-Z][a-z]+Event$/)) {
-	iface = interfaceEl.textContent;
+        iface = interfaceEl.textContent;
       }
     }
     const ev = events.find(e => isSameEvent(event, e));
     if (!ev) {
       if (iface) {
-	event.interface = iface;
+        event.interface = iface;
       }
       event.bubbles = bubbles;
       events.push(event);
@@ -347,12 +347,12 @@ export default function (spec) {
         ev.interface = iface;
       }
       if (!ev.href && event.href) {
-	ev.href = event.href;
+        ev.href = event.href;
       }
       if (bubbles !== undefined) {
         ev.bubbles = bubbles;
       }
     }
   });
-  return events.map(e => e.href && !e.href.startsWith(spec.crawled.url) ? Object.assign(e, {isExtension: true}) : e) ;
+  return events.map(e => e.href && !e.href.startsWith(window.location.toString()) ? Object.assign(e, {isExtension: true}) : e) ;
 }
