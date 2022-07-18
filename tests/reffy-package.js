@@ -33,9 +33,9 @@ describe("The npm package of Reffy", function () {
 
   it("can crawl specs", async () => {
     const clidir = path.join(tmpdir, 'node_modules', 'reffy', 'src', 'lib');
-    const { crawlList } = require(path.join(clidir, 'specs-crawler'));
+    const { crawlSpecs } = require(path.join(clidir, 'specs-crawler'));
     const refResults = JSON.parse(fs.readFileSync(__dirname + "/crawl-test.json", "utf-8"));
-    const results = await crawlList(specs, { forceLocalFetch: true });
+    const results = await crawlSpecs(specs, { forceLocalFetch: true });
     for (const result of results) {
       if (result?.ids?.length) {
         result.ids = result.ids.filter(id => !id.match(/\#respec\-/));
