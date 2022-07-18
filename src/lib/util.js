@@ -973,7 +973,7 @@ const trees = {
  *   root). The object is null if the interface cannot be associated with a
  *   tree.
  */
-function getTreeInfo(iface, interfaces) {
+function getInterfaceTreeInfo(iface, interfaces) {
   while (iface) {
     for (const [tree, nodes] of Object.entries(trees)) {
       if (nodes.includes(iface)) {
@@ -1003,5 +1003,5 @@ module.exports = {
     expandSpecResult,
     getGeneratedIDLNamesByCSSProperty,
     createFolderIfNeeded,
-    getTreeInfo
+    getInterfaceTreeInfo
 };

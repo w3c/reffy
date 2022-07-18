@@ -89,8 +89,8 @@ async function crawlSpec(spec, crawlOptions) {
           cacheInfo = Object.assign({}, fallback?.crawlCacheInfo);
         }
         let result = null;
-        if (crawlOptions.crawl) {
-            result = await expandSpecResult(spec, crawlOptions.crawl);
+        if (crawlOptions.useCrawl) {
+            result = await expandSpecResult(spec, crawlOptions.useCrawl);
         }
         else {
             result = await processSpecification(
@@ -315,7 +315,7 @@ async function crawlList(speclist, crawlOptions) {
     // Prepare Puppeteer instance unless we already have crawl results and
     // we're only interested in post-processing
     let list = null;
-    if (crawlOptions.crawl) {
+    if (crawlOptions.useCrawl) {
         list = speclist;
     }
     else {
@@ -365,7 +365,7 @@ async function crawlList(speclist, crawlOptions) {
     const results = await Promise.all(listAndPromise.map(crawlSpecAndPromise));
 
     // Close Puppeteer instance
-    if (!crawlOptions.crawl) {
+    if (!crawlOptions.useCrawl) {
         teardownBrowser();
     }
 
@@ -513,8 +513,8 @@ function crawlSpecs(options) {
         });
     }
 
-    const crawlIndex = options?.crawl ?
-        requireFromWorkingDirectory(options.crawl) :
+    const crawlIndex = options?.useCrawl ?
+        requireFromWorkingDirectory(options.useCrawl) :
         null;
 
     const requestedList = crawlIndex ? crawlIndex.results :

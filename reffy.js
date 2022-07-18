@@ -79,7 +79,6 @@ program
     .version(version)
     .usage('[options]')
     .description('Crawls and processes a list of Web specifications')
-    .option('-c, --crawl <folder>', 'crawl result folder to use as input for post-processing')
     .option('-d, --debug', 'debug mode, crawl one spec at a time')
     .option('-f, --fallback <json>', 'fallback data to use when a spec crawl fails')
     .option('-m, --module <modules...>', 'spec processing modules')
@@ -89,10 +88,11 @@ program
     .option('-r, --release', 'crawl release (TR) version of specs')
     .option('-s, --spec <specs...>', 'specs to crawl')
     .option('-t, --terse', 'output crawl results without metadata')
+    .option('-u, --use-crawl <folder>', 'use given crawl result folder as input for post-processing')
     .action(options => {
-        if (!(options.crawl || options.output || options.module || options.spec)) {
+        if (!(options.output || options.module || options.spec || options.useCrawl)) {
           console.error(`
-At least one of the --crawl, --output, --module or --spec options needs to be
+At least one of the --output, --module, --spec or --use-crawl options needs to be
 specified. For usage notes, run:
   reffy --help
 
@@ -110,7 +110,7 @@ will dump ~100MB of data to the console:
             publishedVersion: options.release,
             quiet: options.quiet,
             terse: options.terse,
-            crawl: options.crawl
+            useCrawl: options.useCrawl
         };
         if (options.module) {
             crawlOptions.modules = options.module.map(parseModuleOption);
@@ -161,13 +161,6 @@ Description:
   strongly recommended.
 
 Usage notes for some of the options:
--c, --crawl <folder>
-  Tells Reffy to skip the crawl part and only run requested post-processing
-  modules on the crawl results present in the specified folder.
-
-  If post-processing modules are not specified, Reffy will merely copy the crawl
-  results to the output folder (or to the console).
-
 -f, --fallback <jsondata>
   Provides an existing JSON crawl data file to use as a source of fallback data
   for specs that fail to be crawled.
@@ -252,7 +245,7 @@ Usage notes for some of the options:
     https://github.com/w3c/reffy/blob/main/src/lib/post-processor.js
 
   Absolute paths to modules are not properly handled and will likely result in a
-  crawling error.
+  processing error.
 
   Multiple post-processing modules can be specified, repeating the option name
   or not:
@@ -289,6 +282,13 @@ Usage notes for some of the options:
   and the processing module results are thus written to the console directly.
   For instance:
     $ reffy --spec fetch --module idl --terse
+
+-u, --use-crawl <folder>
+  Tells Reffy to skip the crawl part and only run requested post-processing
+  modules on the crawl results present in the specified folder.
+
+  If post-processing modules are not specified, Reffy will merely copy the crawl
+  results to the output folder (or to the console).
 `);
 
 program.parse(process.argv);

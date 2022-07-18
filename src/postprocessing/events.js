@@ -3,7 +3,7 @@
  * per event.
  */
 
-const { isLatestLevelThatPasses, getTreeInfo } = require('../lib/util');
+const { isLatestLevelThatPasses, getInterfaceTreeInfo } = require('../lib/util');
 
 module.exports = {
   dependsOn: ['spec-events'],
@@ -97,7 +97,7 @@ function setBubblingPerTarget(event, parsedInterfaces) {
   const detected = {};
   const treeInterfaces = [];
   for (let iface of event.targets) {
-    const treeInfo = getTreeInfo(iface, parsedInterfaces);
+    const treeInfo = getInterfaceTreeInfo(iface, parsedInterfaces);
     if (!treeInfo) {
       updatedTargets.push({target: iface});
       continue;
@@ -151,7 +151,7 @@ function deepestInterfaceInTree(targets, parsedInterfaces) {
   let deepestInTrees = {};
   let filteredTargets = [];
   for (let {target, bubbles} of targets) {
-    const treeInfo = getTreeInfo(target, parsedInterfaces);
+    const treeInfo = getInterfaceTreeInfo(target, parsedInterfaces);
     if (!treeInfo) { // Not in a tree, we keep it in
       filteredTargets.push({target});
       continue;
@@ -159,7 +159,7 @@ function deepestInterfaceInTree(targets, parsedInterfaces) {
     const { tree, depth } = treeInfo;
     const currentDeepest = deepestInTrees[tree]?.target;
     if (currentDeepest) {
-      const { depth: currentDeepestDepth } = getTreeInfo(currentDeepest, parsedInterfaces);
+      const { depth: currentDeepestDepth } = getInterfaceTreeInfo(currentDeepest, parsedInterfaces);
       if (depth > currentDeepestDepth) {
         deepestInTrees[tree] = {target, bubbles};
       }
