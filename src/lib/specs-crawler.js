@@ -589,5 +589,13 @@ function crawlSpecs(options) {
 /**************************************************
 Export methods for use as module
 **************************************************/
-module.exports.crawlList = crawlList;
-module.exports.crawlSpecs = crawlSpecs;
+// TODO: consider more alignment between the two crawl functions or
+// find more explicit names to distinguish between them:
+// - "crawlList" takes an explicit list of specs as input, does not run the
+// post-processor, and returns the results without saving them to files.
+// - "crawlSpecs" takes options as input, runs all steps and saves results
+// to files (or outputs the results to the console). It does not return
+// anything.
+module.exports.crawlSpecs = (...args) => Array.isArray(args[0]) ?
+    crawlList.apply(this, args) :
+    crawlSpecs.apply(this, args);

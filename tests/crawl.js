@@ -1,4 +1,4 @@
-const { crawlList, crawlSpecs } = require("../src/lib/specs-crawler");
+const { crawlSpecs } = require("../src/lib/specs-crawler");
 const nock = require('../src/lib/nock-server');
 const fs = require("fs");
 const path = require("path");
@@ -13,7 +13,7 @@ const specs = [
 ];
 
 async function crawl() {
-  const results = await crawlList(specs, { forceLocalFetch: true });
+  const results = await crawlSpecs(specs, { forceLocalFetch: true });
   // to avoid reporting bogus diff on updated date
   results.forEach(s => delete s.date);
   return results;
@@ -56,7 +56,7 @@ if (global.describe && describe instanceof Function) {
 
     it("supports 'file' URLs", async () => {
       const fileurl = (new URL('crawl-spec.html', `file://${__dirname}/`)).href;
-      const results = await crawlList([{
+      const results = await crawlSpecs([{
         url: fileurl,
         nightly: { url: fileurl }
       }], { forceLocalFetch: true });
@@ -102,7 +102,7 @@ if (global.describe && describe instanceof Function) {
     it("skips processing and reuse fallback data when spec cache info indicates it has not changed", async () => {
       const url = "https://www.w3.org/TR/ididnotchange/";
       const fallback = path.resolve(__dirname, 'crawl-cache.json');
-      const results = await runWithAnnotatedCrawlData(fallback, async () => crawlList(
+      const results = await runWithAnnotatedCrawlData(fallback, async () => crawlSpecs(
         [{ url, nightly: { url } }],
         {
           forceLocalFetch: true,
@@ -115,7 +115,7 @@ if (global.describe && describe instanceof Function) {
 
     it("reports HTTP error statuses", async () => {
       const url = "https://www.w3.org/TR/idontexist/";
-      const results = await crawlList(
+      const results = await crawlSpecs(
         [{ url, nightly: { url } }],
         { forceLocalFetch: true });
       assert.equal(results[0].title, "[Could not be determined, see error]");
@@ -125,7 +125,7 @@ if (global.describe && describe instanceof Function) {
     it("reports errors and returns fallback data when possible", async () => {
       const url = "https://www.w3.org/TR/idontexist/";
       const fallback = path.resolve(__dirname, 'crawl-fallback.json');
-      const results = await crawlList(
+      const results = await crawlSpecs(
         [{ url, nightly: { url } }],
         {
           forceLocalFetch: true,
@@ -155,7 +155,7 @@ if (global.describe && describe instanceof Function) {
 
     it("reports draft CSS server issues", async () => {
       const url = "https://drafts.csswg.org/server-hiccup/";
-      const results = await crawlList(
+      const results = await crawlSpecs(
         [{ url, nightly: { url } }],
         { forceLocalFetch: true });
       assert.equal(results[0].title, "[Could not be determined, see error]");
