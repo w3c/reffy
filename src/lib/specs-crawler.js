@@ -78,10 +78,6 @@ async function crawlSpec(spec, crawlOptions) {
     const fallbackFolder = crawlOptions.fallback ?
         path.dirname(crawlOptions.fallback) : '';
 
-    if (spec.error) {
-        return specOrFallback(spec, fallbackFolder, crawlOptions.fallbackData?.results);
-    }
-
     try {
         const fallback = crawlOptions.fallbackData?.results?.find(s => s.url === spec.url);
         let cacheInfo = {};
