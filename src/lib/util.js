@@ -816,7 +816,7 @@ async function expandSpecResult(spec, baseFolder, properties) {
             // Also drop header that may have been added when extract was
             // serialized.
             if (contents.startsWith('// GENERATED CONTENT - DO NOT EDIT')) {
-                const hasWindowsEndings = contents.indexOf('\r\n');
+                const hasWindowsEndings = contents.includes('\r\n\r\n');
                 if (hasWindowsEndings) {
                     const endOfHeader = contents.indexOf('\r\n\r\n');
                     contents = contents.substring(endOfHeader + 4)
