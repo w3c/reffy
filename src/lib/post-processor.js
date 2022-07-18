@@ -21,8 +21,12 @@
  * modules may generate such as "idlparsed".
  * - input: either "crawl" or "spec". Default is "spec". Tells whether the
  * module operates on a spec crawl result or on the entire crawl result
- * - property: only when "input" is "spec". Gives the name of the property that
- * will be set in the spec crawl result when the post-processing module runs.
+ * - property: When "input" is "spec", gives the name of the property that
+ * will be set in the spec crawl result when the post-processing module runs
+ * and of the folder that will contain the spec extracts (unless module has its
+ * "save" logic). For modules that run at the crawl level, gives the name of
+ * the final extract file that gets created (unless module has its own "save"
+ * logic).
  * - run: Async function to call to apply the post-processing module. The
  * function is called with either a spec crawl result of the entire crawl result
  * depending on "input". Second parameter is the crawl options object. The

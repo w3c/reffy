@@ -6,7 +6,7 @@
 const { isLatestLevelThatPasses, getInterfaceTreeInfo } = require('../lib/util');
 
 module.exports = {
-  dependsOn: ['spec-events'],
+  dependsOn: ['events'],
   input: 'crawl',
   property: 'events',
 
@@ -38,11 +38,11 @@ module.exports = {
 
     // Only consider latest spec in a series to avoid fake duplicates
     const results = crawl.results.filter(spec =>
-      (spec.seriesComposition !== 'delta' && isLatestLevelThatPasses(spec, crawl.results, s => s['spec-events'])) ||
-      (spec.seriesComposition === 'delta' && spec['spec-events']));
+      (spec.seriesComposition !== 'delta' && isLatestLevelThatPasses(spec, crawl.results, s => s.events)) ||
+      (spec.seriesComposition === 'delta' && spec.events));
 
     // Update events in place
-    const events = results.map(spec => spec['spec-events'].map(e => Object.assign({ spec: spec }, e))).flat();
+    const events = results.map(spec => spec.events.map(e => Object.assign({ spec: spec }, e))).flat();
     for (const event of events) {
       expandMixinTargets(event, mixins);
       setBubblingPerTarget(event, parsedInterfaces);

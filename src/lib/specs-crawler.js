@@ -135,7 +135,7 @@ async function crawlSpec(spec, crawlOptions) {
         });
         crawlOptions.post?.forEach(mod => {
             const prop = mod.property ?? mod.name;
-            if (result[prop]) {
+            if (postProcessor.appliesAtLevel(mod, 'spec') && result[prop]) {
                 spec[prop] = result[prop];
             }
         });
