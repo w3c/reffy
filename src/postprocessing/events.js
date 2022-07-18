@@ -180,7 +180,7 @@ function extendEvent(event, events) {
     return `Found extended event with link ${event.href} in ${event.spec.shortname}, but did not find a matching original event`;
   }
   if (extendedEvent.interface && event.interface && extendedEvent.interface !== event.interface) {
-    return `Found extended event with link ${event.href} in ${event.spec.shortname} set to use interface ${event.interface}, different from original event interface ${extendedEvent.interface} in ${extendedSpec.shortname}`;
+    return `Found extended event with link ${event.href} in ${event.spec.shortname} set to use interface ${event.interface}, different from original event interface ${extendedEvent.interface} in ${extendedEvent.spec.shortname}`;
   }
   // Document potential additional targets
   const newTargets = event.targets?.filter(t => !extendedEvent.targets?.find(tt => tt.target === t.target));
