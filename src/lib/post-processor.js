@@ -79,7 +79,7 @@ function getModule(mod) {
         throw new Error(`Unknown post-processing module "${mod}"`);
       }
       if (!isModuleValid(fmod)) {
-        throw new Error(`Post-processing module "${mod}" is not a valid module`);
+        throw new Error(`"${mod}" is not a valid post-processing module`);
       }
       return Object.assign({ name: mod }, fmod);
     }
