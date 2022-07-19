@@ -257,10 +257,22 @@ const extractValueSpaces = doc => {
         // https://drafts.csswg.org/css-easing-2/#typedef-step-easing-function
         const prod = text.split(reSplitRules)
             .find(p => p.trim().startsWith(dfn.textContent.trim()));
-        if (!prod) {
-          throw new Error(`Production rule for ${dfn.textContent.trim()} found has unexpected format`);
+        if (prod) {
+          parseProductionRule(prod, { pureSyntax: true });
         }
-        parseProductionRule(prod, { pureSyntax: true });
+        else {
+          // "=" may appear in another formula in the body of the text, as in:
+          // https://drafts.csswg.org/css-speech-1/#typedef-voice-volume-decibel
+          // It may be worth checking but not an error per se.
+          console.warn('[reffy]', `Found "=" next to definition of ${dfn.textContent.trim()} but no production rule. Did I miss something?`);
+          const name = (dfn.getAttribute('data-lt') ?? dfn.textContent)
+            .trim().replace(/^<?(.*?)>?$/, '<$1>');
+          if (!(name in res)) {
+            res[name] = {
+              prose: parent.textContent.trim().replace(/\s+/g, ' ')
+            };
+          }
+        }
       }
       else if (dfn.textContent.trim().match(/^[a-zA-Z_][a-zA-Z0-9_\-]+\([^\)]+\)$/)) {
         // Definition is "prod(foo bar)", create a "prod() = prod(foo bar)" entry
