@@ -498,6 +498,24 @@ that spans multiple lines */
         value: "'=' | equal"
       }
     }
+  },
+
+  {
+    title: "does not choke on equal signs that are in prose",
+    html: `<div class="prod">
+        <p>The <dfn data-dfn-type="type">&lt;decibel&gt;</dfn> type denotes
+        a dimension with a "dB" (decibel unit) unit identifier. Decibels
+        represent the ratio of the squares of the new signal amplitude
+        <var>a1</var> and the current amplitude <var>a0</var>,
+        as per the following logarithmic equation:
+        volume(dB) = 20 × log10(<var>a1</var> / <var>a0</var>).</p>
+      </div>`,
+    propertyName: "valuespaces",
+    css: {
+      "<decibel>": {
+        prose: "The <decibel> type denotes a dimension with a \"dB\" (decibel unit) unit identifier. Decibels represent the ratio of the squares of the new signal amplitude a1 and the current amplitude a0, as per the following logarithmic equation: volume(dB) = 20 × log10(a1 / a0)."
+      }
+    }
   }
 ];
 
