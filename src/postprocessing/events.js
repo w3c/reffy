@@ -55,11 +55,13 @@ module.exports = {
       .map(event => {
         const err = extendEvent(event, events);
         if (err) {
+          // Event could not be extended, let's keep extension event
           console.warn(err);
-          return event;
+          return null;
         }
         else {
-          return null;
+          // Event successfully extended, extension can be dropped
+          return event;
         }
       })
       .filter(event => !!event);
