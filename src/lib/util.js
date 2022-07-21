@@ -946,9 +946,13 @@ async function createFolderIfNeeded(folder) {
  * the tree.
  */
 const trees = {
-  // DOM tree:
+  // The DOM tree is defined through "get the parent" algorithms:
   // https://dom.spec.whatwg.org/#node-trees
-  'dom': ['Window', 'Document', 'Element', 'Node'],
+  // https://dom.spec.whatwg.org/#get-the-parent
+  // - Node -> Node
+  // - Document -> Window
+  // - ShadowRoot -> Element (both derive from Node, so covered by Node -> Node)
+  'dom': ['Window', 'Document', 'Node'],
 
   // IndexedDB tree (defined through "get the parent" algorithms)
   // https://www.w3.org/TR/IndexedDB/#ref-for-get-the-parent%E2%91%A0
