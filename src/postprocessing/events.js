@@ -46,7 +46,6 @@ module.exports = {
     for (const event of events) {
       expandMixinTargets(event, mixins);
       setBubblingPerTarget(event, parsedInterfaces);
-      cleanTargetInTrees(event, parsedInterfaces);
     }
 
     // Consolidate events extended in other specs
@@ -69,6 +68,7 @@ module.exports = {
     return events
       .filter(event => !eventsToDrop.includes(event))
       .map(event => {
+        cleanTargetInterfaces(event, parsedInterfaces);
         delete event.spec;
         return event;
       });
@@ -135,41 +135,57 @@ function setBubblingPerTarget(event, parsedInterfaces) {
 }
 
 
-function cleanTargetInTrees(event, parsedInterfaces) {
-  // When several targets are attached to an event that bubbles
-  // keep only the "deepest" target
-  if (event.bubbles && event.targets?.length > 1) {
-    const filteredTargets = deepestInterfaceInTree(event.targets, parsedInterfaces);
-    if (filteredTargets.length !== event.targets.length) {
-      event.targets = filteredTargets;
-      return true;
-    }
-  }
-  return false;
-}
-
-
-function deepestInterfaceInTree(targets, parsedInterfaces) {
-  let deepestInTrees = {};
-  let filteredTargets = [];
-  for (let {target, bubbles} of targets) {
-    const treeInfo = getInterfaceTreeInfo(target, parsedInterfaces);
-    if (!treeInfo) { // Not in a tree, we keep it in
-      filteredTargets.push({target});
-      continue;
-    }
-    const { tree, depth } = treeInfo;
-    const currentDeepest = deepestInTrees[tree]?.target;
-    if (currentDeepest) {
-      const { depth: currentDeepestDepth } = getInterfaceTreeInfo(currentDeepest, parsedInterfaces);
-      if (depth > currentDeepestDepth) {
-        deepestInTrees[tree] = {target, bubbles};
+/**
+ * Filter the list of target interfaces to remove those that don't need to
+ * appear explicitly because they are de facto already covered by another entry
+ * in the list.
+ *
+ * Two reasons to drop a target interface t from the list:
+ * 1. There exists another target interface o with similar bubbling properties
+ * for the event and t inherits from o. If event fires at o, it can de facto
+ * fire at t.
+ * 2. There exists another target interface o such that t and o belong to the
+ * same bubbling tree, o is at a deeper level than t in the bubbling tree, and
+ * event bubbles when it fires at o. Event will de facto fire at t through
+ * bubbling when that happens.
+ */
+function cleanTargetInterfaces(event, parsedInterfaces) {
+  // Helper function that returns true if the iface interface inherits from the
+  // base interface
+  function inheritsFrom(iface, base) {
+    while (iface) {
+      if (iface === base) {
+        return true;
       }
-    } else {
-      deepestInTrees[tree] = {target, bubbles};
+      iface = parsedInterfaces.find(i => i.name === iface)?.inheritance;
     }
+    return false;
   }
-  return filteredTargets.concat(Object.values(deepestInTrees));
+
+  if (!event.targets) {
+    return;
+  }
+
+  event.targets = event.targets
+    .filter(({ target, bubbles }) =>
+      // Drop if an ancestor in the inheritance chain is already there
+      !event.targets.find(({ target: other, bubbles: otherBubbles}) =>
+        target !== other &&
+        bubbles === otherBubbles &&
+        inheritsFrom(target, other)))
+    .filter(({ target, bubbles }) => {
+      // Drop if a deeper bubbling target interface in the tree is already there
+      const targetTreeInfo = getInterfaceTreeInfo(target, parsedInterfaces);
+      return !targetTreeInfo ||
+        !event.targets.find(({ target: other, bubbles: otherBubbles }) => {
+          if (other === target) {
+            return false;
+          }
+          const otherTreeInfo = getInterfaceTreeInfo(other, parsedInterfaces);
+          return otherTreeInfo?.tree === targetTreeInfo.tree &&
+            otherBubbles && otherTreeInfo.depth > targetTreeInfo.depth;
+        });
+    });
 }
 
 
