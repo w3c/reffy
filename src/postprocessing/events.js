@@ -71,6 +71,35 @@ module.exports = {
         cleanTargetInterfaces(event, parsedInterfaces);
         delete event.spec;
         return event;
+      })
+      .sort((event1, event2) => {
+        if (event1.type < event2.type) {
+          return -1;
+        }
+        else if (event1.type > event2.type) {
+          return 1;
+        }
+        else if (event1.interface < event2.interface) {
+          return -1;
+        }
+        else if (event1.interface > event2.interface) {
+          return 1;
+        }
+        else if (!event2.href) {
+          return -1;
+        }
+        else if (!event1.href) {
+          return 1;
+        }
+        else if (event1.href < event2.href) {
+          return -1;
+        }
+        else if (event1.href > event2.href) {
+          return 1;
+        }
+        else {
+          return 0;
+        }
       });
   }
 };
