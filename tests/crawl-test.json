@@ -19,8 +19,8 @@
     },
     "title": "WOFF2",
     "css": {
+      "atrules": {},
       "properties": {},
-      "descriptors": {},
       "valuespaces": {}
     },
     "dfns": [
@@ -81,8 +81,8 @@
     "title": "No Title",
     "generator": "respec",
     "css": {
+      "atrules": {},
       "properties": {},
-      "descriptors": {},
       "valuespaces": {}
     },
     "dfns": [
@@ -201,8 +201,8 @@
     },
     "title": "[No title found for https://w3c.github.io/accelerometer/]",
     "css": {
+      "atrules": {},
       "properties": {},
-      "descriptors": {},
       "valuespaces": {}
     },
     "dfns": [],

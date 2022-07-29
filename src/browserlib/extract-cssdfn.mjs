@@ -13,15 +13,37 @@ import informativeSelector from './informative-selector.mjs';
 export default function () {
   let res = {
     properties: extractTableDfns(document, 'propdef', { unique: true }),
-    descriptors: extractTableDfns(document, 'descdef', { unique: false }),
+    atrules: {},
     valuespaces: extractValueSpaces(document)
   };
+  let descriptors = extractTableDfns(document, 'descdef', { unique: false });
 
   // Try old recipes if we couldn't extract anything
   if ((Object.keys(res.properties).length === 0) &&
-      (Object.keys(res.descriptors).length === 0)) {
+      (Object.keys(descriptors).length === 0)) {
     res.properties = extractDlDfns(document, 'propdef', { unique: true });
-    res.descriptors = extractDlDfns(document, 'descdef', { unique: false });
+    descriptors = extractDlDfns(document, 'descdef', { unique: false });
+  }
+
+  // Move at-rules definitions from valuespaces to at-rules structure
+  for (const [name, dfn] of Object.entries(res.valuespaces)) {
+    if (name.startsWith('@')) {
+      if (!res.atrules[name]) {
+        res.atrules[name] = Object.assign(dfn, { descriptors: [] });
+      }
+      delete res.valuespaces[name];
+    }
+  }
+
+  // Move descriptors to at-rules structure
+  for (const [name, desclist] of Object.entries(descriptors)) {
+    for (const desc of desclist) {
+      const rule = desc.for;
+      if (!res.atrules[rule]) {
+        res.atrules[rule] = { descriptors: [] };
+      }
+      res.atrules[rule].descriptors.push(desc);
+    }
   }
 
   return res;
@@ -198,6 +220,9 @@ const extractDlDfns = (doc, className, options) =>
  * Definitions with `data-dfn-type` attribute set to `value` are not extracted
  * on purpose as they are typically namespaced to another construct (through a
  * `data-dfn-for` attribute.
+ *
+ * The function also extracts syntax of at-rules (name starts with '@') defined
+ * in "pre.prod" blocks.
  */
 const extractValueSpaces = doc => {
   let res = {};
@@ -213,15 +238,26 @@ const extractValueSpaces = doc => {
       .replace(/\/\*[^]*?\*\//gm, '')  // Drop comments
       .split(/\s?=\s/)
       .map(s => s.trim().replace(/\s+/g, ' '));
-    if (nameAndValue[0].match(/^<.*>$|^.*\(\)$/)) {
-      const name = nameAndValue[0].replace(/^(.*\(\))$/, '<$1>');
+
+    function addValuespace(name, value) {
       if (!(name in res)) {
         res[name] = {};
       }
       if (!res[name].value || (pureSyntax && !res[name].pureSyntax)) {
-        res[name].value = normalize(nameAndValue[1]);
+        res[name].value = normalize(value);
         res[name].pureSyntax = pureSyntax;
       }
+    }
+
+    if (nameAndValue[0].match(/^<.*>$|^.*\(\)$/)) {
+      // Regular valuespace
+      addValuespace(
+        nameAndValue[0].replace(/^(.*\(\))$/, '<$1>'),
+        nameAndValue[1]);
+    }
+    else if (nameAndValue[0].match(/^@[a-z\-]+$/)) {
+      // At-rule syntax
+      addValuespace(nameAndValue[0], nameAndValue[1]);
     }
   };
 
@@ -351,8 +387,16 @@ const extractValueSpaces = doc => {
     .map(val => val.replace(/\/\*[^]*?\*\//gm, ''))  // Drop comments
     .map(val => val.split(reSplitRules))             // Separate definitions
     .flat()
-    .filter(text => text.match(/\s?=\s/))
-    .map(text => parseProductionRule(text, { pureSyntax: true }));
+    .map(text => text.trim())
+    .map(text => {
+      if (text.match(/\s?=\s/)) {
+        return parseProductionRule(text, { pureSyntax: true });
+      }
+      else if (text.startsWith('@')) {
+        const name = text.split(' ')[0];
+        return parseProductionRule(`${name} = ${text}`, { pureSyntax: true });
+      }
+    });
 
   // Don't keep the info on whether value comes from a pure syntax section
   Object.values(res).map(value => delete value.pureSyntax);
