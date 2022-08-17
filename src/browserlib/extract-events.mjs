@@ -154,6 +154,8 @@ export default function (spec) {
           a.href === "https://w3c.github.io/ServiceWorker/#fire-functional-event" ||
           a.href === "https://www.w3.org/TR/service-workers-1/#fire-functional-event-algorithm" ||
           a.href === "https://www.w3.org/TR/service-workers-1/#fire-functional-event" ||
+          a.href === "https://www.w3.org/TR/service-workers/#fire-functional-event-algorithm" ||
+          a.href === "https://www.w3.org/TR/service-workers/#fire-functional-event" ||
         a.href === "https://w3c.github.io/pointerevents/#dfn-fire-a-pointer-event";
   [...document.querySelectorAll("a")]
     .filter(a => !a.closest(informativeSelector) && isFiringLink(a))
