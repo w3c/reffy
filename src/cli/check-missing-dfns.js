@@ -75,15 +75,30 @@ function getExpectedDfnsFromCSS(css) {
       })
   );
 
+  // Add the list of expected at-rules
+  expected = expected.concat(
+    Object.entries(css.atrules || {}).map(([name, rule]) => {
+      if (rule.value) {
+        return {
+          linkingText: [name],
+          type: 'at-rule',
+          'for': []
+        };
+      }
+    }).filter(dfn => !!dfn)
+  );
+
   // Add the list of expected descriptors
   expected = expected.concat(
-    Object.values(css.descriptors || {}).flat().map(desc => {
-      return {
-        linkingText: [desc.name],
-        type: 'descriptor',
-        'for': [desc.for]
-      };
-    })
+    Object.entries(css.atrules || {}).map(([name, rule]) =>
+      (rule.descriptors || []).map(desc => {
+        return {
+          linkingText: [desc.name],
+          type: 'descriptor',
+          'for': [name]
+        };
+      })
+    ).flat()
   );
   
   // Add the list of expected "values".
