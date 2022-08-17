@@ -267,6 +267,64 @@ const tests = [
     css: {}
   },
 
+  {
+    title: "extracts an at-rule syntax",
+    html: `
+      <pre class="prod">
+        @layer <a class="production">&lt;layer-name&gt;</a>? {
+          <a class="production">&lt;stylesheet&gt;</a>
+        }
+      </pre>
+    `,
+    propertyName: "atrules",
+    css: {
+      "@layer": {
+        "value": "@layer <layer-name>? { <stylesheet> }",
+        "descriptors": []
+      }
+    }
+  },
+
+  {
+    title: "combines an at-rule syntax with descriptor",
+    html: `
+      <pre class="prod">
+        @font-face {
+          &lt;declaration-list&gt;
+        }
+      </pre>
+      <table class="def descdef">
+      <tbody>
+       <tr>
+        <th>Name:
+        </th><td><dfn class="dfn-paneled css" data-dfn-for="@font-face" data-dfn-type="descriptor" data-export="" id="descdef-font-face-font-display">font-display</dfn>
+       </td></tr><tr>
+        <th>For:
+        </th><td><a class="css" data-link-type="at-rule" href="#at-font-face-rule" id="ref-for-at-font-face-rule④⑥">@font-face</a>
+       </td></tr><tr>
+        <th>Value:
+        </th><td class="prod">auto <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-one" id="ref-for-comb-one⑥⑨">|</a> block <span id="ref-for-comb-one⑦⓪">|</span> swap <span id="ref-for-comb-one⑦①">|</span> fallback <span id="ref-for-comb-one⑦②">|</span> optional
+       </td></tr><tr>
+        <th>Initial:
+        </th><td>auto
+     </td></tr></tbody></table>
+    `,
+    propertyName: "atrules",
+    css: {
+      "@font-face": {
+        "value": "@font-face { <declaration-list> }",
+        "descriptors": [
+          {
+            for: "@font-face",
+            initial: "auto",
+            name: "font-display",
+            value: "auto | block | swap | fallback | optional"
+          }
+        ]
+      }
+    }
+  },
+
 
   {
     title: "extracts multiple descriptors with the same name",
@@ -301,22 +359,28 @@ const tests = [
       <th>Initial:
       </th><td>auto
    </td></tr></tbody></table>`,
-    propertyName: "descriptors",
+    propertyName: "atrules",
     css: {
-      "font-display": [
-        {
-          for: "@font-face",
-          initial: "auto",
-          name: "font-display",
-          value: "auto | block | swap | fallback | optional"
-        },
-        {
-          for: "@font-feature-values",
-          initial: "auto",
-          name: "font-display",
-          value: "auto | block | swap | fallback | optional"
-        }
-      ]
+      "@font-face": {
+        "descriptors": [
+          {
+            for: "@font-face",
+            initial: "auto",
+            name: "font-display",
+            value: "auto | block | swap | fallback | optional"
+          }
+        ]
+      },
+      "@font-feature-values": {
+        "descriptors": [
+          {
+            for: "@font-feature-values",
+            initial: "auto",
+            name: "font-display",
+            value: "auto | block | swap | fallback | optional"
+          }
+        ]
+      }
     }
   },
 
