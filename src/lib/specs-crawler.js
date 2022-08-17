@@ -243,7 +243,7 @@ async function saveSpecResults(spec, settings) {
     function defineCSSContent(spec) {
         return spec.css && (
             (Object.keys(spec.css.properties || {}).length > 0) ||
-            (Object.keys(spec.css.descriptors || {}).length > 0) ||
+            (Object.keys(spec.css.atrules || {}).length > 0) ||
             (Object.keys(spec.css.valuespaces || {}).length > 0));
     }
     if (defineCSSContent(spec)) {
