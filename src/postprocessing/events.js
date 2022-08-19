@@ -104,7 +104,7 @@ function setBubblingPerTarget(event, parsedInterfaces) {
       updatedTargets.push({target: iface});
       continue;
     }
-    const { tree, depth } = treeInfo;
+    const { tree, depth, bubblingPath } = treeInfo;
     if (!detected[tree]) {
       detected[tree] = {root: false, nonroot: false};
     }
@@ -113,7 +113,7 @@ function setBubblingPerTarget(event, parsedInterfaces) {
       updatedTargets.push({target: iface});
       detected[tree].root = true;
     } else {
-      treeInterfaces.push(iface);
+      treeInterfaces.push({ iface, bubblingPath });
       detected[tree].nonroot = true;
     }
   }
@@ -125,9 +125,11 @@ function setBubblingPerTarget(event, parsedInterfaces) {
       event.bubbles = false;
     }
   }
-  for (let iface of treeInterfaces) {
+  for (let { iface, bubblingPath } of treeInterfaces) {
     if (event.hasOwnProperty('bubbles')) {
-      updatedTargets.push({target: iface, bubbles: event.bubbles});
+      updatedTargets.push(Object.assign(
+        { target: iface, bubbles: event.bubbles },
+        event.bubbles ? { bubblingPath } : {}));
     }
   }
   event.targets = updatedTargets;

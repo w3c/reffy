@@ -952,7 +952,7 @@ const trees = {
   // - Node -> Node
   // - Document -> Window
   // - ShadowRoot -> Element (both derive from Node, so covered by Node -> Node)
-  'dom': ['Window', 'Document', 'Node'],
+  'dom': ['Window', 'Document', 'Node', 'Node'],
 
   // IndexedDB tree (defined through "get the parent" algorithms)
   // https://www.w3.org/TR/IndexedDB/#ref-for-get-the-parent%E2%91%A0
@@ -990,10 +990,12 @@ function getInterfaceTreeInfo(iface, interfaces) {
   while (iface) {
     for (const [tree, nodes] of Object.entries(trees)) {
       if (nodes.includes(iface)) {
+        const depth = nodes.lastIndexOf(iface);
         return {
           tree,
           interface: iface,
-          depth: nodes.findIndex(i => i === iface)
+          depth,
+          bubblingPath: nodes.slice(0, depth).reverse()
         };
       }
     }
