@@ -990,9 +990,7 @@ function getInterfaceTreeInfo(iface, interfaces) {
   while (iface) {
     for (const [tree, nodes] of Object.entries(trees)) {
       if (nodes.includes(iface)) {
-        // Depth is last occurrence of iface in the array
-        // (but "findLastIndex" is not supported in Node.js)
-        const depth = nodes.length - 1 - nodes.slice().reverse().findIndex(i => i === iface);
+        const depth = nodes.lastIndexOf(iface);
         return {
           tree,
           interface: iface,
