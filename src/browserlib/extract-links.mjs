@@ -21,7 +21,7 @@ export default function (spec, _, specs) {
     // Annotate with the spec to which the page belong if we can find one
     if (Array.isArray(specs)) {
       const specUrl = canonicalizeUrl(pageUrl);
-      let matchingSpec = specs.find(s => s?.release?.url === specUrl || s?.nightly?.url === specUrl || s?.series?.nightlyUrl === specUrl || s?.series?.releaseUrl === specUrl || s?.nightly?.pages?.includes(specUrl) || s?.release?.pages?.includes(specUrl));
+      let matchingSpec = specs.find(s => s?.release?.url === specUrl || s?.nightly?.url === specUrl || (s?.series?.currentSpecification === s?.shortname && (s?.series?.nightlyUrl === specUrl || s?.series?.releaseUrl === specUrl)) || s?.nightly?.pages?.includes(specUrl) || s?.release?.pages?.includes(specUrl));
       if (matchingSpec) {
 	links[pageUrl].specShortname = matchingSpec.shortname;
       }
