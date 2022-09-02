@@ -1,9 +1,7 @@
-import { canonicalizeUrl } from './canonicalize-url.mjs';
-
 /**
- * Extract and canonicalize absolute links of the document and their fragments
+ * Extract absolute links of the document and their fragments
 */
-export default function (spec, _, specs) {
+export default function () {
   const links = {};
   document.querySelectorAll('a[href^=http]').forEach(n => {
     // Ignore links from the "head" section, which either link to
@@ -17,21 +15,12 @@ export default function (spec, _, specs) {
     if (n.href.includes('#') && n.href.split('#')[1]) {
       links[pageUrl].anchors.add(n.href.split('#')[1]);
     }
-
-    // Annotate with the spec to which the page belong if we can find one
-    if (Array.isArray(specs)) {
-      const specUrl = canonicalizeUrl(pageUrl);
-      let matchingSpec = specs.find(s => s?.release?.url === specUrl || s?.nightly?.url === specUrl || (s?.series?.currentSpecification === s?.shortname && (s?.series?.nightlyUrl === specUrl || s?.series?.releaseUrl === specUrl)) || s?.nightly?.pages?.includes(specUrl) || s?.release?.pages?.includes(specUrl));
-      if (matchingSpec) {
-	links[pageUrl].specShortname = matchingSpec.shortname;
-      }
-    }
   });
   return Object.keys(links)
     .sort()
   // turning sets into arrays
     .reduce((acc, u) => {
-      acc[u] = {specShortname: links[u].specShortname};
+      acc[u] = {};
       if (links[u].anchors.size > 0) {
 	acc[u].anchors = [...links[u].anchors];
       }

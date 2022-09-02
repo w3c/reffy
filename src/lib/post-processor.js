@@ -59,7 +59,8 @@ const modules = {
   csscomplete: require('../postprocessing/csscomplete'),
   events: require('../postprocessing/events'),
   idlnames: require('../postprocessing/idlnames'),
-  idlparsed: require('../postprocessing/idlparsed')
+  idlparsed: require('../postprocessing/idlparsed'),
+  annotatelinks: require('../postprocessing/annotate-links')
 };
 
 

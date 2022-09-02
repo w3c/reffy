@@ -91,18 +91,18 @@ async function crawlSpec(spec, crawlOptions) {
         else {
             result = await processSpecification(
                 urlToCrawl,
-              (spec, modules, speclist) => {
+                (spec, modules) => {
                     const idToHeading = modules.find(m => m.needsIdToHeadingMap) ?
                         window.reffy.mapIdsToHeadings() : null;
                     const res = {
                         crawled: window.location.toString()
                     };
                     modules.forEach(mod => {
-                        res[mod.property] = window.reffy[mod.name](spec, idToHeading, speclist);
+                        res[mod.property] = window.reffy[mod.name](spec, idToHeading);
                     });
                     return res;
                 },
-              [spec, crawlOptions.modules, crawlOptions.speclist],
+              [spec, crawlOptions.modules],
                 { quiet: crawlOptions.quiet,
                   forceLocalFetch: crawlOptions.forceLocalFetch,
                   ...cacheInfo}
@@ -294,7 +294,7 @@ async function saveSpecResults(spec, settings) {
 async function crawlList(speclist, crawlOptions) {
     // Make a shallow copy of crawl options object since we're going
     // to modify properties in place
-    crawlOptions = Object.assign({speclist}, crawlOptions);
+    crawlOptions = Object.assign({}, crawlOptions);
 
     // Expand list of processing modules to use if not already done
     crawlOptions.modules = expandBrowserModules(crawlOptions.modules);
