@@ -102,7 +102,7 @@ async function crawlSpec(spec, crawlOptions) {
                     });
                     return res;
                 },
-                [spec, crawlOptions.modules],
+              [spec, crawlOptions.modules],
                 { quiet: crawlOptions.quiet,
                   forceLocalFetch: crawlOptions.forceLocalFetch,
                   ...cacheInfo}
@@ -294,7 +294,7 @@ async function saveSpecResults(spec, settings) {
 async function crawlList(speclist, crawlOptions) {
     // Make a shallow copy of crawl options object since we're going
     // to modify properties in place
-    crawlOptions = Object.assign({}, crawlOptions);
+    crawlOptions = Object.assign({speclist}, crawlOptions);
 
     // Expand list of processing modules to use if not already done
     crawlOptions.modules = expandBrowserModules(crawlOptions.modules);
