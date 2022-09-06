@@ -2,8 +2,6 @@
  * Post-processing module that annotates links extracts with the spec
    shortname they link to
  */
-const fs = require('fs');
-const path = require('path');
 
 function canonicalizeUrl(url) {
     return url.replace(/^http:/, 'https:')
@@ -23,14 +21,13 @@ const needsSaving = {};
 module.exports = {
   dependsOn: ['links'],
   input: 'spec',
-  property: 'links',
 
   run: function(spec, {speclist}) {
     if (!speclist || !speclist.length) {
       console.error("No spec list passed as input, cannot annotate links in post-processing");
       return spec;
     }
-    for (let link of Object.keys(spec.links || {})) {
+    for (let link in (spec.links || {})) {
       // Annotate with the spec to which the page belong if we can find one
       const specUrl = canonicalizeUrl(link);
       let matchingSpec = speclist.find(s => s?.release?.url === specUrl || s?.nightly?.url === specUrl || (s?.series?.currentSpecification === s?.shortname && (s?.series?.nightlyUrl === specUrl || s?.series?.releaseUrl === specUrl)) || s?.nightly?.pages?.includes(specUrl) || s?.release?.pages?.includes(specUrl));
