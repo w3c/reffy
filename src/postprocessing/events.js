@@ -72,35 +72,12 @@ module.exports = {
         delete event.spec;
         return event;
       })
-      .sort((event1, event2) => {
-        if (event1.type < event2.type) {
-          return -1;
-        }
-        else if (event1.type > event2.type) {
-          return 1;
-        }
-        else if (event1.interface < event2.interface) {
-          return -1;
-        }
-        else if (event1.interface > event2.interface) {
-          return 1;
-        }
-        else if (!event2.href) {
-          return -1;
-        }
-        else if (!event1.href) {
-          return 1;
-        }
-        else if (event1.href < event2.href) {
-          return -1;
-        }
-        else if (event1.href > event2.href) {
-          return 1;
-        }
-        else {
-          return 0;
-        }
-      });
+      .sort((event1, event2) =>
+        event1.type.localeCompare(event2.type, 'en-US') ||
+        event1.interface.localeCompare(event2.interface, 'en-US') ||
+        (!event2.href ? -1 : 0) ||
+        (!event1.href ? 1 : 0) ||
+        event1.href.localeCompare(event2.href, 'en-US'));
   }
 };
 
