@@ -71,7 +71,13 @@ module.exports = {
         cleanTargetInterfaces(event, parsedInterfaces);
         delete event.spec;
         return event;
-      });
+      })
+      .sort((event1, event2) =>
+        event1.type.localeCompare(event2.type, 'en-US') ||
+        event1.interface.localeCompare(event2.interface, 'en-US') ||
+        (!event2.href ? -1 : 0) ||
+        (!event1.href ? 1 : 0) ||
+        event1.href.localeCompare(event2.href, 'en-US'));
   }
 };
 
