@@ -101,7 +101,10 @@ function parseReferences(referenceList, options) {
     if (!desc || !ref.name) {
       return;
     }
-    ref.url = desc.querySelector('a[href^="http"]')?.href ?? "";
+    const url = desc.querySelector('a[href*="://"]')?.href;
+    if (url) {
+      ref.url = url;
+    }
     if (options.filterInformative &&
         desc.textContent.match(/non-normative/i)) {
       return informativeRef.push(ref);
