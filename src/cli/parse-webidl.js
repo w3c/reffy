@@ -362,6 +362,7 @@ function parseType(idltype, idlReport, contextName) {
             "short", "unsigned short",
             "long", "unsigned long", "long long", "unsigned long long",
             "float", "unrestricted float", "double", "unrestricted double",
+            "bigint",
             "DOMString", "ByteString", "USVString",
             "object"
     ];
