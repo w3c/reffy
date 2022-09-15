@@ -249,6 +249,14 @@ function dependsOn(mod) {
   return mod.dependsOn;
 }
 
+/**
+ * Return the name of the property that will be set in the spec crawl result
+ * when the post-processing module runs, if any
+ */
+function getProperty(mod) {
+  mod = getModule(mod);
+  return mod.property ?? mod.name;
+}
 
 function appliesAtLevel(mod, level) {
   mod = getModule(mod);
@@ -266,5 +274,6 @@ module.exports = {
   run, save,
   extractsPerSeries,
   dependsOn,
+  getProperty,
   appliesAtLevel
 };
