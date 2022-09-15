@@ -79,11 +79,13 @@ export default function () {
       const match = trimmedText.match(reNumber);
       const number = match ? match[1] : null;
 
-      mappingTable[nodeid] = {
-        id,
-        href,
-        title: trimmedText.replace(reNumber, '').trim().replace(/\s+/g, ' ')
-      };
+      const mapping = {};
+      if (id) {
+        mapping.id = id;
+      }
+      mapping.href = href;
+      mapping.title = trimmedText.replace(reNumber, '').trim().replace(/\s+/g, ' ');
+      mappingTable[nodeid] = mapping;
 
       if (number) {
         // Store the number without the final "."
@@ -120,11 +122,13 @@ function esMapIdToHeadings() {
       const match = trimmedText.match(reNumber);
       const number = match ? match[1] : null;
 
-      mappingTable[nodeid] = {
-        id: section.id,
-        href,
-        title: trimmedText.replace(reNumber, '').trim().replace(/\s+/g, ' ')
-      };
+      const mapping = {};
+      if (section.id) {
+        mapping.id = section.id;
+      }
+      mapping.href = href;
+      mapping.title = trimmedText.replace(reNumber, '').trim().replace(/\s+/g, ' ');
+      mappingTable[nodeid] = mapping;
 
       if (number) {
         // Store the number without the final "."

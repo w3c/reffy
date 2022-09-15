@@ -13,6 +13,7 @@ export default function (spec, idToHeading) {
     const headingLevel = headingNumber ? headingNumber.split(".").length : undefined;
     return {
       id: n.parentNode.id,
+      href: getAbsoluteUrl(n.parentNode, { singlePage }),
       title: n.textContent.replace(headingNumber, '').trim(),
       level: headingLevel,
       number: headingNumber

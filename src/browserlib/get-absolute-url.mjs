@@ -16,6 +16,9 @@ export default function (node, { singlePage, attribute } =
   const page = singlePage ? null :
     node.closest('[data-reffy-page]')?.getAttribute('data-reffy-page');
   const url = new URL(page ?? window.location.href);
-  url.hash = '#' + node.getAttribute(attribute);
+  const hashid = node.getAttribute(attribute);
+  if (hashid) {
+    url.hash = '#' + hashid;
+  }
   return url.toString();
 }
