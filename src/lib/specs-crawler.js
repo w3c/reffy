@@ -426,36 +426,17 @@ async function adjustExtractsPerSeries(data, property, settings) {
  * Saves the crawl results to an index.json file.
  *
  * @function
- * @param {Array(Object)} data The list of specification structures to save
+ * @param {Array(Object)} contents The contents to save
  * @param {Object} settings Crawl settings. The function does not create any
  *   save file if the "output" setting is not set.
  * @return {Promise<void>} The promise to have saved the data
  */
-async function saveResults(data, settings) {
+async function saveResults(contents, settings) {
     if (!settings.output) {
-        return data;
+        return;
     }
-
-    // Save all results to an index.json file
     const indexFilename = path.join(settings.output, 'index.json');
-
-    const contents = {
-        type: 'crawl',
-        title: 'Reffy crawl',
-        date: (new Date()).toJSON(),
-        options: settings,
-        stats: {},
-        crawler: `reffy-${reffyVersion}`,
-        results: data
-    };
-    contents.options.modules = contents.options.modules.map(mod => mod.property);
-    contents.stats = {
-        crawled: contents.results.length,
-        errors: contents.results.filter(spec => !!spec.error).length
-    };
-
     await fs.promises.writeFile(indexFilename, JSON.stringify(contents, null, 2));
-    return contents;
 }
 
 
@@ -537,7 +518,24 @@ function crawlSpecs(options) {
             }
             return results;
         })
-        .then(results => {
+        .then(async results => {
+            // Create and return a crawl index out of the results, to allow
+            // post-processing modules to run.
+            const index = {
+                type: 'crawl',
+                title: 'Reffy crawl',
+                date: (new Date()).toJSON(),
+                options,
+                stats: {},
+                crawler: `reffy-${reffyVersion}`,
+                results
+            };
+            index.options.modules = options.modules.map(mod => mod.property);
+            index.stats = {
+                crawled: results.length,
+                errors: results.filter(spec => !!spec.error).length
+            };
+
             // Return results to the console or save crawl results to an
             // index.json file
             if (options.terse) {
@@ -559,8 +557,9 @@ function crawlSpecs(options) {
                 console.log(JSON.stringify(results, null, 2));
             }
             else {
-                return saveResults(results, options);
+                await saveResults(index, options);
             }
+            return index;
         })
         .then(async crawlIndex => {
             // Run post-processing modules at the crawl level
@@ -568,8 +567,10 @@ function crawlSpecs(options) {
                 if (!postProcessor.appliesAtLevel(mod, 'crawl')) {
                     continue;
                 }
-                const crawlResults = await expandCrawlResult(
-                    crawlIndex, options.output, postProcessor.dependsOn(mod));
+                const crawlResults = options.output ?
+                    await expandCrawlResult(
+                        crawlIndex, options.output, postProcessor.dependsOn(mod)) :
+                    crawlIndex;
                 const result = await postProcessor.run(mod, crawlResults, options);
                 await postProcessor.save(mod, result, options);
 
