@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "https://github.com/w3c/reffy/blob/main/schemas/postprocessing/events.json",
+
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["type", "interface", "targets"],
+    "properties": {
+      "type": { "type": "string" },
+      "interface": { "$ref": "../common.json#/$defs/interface" },
+      "targets": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["target"],
+          "properties": {
+            "target": { "$ref": "../common.json#/$defs/interface" },
+            "bubbles": { "type": "boolean" },
+            "bubblingPath": {
+              "type": "array",
+              "items": { "$ref": "../common.json#/$defs/interface" }
+            }
+          }
+        }
+      },
+      "href": { "$ref": "../common.json#/$defs/url" },
+      "src": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "format": { "type": "string" },
+          "href": { "$ref": "../common.json#/$defs/url" }
+        }
+      },
+      "extendedIn": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["spec"],
+          "properties": {
+            "spec": { "$ref": "../common.json#/$defs/shortname" },
+            "href": { "$ref": "../common.json#/$defs/url" }
+          }
+        }
+      }
+    }
+  }
+}

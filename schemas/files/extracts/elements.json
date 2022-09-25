@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "https://github.com/w3c/reffy/blob/main/schemas/files/extracts/elements.json",
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["spec", "elements"],
+  "properties": {
+    "spec": { "$ref": "../../common.json#/$defs/specInExtract" },
+    "elements": { "$ref": "../../browserlib/extract-elements.json" }
+  }
+}

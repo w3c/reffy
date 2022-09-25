@@ -2,7 +2,7 @@ const { assert } = require('chai');
 const puppeteer = require('puppeteer');
 const path = require('path');
 const rollup = require('rollup');
-
+const { getSchemaValidationFunction } = require('../src/lib/util');
 
 const tests = [
   {
@@ -165,6 +165,7 @@ describe("Markup element extraction", function () {
 
   let browser;
   let extractElementsCode;
+  const validateSchema = getSchemaValidationFunction('extract-elements');
 
   before(async () => {
     const bundle = await rollup.rollup({
@@ -191,6 +192,9 @@ describe("Markup element extraction", function () {
       });
       await page.close();
       assert.deepEqual(extractedElements, t.res);
+
+      const errors = validateSchema(extractedElements);
+      assert.strictEqual(errors, null, JSON.stringify(errors, null, 2));
     });
   });
 

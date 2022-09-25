@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "https://github.com/w3c/reffy/blob/main/schemas/files/extracts/events.json",
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["spec", "events"],
+  "properties": {
+    "spec": { "$ref": "../../common.json#/$defs/specInExtract" },
+    "events": { "$ref": "../../browserlib/extract-events.json" }
+  }
+}

@@ -2,6 +2,7 @@ const assert = require('assert');
 const puppeteer = require('puppeteer');
 const path = require('path');
 const rollup = require('rollup');
+const { getSchemaValidationFunction } = require('../src/lib/util');
 
 const tests = [
   {title: "parses a regular propdef table",
@@ -588,6 +589,8 @@ describe("Test CSS properties extraction", function() {
   this.timeout(10000);
   let browser;
   let extractCSSCode;
+  const validateSchema = getSchemaValidationFunction('extract-cssdfn');
+
   before(async () => {
     // Convert the JS module to a JS script that can be loaded in Puppeteer
     // without having to provide a URL for it (tests run in "about:blank" pages)
@@ -624,6 +627,8 @@ describe("Test CSS properties extraction", function() {
       }
       else {
         assert.deepEqual(extractedCss[t.propertyName ?? 'properties'], t.css);
+        const errors = validateSchema(extractedCss);
+        assert.strictEqual(errors, null, JSON.stringify(errors, null, 2));
       }
     });
   });

@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "https://github.com/w3c/reffy/blob/main/schemas/files/extracts/dfns.json",
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["spec", "dfns"],
+  "properties": {
+    "spec": { "$ref": "../../common.json#/$defs/specInExtract" },
+    "dfns": { "$ref": "../../browserlib/extract-dfns.json" }
+  }
+}

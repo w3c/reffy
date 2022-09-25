@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "https://github.com/w3c/reffy/blob/main/schemas/browserlib/extract-links.json",
+
+  "type": "object",
+  "propertyNames": { "$ref": "../common.json#/$defs/url" },
+  "additionalProperties": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "anchors": {
+        "type": "array",
+        "items": { "$ref": "../common.json#/$defs/id" },
+        "minItems": 1
+      },
+      "specShortname": { "$ref": "../common.json#/$defs/shortname" }
+    }
+  }
+}

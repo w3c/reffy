@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "https://github.com/w3c/reffy/blob/main/schemas/browserlib/extract-ids.json",
+
+  "type": "array",
+  "items": { "$ref": "../common.json#/$defs/url" }
+}

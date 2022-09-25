@@ -356,5 +356,21 @@ export default function (spec) {
       }
     }
   });
-  return events.map(e => e.href && !e.href.startsWith(window.location.toString()) ? Object.assign(e, {isExtension: true}) : e) ;
+  return events
+    .map(e => {
+      // Drop null properties (mandated by the schema for event extracts)
+      if (e.hasOwnProperty('interface') && !e.interface) {
+        delete e.interface;
+      }
+      if (e.hasOwnProperty('href') && !e.href) {
+        delete e.href;
+      }
+      if (e.src && e.src.hasOwnProperty('href') && !e.src.href) {
+        delete e.src.href;
+      }
+      return e;
+    })
+    .map(e => e.href && !e.href.startsWith(window.location.toString()) ?
+      Object.assign(e, {isExtension: true}) :
+      e) ;
 }

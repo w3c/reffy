@@ -9,7 +9,8 @@
   "files": [
     "index.js",
     "reffy.js",
-    "src/"
+    "src/",
+    "schemas/"
   ],
   "bugs": {
     "url": "https://github.com/w3c/reffy/issues"
@@ -32,6 +33,8 @@
   "bin": "./reffy.js",
   "dependencies": {
     "abortcontroller-polyfill": "1.7.3",
+    "ajv": "8.11.0",
+    "ajv-formats": "2.1.1",
     "commander": "9.4.0",
     "fetch-filecache-for-crawling": "4.1.0",
     "puppeteer": "18.0.5",

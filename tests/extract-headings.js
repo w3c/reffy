@@ -2,6 +2,7 @@ const { assert } = require('chai');
 const puppeteer = require('puppeteer');
 const path = require('path');
 const rollup = require('rollup');
+const { getSchemaValidationFunction } = require('../src/lib/util');
 
 const testHeadings = [
   {
@@ -27,6 +28,7 @@ describe("Test headings extraction", function () {
   let browser;
   let extractDefinitionsCode;
   let mapIdsToHeadingsCode;
+  const validateSchema = getSchemaValidationFunction('extract-headings');
 
   before(async () => {
     const extractHeadingsBundle = await rollup.rollup({
@@ -63,6 +65,9 @@ describe("Test headings extraction", function () {
       });
       await page.close();
       assert.deepEqual(extractedHeadings, t.res);
+
+      const errors = validateSchema(extractedHeadings);
+      assert.strictEqual(errors, null, JSON.stringify(errors, null, 2));
     });
   });
 
