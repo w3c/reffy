@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "https://github.com/w3c/reffy/blob/main/schemas/browserlib/extract-events.json",
+
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["type"],
+    "properties": {
+      "type": { "type": "string" },
+      "interface": { "$ref": "../common.json#/$defs/interface" },
+      "targets": {
+        "type": "array",
+        "items": { "$ref": "../common.json#/$defs/interface" }
+      },
+      "bubbles": { "type": "boolean" },
+      "isExtension": { "type": "boolean" },
+      "href": { "$ref": "../common.json#/$defs/url" },
+      "src": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "format": { "type": "string" },
+          "href": { "$ref": "../common.json#/$defs/url" }
+        }
+      }
+    }
+  }
+}

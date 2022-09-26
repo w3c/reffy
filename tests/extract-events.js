@@ -2,6 +2,7 @@ const { assert } = require('chai');
 const puppeteer = require('puppeteer');
 const path = require('path');
 const rollup = require('rollup');
+const { getSchemaValidationFunction } = require('../src/lib/util');
 
 const defaultResults = (format, {successIface} = {successIface: "SuccessEvent"}) =>  [
   {
@@ -107,7 +108,6 @@ ${defaultIdl}`,
     res: [
       {
 	type: "success",
-	interface: null,
 	targets: ["Example"],
 	src: { format: "dfn", href:"about:blank#success"},
 	href:"about:blank#success"
@@ -164,6 +164,7 @@ describe("Events extraction", function () {
   this.slow(5000);
   let browser;
   let extractEventsCode;
+  const validateSchema = getSchemaValidationFunction('extract-events');
 
   before(async () => {
     const bundle = await rollup.rollup({
@@ -191,6 +192,9 @@ describe("Events extraction", function () {
       });
       await page.close();
       assert.deepEqual(extractedEvents, t.res);
+
+      const errors = validateSchema(extractedEvents);
+      assert.strictEqual(errors, null, JSON.stringify(errors, null, 2));
     });
   });
 

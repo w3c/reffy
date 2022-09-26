@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "https://github.com/w3c/reffy/blob/main/schemas/files/extracts/headings.json",
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["spec", "headings"],
+  "properties": {
+    "spec": { "$ref": "../../common.json#/$defs/specInExtract" },
+    "headings": { "$ref": "../../browserlib/extract-headings.json" }
+  }
+}

@@ -5,5 +5,6 @@ module.exports = {
   mergeCrawlResults: require("./src/lib/util").mergeCrawlResults,
   isLatestLevelThatPasses: require("./src/lib/util").isLatestLevelThatPasses,
   getInterfaceTreeInfo: require("./src/lib/util").getInterfaceTreeInfo,
+  getSchemaValidationFunction: require("./src/lib/util").getSchemaValidationFunction,
   postProcessor: require("./src/lib/post-processor")
 };

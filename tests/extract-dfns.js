@@ -2,6 +2,7 @@ const { assert } = require('chai');
 const puppeteer = require('puppeteer');
 const path = require('path');
 const rollup = require('rollup');
+const { getSchemaValidationFunction } = require('../src/lib/util');
 
 // Associating HTML definitions with the right data relies on IDL defined in that spec
 const baseHtml = `<pre><code class=idl>
@@ -87,7 +88,11 @@ const baseDfn = {
     for: [],
     access: 'private',
     informative: false,
-    definedIn: 'prose'
+    definedIn: 'prose',
+    heading: {
+      href: 'about:blank',
+      title: ''
+    }
 };
 const tests = [
   {title: "parses a simple <dfn>",
@@ -279,7 +284,11 @@ const tests = [
       id: "text/xml",
       linkingText: ["text/xml"],
       href: "https://example.org/indices.html#text/xml",
-      definedIn: "dt"
+      definedIn: "dt",
+      heading: {
+        href: "https://example.org/indices.html",
+        title: ""
+      }
     }],
     spec: "html"
   },
@@ -433,6 +442,7 @@ describe("Test definition extraction", function () {
   let browser;
   let mapIdsToHeadingsCode;
   let extractDefinitionsCode;
+  const validateSchema = getSchemaValidationFunction('extract-dfns');
 
   async function assertExtractedDefinition(html, dfns, spec) {
     const page = await browser.newPage();
@@ -460,6 +470,9 @@ describe("Test definition extraction", function () {
     await page.close();
 
     assert.deepEqual(extractedDfns, dfns.map(d => Object.assign({}, baseDfn, {href: "about:blank#" + (d.id || baseDfn.id)}, d)));
+
+    const errors = validateSchema(extractedDfns);
+    assert.strictEqual(errors, null, JSON.stringify(errors, null, 2));
   }
 
   before(async () => {

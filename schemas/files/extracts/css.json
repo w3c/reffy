@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "https://github.com/w3c/reffy/blob/main/schemas/files/extracts/css.json",
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["spec", "properties", "atrules", "valuespaces"],
+  "properties": {
+    "spec": { "$ref": "../../common.json#/$defs/specInExtract" },
+    "properties": { "$ref": "../../browserlib/extract-cssdfn.json#/properties/properties" },
+    "atrules": { "$ref": "../../browserlib/extract-cssdfn.json#/properties/atrules" },
+    "valuespaces": { "$ref": "../../browserlib/extract-cssdfn.json#/properties/valuespaces" }
+  }
+}

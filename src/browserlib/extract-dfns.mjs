@@ -175,8 +175,12 @@ function definitionMapper(el, idToHeading) {
     // Whether the term is defined in a normative/informative section
     informative: !!el.closest(informativeSelector),
 
-    // Heading under which the term is to be found
-    heading: idToHeading[href],
+    // Heading under which the term is to be found,
+    // Defaults to the page or document URL and the spec's title
+    heading: idToHeading[href] ?? {
+      href: (new URL(page ?? window.location.href)).toString(),
+      title: document.title
+    },
 
     // Enclosing element under which the definition appears. Value can be one of
     // "dt", "pre", "table", "heading", "note", "example", or "prose" (last one

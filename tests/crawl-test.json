@@ -37,6 +37,10 @@
         "for": [],
         "access": "private",
         "informative": false,
+        "heading": {
+          "href": "https://w3c.github.io/woff/woff2/",
+          "title": "WOFF2"
+        },
         "definedIn": "prose"
       }
     ],

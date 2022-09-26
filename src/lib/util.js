@@ -3,13 +3,17 @@
  */
 
 const fs = require('fs').promises;
-const { existsSync } = require('fs');
+const { existsSync, readdirSync } = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer');
 const crypto = require('crypto');
 const { AbortController } = require('abortcontroller-polyfill/dist/cjs-ponyfill');
+const Ajv = require('ajv');
+const addFormats = require('ajv-formats');
+const commonSchema = require('../../schemas/common.json');
 const fetch = require('./fetch');
 const specEquivalents = require('../specs/spec-equivalents.json');
+
 
 const reffyModules = require('../browserlib/reffy.json');
 
@@ -1005,6 +1009,100 @@ function getInterfaceTreeInfo(iface, interfaces) {
 }
 
 
+/**
+ * Return a schema validation function for the given schema name.
+ *
+ * The function is provided by the Ajv library. The schema name can be one of:
+ * "extract-xxx.json" to target schemas under browserlib, "css", "dfns", ...
+ * to target schemas under files/extracts, "index.json", "events.json",
+ * "idlnames.json", "idlparsed" or "idlnamesparsed". Additional schemas may be
+ * added over time as more extraction facilities are added to Reffy.
+ *
+ * @function
+ * @public
+ * @param {any} data The data to validate
+ * @param {String} schemaName The name of the JSON schema to use
+ * @return {function} The "validate" function for Ajv. The function returns null
+ *   if the requested schema does not exist.
+ */
+function getSchemaValidationFunction(schemaName) {
+    // Helper function that selects the right schema file from the given
+    // schema name.
+    function getSchemaFileFromSchemaName(name) {
+        switch (name) {
+            case 'index.json':
+                return path.join('files', name);
+            case 'idlnamesparsed':
+                return path.join('postprocessing', 'idlnames-parsed.json');
+            case 'idlparsed':
+                return path.join('postprocessing', 'idlparsed.json');
+            default:
+                if (name.startsWith('extract-')) {
+                    return path.join('browserlib', `${name}.json`);
+                }
+                else if (name.endsWith('.json')) {
+                    return path.join('postprocessing', name);
+                }
+                else {
+                    return path.join('files', 'extracts', `${name}.json`)
+                }
+        }
+    }
+
+    const schemasFolder = path.join(__dirname, '..', '..', 'schemas');
+    const schemaFile = getSchemaFileFromSchemaName(schemaName);
+    let schema;
+    try {
+        schema = require(path.join(schemasFolder, schemaFile));
+    }
+    catch (err) {
+        return null;
+    }
+
+    const ajv = new Ajv({ verbose: true, allErrors: true });
+    addFormats(ajv);
+    let ajvWithSchemas = ajv.addSchema(commonSchema);
+    if (schemaFile.startsWith('files')) {
+        // The files schemas reference the browserlib ones, which need to
+        // be explicitly added for Ajv to resolve references
+        const folder = path.join(schemasFolder, 'browserlib');
+        const files = readdirSync(folder);
+        for (const file of files) {
+            if (file.endsWith('.json')) {
+                ajvWithSchemas = ajvWithSchemas.addSchema(require(path.join(schemasFolder, 'browserlib', file)));
+            }
+        }
+    }
+    const validate = ajv.compile(schema);
+
+    return function (data) {
+        validate(data);
+
+        // Ajv incorrectly reports that "about:blank" URLs are invalid. Let's
+        // check URL validation errors for "about:blank" URLs once more with
+        // Node's built-in URL constructor instead, which whould follow the
+        // WHATWG URL spec. The URL constructor may auto-fix some of the errors,
+        // but "about:blank" URLs should only appear in tests in any case)
+        let errors = (validate.errors || []).filter(err => {
+            if (err.keyword !== 'format' || err.params.format !== 'url' || !err.data?.startsWith('about:blank')) {
+                return true;
+            }
+            try {
+                new URL(err.data);
+                return false;
+            }
+            catch (e) {
+                return true;
+            }
+        });
+        if (errors.length === 0) {
+            errors = null;
+        }
+        return errors;
+    };
+}
+
+
 module.exports = {
     fetch,
     requireFromWorkingDirectory,
@@ -1018,5 +1116,6 @@ module.exports = {
     expandSpecResult,
     getGeneratedIDLNamesByCSSProperty,
     createFolderIfNeeded,
-    getInterfaceTreeInfo
+    getInterfaceTreeInfo,
+    getSchemaValidationFunction
 };

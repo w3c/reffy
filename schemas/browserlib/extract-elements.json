@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "https://github.com/w3c/reffy/blob/main/schemas/browserlib/extract-elements.json",
+
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["name"],
+    "properties": {
+      "name": { "type": "string" },
+      "interface": { "$ref": "../common.json#/$defs/interface" },
+      "obsolete": { "type": "boolean" }
+    }
+  }
+}

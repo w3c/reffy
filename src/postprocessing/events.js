@@ -74,6 +74,8 @@ module.exports = {
       })
       .sort((event1, event2) =>
         event1.type.localeCompare(event2.type, 'en-US') ||
+        (!event2.interface ? -1 : 0) ||
+        (!event1.interface ? 1 : 0) ||
         event1.interface.localeCompare(event2.interface, 'en-US') ||
         (!event2.href ? -1 : 0) ||
         (!event1.href ? 1 : 0) ||
@@ -217,5 +219,7 @@ function extendEvent(event, events) {
   if (!extendedEvent.extendedIn) {
     extendedEvent.extendedIn = [];
   }
-  extendedEvent.extendedIn.push({ spec: event.spec.series.shortname, href: event.src?.href });
+  extendedEvent.extendedIn.push(Object.assign(
+    { spec: event.spec.series.shortname },
+    event.src?.href ? { href: event.src?.href } : {}));
 }

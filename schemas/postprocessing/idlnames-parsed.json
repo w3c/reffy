@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "https://github.com/w3c/reffy/blob/main/schemas/postprocessing/idlnames-parsed.json",
+  
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "type", "defined", "extended", "includes"],
+  "properties": {
+    "name": { "$ref": "../common.json#/$defs/interface" },
+    "type": { "$ref": "../common.json#/$defs/interfacetype" },
+    "defined": { "$ref": "../common.json#/$defs/idlFragmentInSpec" },
+    "extended": {
+      "type": "array",
+      "items": { "$ref": "../common.json#/$defs/idlFragmentInSpec" }
+    },
+    "inheritance": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#" }
+      ]
+    },
+    "includes": {
+      "type": "array",
+      "items": { "$ref": "#" }
+    }
+  }
+}
