@@ -32,7 +32,7 @@
             "required": ["fragment", "type"],
             "properties": {
               "fragment": { "type": "string" },
-              "type": { "type": "string" }
+              "type": { "$ref": "../common.json#/$defs/interfacetype" }
             }
           }
         },
@@ -47,7 +47,7 @@
               "required": ["fragment", "type"],
               "properties": {
                 "fragment": { "type": "string" },
-                "type": { "type": "string" }
+                "type": { "$ref": "../common.json#/$defs/extensiontype" }
               }
             }
           }

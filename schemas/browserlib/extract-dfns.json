@@ -19,7 +19,26 @@
         "type": "array",
         "items": { "type": "string" }
       },
-      "type": { "type": "string" },
+      "type": {
+        "type": "string",
+        "enum": [
+          "property", "descriptor", "value", "type",
+          "at-rule", "function", "selector",
+
+          "namespace", "interface", "constructor", "method", "argument",
+          "attribute", "callback", "dictionary", "dict-member", "enum",
+          "enum-value", "exception", "const", "typedef", "stringifier",
+          "serializer", "iterator", "maplike", "setlike", "extended-attribute",
+          "event", "permission",
+
+          "element", "element-state", "element-attr", "attr-value",
+
+          "scheme", "http-header",
+
+          "grammar", "abstract-op", "dfn"
+        ],
+        "$comment": "Types taken from src/browserlib/extract-dfns.mjs"
+      },
       "for": {
         "type": "array",
         "items": { "type": "string" }

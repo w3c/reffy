@@ -8,14 +8,6 @@
       "format": "url"
     },
 
-    "nullableurl": {
-      "oneOf": [
-        { "$ref": "#/$defs/url" },
-        { "type": "null" }
-      ],
-      "$comment": "Extracts sometimes use null values for URLs, they should probably rather drop the property"
-    },
-
     "title": {
       "type": "string",
       "minLength": 1
@@ -49,8 +41,22 @@
 
     "interface": {
       "type": "string",
-      "pattern": "^[A-Z]([A-Za-z0-9_])*|console$",
+      "pattern": "^[A-Z]([A-Za-z0-9_])*$|^console$",
       "$comment": "console is the only interface name that starts with a lower-case character"
+    },
+
+    "interfacetype": {
+      "type": "string",
+      "enum": [
+        "dictionary", "interface", "interface mixin", "enum", "typedef",
+        "callback", "callback interface", "namespace"]
+    },
+
+    "extensiontype": {
+      "oneOf": [
+        { "$ref": "#/$defs/interfacetype" },
+        { "type": "string", "const": "includes" }
+      ]
     },
 
     "global": {

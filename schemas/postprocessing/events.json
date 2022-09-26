@@ -19,10 +19,7 @@
           "properties": {
             "target": { "$ref": "../common.json#/$defs/interface" },
             "bubbles": { "type": "boolean" },
-            "bubblingPath": {
-              "type": "array",
-              "items": { "$ref": "../common.json#/$defs/interface" }
-            }
+            "bubblingPath": { "$ref": "../common.json#/$defs/interfaces" }
           }
         }
       },

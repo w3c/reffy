@@ -7,11 +7,7 @@
   "required": ["name", "type", "defined", "extended", "includes"],
   "properties": {
     "name": { "$ref": "../common.json#/$defs/interface" },
-    "type": {
-      "type": "string",
-      "enum": ["dictionary", "interface", "interface mixin", "enum", "typedef",
-        "callback", "callback interface", "namespace"]
-    },
+    "type": { "$ref": "../common.json#/$defs/interfacetype" },
     "defined": { "$ref": "../common.json#/$defs/idlFragmentInSpec" },
     "extended": {
       "type": "array",
