@@ -1026,14 +1026,31 @@ function getInterfaceTreeInfo(iface, interfaces) {
  *   if the requested schema does not exist.
  */
 function getSchemaValidationFunction(schemaName) {
+    // Helper function that selects the right schema file from the given
+    // schema name.
+    function getSchemaFileFromSchemaName(name) {
+        switch (name) {
+            case 'index.json':
+                return path.join('files', name);
+            case 'idlnamesparsed':
+                return path.join('postprocessing', 'idlnames-parsed.json');
+            case 'idlparsed':
+                return path.join('postprocessing', 'idlparsed.json');
+            default:
+                if (name.startsWith('extract-')) {
+                    return path.join('browserlib', `${name}.json`);
+                }
+                else if (name.endsWith('.json')) {
+                    return path.join('postprocessing', name);
+                }
+                else {
+                    return path.join('files', 'extracts', `${name}.json`)
+                }
+        }
+    }
+
     const schemasFolder = path.join(__dirname, '..', '..', 'schemas');
-    const schemaFile =
-        (schemaName === 'index.json') ? path.join('files', schemaName) :
-        (schemaName === 'idlnamesparsed') ? path.join('postprocessing', 'idlnames-parsed.json') :
-        (schemaName === 'idlparsed') ? path.join('postprocessing', 'idlparsed.json') :
-        schemaName.startsWith('extract-') ? path.join('browserlib', `${schemaName}.json`) :
-        schemaName.endsWith('.json') ? path.join('postprocessing', schemaName) :
-        path.join('files', 'extracts', `${schemaName}.json`);
+    const schemaFile = getSchemaFileFromSchemaName(schemaName);
     let schema;
     try {
         schema = require(path.join(schemasFolder, schemaFile));
