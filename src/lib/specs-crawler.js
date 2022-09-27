@@ -525,12 +525,13 @@ function crawlSpecs(options) {
                 type: 'crawl',
                 title: 'Reffy crawl',
                 date: (new Date()).toJSON(),
-                options,
+                options: Object.assign({}, options, {
+                    modules: options.modules.map(mod => mod.property)
+                }),
                 stats: {},
                 crawler: `reffy-${reffyVersion}`,
                 results
             };
-            index.options.modules = options.modules.map(mod => mod.property);
             index.stats = {
                 crawled: results.length,
                 errors: results.filter(spec => !!spec.error).length
@@ -542,9 +543,6 @@ function crawlSpecs(options) {
                 const property = options.modules[0].property;
                 results = results.map(result => {
                     let res = result[property];
-                    if (property === 'idl') {
-                        res = res?.idl;
-                    }
                     return res;
                 });
                 if (results.length === 1) {
