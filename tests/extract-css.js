@@ -269,6 +269,25 @@ const tests = [
   },
 
   {
+    title: "knows that second definition of rgb() is legacy",
+    html: `
+      <pre class="prod">
+        &lt;rgb()> = rgb( modern )
+      </pre>
+      <pre class="prod">
+        &lt;rgb()> = rgb( legacy )
+      </pre>
+    `,
+    propertyName: "valuespaces",
+    css: {
+      "<rgb()>": {
+        "value": "rgb( modern )",
+        "legacyValue": "rgb( legacy )"
+      }
+    }
+  },
+
+  {
     title: "extracts an at-rule syntax",
     html: `
       <pre class="prod">
@@ -281,6 +300,27 @@ const tests = [
     css: {
       "@layer": {
         "value": "@layer <layer-name>? { <stylesheet> }",
+        "descriptors": []
+      }
+    }
+  },
+
+  {
+    title: "extracts an at-rule syntax with multiple definitions",
+    html: `
+      <pre class="prod">
+        @layer <a class="production">&lt;layer-name&gt;</a>? {
+          <a class="production">&lt;stylesheet&gt;</a>
+        }
+      </pre>
+      <pre class="prod">
+        @layer <a class="production">&lt;layer-name&gt;</a>#;
+      </pre>
+    `,
+    propertyName: "atrules",
+    css: {
+      "@layer": {
+        "value": "@layer <layer-name>? { <stylesheet> } | @layer <layer-name>#;",
         "descriptors": []
       }
     }

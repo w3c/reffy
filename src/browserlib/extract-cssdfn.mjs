@@ -240,12 +240,26 @@ const extractValueSpaces = doc => {
       .map(s => s.trim().replace(/\s+/g, ' '));
 
     function addValuespace(name, value) {
+      const normalizedValue = normalize(value);
       if (!(name in res)) {
         res[name] = {};
       }
       if (!res[name].value || (pureSyntax && !res[name].pureSyntax)) {
-        res[name].value = normalize(value);
+        res[name].value = normalizedValue;
         res[name].pureSyntax = pureSyntax;
+      }
+      else if (res[name].value !== normalizedValue) {
+        // Second definition found. Typically happens for the statement and
+        // block @layer definitions in css-cascade-5. We'll combine the values
+        // as alternative.
+        // Hardcoded exception: re-definitions of rgb() and hsl() are legacy
+        // constructs, stored separately not to pollute `value`.
+        if (name === '<rgb()>' || name === '<hsl()>') {
+          res[name].legacyValue = normalizedValue;
+        }
+        else {
+          res[name].value += ` | ${normalizedValue}`;
+        }
       }
     }
 
