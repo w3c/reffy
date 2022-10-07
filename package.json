@@ -35,7 +35,7 @@
     "abortcontroller-polyfill": "1.7.3",
     "ajv": "8.11.0",
     "ajv-formats": "2.1.1",
-    "commander": "9.4.0",
+    "commander": "9.4.1",
     "fetch-filecache-for-crawling": "4.1.0",
     "puppeteer": "18.0.5",
     "semver": "^7.3.5",
