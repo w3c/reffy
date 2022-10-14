@@ -27,7 +27,7 @@
   ],
   "license": "MIT",
   "engines": {
-    "node": ">=14"
+    "node": ">=14.18"
   },
   "main": "index.js",
   "bin": "./reffy.js",
@@ -48,7 +48,7 @@
     "nock": "13.2.9",
     "respec": "32.3.0",
     "respec-hljs": "2.1.1",
-    "rollup": "2.79.1"
+    "rollup": "3.1.0"
   },
   "scripts": {
     "test": "mocha --recursive tests/"
