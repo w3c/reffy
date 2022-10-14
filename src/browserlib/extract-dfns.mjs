@@ -230,6 +230,13 @@ export default function (spec, idToHeading = {}) {
       return node;
     })
     .filter(hasValidType)
+    // When the whole term links to an external spec, the definition is an
+    // imported definition. Such definitions are not "real" definitions, let's
+    // skip them.
+    .filter(node => {
+      const link = node.querySelector('a[href^="http"]');
+      return !link || (node.textContent.trim() !== link.textContent.trim());
+    })
     .map(node => definitionMapper(node, idToHeading));
 }
 
@@ -581,32 +588,6 @@ function preProcessHTML() {
       const headingId = el.closest("h2, h3, h4, h5, h6").id;
       if (!el.id) {
         el.id = headingId;
-      }
-    });
-
-  // all the definitions in indices.html are non-normative, so we skip them
-  // to avoid having to properly type them
-  // they're not all that interesting
-  document.querySelectorAll('section[data-reffy-page$="indices.html"] dfn[id]')
-    .forEach(el => {
-      el.dataset.dfnSkip = true;
-    });
-
-  document.querySelectorAll("dfn[id]:not([data-dfn-type]):not([data-skip])")
-    .forEach(el => {
-      // Hard coded rules for special ids
-      // dom-style is defined elsewhere
-      if (el.id === "dom-style") {
-        el.dataset.dfnType = 'attribute';
-        el.dataset.dfnFor = 'HTMLElement';
-        el.dataset.noexport = "";
-        return;
-      }
-
-      // If there is a link, we assume this documents an imported definition
-      // so we make it ignored by removing the id
-      if (el.querySelector('a[href^="http"]')) {
-        return;
       }
     });
 }
