@@ -24,6 +24,13 @@ import {parse} from "../../node_modules/webidl2/index.js";
  *     "prose" (last one indicates that definition appears in the main body of
  *     the spec)
  *
+ * The extraction ignores definitions with an unknown type. A warning is issued
+ * to the console when that happens.
+ *
+ * The extraction uses the first definition it finds when it bumps into a term
+ * that is defined more than once (same "linkingText", same "type", same "for").
+ * A warning is issued to the console when that happens.
+ *
  * @function
  * @public
  * @return {Array(Object)} An Array of definitions
@@ -99,6 +106,20 @@ function hasValidType(el) {
   return isValid;
 }
 
+// Return true when definition is not already defined in the list,
+// Return false and issue a warning when it is already defined.
+function isNotAlreadyDefined(dfn, idx, list) {
+  const first = list.find(d => d === dfn ||
+      (d.type === dfn.type &&
+      d.linkingText.length === dfn.linkingText.length &&
+      d.linkingText.every(lt => dfn.linkingText.find(t => t == lt)) &&
+      d.for.length === dfn.for.length &&
+      d.for.every(lt => dfn.for.find(t => t === lt))));
+  if (first !== dfn) {
+    console.warn('[reffy]', `Duplicate dfn found for "${dfn.linkingText[0]}", type="${dfn.type}", for="${dfn.for[0]}"`);
+  }
+  return first === dfn;
+}
 
 function definitionMapper(el, idToHeading) {
   let definedIn = 'prose';
@@ -237,7 +258,8 @@ export default function (spec, idToHeading = {}) {
       const link = node.querySelector('a[href^="http"]');
       return !link || (node.textContent.trim() !== link.textContent.trim());
     })
-    .map(node => definitionMapper(node, idToHeading));
+    .map(node => definitionMapper(node, idToHeading))
+    .filter(isNotAlreadyDefined);
 }
 
 function preProcessEcmascript() {
