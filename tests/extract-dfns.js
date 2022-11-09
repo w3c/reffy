@@ -152,6 +152,10 @@ const tests = [
    html: "<dfn id=foo data-dfn-type=invalidtype>Foo</dfn>",
    changesToBaseDfn: []
   },
+  {title: "ignores dfns already defined",
+   html: "<dfn id='foo'>Foo</dfn>. <dfn id='foo2'>Foo</dfn> is already defined.",
+   changesToBaseDfn: [{}]
+  },
   {title: "automatically fixes internal slots dfns with an invalid 'idl' data-dfn-type",
    html: "<dfn id=foo data-dfn-type=idl>Foo</dfn>",
    changesToBaseDfn: [{type: "attribute", access: "public"}]
