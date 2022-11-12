@@ -11,39 +11,245 @@ import informativeSelector from './informative-selector.mjs';
  *  "descriptors", and "valuespaces".
  */
 export default function () {
-  let res = {
-    properties: extractTableDfns(document, 'propdef', { unique: true }),
-    atrules: {},
-    valuespaces: extractValueSpaces(document)
+  const res = {
+    // Properties are always defined in dedicated tables in modern CSS specs
+    properties: extractDfns({
+      selector: 'table.propdef:not(.attrdef)',
+      extractor: extractTableDfn,
+      duplicates: 'merge',
+      mayReturnMultipleDfns: true
+    }),
+
+    // At-rules, selectors, functions and types are defined through dfns with
+    // the right "data-dfn-type" attribute
+    atrules: extractDfns({
+      selector: 'dfn[data-dfn-type=at-rule]',
+      extractor: extractTypedDfn,
+      duplicates: 'reject'
+    }),
+    selectors: extractDfns({
+      selector: 'dfn[data-dfn-type=selector]',
+      extractor: extractTypedDfn,
+      duplicates: 'reject'
+    }),
+    values: extractDfns({
+      selector: ['dfn[data-dfn-type=function]:not([data-dfn-for])',
+                 'dfn[data-dfn-type=type]:not([data-dfn-for])'
+                ].join(','),
+      extractor: extractTypedDfn,
+      duplicates: 'reject'
+    })
   };
-  let descriptors = extractTableDfns(document, 'descdef', { unique: false });
 
-  // Try old recipes if we couldn't extract anything
-  if ((Object.keys(res.properties).length === 0) &&
-      (Object.keys(descriptors).length === 0)) {
-    res.properties = extractDlDfns(document, 'propdef', { unique: true });
-    descriptors = extractDlDfns(document, 'descdef', { unique: false });
-  }
+  // At-rules have descriptors, defined in dedicated tables in modern CSS specs
+  let descriptors = extractDfns({
+    selector: 'table.descdef:not(.attrdef)',
+    extractor: extractTableDfn,
+    duplicates: 'push',
+    mayReturnMultipleDfns: true
+  });
 
-  // Move at-rules definitions from valuespaces to at-rules structure
-  for (const [name, dfn] of Object.entries(res.valuespaces)) {
-    if (name.startsWith('@')) {
-      if (!res.atrules[name]) {
-        res.atrules[name] = Object.assign(dfn, { descriptors: [] });
-      }
-      delete res.valuespaces[name];
-    }
+  // Older specs may follow older recipes, let's give them a try if we couldn't
+  // extract properties or descriptors
+  if (res.properties.length === 0 && descriptors.length === 0) {
+    res.properties = extractDfns({
+      selector: 'div.propdef dl',
+      extractor: extractDlDfn,
+      duplicates: 'merge',
+      mayReturnMultipleDfns: true
+    });
+    descriptors = extractDfns({
+      selector: 'div.descdef dl',
+      extractor: extractDlDfn,
+      duplicates: 'push',
+      mayReturnMultipleDfns: true
+    });
   }
 
   // Move descriptors to at-rules structure
-  for (const [name, desclist] of Object.entries(descriptors)) {
+  for (const desclist of descriptors) {
     for (const desc of desclist) {
-      const rule = desc.for;
-      if (!res.atrules[rule]) {
-        res.atrules[rule] = { descriptors: [] };
+      let rule = res.atrules.find(r => r.name === desc.for);
+      if (rule) {
+        if (!rule.descriptors) {
+          rule.descriptors = [];
+        }
       }
-      res.atrules[rule].descriptors.push(desc);
+      else {
+        rule = { name: desc.for, descriptors: [] };
+        res.atrules.push(rule);
+      }
+      rule.descriptors.push(desc);
     }
+  }
+
+  // Keep an index of "root" (non-namespaced + descriptors) dfns
+  const rootDfns = Object.values(res).flat();
+  for (const desclist of descriptors) {
+    for (const desc of desclist) {
+      rootDfns.push(desc);
+    }
+  }
+
+  // Extract value dfns.
+  // Note some of the values can be namespaced "function" or "type" dfns, such
+  // as "<content-replacement>" in css-content-3:
+  // https://drafts.csswg.org/css-content-3/#typedef-content-content-replacement
+  const values = extractDfns({
+    selector: ['dfn[data-dfn-type=value][data-dfn-for]',
+               'dfn[data-dfn-type=function][data-dfn-for]',
+               'dfn[data-dfn-type=type][data-dfn-for]'
+              ].join(','),
+    extractor: extractTypedDfn,
+    duplicates: 'push'
+  }).flat();
+
+  const matchName = name => dfn => {
+    let res = dfn.name === name || `<${dfn.name}>` === name;
+    if (!res && name.match(/^@.+\/.+$/)) {
+      // Value reference might be for an at-rule descriptor:
+      // https://tabatkins.github.io/bikeshed/#dfn-for
+      const parts = name.split('/');
+      res = dfn.name === parts[1] && dfn.for === parts[0];
+    }
+    return res;
+  };
+
+  // Extract production rules from pre.prod contructs
+  // and complete result structure accordingly
+  const rules = extractProductionRules(document);
+  for (const rule of rules) {
+    const dfn = rootDfns.find(matchName(rule.name));
+    if (dfn) {
+      dfn.value = rule.value;
+      if (rule.legacyValue) {
+        dfn.legacyValue = rule.legacyValue;
+      }
+    }
+    else {
+      const matchingValues = values.filter(matchName(rule.name));
+      for (const matchingValue of matchingValues) {
+        matchingValue.value = rule.value;
+        if (rule.legacyValue) {
+          matchingValue.legacyValue = rule.legacyValue;
+        }
+      }
+      if (matchingValues.length === 0) {
+        // Dangling production rule. That should never happen for properties,
+        // at-rules, descriptors and functions, since they should always be
+        // defined somewhere. That happens from time to time for types that are
+        // described in prose and that don't have a dfn. One could argue that
+        // these constructs ought to have a dfn too. It seems worth checking
+        // in any case.
+        if (rule.name.startsWith('<')) {
+          console.warn('[reffy]', `No dfn found for "${rule.name}", adding production rule as generic type value`);
+          const dfn = {
+            name: rule.name,
+            type: 'type',
+            value: rule.value
+          };
+          res.values.push(dfn);
+          rootDfns.push(res);
+        }
+        else {
+          console.warn('[reffy]', `No dfn found for "${rule.name}"`);
+        }
+      }
+    }
+  }
+
+  // We now need to associate values with dfns. CSS specs tend to list in
+  // "data-dfn-for" attributes of values the construct to which the value
+  // applies directly but also the constructs to which the value indirectly
+  // applies. For instance, "open-quote" in css-content-3 directly applies to
+  // "<quote>" and indirectly applies to "<content-list>" (which has "<quote>"
+  // in its value syntax) and to "content" (which has "<content-list>" in its
+  // value syntax), and all 3 appear in the "data-dfn-for" attribute:
+  // https://drafts.csswg.org/css-content-3/#valdef-content-open-quote
+  //
+  // To make it easier to make sense of the extracted data and avoid duplicates
+  // in the resulting structure, the goal is to only keep the constructs to
+  // which the value applies directly. In the previous example, the goal is to
+  // list "open-quote" under "<quote>" but not under "<content-list>" and
+  // "<content>".
+
+  // Start by looking at values that are "for" something. Their list of parents
+  // appears in the "data-dfn-for" attribute of their definition.
+  const parents = {};
+  for (const value of values) {
+    if (!parents[value.name]) {
+      parents[value.name] = [];
+    }
+    parents[value.name].push(...value.for.split(',').map(ref => ref.trim()));
+  }
+
+  // Then look at non-namespaced types and functions. Their list of parents
+  // are all the definitions whose values reference them (for instance,
+  // "<quote>" has "<content-list>" as parent because "<content-list>" has
+  // "<quote>" in its value syntax).
+  for (const type of res.values) {
+    if (!parents[type.name]) {
+      parents[type.name] = [];
+    }
+    for (const value of values) {
+      if (value.value?.includes(type.name)) {
+        parents[type.name].push(value.name);
+      }
+    }
+    for (const dfn of rootDfns) {
+      if (dfn.value?.includes(type.name)) {
+        parents[type.name].push(dfn.name);
+      }
+    }
+  }
+
+  // Helper functions to reason on the parents index we just created.
+  const isAncestorOf = (ancestor, child) =>
+    ancestor === child ||
+    !!parents[child]?.find(p => isAncestorOf(ancestor, p));
+  const isDeepestConstruct = (name, list) =>
+    list.every(p => p === name || !isAncestorOf(name, p));
+
+  // We may now associate values with dfns
+  for (const value of values) {
+    value.for.split(',')
+      .map(ref => ref.trim())
+      .filter((ref, _, arr) => isDeepestConstruct(ref, arr))
+      .forEach(ref => {
+        // Look for the referenced definition in root dfns
+        const dfn = rootDfns.find(matchName(ref));
+        if (dfn) {
+          if (!dfn.values) {
+            dfn.values = [];
+          }
+          dfn.values.push(value);
+        }
+        else {
+          // If the referenced definition is not in root dfns, look in
+          // namespaced dfns as functions/types are sometimes namespaced to a
+          // property, and values may reference these functions/types.
+          const referencedValues = values.filter(matchName(ref));
+          for (const referencedValue of referencedValues) {
+            if (!referencedValue.values) {
+              referencedValue.values = [];
+            }
+            referencedValue.values.push(value);
+          }
+
+          if (referencedValues.length === 0) {
+            console.warn('[reffy]', `Found dangling value "${value.name}" for "${ref}"`);
+          }
+        }
+      });
+  }
+
+  // Don't keep the info on whether value comes from a pure syntax section
+  for (const dfn of rootDfns) {
+    delete dfn.pureSyntax;
+  }
+  for (const value of values) {
+    delete value.for;
+    delete value.pureSyntax;
   }
 
   return res;
@@ -162,32 +368,44 @@ const mergeDfns = (dfn1, dfn2) => {
 
 /**
  * Extract CSS definitions in a spec using the given CSS selector and extractor
+ *
+ * The "duplicates" option controls the behavior of the function when it
+ * encounters a duplicate (or similar) definition for the same thing. Values
+ * may be "reject" to throw an error, "merge" to merge the definitions, and
+ * "push" to keep both definitions separated.
  */
-const extractDfns = (doc, selector, extractor, { unique } = { unique: true }) => {
-  let res = {};
-  [...doc.querySelectorAll(selector)]
+const extractDfns = ({ root = document, selector, extractor,
+                       duplicates = 'reject', mayReturnMultipleDfns = false }) => {
+  const res = [];
+  [...root.querySelectorAll(selector)]
     .filter(el => !el.closest(informativeSelector))
     .filter(el => !el.querySelector('ins, del'))
     .map(extractor)
-    .filter(dfn => !!dfn.name)
-    .map(dfn => dfn.name.split(',').map(name => Object.assign({},
-      dfn, { name: name.trim() })))
+    .filter(dfn => !!dfn?.name)
+    .map(dfn => !mayReturnMultipleDfns ? [dfn] :
+      dfn.name.split(',').map(name => Object.assign({}, dfn, { name: name.trim() })))
     .reduce((acc, val) => acc.concat(val), [])
     .forEach(dfn => {
-      if (res[dfn.name]) {
-        if (unique) {
-          const merged = mergeDfns(res[dfn.name], dfn);
+      const idx = res.findIndex(e => e.name === dfn.name);
+      if (idx >= 0) {
+        switch (duplicates) {
+        case 'merge':
+          const merged = mergeDfns(res[idx], dfn);
           if (!merged) {
-            throw new Error(`More than one dfn found for CSS property "${dfn.name}" and dfns cannot be merged`);
+            throw new Error(`More than one CSS dfn found for "${dfn.name}" and dfns cannot be merged`);
           }
-          res[dfn.name] = merged;
-        }
-        else {
-          res[dfn.name].push(dfn);
+          res[idx] = merged;
+          break;
+
+        case 'push':
+          res[idx].push(dfn);
+
+        default:
+          throw new Error(`More than one CSS dfn found for "${dfn.name}"`);
         }
       }
       else {
-        res[dfn.name] = unique ? dfn : [dfn];
+        res.push(duplicates !== 'push' ? dfn : [dfn]);
       }
     });
   return res;
@@ -195,200 +413,186 @@ const extractDfns = (doc, selector, extractor, { unique } = { unique: true }) =>
 
 
 /**
- * Extract CSS definitions in tables for the given class name
- * (typically one of `propdef` or `descdef`)
+ * Regular expression used to split production rules:
+ * Split on the space that precedes a term immediately before an equal sign
+ * that is not wrapped in quotes (an equal sign wrapped in quotes is part of
+ * actual value syntax)
  */
-const extractTableDfns = (doc, className, options) =>
-  extractDfns(doc, 'table.' + className + ':not(.attrdef)', extractTableDfn, options);
+const reSplitRules = /\s(?=[^\s]+?\s*?=[^'])/;
 
 
 /**
- * Extract CSS definitions in a dl list for the given class name
- * (typically one of `propdef` or `descdef`)
+ * Helper function to parse a production rule. The "pureSyntax" parameter
+ * should be set to indicate that the rule comes from a pure syntactic block
+ * and should have precedence over another value definition that may be
+ * extracted from the prose. For instance, this makes it possible to extract
+ * `<abs()> = abs( <calc-sum> )` from the syntax part in CSS Values instead
+ * of `<abs()> = abs(A)` which is how the function is defined in prose.
  */
-const extractDlDfns = (doc, className, options) =>
-  extractDfns(doc, 'div.' + className + ' dl', extractDlDfn, options);
+const parseProductionRule = (rule, { res = [], pureSyntax = false }) => {
+  const nameAndValue = rule
+    .replace(/\/\*[^]*?\*\//gm, '')  // Drop comments
+    .split(/\s?=\s/)
+    .map(s => s.trim().replace(/\s+/g, ' '));
+
+  const name = nameAndValue[0];
+  const value = nameAndValue[1];
+
+  const normalizedValue = normalize(value);
+  let entry = res.find(e => e.name === name);
+  if (!entry) {
+    entry = { name };
+    res.push(entry);
+  }
+  if (!entry.value || (pureSyntax && !entry.pureSyntax)) {
+    entry.value = normalizedValue;
+    entry.pureSyntax = pureSyntax;
+  }
+  else if (entry.value !== normalizedValue) {
+    // Second definition found. Typically happens for the statement and
+    // block @layer definitions in css-cascade-5. We'll combine the values
+    // as alternative.
+    // Hardcoded exception: re-definitions of rgb() and hsl() are legacy
+    // constructs, stored separately not to pollute `value`.
+    if (name === '<rgb()>' || name === '<hsl()>') {
+      entry.legacyValue = normalizedValue;
+    }
+    else {
+      entry.value += ` | ${normalizedValue}`;
+    }
+  }
+
+  return entry;
+};
 
 
 /**
- * Extract value spaces (non-terminal values) defined in the specification
- *
- * From a definitions data model perspective, non-terminal values are those
- * defined with a `data-dfn-type` attribute equal to `type` or `function`. They
- * form (at least in theory) a single namespace across CSS specs.
- *
- * Definitions with `data-dfn-type` attribute set to `value` are not extracted
- * on purpose as they are typically namespaced to another construct (through a
- * `data-dfn-for` attribute.
- *
- * The function also extracts syntax of at-rules (name starts with '@') defined
- * in "pre.prod" blocks.
+ * Extract the given dfn
  */
-const extractValueSpaces = doc => {
+const extractTypedDfn = dfn => {
   let res = {};
+  const arr = [];
+  const dfnType = dfn.getAttribute('data-dfn-type');
+  const dfnFor = dfn.getAttribute('data-dfn-for');
+  if (dfnFor && !['function', 'type', 'value'].includes(dfnType)) {
+    console.warn('[reffy]', `Unexpected data-dfn-for="${dfnFor}" in "${dfn.getAttribute('data-dfn-type')}" dfn "${dfn.textContent}"`);
+    return null;
+  }
+  const parent = dfn.parentNode.cloneNode(true);
 
-  // Helper function to parse a production rule. The "pureSyntax" parameter
-  // should be set to indicate that the rule comes from a pure syntactic block
-  // and should have precedence over another value definition that may be
-  // extracted from the prose. For instance, this makes it possible to extract
-  // `<abs()> = abs( <calc-sum> )` from the syntax part in CSS Values instead
-  // of `<abs()> = abs(A)` which is how the function is defined in prose.
-  const parseProductionRule = (rule, { pureSyntax = false }) => {
-    const nameAndValue = rule
-      .replace(/\/\*[^]*?\*\//gm, '')  // Drop comments
-      .split(/\s?=\s/)
-      .map(s => s.trim().replace(/\s+/g, ' '));
+  // Remove note references as in:
+  // https://drafts.csswg.org/css-syntax-3/#the-anb-type
+  // and remove MDN annotations as well
+  [...parent.querySelectorAll('sup')]
+    .map(sup => sup.parentNode.removeChild(sup));
+  [...parent.querySelectorAll('aside, .mdn-anno')]
+    .map(annotation => annotation.parentNode.removeChild(annotation));
 
-    function addValuespace(name, value) {
-      const normalizedValue = normalize(value);
-      if (!(name in res)) {
-        res[name] = {};
+  const text = parent.textContent.trim();
+  if (text.match(/\s?=\s/)) {
+    // Definition appears in a "prod = foo" text, that's all good
+    // ... except in css-easing-2 draft where text also contains another
+    // production rule as a child of the first one:
+    // https://drafts.csswg.org/css-easing-2/#typedef-step-easing-function
+    const prod = text.split(reSplitRules)
+        .find(p => p.trim().startsWith(dfn.textContent.trim()));
+    if (dfn.closest('pre')) {
+      // Don't attempt to parse pre tags at this stage, they are tricky to
+      // split, we'll parse them as text and map them to the right definitions
+      // afterwards.
+      const name = (dfn.getAttribute('data-lt') ?? dfn.textContent).trim();
+      res = { name };
+    }
+    else if (prod) {
+      res = parseProductionRule(prod, { pureSyntax: true });
+    }
+    else {
+      // "=" may appear in another formula in the body of the text, as in:
+      // https://drafts.csswg.org/css-speech-1/#typedef-voice-volume-decibel
+      // It may be worth checking but not an error per se.
+      console.warn('[reffy]', `Found "=" next to definition of ${dfn.textContent.trim()} but no production rule. Did I miss something?`);
+      const name = (dfn.getAttribute('data-lt') ?? dfn.textContent).trim();
+      res = { name, prose: text.replace(/\s+/g, ' ') };
+    }
+  }
+  else if (dfn.textContent.trim().match(/^[a-zA-Z_][a-zA-Z0-9_\-]+\([^\)]+\)$/)) {
+    // Definition is "prod(foo bar)", create a "prod() = prod(foo bar)" entry
+    const fn = dfn.textContent.trim().match(/^([a-zA-Z_][a-zA-Z0-9_\-]+)\([^\)]+\)$/)[1];
+    res = parseProductionRule(`${fn}() = ${dfn.textContent.trim()}`, { pureSyntax: false });
+  }
+  else if (parent.nodeName === 'DT') {
+    // Definition is in a <dt>, look for value in following <dd>
+    let dd = dfn.parentNode;
+    while (dd && (dd.nodeName !== 'DD')) {
+      dd = dd.nextSibling;
+    }
+    if (!dd) {
+      return;
+    }
+    let code = dd.querySelector('p > code, pre.prod');
+    if (code) {
+      if (code.textContent.startsWith(`${text} = `) ||
+          code.textContent.startsWith(`<${text}> = `)) {
+        res = parseProductionRule(code.textContent, { pureSyntax: true });
       }
-      if (!res[name].value || (pureSyntax && !res[name].pureSyntax)) {
-        res[name].value = normalizedValue;
-        res[name].pureSyntax = pureSyntax;
-      }
-      else if (res[name].value !== normalizedValue) {
-        // Second definition found. Typically happens for the statement and
-        // block @layer definitions in css-cascade-5. We'll combine the values
-        // as alternative.
-        // Hardcoded exception: re-definitions of rgb() and hsl() are legacy
-        // constructs, stored separately not to pollute `value`.
-        if (name === '<rgb()>' || name === '<hsl()>') {
-          res[name].legacyValue = normalizedValue;
-        }
-        else {
-          res[name].value += ` | ${normalizedValue}`;
-        }
+      else {
+        res = parseProductionRule(`${text} = ${code.textContent}`, { pureSyntax: false });
       }
     }
+    else {
+      // Remove notes, details sections that link to tests, and subsections
+      // that go too much into details
+      dd = dd.cloneNode(true);
+      [...dd.children].forEach(c => {
+        if (c.tagName === 'DETAILS' ||
+            c.tagName === 'DL' ||
+            c.classList.contains('note')) {
+          c.remove();
+        }
+      });
 
-    if (nameAndValue[0].match(/^<.*>$|^.*\(\)$/)) {
-      // Regular valuespace
-      addValuespace(
-        nameAndValue[0].replace(/^(.*\(\))$/, '<$1>'),
-        nameAndValue[1]);
+      const name = (dfn.getAttribute('data-lt') ?? dfn.textContent).trim();
+      res = { name, prose: dd.textContent.trim().replace(/\s+/g, ' ') };
     }
-    else if (nameAndValue[0].match(/^@[a-z\-]+$/)) {
-      // At-rule syntax
-      addValuespace(nameAndValue[0], nameAndValue[1]);
-    }
-  };
+  }
+  else if (parent.nodeName === 'P') {
+    // Definition is in regular prose, extract value from prose.
+    const name = (dfn.getAttribute('data-lt') ?? dfn.textContent).trim();
+    res = { name, prose: parent.textContent.trim().replace(/\s+/g, ' ') };
+  }
+  else {
+    // Definition is in a heading or a more complex structure, just list the
+    // name for now.
+    const name = (dfn.getAttribute('data-lt') ?? dfn.textContent).trim();
+    res = { name };
+  }
 
-  // Regular expression to use to split production rules:
-  // Split on the space that precedes a term immediately before an equal sign
-  // that is not wrapped in quotes (an equal sign wrapped in quotes is part of
-  // actual value syntax)
-  const reSplitRules = /\s(?=[^\s]+?\s*?=[^'])/;
+  if (dfnType === 'value') {
+    res.value = res.name;
+  }
+  if (['function', 'type', 'value'].includes(dfnType)) {
+    res.type = dfnType;
+  }
+  if (dfnFor) {
+    res.for = dfnFor;
+  }
 
-  // Extract all dfns with data-dfn-type="type" or data-dfn-type="function"
-  // but ignore definitions in <pre> as they do not always use dfns, as in
-  // https://drafts.csswg.org/css-values-4/#calc-syntax
-  [...doc.querySelectorAll(
-      'dfn[data-dfn-type=type],dfn[data-dfn-type=function]')]
-    .filter(el => !el.closest(informativeSelector))
-    .filter(el => !el.closest('pre'))
-    .forEach(dfn => {
-      const parent = dfn.parentNode.cloneNode(true);
+  return res;
+};
 
-      // Remove note references as in:
-      // https://drafts.csswg.org/css-syntax-3/#the-anb-type
-      // and remove MDN annotations as well
-      [...parent.querySelectorAll('sup')]
-        .map(sup => sup.parentNode.removeChild(sup));
-      [...parent.querySelectorAll('aside, .mdn-anno')]
-        .map(annotation => annotation.parentNode.removeChild(annotation));
-
-      const text = parent.textContent.trim();
-      if (text.match(/\s?=\s/)) {
-        // Definition appears in a "prod = foo" text, that's all good
-        // ... except in css-easing-2 draft where text also contains another
-        // production rule as a child of the first one:
-        // https://drafts.csswg.org/css-easing-2/#typedef-step-easing-function
-        const prod = text.split(reSplitRules)
-            .find(p => p.trim().startsWith(dfn.textContent.trim()));
-        if (prod) {
-          parseProductionRule(prod, { pureSyntax: true });
-        }
-        else {
-          // "=" may appear in another formula in the body of the text, as in:
-          // https://drafts.csswg.org/css-speech-1/#typedef-voice-volume-decibel
-          // It may be worth checking but not an error per se.
-          console.warn('[reffy]', `Found "=" next to definition of ${dfn.textContent.trim()} but no production rule. Did I miss something?`);
-          const name = (dfn.getAttribute('data-lt') ?? dfn.textContent)
-            .trim().replace(/^<?(.*?)>?$/, '<$1>');
-          if (!(name in res)) {
-            res[name] = {
-              prose: parent.textContent.trim().replace(/\s+/g, ' ')
-            };
-          }
-        }
-      }
-      else if (dfn.textContent.trim().match(/^[a-zA-Z_][a-zA-Z0-9_\-]+\([^\)]+\)$/)) {
-        // Definition is "prod(foo bar)", create a "prod() = prod(foo bar)" entry
-        const fn = dfn.textContent.trim().match(/^([a-zA-Z_][a-zA-Z0-9_\-]+)\([^\)]+\)$/)[1];
-        parseProductionRule(`${fn}() = ${dfn.textContent.trim()}`, { pureSyntax: false });
-      }
-      else if (parent.nodeName === 'DT') {
-        // Definition is in a <dt>, look for value in following <dd>
-        let dd = dfn.parentNode;
-        while (dd && (dd.nodeName !== 'DD')) {
-          dd = dd.nextSibling;
-        }
-        if (!dd) {
-          return;
-        }
-        let code = dd.querySelector('p > code, pre.prod');
-        if (code) {
-          if (code.textContent.startsWith(`${text} = `) ||
-              code.textContent.startsWith(`<${text}> = `)) {
-            parseProductionRule(code.textContent, { pureSyntax: true });
-          }
-          else {
-            parseProductionRule(`${text} = ${code.textContent}`, { pureSyntax: false });
-          }
-        }
-        else {
-          // Remove notes, details sections that link to tests, and subsections
-          // that go too much into details
-          dd = dd.cloneNode(true);
-          [...dd.children].forEach(c => {
-            if (c.tagName === 'DETAILS' ||
-                c.tagName === 'DL' ||
-                c.classList.contains('note')) {
-              c.remove();
-            }
-          });
-
-          const name = (dfn.getAttribute('data-lt') ?? dfn.textContent)
-            .trim().replace(/^<?(.*?)>?$/, '<$1>');
-          if (!(name in res)) {
-            res[name] = {};
-          }
-          if (!res[name].prose) {
-            res[name].prose = dd.textContent.trim().replace(/\s+/g, ' ');
-          }
-        }
-      }
-      else if (parent.nodeName === 'P') {
-        // Definition is in regular prose, extract value from prose.
-        const name = (dfn.getAttribute('data-lt') ?? dfn.textContent)
-          .trim().replace(/^<?(.*?)>?$/, '<$1>');
-        if (!(name in res)) {
-          res[name] = {
-            prose: parent.textContent.trim().replace(/\s+/g, ' ')
-          };
-        }
-      }
-    });
-
-  // Complete with production rules defined in <pre class=prod> tags (some of
-  // which use dfns, while others don't, but all of them are actual production
-  // rules). For <pre> tags that don't have a "prod" class (e.g. in HTML and
+/**
+ * Extract production rules defined in the specification in "<pre>" tags and
+ * complete the result structure received as parameter accordingly.
+ */
+const extractProductionRules = root => {
+  // For <pre> tags that don't have a "prod" class (e.g. in HTML and
   // css-namespaces), make sure they contain a <dfn> to avoid parsing things
   // that are not production rules
-  [...doc.querySelectorAll('pre.prod')]
-    .concat([...doc.querySelectorAll('pre:not(.idl)')]
+  // In all cases, make sure we're not in a changelog with details, as in:
+  // https://drafts.csswg.org/css-backgrounds-3/#changes-2017-10
+  const rules = [];
+  [...root.querySelectorAll('pre.prod:not(:has(del)):not(:has(ins))')]
+    .concat([...root.querySelectorAll('pre:not(.idl):not(:has(del)):not(:has(ins))')]
       .filter(el => el.querySelector('dfn')))
     .filter(el => !el.closest(informativeSelector))
     .map(el => el.cloneNode(true))
@@ -402,18 +606,15 @@ const extractValueSpaces = doc => {
     .map(val => val.split(reSplitRules))             // Separate definitions
     .flat()
     .map(text => text.trim())
-    .map(text => {
+    .forEach(text => {
       if (text.match(/\s?=\s/)) {
-        return parseProductionRule(text, { pureSyntax: true });
+        parseProductionRule(text, { res: rules, pureSyntax: true });
       }
       else if (text.startsWith('@')) {
         const name = text.split(' ')[0];
-        return parseProductionRule(`${name} = ${text}`, { pureSyntax: true });
+        parseProductionRule(`${name} = ${text}`, { res: rules, pureSyntax: true });
       }
     });
 
-  // Don't keep the info on whether value comes from a pure syntax section
-  Object.values(res).map(value => delete value.pureSyntax);
-
-  return res;
+  return rules;
 }
