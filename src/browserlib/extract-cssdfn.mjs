@@ -37,7 +37,8 @@ export default function () {
                  'dfn[data-dfn-type=type]:not([data-dfn-for])'
                 ].join(','),
       extractor: extractTypedDfn,
-      duplicates: 'reject'
+      duplicates: 'reject',
+      keepDfnType: true
     })
   };
 
@@ -101,7 +102,8 @@ export default function () {
                'dfn[data-dfn-type=type][data-dfn-for]'
               ].join(','),
     extractor: extractTypedDfn,
-    duplicates: 'push'
+    duplicates: 'push',
+    keepDfnType: true
   }).flat();
 
   const matchName = name => dfn => {
@@ -138,22 +140,14 @@ export default function () {
         // Dangling production rule. That should never happen for properties,
         // at-rules, descriptors and functions, since they should always be
         // defined somewhere. That happens from time to time for types that are
-        // described in prose and that don't have a dfn. One could argue that
-        // these constructs ought to have a dfn too. It seems worth checking
-        // in any case.
-        if (rule.name.startsWith('<')) {
-          console.warn('[reffy]', `No dfn found for "${rule.name}", adding production rule as generic type value`);
-          const dfn = {
-            name: rule.name,
-            type: 'type',
-            value: rule.value
-          };
-          res.values.push(dfn);
-          rootDfns.push(res);
+        // described in prose and that don't have a dfn. One could perhaps argue
+        // that these constructs ought to have a dfn too.
+        if (!res.warnings) {
+          res.warnings = []
         }
-        else {
-          console.warn('[reffy]', `No dfn found for "${rule.name}"`);
-        }
+        const warning = Object.assign({ msg: 'Missing dfn' }, rule);
+        res.warnings.push(warning);
+        rootDfns.push(warning);
       }
     }
   }
@@ -237,7 +231,14 @@ export default function () {
           }
 
           if (referencedValues.length === 0) {
-            console.warn('[reffy]', `Found dangling value "${value.name}" for "${ref}"`);
+            if (!res.warnings) {
+              res.warnings = []
+            }
+            res.warnings.push(Object.assign(
+              { msg: 'Dangling value' },
+              value,
+              { for: ref }
+            ));
           }
         }
       });
@@ -375,7 +376,8 @@ const mergeDfns = (dfn1, dfn2) => {
  * "push" to keep both definitions separated.
  */
 const extractDfns = ({ root = document, selector, extractor,
-                       duplicates = 'reject', mayReturnMultipleDfns = false }) => {
+                       duplicates = 'reject', mayReturnMultipleDfns = false,
+                       keepDfnType = false }) => {
   const res = [];
   [...root.querySelectorAll(selector)]
     .filter(el => !el.closest(informativeSelector))
@@ -386,6 +388,9 @@ const extractDfns = ({ root = document, selector, extractor,
       dfn.name.split(',').map(name => Object.assign({}, dfn, { name: name.trim() })))
     .reduce((acc, val) => acc.concat(val), [])
     .forEach(dfn => {
+      if (dfn.type && !keepDfnType) {
+        delete dfn.type;
+      }
       const idx = res.findIndex(e => e.name === dfn.name);
       if (idx >= 0) {
         switch (duplicates) {
@@ -474,10 +479,6 @@ const extractTypedDfn = dfn => {
   const arr = [];
   const dfnType = dfn.getAttribute('data-dfn-type');
   const dfnFor = dfn.getAttribute('data-dfn-for');
-  if (dfnFor && !['function', 'type', 'value'].includes(dfnType)) {
-    console.warn('[reffy]', `Unexpected data-dfn-for="${dfnFor}" in "${dfn.getAttribute('data-dfn-type')}" dfn "${dfn.textContent}"`);
-    return null;
-  }
   const parent = dfn.parentNode.cloneNode(true);
 
   // Remove note references as in:
@@ -567,11 +568,9 @@ const extractTypedDfn = dfn => {
     res = { name };
   }
 
+  res.type = dfnType;
   if (dfnType === 'value') {
     res.value = res.name;
-  }
-  if (['function', 'type', 'value'].includes(dfnType)) {
-    res.type = dfnType;
   }
   if (dfnFor) {
     res.for = dfnFor;

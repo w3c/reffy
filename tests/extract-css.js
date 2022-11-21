@@ -545,14 +545,15 @@ const tests = [
 
   {
     title: "ignores comments",
-    html: `<pre class="prod">&lt;page-selector-list> = &lt;page-selector>#
+    html: `<pre class="prod">
+<dfn data-dfn-type="type">&lt;page-selector-list></dfn> = &lt;page-selector>#
 /* A comment */
-&lt;page-selector> = [ &lt;ident-token>? &lt;pseudo-page>* ]!
-&lt;pseudo-page> = ':' [ left | right | first | blank ] /* Another comment */
+<dfn data-dfn-type="type">&lt;page-selector></dfn> = [ &lt;ident-token>? &lt;pseudo-page>* ]!
+<dfn data-dfn-type="type">&lt;pseudo-page></dfn> = ':' [ left | right | first | blank ] /* Another comment */
 
 /* Yet another one
 that spans multiple lines */
-@top-left-corner = @top-left-corner { &lt;declaration-list> };
+<dfn data-dfn-type="at-rule">@top-left-corner</dfn> = @top-left-corner { &lt;declaration-list> };
 </pre>`,
     propertyName: "values",
     css: [
