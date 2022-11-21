@@ -34,7 +34,9 @@ export default function () {
     }),
     values: extractDfns({
       selector: ['dfn[data-dfn-type=function]:not([data-dfn-for])',
-                 'dfn[data-dfn-type=type]:not([data-dfn-for])'
+                 'dfn[data-dfn-type=function][data-dfn-for=""]',
+                 'dfn[data-dfn-type=type]:not([data-dfn-for])',
+                 'dfn[data-dfn-type=type][data-dfn-for=""]'
                 ].join(','),
       extractor: extractTypedDfn,
       duplicates: 'reject',
@@ -97,9 +99,9 @@ export default function () {
   // as "<content-replacement>" in css-content-3:
   // https://drafts.csswg.org/css-content-3/#typedef-content-content-replacement
   const values = extractDfns({
-    selector: ['dfn[data-dfn-type=value][data-dfn-for]',
-               'dfn[data-dfn-type=function][data-dfn-for]',
-               'dfn[data-dfn-type=type][data-dfn-for]'
+    selector: ['dfn[data-dfn-type=value][data-dfn-for]:not([data-dfn-for=""])',
+               'dfn[data-dfn-type=function][data-dfn-for]:not([data-dfn-for=""])',
+               'dfn[data-dfn-type=type][data-dfn-for]:not([data-dfn-for=""])'
               ].join(','),
     extractor: extractTypedDfn,
     duplicates: 'push',
