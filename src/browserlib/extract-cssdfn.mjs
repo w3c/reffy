@@ -11,13 +11,18 @@ import informativeSelector from './informative-selector.mjs';
  *  "descriptors", and "valuespaces".
  */
 export default function () {
+  // List of inconsistencies and errors found in the spec while trying to make
+  // sense of the CSS definitions and production rules it contains
+  const warnings = [];
+
   const res = {
     // Properties are always defined in dedicated tables in modern CSS specs
     properties: extractDfns({
       selector: 'table.propdef:not(.attrdef)',
       extractor: extractTableDfn,
       duplicates: 'merge',
-      mayReturnMultipleDfns: true
+      mayReturnMultipleDfns: true,
+      warnings
     }),
 
     // At-rules, selectors, functions and types are defined through dfns with
@@ -25,12 +30,14 @@ export default function () {
     atrules: extractDfns({
       selector: 'dfn[data-dfn-type=at-rule]',
       extractor: extractTypedDfn,
-      duplicates: 'reject'
+      duplicates: 'reject',
+      warnings
     }),
     selectors: extractDfns({
       selector: 'dfn[data-dfn-type=selector]',
       extractor: extractTypedDfn,
-      duplicates: 'reject'
+      duplicates: 'reject',
+      warnings
     }),
     values: extractDfns({
       selector: ['dfn[data-dfn-type=function]:not([data-dfn-for])',
@@ -40,7 +47,8 @@ export default function () {
                 ].join(','),
       extractor: extractTypedDfn,
       duplicates: 'reject',
-      keepDfnType: true
+      keepDfnType: true,
+      warnings
     })
   };
 
@@ -49,7 +57,8 @@ export default function () {
     selector: 'table.descdef:not(.attrdef)',
     extractor: extractTableDfn,
     duplicates: 'push',
-    mayReturnMultipleDfns: true
+    mayReturnMultipleDfns: true,
+      warnings
   });
 
   // Older specs may follow older recipes, let's give them a try if we couldn't
@@ -59,13 +68,15 @@ export default function () {
       selector: 'div.propdef dl',
       extractor: extractDlDfn,
       duplicates: 'merge',
-      mayReturnMultipleDfns: true
+      mayReturnMultipleDfns: true,
+      warnings
     });
     descriptors = extractDfns({
       selector: 'div.descdef dl',
       extractor: extractDlDfn,
       duplicates: 'push',
-      mayReturnMultipleDfns: true
+      mayReturnMultipleDfns: true,
+      warnings
     });
   }
 
@@ -105,7 +116,8 @@ export default function () {
               ].join(','),
     extractor: extractTypedDfn,
     duplicates: 'push',
-    keepDfnType: true
+    keepDfnType: true,
+    warnings
   }).flat();
 
   const matchName = name => dfn => {
@@ -147,7 +159,7 @@ export default function () {
         if (!res.warnings) {
           res.warnings = []
         }
-        const warning = Object.assign({ msg: 'Missing dfn' }, rule);
+        const warning = Object.assign({ msg: 'Missing definition' }, rule);
         res.warnings.push(warning);
         rootDfns.push(warning);
       }
@@ -233,10 +245,7 @@ export default function () {
           }
 
           if (referencedValues.length === 0) {
-            if (!res.warnings) {
-              res.warnings = []
-            }
-            res.warnings.push(Object.assign(
+            warnings.push(Object.assign(
               { msg: 'Dangling value' },
               value,
               { for: ref }
@@ -253,6 +262,11 @@ export default function () {
   for (const value of values) {
     delete value.for;
     delete value.pureSyntax;
+  }
+
+  // Report warnings
+  if (warnings.length > 0) {
+    res.warnings = warnings;
   }
 
   return res;
@@ -374,12 +388,19 @@ const mergeDfns = (dfn1, dfn2) => {
  *
  * The "duplicates" option controls the behavior of the function when it
  * encounters a duplicate (or similar) definition for the same thing. Values
- * may be "reject" to throw an error, "merge" to merge the definitions, and
+ * may be "reject" to report a warning, "merge" to merge the definitions, and
  * "push" to keep both definitions separated.
+ *
+ * Merge issues and unexpected duplicates get reported as warnings in the
+ * "warnings" array passed as parameter.
  */
-const extractDfns = ({ root = document, selector, extractor,
-                       duplicates = 'reject', mayReturnMultipleDfns = false,
-                       keepDfnType = false }) => {
+const extractDfns = ({ root = document,
+                       selector,
+                       extractor,
+                       duplicates = 'reject',
+                       mayReturnMultipleDfns = false,
+                       keepDfnType = false,
+                       warnings = [] }) => {
   const res = [];
   [...root.querySelectorAll(selector)]
     .filter(el => !el.closest(informativeSelector))
@@ -398,17 +419,25 @@ const extractDfns = ({ root = document, selector, extractor,
         switch (duplicates) {
         case 'merge':
           const merged = mergeDfns(res[idx], dfn);
-          if (!merged) {
-            throw new Error(`More than one CSS dfn found for "${dfn.name}" and dfns cannot be merged`);
+          if (merged) {
+            res[idx] = merged;
           }
-          res[idx] = merged;
+          else {
+            warnings.push(Object.assign(
+              { msg: 'Unmergeable definition' },
+              dfn
+            ));
+          }
           break;
 
         case 'push':
           res[idx].push(dfn);
 
         default:
-          throw new Error(`More than one CSS dfn found for "${dfn.name}"`);
+          warnings.push(Object.assign(
+            { msg: 'Duplicate definition' },
+            dfn
+          ));
         }
       }
       else {
