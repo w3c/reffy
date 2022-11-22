@@ -15,23 +15,23 @@ const tests = [
       <th><a href="#values">Value</a>: 
       </th><td><a class="production css" data-link-type="type" href="https://www.w3.org/TR/css-color-3/#valuea-def-color" id="ref-for-valuea-def-color" title="Expands to: aliceblue | antiquewhite | aqua | aquamarine | azure | beige | bisque | black | blanchedalmond | blue | blueviolet | brown | burlywood | cadetblue | chartreuse | chocolate | coral | cornflowerblue | cornsilk | crimson | currentcolor | cyan | darkblue | darkcyan | darkgoldenrod | darkgray | darkgreen | darkgrey | darkkhaki | darkmagenta | darkolivegreen | darkorange | darkorchid | darkred | darksalmon | darkseagreen | darkslateblue | darkslategray | darkslategrey | darkturquoise | darkviolet | deeppink | deepskyblue | dimgray | dimgrey | dodgerblue | firebrick | floralwhite | forestgreen | fuchsia | gainsboro | ghostwhite | gold | goldenrod | gray | green | greenyellow | grey | honeydew | hotpink | indianred | indigo | ivory | khaki | lavender | lavenderblush | lawngreen | lemonchiffon | lightblue | lightcoral | lightcyan | lightgoldenrodyellow | lightgray | lightgreen | lightgrey | lightpink | lightsalmon | lightseagreen | lightskyblue | lightslategray | lightslategrey | lightsteelblue | lightyellow | lime | limegreen | linen | magenta | maroon | mediumaquamarine | mediumblue | mediumorchid | mediumpurple | mediumseagreen | mediumslateblue | mediumspringgreen | mediumturquoise | mediumvioletred | midnightblue | mintcream | mistyrose | moccasin | navajowhite | navy | oldlace | olive | olivedrab | orange | orangered | orchid | palegoldenrod | palegreen | paleturquoise | palevioletred | papayawhip | peachpuff | peru | pink | plum | powderblue | purple | rebeccapurple | red | rosybrown | royalblue | saddlebrown | salmon | sandybrown | seagreen | seashell | sienna | silver | skyblue | slateblue | slategray | slategrey | snow | springgreen | steelblue | tan | teal | thistle | tomato | transparent | turquoise | violet | wheat | white | whitesmoke | yellow | yellowgreen">&lt;color&gt;</a> 
      </td></tr><tr>
-      <th>Initial: 
-      </th><td>transparent 
+      <th>Initial:
+      </th><td>transparent
      </td></tr><tr>
-      <th>Applies to: 
-      </th><td>all elements 
+      <th>Applies to:
+      </th><td>all elements
      </td></tr><tr>
-      <th>Inherited: 
-      </th><td>no 
+      <th>Inherited:
+      </th><td>no
      </td></tr><tr>
-      <th>Percentages: 
-      </th><td>N/A 
+      <th>Percentages:
+      </th><td>N/A
      </td></tr><tr>
-      <th>Computed value: 
-      </th><td>computed color 
+      <th>Computed value:
+      </th><td>computed color
      </td></tr><tr>
-      <th>Animation type: 
-      </th><td>by computed value 
+      <th>Animation type:
+      </th><td>by computed value
    </td></tr></tbody></table>`,
    css: [{
       "name": "background-color",
@@ -82,28 +82,28 @@ const tests = [
        <dfn class="dfn-paneled css" data-dfn-type="property" data-export="" id="propdef-align-content">align-content</dfn>
      </td></tr><tr class="value">
       <th><a href="https://www.w3.org/TR/css-values/#value-defs">Value:</a>
-      </th><td class="prod">normal <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-one" id="ref-for-comb-one①⑤">|</a> <a class="production css" data-link-type="type" href="#typedef-baseline-position" id="ref-for-typedef-baseline-position①" title="Expands to: baseline | first | last">&lt;baseline-position&gt;</a> <span id="ref-for-comb-one①⑥">|</span> <a class="production css" data-link-type="type" href="#typedef-content-distribution" id="ref-for-typedef-content-distribution①" title="Expands to: space-around | space-between | space-evenly | stretch">&lt;content-distribution&gt;</a> <span id="ref-for-comb-one①⑦">|</span> <a class="production css" data-link-type="type" href="#typedef-overflow-position" id="ref-for-typedef-overflow-position②" title="Expands to: safe | unsafe">&lt;overflow-position&gt;</a><a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#mult-opt" id="ref-for-mult-opt①">?</a> <a class="production css" data-link-type="type" href="#typedef-content-position" id="ref-for-typedef-content-position②" title="Expands to: center | end | flex-end | flex-start | start">&lt;content-position&gt;</a> 
+      </th><td class="prod">normal <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-one" id="ref-for-comb-one①⑤">|</a> <a class="production css" data-link-type="type" href="#typedef-baseline-position" id="ref-for-typedef-baseline-position①" title="Expands to: baseline | first | last">&lt;baseline-position&gt;</a> <span id="ref-for-comb-one①⑥">|</span> <a class="production css" data-link-type="type" href="#typedef-content-distribution" id="ref-for-typedef-content-distribution①" title="Expands to: space-around | space-between | space-evenly | stretch">&lt;content-distribution&gt;</a> <span id="ref-for-comb-one①⑦">|</span> <a class="production css" data-link-type="type" href="#typedef-overflow-position" id="ref-for-typedef-overflow-position②" title="Expands to: safe | unsafe">&lt;overflow-position&gt;</a><a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#mult-opt" id="ref-for-mult-opt①">?</a> <a class="production css" data-link-type="type" href="#typedef-content-position" id="ref-for-typedef-content-position②" title="Expands to: center | end | flex-end | flex-start | start">&lt;content-position&gt;</a>
      </td></tr><tr>
       <th><a href="https://www.w3.org/TR/css-cascade/#initial-values">Initial:</a>
-      </th><td>normal 
+      </th><td>normal
      </td></tr><tr>
       <th>Applies to:
-      </th><td>block containers, multicol containers, flex containers, and grid containers 
+      </th><td>block containers, multicol containers, flex containers, and grid containers
      </td></tr><tr>
       <th><a href="https://www.w3.org/TR/css-cascade/#inherited-property">Inherited:</a>
-      </th><td>no 
+      </th><td>no
      </td></tr><tr>
       <th><a href="https://www.w3.org/TR/css-values/#percentages">Percentages:</a>
-      </th><td>n/a 
+      </th><td>n/a
      </td></tr><tr>
       <th><a href="https://www.w3.org/TR/css-cascade/#computed">Computed value:</a>
-      </th><td>specified keyword(s) 
+      </th><td>specified keyword(s)
      </td></tr><tr>
       <th>Canonical order:
-      </th><td>per grammar 
+      </th><td>per grammar
      </td></tr><tr>
       <th><a href="https://www.w3.org/TR/web-animations/#animation-type">Animation type:</a>
-      </th><td>discrete 
+      </th><td>discrete
    </td></tr></tbody></table>`,
    css: [{
        "name": "align-content",
@@ -184,7 +184,7 @@ const tests = [
   },
 
   {
-    title: "parses a value definition, excluding tests and notes",
+    title: "parses a type definition, excluding tests and notes",
     html: `<dl>
     <dt><dfn class="css" data-dfn-type="type" data-export="" id="valdef-text-indent-percentage">&lt;percentage&gt;<a class="self-link" href="#valdef-text-indent-percentage"></a></dfn> 
     </dt><dd>
@@ -458,60 +458,6 @@ const tests = [
 
 
   {
-    title: "throws when a property is defined more than once and cannot be merged",
-    html: `
-      <table class="def propdef" data-link-for-hint="scrollbar-gutter"><tbody>
-       <tr>
-        <th>Name:
-        </th><td><dfn class="dfn-paneled css" data-dfn-type="property" data-export="" id="propdef-scrollbar-gutter">scrollbar-gutter</dfn>
-       </td></tr><tr class="value">
-        <th><a href="https://www.w3.org/TR/css-values/#value-defs">Value:</a>
-        </th><td class="prod">auto <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-one" id="ref-for-comb-one">|</a> stable <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-all" id="ref-for-comb-all">&amp;&amp;</a> mirror<a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#mult-opt" id="ref-for-mult-opt">?</a>
-       </td></tr><tr>
-        <th><a href="https://www.w3.org/TR/css-cascade/#initial-values">Initial:</a>
-        </th><td>auto
-       </td></tr><tr>
-        <th>Applies to:
-        </th><td><a data-link-type="dfn" href="https://drafts.csswg.org/css-overflow-3/#scroll-container" id="ref-for-scroll-container">scroll containers</a>
-       </td></tr><tr>
-        <th><a href="https://www.w3.org/TR/css-cascade/#inherited-property">Inherited:</a>
-        </th><td>no
-       </td></tr><tr>
-        <th><a href="https://www.w3.org/TR/css-values/#percentages">Percentages:</a>
-        </th><td>n/a
-       </td></tr><tr>
-        <th><a href="https://www.w3.org/TR/css-cascade/#computed">Computed value:</a>
-        </th><td>specified keyword(s)
-       </td></tr><tr>
-        <th>Canonical order:
-        </th><td>per grammar
-       </td></tr><tr>
-        <th><a href="https://www.w3.org/TR/web-animations/#animation-type">Animation type:</a>
-        </th><td>discrete
-        </td></tr>
-      </tbody></table>
-      <table class="def propdef partial" data-link-for-hint="scrollbar-gutter">
-       <tbody>
-        <tr>
-         <th>Name:
-         </th><td><a class="css" data-link-type="property" href="#propdef-scrollbar-gutter" id="ref-for-propdef-scrollbar-gutter①⓪">scrollbar-gutter</a>
-        </td></tr><tr class="value">
-         <th><a href="https://www.w3.org/TR/css-values/#value-defs">New values:</a>
-         </th><td class="prod">auto <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-one" id="ref-for-comb-one①⓪">|</a> [ [ stable <span id="ref-for-comb-one①①">|</span> always ] <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-all" id="ref-for-comb-all①">&amp;&amp;</a> mirror<a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#mult-opt" id="ref-for-mult-opt①">?</a> <span id="ref-for-comb-all②">&amp;&amp;</span> force<span id="ref-for-mult-opt②">?</span> ] <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-any" id="ref-for-comb-any">||</a> match-parent
-        </td></tr><tr>
-          <th><a href="https://www.w3.org/TR/css-cascade/#initial-values">Initial:</a>
-          </th><td>A different initial value
-         </td></tr><tr>
-         <th>Applies to:
-         </th><td><a href="https://www.w3.org/TR/css-pseudo/#generated-content" title="Includes ::before and ::after pseudo-elements.">all elements</a>
-        </td></tr>
-       </tbody>
-      </table>`,
-    error: 'More than one CSS dfn found for \"scrollbar-gutter\" and dfns cannot be merged'
-  },
-
-
-  {
     title: "ignores definitions that describe changes",
     html: `<table class="propdef">
       <tbody>
@@ -671,7 +617,378 @@ that spans multiple lines */
         type: "type",
         prose: "The <decibel> type denotes a dimension with a \"dB\" (decibel unit) unit identifier. Decibels represent the ratio of the squares of the new signal amplitude a1 and the current amplitude a0, as per the following logarithmic equation: volume(dB) = 20 × log10(a1 / a0)."
     }]
-  }
+  },
+
+  {
+    title: "parses selectors definitions",
+    html: `
+    <p>
+      The <dfn data-dfn-type="selector">:open</dfn> pseudo-class represents an
+      element that has both “open” and “closed” states, and which is currently
+      in the “open” state.
+    </p>
+    <p>
+      The <dfn data-dfn-type="selector">:closed</dfn> pseudo-class represents an
+      element that has both “open” and “closed” states, and which is currently
+      in the “closed” state.
+    </p>
+    `,
+    propertyName: "selectors",
+    css: [
+      {
+        name: ":open",
+        prose: "The :open pseudo-class represents an element that has both “open” and “closed” states, and which is currently in the “open” state."
+      },
+      {
+        name: ":closed",
+        prose: "The :closed pseudo-class represents an element that has both “open” and “closed” states, and which is currently in the “closed” state."
+      }
+    ]
+  },
+
+  {
+    title: 'parses a "value" definition for a "property"',
+    html: `
+    <table class="def propdef" data-link-for-hint="animation-name">
+    <tbody>
+     <tr>
+      <th>Name:
+      </th><td><dfn class="dfn-paneled css" data-dfn-type="property" data-export="" id="propdef-animation-name">animation-name</dfn>
+     </td></tr><tr class="value">
+      <th><a href="https://www.w3.org/TR/css-values/#value-defs">Value:</a>
+      </th><td class="prod">[ none <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-one" id="ref-for-comb-one">|</a> <a class="production css" data-link-type="type" href="#typedef-keyframes-name" id="ref-for-typedef-keyframes-name①">&lt;keyframes-name&gt;</a> ]<a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#mult-comma" id="ref-for-mult-comma">#</a>
+     </td></tr><tr>
+      <th><a href="https://www.w3.org/TR/css-cascade/#initial-values">Initial:</a>
+      </th><td>none
+     </td></tr><tr>
+      <th><a href="https://www.w3.org/TR/css-cascade/#applies-to">Applies to:</a>
+      </th><td><a href="https://www.w3.org/TR/css-pseudo/#generated-content" title="Includes ::before and ::after pseudo-elements.">all elements</a>
+     </td></tr><tr>
+      <th><a href="https://www.w3.org/TR/css-cascade/#inherited-property">Inherited:</a>
+      </th><td>no
+     </td></tr><tr>
+      <th><a href="https://www.w3.org/TR/css-values/#percentages">Percentages:</a>
+      </th><td>N/A
+     </td></tr><tr>
+      <th><a href="https://www.w3.org/TR/css-cascade/#computed">Computed value:</a>
+      </th><td>list, each item either a case-sensitive <a data-link-type="dfn" href="https://drafts.csswg.org/css-values-4/#css-css-identifier" id="ref-for-css-css-identifier">css identifier</a> or the keyword <a class="css" data-link-type="maybe" href="#valdef-animation-name-none" id="ref-for-valdef-animation-name-none①">none</a>
+     </td></tr><tr>
+      <th><a href="https://www.w3.org/TR/cssom/#serializing-css-values">Canonical order:</a>
+      </th><td>per grammar
+     </td></tr><tr>
+      <th><a href="https://www.w3.org/TR/web-animations/#animation-type">Animation type:</a>
+      </th><td>not animatable
+    </td></tr></tbody></table>
+    <dl>
+    <dt><dfn class="dfn-paneled css" data-dfn-for="animation-name" data-dfn-type="value" data-export="" id="valdef-animation-name-none">none</dfn>
+    </dt><dd> No keyframes are specified at all, so there will be no animation.
+      Any other animations properties specified for this animation have no effect.
+    </dd><dt><dfn class="css" data-dfn-for="animation-name" data-dfn-type="value" data-export="" id="valdef-animation-name-keyframes-name"><a class="production css" data-link-type="type" href="#typedef-keyframes-name" id="ref-for-typedef-keyframes-name②">&lt;keyframes-name&gt;</a><a class="self-link" href="#valdef-animation-name-keyframes-name"></a></dfn>
+    </dt><dd> The animation will use the keyframes with the name specified by the <a class="production css" data-link-type="type" href="#typedef-keyframes-name" id="ref-for-typedef-keyframes-name③">&lt;keyframes-name&gt;</a>,
+      if they exist.
+      If no <a class="css" data-link-type="maybe" href="#at-ruledef-keyframes" id="ref-for-at-ruledef-keyframes⑧">@keyframes</a> rule with that name exists, there is no animation.
+    </dd></dl>
+    `,
+    css: [{
+      "name": "animation-name",
+      "animationType": "not animatable",
+      "appliesTo": "all elements",
+      "canonicalOrder": "per grammar",
+      "computedValue": "list, each item either a case-sensitive css identifier or the keyword none",
+      "inherited": "no",
+      "initial": "none",
+      "percentages": "N/A",
+      "value": "[ none | <keyframes-name> ]#",
+      "values": [
+        {
+          "name": "none",
+          "prose": "No keyframes are specified at all, so there will be no animation. Any other animations properties specified for this animation have no effect.",
+          "type": "value",
+          "value": "none"
+        },
+        {
+          "name": "<keyframes-name>",
+          "prose": "The animation will use the keyframes with the name specified by the <keyframes-name>, if they exist. If no @keyframes rule with that name exists, there is no animation.",
+          "type": "value",
+          "value": "<keyframes-name>"
+        }
+      ]
+    }]
+  },
+
+  {
+    title: 'parses a "value" definition for a "descriptor"',
+    html: `
+    <p>The <dfn data-dfn-type="at-rule">@counter-style</dfn> rule allows authors
+    to define a custom counter style.</p>
+    <table class="def descdef">
+    <tbody>
+     <tr>
+      <th>Name:
+      </th><td><dfn class="css" data-dfn-for="@counter-style" data-dfn-type="descriptor" data-export="" id="descdef-counter-style-system">system<a class="self-link" href="#descdef-counter-style-system"></a></dfn>
+     </td></tr><tr>
+      <th>For:
+      </th><td><a class="css" data-link-type="at-rule" href="#at-ruledef-counter-style" id="ref-for-at-ruledef-counter-style①④">@counter-style</a>
+     </td></tr><tr>
+      <th>Value:
+      </th><td class="prod">cyclic <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-one" id="ref-for-comb-one">|</a> numeric <span id="ref-for-comb-one①">|</span> alphabetic <span id="ref-for-comb-one②">|</span> symbolic <span id="ref-for-comb-one③">|</span> additive <span id="ref-for-comb-one④">|</span> <span class="nobr">[fixed <a class="production css" data-link-type="type" href="https://drafts.csswg.org/css-values-4/#integer-value" id="ref-for-integer-value">&lt;integer&gt;</a><a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#mult-opt" id="ref-for-mult-opt">?</a>]</span> <span id="ref-for-comb-one⑤">|</span> <span class="nobr">[ extends <a class="production css" data-link-type="type" href="#typedef-counter-style-name" id="ref-for-typedef-counter-style-name③" title="Expands to: arabic-indic | armenian | bengali | cambodian | circle | cjk-decimal | cjk-earthly-branch | cjk-heavenly-stem | decimal | decimal-leading-zero | devanagari | disc | disclosure-closed | disclosure-open | ethiopic-numeric | georgian | gujarati | gurmukhi | hebrew | hiragana | hiragana-iroha | kannada | katakana | katakana-iroha | khmer | korean-hangul-formal | korean-hanja-formal | korean-hanja-informal | lao | lower-alpha | lower-armenian | lower-greek | lower-latin | lower-roman | malayalam | mongolian | myanmar | oriya | persian | square | tamil | telugu | thai | tibetan | upper-alpha | upper-armenian | upper-latin | upper-roman">&lt;counter-style-name&gt;</a> ]</span>
+     </td></tr><tr>
+      <th>Initial:
+      </th><td>symbolic
+   </td></tr></tbody></table>
+   <p>The <dfn data-dfn-for="@counter-style/system" data-dfn-type="value">cyclic</dfn>
+   counter system cycles repeatedly through its provided symbols.</p>
+    `,
+    propertyName: 'atrules',
+    css: [{
+      name: '@counter-style',
+      prose: 'The @counter-style rule allows authors to define a custom counter style.',
+      descriptors: [
+        {
+          name: 'system',
+          for: '@counter-style',
+          initial: 'symbolic',
+          value: 'cyclic | numeric | alphabetic | symbolic | additive | [fixed <integer>?] | [ extends <counter-style-name> ]',
+          values: [
+            {
+              name: 'cyclic',
+              type: 'value',
+              value: 'cyclic',
+              prose: 'The cyclic counter system cycles repeatedly through its provided symbols.'
+            }
+          ]
+        }
+      ]
+    }]
+  },
+
+  {
+    title: 'parses "value" definitions for a "type"',
+    html: `
+    <pre class="prod">
+      <dfn data-dfn-type="type">&lt;font-weight-absolute&gt;</dfn> = [normal | bold | &lt;number [1,1000]&gt;]
+    </pre>
+    <dl>
+    <dt><dfn data-dfn-for="&lt;font-weight-absolute&gt;" data-dfn-type="value">&lt;number [1,1000]&gt;</dfn>
+    </dt><dd>
+      Each number indicates a weight that is at least as dark as its predecessor.
+    </dd><dt><dfn data-dfn-for="&lt;font-weight-absolute&gt;" data-dfn-type="value">normal</dfn>
+    </dt><dd>Same as <span class="css">400</span>.
+    </dd></dl>
+    `,
+    propertyName: 'values',
+    css: [{
+      name: '<font-weight-absolute>',
+      type: 'type',
+      value: '[normal | bold | <number [1,1000]>]',
+      values: [
+        {
+          name: '<number [1,1000]>',
+          type: 'value',
+          prose: 'Each number indicates a weight that is at least as dark as its predecessor.',
+          value: '<number [1,1000]>',
+        },
+        {
+          name: 'normal',
+          type: 'value',
+          prose: 'Same as 400.',
+          value: 'normal'
+        }
+      ]
+    }]
+  },
+
+  {
+    title: 'parses "type" and "function" definitions for a "type"',
+    html: `
+    <pre class="prod">
+      <dfn data-dfn-type="type">&lt;my-type&gt;</dfn> =
+        &lt;my-function()> &lt;my-subtype>
+      <dfn data-dfn-type="function" data-dfn-for="&lt;my-type&gt;">my-function()</dfn> = my-function(takes parameters)
+      <dfn data-dfn-type="type" data-dfn-for="&lt;my-type&gt;">&lt;my-subtype&gt;</dfn> = none | auto
+    </pre>
+    `,
+    propertyName: 'values',
+    css: [{
+      name: '<my-type>',
+      type: 'type',
+      value: '<my-function()> <my-subtype>',
+      values: [
+        {
+          name: 'my-function()',
+          type: 'function',
+          value: 'my-function(takes parameters)'
+        },
+        {
+          name: '<my-subtype>',
+          type: 'type',
+          value: 'none | auto'
+        }
+      ]
+    }]
+  },
+
+  {
+    title: 'does not choke on empty data-dfn-for attributes',
+    html: `
+    <pre class="prod">
+      <dfn data-dfn-type="type" data-dfn-for="">&lt;my-type&gt;</dfn> =
+      &lt;my-function()> &lt;my-subtype>
+    </pre>
+    `,
+    propertyName: 'values',
+    css: [{
+      name: '<my-type>',
+      type: 'type',
+      value: '<my-function()> <my-subtype>'
+    }]
+  },
+
+  {
+    title: 'associates values with the deepest structure it is for',
+    html: `
+    <pre class="prod">
+      <dfn data-dfn-type="type">&lt;my-type&gt;</dfn> = &lt;my-subtype>
+      <dfn data-dfn-type="type">&lt;my-subtype&gt;</dfn> = none | auto
+    </pre>
+    <p>The <dfn data-dfn-type="value" data-dfn-for="&lt;my-type&gt;,&lt;my-subtype&gt;">none</dfn>
+      value is fantastic.</p>
+    <p>The <dfn data-dfn-type="value" data-dfn-for="&lt;my-type&gt;,&lt;my-subtype&gt;">auto</dfn>
+      value is also fantastic.</p>
+    `,
+    propertyName: 'values',
+    css: [
+      {
+        name: '<my-type>',
+        type: 'type',
+        value: '<my-subtype>'
+      },
+      {
+        name: '<my-subtype>',
+        type: 'type',
+        value: 'none | auto',
+        values: [
+          {
+            name: 'none',
+            type: 'value',
+            value: 'none',
+            prose: 'The none value is fantastic.'
+          },
+          {
+            name: 'auto',
+            type: 'value',
+            value: 'auto',
+            prose: 'The auto value is also fantastic.'
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    title: 'issues a warning when a definition is missing',
+    html: `
+    <pre class="prod">&lt;my-type&gt; = none | auto
+    `,
+    propertyName: 'warnings',
+    css: [{
+      msg: 'Missing definition',
+      name: '<my-type>',
+      value: 'none | auto'
+    }]
+  },
+
+  {
+    title: 'issues a warning when it bumps into a duplicated definition',
+    html: `
+    <p><dfn data-dfn-type='type'>&lt;my-type&gt;</dfn> is defined a first time.</p>
+    <p><dfn data-dfn-type='type'>&lt;my-type&gt;</dfn> is defined a second time.</p>
+    `,
+    propertyName: 'warnings',
+    css: [{
+      msg: 'Duplicate definition',
+      name: '<my-type>',
+      type: 'type',
+      prose: '<my-type> is defined a second time.'
+    }]
+  },
+
+  {
+    title: 'issues a warning when a value is dangling',
+    html: `
+    <p>The <dfn data-dfn-type="value" data-dfn-for="my-property">dangling</dfn>
+    value is dangling.</p>
+    `,
+    propertyName: 'warnings',
+    css: [{
+      msg: 'Dangling value',
+      name: 'dangling',
+      for: 'my-property',
+      type: 'value',
+      value: 'dangling',
+      prose: 'The dangling value is dangling.'
+    }]
+  },
+
+  {
+    title: "issues a warning when a property is defined more than once and cannot be merged",
+    html: `
+      <table class="def propdef" data-link-for-hint="scrollbar-gutter"><tbody>
+       <tr>
+        <th>Name:
+        </th><td><dfn class="dfn-paneled css" data-dfn-type="property" data-export="" id="propdef-scrollbar-gutter">scrollbar-gutter</dfn>
+       </td></tr><tr class="value">
+        <th><a href="https://www.w3.org/TR/css-values/#value-defs">Value:</a>
+        </th><td class="prod">auto <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-one" id="ref-for-comb-one">|</a> stable <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-all" id="ref-for-comb-all">&amp;&amp;</a> mirror<a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#mult-opt" id="ref-for-mult-opt">?</a>
+       </td></tr><tr>
+        <th><a href="https://www.w3.org/TR/css-cascade/#initial-values">Initial:</a>
+        </th><td>auto
+       </td></tr><tr>
+        <th>Applies to:
+        </th><td><a data-link-type="dfn" href="https://drafts.csswg.org/css-overflow-3/#scroll-container" id="ref-for-scroll-container">scroll containers</a>
+       </td></tr><tr>
+        <th><a href="https://www.w3.org/TR/css-cascade/#inherited-property">Inherited:</a>
+        </th><td>no
+       </td></tr><tr>
+        <th><a href="https://www.w3.org/TR/css-values/#percentages">Percentages:</a>
+        </th><td>n/a
+       </td></tr><tr>
+        <th><a href="https://www.w3.org/TR/css-cascade/#computed">Computed value:</a>
+        </th><td>specified keyword(s)
+       </td></tr><tr>
+        <th>Canonical order:
+        </th><td>per grammar
+       </td></tr><tr>
+        <th><a href="https://www.w3.org/TR/web-animations/#animation-type">Animation type:</a>
+        </th><td>discrete
+        </td></tr>
+      </tbody></table>
+      <table class="def propdef partial" data-link-for-hint="scrollbar-gutter">
+       <tbody>
+        <tr>
+         <th>Name:
+         </th><td><a class="css" data-link-type="property" href="#propdef-scrollbar-gutter" id="ref-for-propdef-scrollbar-gutter①⓪">scrollbar-gutter</a>
+        </td></tr><tr class="value">
+         <th><a href="https://www.w3.org/TR/css-values/#value-defs">New values:</a>
+         </th><td class="prod">auto <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-one" id="ref-for-comb-one①⓪">|</a> [ [ stable <span id="ref-for-comb-one①①">|</span> always ] <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-all" id="ref-for-comb-all①">&amp;&amp;</a> mirror<a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#mult-opt" id="ref-for-mult-opt①">?</a> <span id="ref-for-comb-all②">&amp;&amp;</span> force<span id="ref-for-mult-opt②">?</span> ] <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-any" id="ref-for-comb-any">||</a> match-parent
+        </td></tr><tr>
+          <th><a href="https://www.w3.org/TR/css-cascade/#initial-values">Initial:</a>
+          </th><td>A different initial value
+         </td></tr><tr>
+         <th>Applies to:
+         </th><td><a href="https://www.w3.org/TR/css-pseudo/#generated-content" title="Includes ::before and ::after pseudo-elements.">all elements</a>
+        </td></tr>
+       </tbody>
+      </table>`,
+    propertyName: "warnings",
+    css: [{
+      msg: 'Unmergeable definition',
+      name: "scrollbar-gutter",
+      appliesTo: 'all elements',
+      initial: 'A different initial value',
+      newValues: 'auto | [ [ stable | always ] && mirror? && force? ] || match-parent'
+    }]
+  },
 ];
 
 describe("Test CSS properties extraction", function() {

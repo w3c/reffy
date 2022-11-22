@@ -160,7 +160,7 @@ export default function () {
           res.warnings = []
         }
         const warning = Object.assign({ msg: 'Missing definition' }, rule);
-        res.warnings.push(warning);
+        warnings.push(warning);
         rootDfns.push(warning);
       }
     }
