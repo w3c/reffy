@@ -20,10 +20,10 @@ module.exports = {
         .filter(dfn => dfn.type == "property" && !dfn.informative)
         .forEach(propDfn => {
           propDfn.linkingText.forEach(lt => {
-            if (!spec.css.properties.hasOwnProperty(lt)) {
-              spec.css.properties[lt] = {
+            if (!spec.css.properties.find(p => p.name === lt)) {
+              spec.css.properties.push({
                 name: lt
-              };
+              });
             }
           });
         });
@@ -31,18 +31,15 @@ module.exports = {
 
     if (spec.css) {
       // Add generated IDL attribute names
-      Object.entries(spec.css.properties || {}).forEach(([prop, dfn]) => {
-        dfn.styleDeclaration = getGeneratedIDLNamesByCSSProperty(prop);
+      spec.css.properties.forEach(dfn => {
+        dfn.styleDeclaration = getGeneratedIDLNamesByCSSProperty(dfn.name);
       });
 
       // Drop the sample definition (property-name) in CSS2 and the custom
       // property definition (--*) in CSS Variables that specs incorrectly flag
       // as real CSS properties.
-      ['property-name', '--*'].forEach(prop => {
-          if ((spec.css.properties || {})[prop]) {
-              delete spec.css.properties[prop];
-          }
-      });
+      spec.css.properties = spec.css.properties.filter(p =>
+        !['property-name', '--*'].includes(p.name));
     }
 
     return spec;
