@@ -16,6 +16,9 @@
  * - `format` is the optional output format. Either `json` or `markdown` with
  * `markdown` being the default.
  *
+ * Note: CSS extraction already relies on dfns and reports missing dfns in a
+ * "warnings" property. This checker simply looks at that list.
+ *
  * @module checker
  */
 
@@ -59,61 +62,15 @@ function arraysEqual(a, b) {
  * @return {Array} An array of expected definitions
  */
 function getExpectedDfnsFromCSS(css) {
-  let expected = [];
-
-  // Add the list of expected properties, filtering out properties that define
-  // new values to an existing property (defined elsewhere)
-  expected = expected.concat(
-    Object.values(css.properties || {})
-      .filter(desc => !desc.newValues)
-      .map(desc => {
-        return {
-          linkingText: [desc.name],
-          type: 'property',
-          'for': []
-        };
-      })
-  );
-
-  // Add the list of expected at-rules
-  expected = expected.concat(
-    Object.entries(css.atrules || {}).map(([name, rule]) => {
-      if (rule.value) {
-        return {
-          linkingText: [name],
-          type: 'at-rule',
-          'for': []
-        };
-      }
-    }).filter(dfn => !!dfn)
-  );
-
-  // Add the list of expected descriptors
-  expected = expected.concat(
-    Object.entries(css.atrules || {}).map(([name, rule]) =>
-      (rule.descriptors || []).map(desc => {
-        return {
-          linkingText: [desc.name],
-          type: 'descriptor',
-          'for': [name]
-        };
-      })
-    ).flat()
-  );
-  
-  // Add the list of expected "values".
-  // Note: we don't qualify the "type" of values in valuespaces and don't store
-  // the scope of values either (the "for" property). Definition types can be
-  // "type", "function", "value", etc. in practice. The comparison cannot be
-  // perfect as a result.
-  expected = expected.concat(
-    Object.entries(css.valuespaces || {}).map(([name, desc]) => {
+  const expected = (css.warnings ?? [])
+    .filter(warning => warning.msg === 'Missing definition')
+    .map(warning => {
       return {
-        linkingText: [name],
-        value: desc.value
+        linkingText: [warning.name],
+        type: warning.type,
+        'for': warning.for
       };
-    })
-  );
+    });
 
   return expected;
 }
