@@ -29,7 +29,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["name"],
+        "required": ["name", "descriptors"],
         "additionalProperties": false,
         "properties": {
           "name": { "type": "string", "pattern": "^@" },

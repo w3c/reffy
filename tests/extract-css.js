@@ -331,8 +331,9 @@ const tests = [
     `,
     propertyName: "atrules",
     css: [{
-        "name": "@layer",
-        "value": "@layer <layer-name>? { <stylesheet> }"
+        name: "@layer",
+        value: "@layer <layer-name>? { <stylesheet> }",
+        descriptors: []
     }]
   },
 
@@ -351,8 +352,9 @@ const tests = [
     `,
     propertyName: "atrules",
     css: [{
-        "name": "@layer",
-        "value": "@layer <layer-name>? { <stylesheet> } | @layer <layer-name>#;"
+        name: "@layer",
+        value: "@layer <layer-name>? { <stylesheet> } | @layer <layer-name>#;",
+        descriptors: []
     }]
   },
 
@@ -989,6 +991,116 @@ that spans multiple lines */
       newValues: 'auto | [ [ stable | always ] && mirror? && force? ] || match-parent'
     }]
   },
+
+  {
+    title: 'keeps the "type" of descriptors if so defined',
+    html: `
+    <table class="def descdef mq">
+    <tbody>
+     <tr>
+      <th>Name:
+      </th><td><dfn class="dfn-paneled css" data-dfn-for="@media" data-dfn-type="descriptor">-webkit-device-pixel-ratio</dfn>
+     </td></tr><tr>
+      <th>For:
+      </th><td>@media
+     </td></tr><tr>
+      <th>Value:
+      </th><td class="prod">&lt;number&gt;
+     </td></tr><tr>
+      <th>Type:
+      </th><td>range
+   </td></tr></tbody></table>
+    `,
+    propertyName: 'atrules',
+    css: [{
+      name: '@media',
+      descriptors: [{
+        name: '-webkit-device-pixel-ratio',
+        for: '@media',
+        value: '<number>',
+        type: 'range'
+      }]
+    }]
+  },
+
+  {
+    title: 'handles cycles in value references',
+    html: `
+    <pre class="prod">
+      <dfn data-dfn-type="type">&lt;my-type&gt;</dfn> = &lt;my-subtype>
+      <dfn data-dfn-type="type" data-dfn-for="&lt;my-type&gt;">&lt;my-subtype&gt;</dfn> = none | auto | &lt;recurring-type&gt;
+      <dfn data-dfn-type="type" data-dfn-for="&lt;my-subtype&gt;">&lt;recurring-type&gt;</dfn> = &lt;my-type&gt;
+    </pre>
+    `,
+    propertyName: 'values',
+    css: [{
+      name: '<my-type>',
+      type: 'type',
+      value: '<my-subtype>',
+      values: [
+        {
+          name: '<my-subtype>',
+          type: 'type',
+          value: 'none | auto | <recurring-type>',
+          values: [
+            {
+              name: '<recurring-type>',
+              type: 'type',
+              value: '<my-type>'
+            }
+          ]
+        }
+      ]
+    }]
+  },
+
+  {
+    title: 'skips production rules of IDL blocks in HTML spec',
+    html: `
+    <pre>
+      <code class="idl">
+        <dfn>&lt;not-a-css-type&gt;</dfn> = blah
+      </code>
+    </pre>
+    `,
+    propertyName: 'values',
+    css: []
+  },
+
+  {
+    title: 'does not report production rules of IDL blocks in HTML spec as warnings',
+    html: `
+    <pre>
+      <code class="idl">
+        <dfn>&lt;not-a-css-type&gt;</dfn> = blah
+      </code>
+    </pre>
+    `,
+    propertyName: 'warnings',
+    css: undefined
+  },
+
+  {
+    title: 'skips production rules that are not of the right type',
+    html: `
+    <pre>
+      <dfn data-dfn-type="dfn">&lt;not-a-css-type&gt;</dfn> = none | auto
+    </pre>
+    `,
+    propertyName: 'values',
+    css: []
+  },
+
+  {
+    title: 'does not report production rules that are not of the right type as warnings',
+    html: `
+    <pre>
+      <dfn data-dfn-type="dfn">&lt;not-a-css-type&gt;</dfn> = none | auto
+    </pre>
+    `,
+    propertyName: 'warnings',
+    css: undefined
+  }
 ];
 
 describe("Test CSS properties extraction", function() {

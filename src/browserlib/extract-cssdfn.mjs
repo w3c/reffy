@@ -8,7 +8,7 @@ import informativeSelector from './informative-selector.mjs';
  * @return {Promise} The promise to get an extract of the CSS definitions, or
  *   an empty CSS description object if the spec does not contain any CSS
  *   definition. The return object will have properties named "properties",
- *  "descriptors", and "valuespaces".
+ *  "descriptors", "selectors" and "values".
  */
 export default function () {
   // List of inconsistencies and errors found in the spec while trying to make
@@ -53,12 +53,18 @@ export default function () {
   };
 
   // At-rules have descriptors, defined in dedicated tables in modern CSS specs
+  // Note some of the descriptors are defined with a "type" property set to
+  // "range". Not sure what the type of a descriptor is supposed to mean, but
+  // let's keep that information around. One such example is the
+  // "-webkit-device-pixel-ratio" descriptor for "@media" at-rule in compat:
+  // https://compat.spec.whatwg.org/#css-media-queries-webkit-device-pixel-ratio
   let descriptors = extractDfns({
     selector: 'table.descdef:not(.attrdef)',
     extractor: extractTableDfn,
     duplicates: 'push',
     mayReturnMultipleDfns: true,
-      warnings
+    keepDfnType: true,
+    warnings
   });
 
   // Older specs may follow older recipes, let's give them a try if we couldn't
@@ -96,6 +102,11 @@ export default function () {
       rule.descriptors.push(desc);
     }
   }
+  for (const rule of res.atrules) {
+    if (!rule.descriptors) {
+      rule.descriptors = [];
+    }
+  }
 
   // Keep an index of "root" (non-namespaced + descriptors) dfns
   const rootDfns = Object.values(res).flat();
@@ -120,13 +131,16 @@ export default function () {
     warnings
   }).flat();
 
-  const matchName = name => dfn => {
-    let res = dfn.name === name || `<${dfn.name}>` === name;
+  const matchName = (name, { approx = false } = {}) => dfn => {
+    let res = dfn.name === name;
     if (!res && name.match(/^@.+\/.+$/)) {
       // Value reference might be for an at-rule descriptor:
       // https://tabatkins.github.io/bikeshed/#dfn-for
       const parts = name.split('/');
       res = dfn.name === parts[1] && dfn.for === parts[0];
+    }
+    if (!res && approx) {
+      res = `<${dfn.name}>` === name;
     }
     return res;
   };
@@ -135,7 +149,8 @@ export default function () {
   // and complete result structure accordingly
   const rules = extractProductionRules(document);
   for (const rule of rules) {
-    const dfn = rootDfns.find(matchName(rule.name));
+    const dfn = rootDfns.find(matchName(rule.name)) ??
+      rootDfns.find(matchName(rule.name, { approx: true }));
     if (dfn) {
       dfn.value = rule.value;
       if (rule.legacyValue) {
@@ -143,7 +158,10 @@ export default function () {
       }
     }
     else {
-      const matchingValues = values.filter(matchName(rule.name));
+      let matchingValues = values.filter(matchName(rule.name));
+      if (matchingValues.length === 0) {
+        matchingValues = values.filter(matchName(rule.name, { approx: true }));
+      }
       for (const matchingValue of matchingValues) {
         matchingValue.value = rule.value;
         if (rule.legacyValue) {
@@ -212,9 +230,24 @@ export default function () {
   }
 
   // Helper functions to reason on the parents index we just created.
-  const isAncestorOf = (ancestor, child) =>
-    ancestor === child ||
-    !!parents[child]?.find(p => isAncestorOf(ancestor, p));
+  // Note there may be cycles. For instance, in CSS Images 4, <image> references
+  // <image-set()>, which references <image-set-option>, which references
+  // <image> again:
+  // https://drafts.csswg.org/css-images-4/#typedef-image
+  const isAncestorOf = (ancestor, child) => {
+    let seen = [];
+    const checkChild = c => {
+      let res = ancestor === c;
+      if (!res) {
+        res = parents[c]
+          ?.filter(p => !seen.includes(p))
+          ?.find(p => checkChild(ancestor, p));
+      }
+      seen = seen.concat(parents[c]);
+      return res;
+    }
+    return checkChild(child);
+  };
   const isDeepestConstruct = (name, list) =>
     list.every(p => p === name || !isAncestorOf(name, p));
 
@@ -225,7 +258,8 @@ export default function () {
       .filter((ref, _, arr) => isDeepestConstruct(ref, arr))
       .forEach(ref => {
         // Look for the referenced definition in root dfns
-        const dfn = rootDfns.find(matchName(ref));
+        const dfn = rootDfns.find(matchName(ref)) ??
+          rootDfns.find(matchName(ref, { approx: true }));
         if (dfn) {
           if (!dfn.values) {
             dfn.values = [];
@@ -236,7 +270,10 @@ export default function () {
           // If the referenced definition is not in root dfns, look in
           // namespaced dfns as functions/types are sometimes namespaced to a
           // property, and values may reference these functions/types.
-          const referencedValues = values.filter(matchName(ref));
+          let referencedValues = values.filter(matchName(ref));
+          if (referencedValues.length === 0) {
+            referencedValues = values.filter(matchName(ref, { approx: true }));
+          }
           for (const referencedValue of referencedValues) {
             if (!referencedValue.values) {
               referencedValue.values = [];
@@ -616,14 +653,20 @@ const extractTypedDfn = dfn => {
  */
 const extractProductionRules = root => {
   // For <pre> tags that don't have a "prod" class (e.g. in HTML and
-  // css-namespaces), make sure they contain a <dfn> to avoid parsing things
-  // that are not production rules
-  // In all cases, make sure we're not in a changelog with details, as in:
+  // css-namespaces), make sure they contain a <dfn> with a valid CSS
+  // data-dfn-type attribute to avoid parsing things that are not production
+  // rules. In all cases, make sure we're not in a changelog with details as in:
   // https://drafts.csswg.org/css-backgrounds-3/#changes-2017-10
   const rules = [];
   [...root.querySelectorAll('pre.prod:not(:has(del)):not(:has(ins))')]
-    .concat([...root.querySelectorAll('pre:not(.idl):not(:has(del)):not(:has(ins))')]
-      .filter(el => el.querySelector('dfn')))
+    .concat([...root.querySelectorAll('pre:not(.idl):not(:has(.idl)):not(:has(del)):not(:has(ins))')]
+      .filter(el => el.querySelector([
+        'dfn[data-dfn-type=at-rule]',
+        'dfn[data-dfn-type=selector]',
+        'dfn[data-dfn-type=value]',
+        'dfn[data-dfn-type=function]',
+        'dfn[data-dfn-type=type]'
+      ].join(','))))
     .filter(el => !el.closest(informativeSelector))
     .map(el => el.cloneNode(true))
     .map(el => {

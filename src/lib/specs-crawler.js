@@ -241,10 +241,11 @@ async function saveSpecResults(spec, settings) {
 
     // Save CSS dumps
     function defineCSSContent(spec) {
-        return spec.css && (
-            (Object.keys(spec.css.properties || {}).length > 0) ||
-            (Object.keys(spec.css.atrules || {}).length > 0) ||
-            (Object.keys(spec.css.valuespaces || {}).length > 0));
+        return (spec.css?.properties?.length > 0) ||
+               (spec.css?.atrules?.length > 0) ||
+               (spec.css?.selectors?.length > 0) ||
+               (spec.css?.values?.length > 0) ||
+               (spec.css?.warnings?.length > 0);
     }
     if (defineCSSContent(spec)) {
         spec.css = await saveCss(spec);
