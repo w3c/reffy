@@ -625,14 +625,19 @@ that spans multiple lines */
     title: "parses selectors definitions",
     html: `
     <p>
-      The <dfn data-dfn-type="selector">:open</dfn> pseudo-class represents an
+      The <dfn data-dfn-type="selector" data-export>:open</dfn> pseudo-class represents an
       element that has both “open” and “closed” states, and which is currently
       in the “open” state.
     </p>
     <p>
-      The <dfn data-dfn-type="selector">:closed</dfn> pseudo-class represents an
+      The <dfn data-dfn-type="selector" data-export>:closed</dfn> pseudo-class represents an
       element that has both “open” and “closed” states, and which is currently
       in the “closed” state.
+    </p>
+    <p>
+      The <dfn data-dfn-type="selector">:schrödinger</dfn> internal pseudo-class represents an
+      element that has both “open” and “closed” states, and which is currently
+      in an undetermined state.
     </p>
     `,
     propertyName: "selectors",

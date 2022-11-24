@@ -27,6 +27,8 @@ export default function () {
 
     // At-rules, selectors, functions and types are defined through dfns with
     // the right "data-dfn-type" attribute
+    // Note some selectors are re-defined locally in HTML and Fullscreen. We
+    // won't import them.
     atrules: extractDfns({
       selector: 'dfn[data-dfn-type=at-rule]',
       extractor: extractTypedDfn,
@@ -34,7 +36,7 @@ export default function () {
       warnings
     }),
     selectors: extractDfns({
-      selector: 'dfn[data-dfn-type=selector]',
+      selector: 'dfn[data-dfn-type=selector][data-export]',
       extractor: extractTypedDfn,
       duplicates: 'reject',
       warnings
