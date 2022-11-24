@@ -640,7 +640,7 @@ const extractTypedDfn = dfn => {
 
   res.type = dfnType;
   if (dfnType === 'value') {
-    res.value = res.name;
+    res.value = normalize(res.name);
   }
   if (dfnFor) {
     res.for = dfnFor;

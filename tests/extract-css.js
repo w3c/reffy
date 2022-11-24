@@ -1105,6 +1105,46 @@ that spans multiple lines */
     `,
     propertyName: 'warnings',
     css: undefined
+  },
+
+  {
+    title: 'normalizes values ("−" to "-")',
+    html: `
+    <pre>
+      <dfn data-dfn-type="type">&lt;my-type&gt;</dfn> = none | oblique &lt;angle [−90deg,90deg]&gt;?
+    </pre>
+    `,
+    propertyName: 'values',
+    css: [{
+      name: '<my-type>',
+      type: 'type',
+      value: 'none | oblique <angle [-90deg,90deg]>?'
+    }]
+  },
+
+  {
+    title: 'normalizes values at a deeper level ("−" to "-")',
+    html: `
+    <pre>
+      <dfn data-dfn-type="type">&lt;my-type&gt;</dfn> = none | oblique &lt;angle [−90deg,90deg]&gt;?</dfn>
+    </pre>
+    <p>
+      The <dfn data-dfn-type="value" data-dfn-for="&lt;my-type&gt;">oblique &lt;angle [−90deg,90deg]&gt;?</dfn>
+      value is super.
+    </p>
+    `,
+    propertyName: 'values',
+    css: [{
+      name: '<my-type>',
+      type: 'type',
+      value: 'none | oblique <angle [-90deg,90deg]>?',
+      values: [{
+        name: 'oblique <angle [−90deg,90deg]>?',
+        type: 'value',
+        value: 'oblique <angle [-90deg,90deg]>?',
+        prose: 'The oblique <angle [−90deg,90deg]>? value is super.'
+      }]
+    }]
   }
 ];
 
