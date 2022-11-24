@@ -121,7 +121,7 @@ function isNotAlreadyDefined(dfn, idx, list) {
   return first === dfn;
 }
 
-function definitionMapper(el, idToHeading) {
+function definitionMapper(el, idToHeading, usesDfnDataModel) {
   let definedIn = 'prose';
   const enclosingEl = el.closest('dt,pre,table,h1,h2,h3,h4,h5,h6,.note,.example') || el;
   switch (enclosingEl.nodeName) {
@@ -186,8 +186,10 @@ function definitionMapper(el, idToHeading) {
       [],
 
     // Definition is public if explicitly marked as exportable or if export has
-    // not been explicitly disallowed and its type is not "dfn"
-    access: (el.hasAttribute('data-export') ||
+    // not been explicitly disallowed and its type is not "dfn", or if the spec
+    // is an old spec that does not use the "data-dfn-type" convention.
+    access: (!usesDfnDataModel ||
+             el.hasAttribute('data-export') ||
              (!el.hasAttribute('data-noexport') &&
               el.hasAttribute('data-dfn-type') &&
               el.getAttribute('data-dfn-type') !== 'dfn')) ?
@@ -221,7 +223,6 @@ export default function (spec, idToHeading = {}) {
     'h6[id][data-dfn-type]:not([data-lt=""])'
   ].join(',');
 
-  let extraDefinitions = [];
   const shortname = (typeof spec === 'string') ? spec : spec.shortname;
   switch (shortname) {
   case "html":
@@ -235,7 +236,14 @@ export default function (spec, idToHeading = {}) {
     break;
   }
 
-  return [...document.querySelectorAll(definitionsSelector)]
+  const definitions = [...document.querySelectorAll(definitionsSelector)];
+  const usesDfnDataModel = definitions.some(dfn =>
+    dfn.hasAttribute('data-dfn-type') ||
+    dfn.hasAttribute('data-dfn-for') ||
+    dfn.hasAttribute('data-export') ||
+    dfn.hasAttribute('data-noexport'));
+
+  return definitions
     .map(node => {
       // 2021-06-21: Temporary preprocessing of invalid "idl" dfn type (used for
       // internal slots) while fix for https://github.com/w3c/respec/issues/3644
@@ -258,7 +266,7 @@ export default function (spec, idToHeading = {}) {
       const link = node.querySelector('a[href^="http"]');
       return !link || (node.textContent.trim() !== link.textContent.trim());
     })
-    .map(node => definitionMapper(node, idToHeading))
+    .map(node => definitionMapper(node, idToHeading, usesDfnDataModel))
     .filter(isNotAlreadyDefined);
 }
 
