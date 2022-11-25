@@ -96,16 +96,16 @@ const baseDfn = {
 };
 const tests = [
   {title: "parses a simple <dfn>",
-   html: "<dfn id='foo'>Foo</dfn>",
+   html: "<dfn id='foo' data-dfn-type='dfn'>Foo</dfn>",
    changesToBaseDfn: [{}]
   },
   {title: "normalizes whitespace and trims text in a simple <dfn>",
-   html: "<dfn id='foo'>Foo\n    \n</dfn>",
+   html: "<dfn id='foo' data-dfn-type='dfn'>Foo\n    \n</dfn>",
    changesToBaseDfn: [{}]
   },
 
   {title: "ignores a <dfn> without an id",
-   html: "<dfn>Foo</dfn>",
+   html: "<dfn data-dfn-type='dfn'>Foo</dfn>",
    changesToBaseDfn: []
   },
   {title: "marks as public a <dfn data-export>",
@@ -121,7 +121,7 @@ const tests = [
    changesToBaseDfn: [{type: 'interface'}]
   },
   {title: "detects informative definitions",
-   html: "<div class=informative><dfn id=foo>Foo</dfn></div>",
+   html: "<div class=informative><dfn id=foo data-dfn-type='dfn'>Foo</dfn></div>",
    changesToBaseDfn: [{informative: true}]
   },
   {title: "associates a definition to a namespace",
@@ -141,11 +141,11 @@ const tests = [
    changesToBaseDfn: []
   },
   {title: "uses text in data-lt as linking text",
-   html: "<dfn data-lt='foo \n   |\nbar' id=foo>Foo</dfn>",
+   html: "<dfn data-lt='foo \n   |\nbar' id=foo data-dfn-type='dfn'>Foo</dfn>",
    changesToBaseDfn: [{linkingText: ["foo", "bar"]}]
   },
   {title: "includes data-lt in its list of linking text",
-   html: "<dfn data-lt='foo \n   |\nbar' id=foo>Foo</dfn>",
+   html: "<dfn data-lt='foo \n   |\nbar' id=foo data-dfn-type='dfn'>Foo</dfn>",
    changesToBaseDfn: [{linkingText: ["foo", "bar"]}]
   },
   {title: "ignores dfns with an invalid data-dfn-type",
@@ -153,7 +153,7 @@ const tests = [
    changesToBaseDfn: []
   },
   {title: "ignores dfns already defined",
-   html: "<dfn id='foo'>Foo</dfn>. <dfn id='foo2'>Foo</dfn> is already defined.",
+   html: "<dfn id='foo' data-dfn-type='dfn'>Foo</dfn>. <dfn id='foo2'>Foo</dfn> is already defined.",
    changesToBaseDfn: [{}]
   },
   {title: "automatically fixes internal slots dfns with an invalid 'idl' data-dfn-type",
@@ -265,7 +265,7 @@ const tests = [
     spec: "ecmascript"
   },
   {title: "handles HTML spec conventions of definitions in headings",
-   html: '<h6 id="parsing-main-inselect"><span class="secno">12.2.6.4.16</span> The "<dfn>in select</dfn>" insertion mode<a href="#parsing-main-inselect" class="self-link"></a></h6>',
+   html: '<h6 id="parsing-main-inselect"><span class="secno">12.2.6.4.16</span> The "<dfn data-noexport>in select</dfn>" insertion mode<a href="#parsing-main-inselect" class="self-link"></a></h6>',
    changesToBaseDfn: [{id: "parsing-main-inselect",
            linkingText: ["in select"],
            heading: { id: "parsing-main-inselect", href: "about:blank#parsing-main-inselect", title: "The \"in select\" insertion mode", number: "12.2.6.4.16"},

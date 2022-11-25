@@ -32,7 +32,7 @@ const mockSpecs = {
     html: `
       <title>WOFF2</title>
       <body>
-        <dfn id='foo'>Foo</dfn>
+        <dfn id='foo' data-dfn-type="dfn">Foo</dfn>
         <a href="https://www.w3.org/TR/bar/#baz">bar</a>
         <ul class='toc'><li><a href='page.html'>page</a></ul>`,
     pages: {
