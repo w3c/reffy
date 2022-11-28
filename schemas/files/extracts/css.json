@@ -4,11 +4,13 @@
 
   "type": "object",
   "additionalProperties": false,
-  "required": ["spec", "properties", "atrules", "valuespaces"],
+  "required": ["spec", "properties", "atrules", "selectors", "values"],
   "properties": {
     "spec": { "$ref": "../../common.json#/$defs/specInExtract" },
     "properties": { "$ref": "../../browserlib/extract-cssdfn.json#/properties/properties" },
     "atrules": { "$ref": "../../browserlib/extract-cssdfn.json#/properties/atrules" },
-    "valuespaces": { "$ref": "../../browserlib/extract-cssdfn.json#/properties/valuespaces" }
+    "selectors": { "$ref": "../../browserlib/extract-cssdfn.json#/properties/selectors" },
+    "values": { "$ref": "../../browserlib/extract-cssdfn.json#/properties/values" },
+    "warnings": { "$ref": "../../browserlib/extract-cssdfn.json#/properties/warnings" }
   }
 }
