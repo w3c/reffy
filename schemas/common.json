@@ -43,7 +43,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["name", "type", "value"],
+        "required": ["name", "type"],
         "additionalProperties": false,
         "properties": {
           "name": { "$ref": "#/$defs/cssValue" },
