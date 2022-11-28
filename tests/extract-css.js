@@ -1145,6 +1145,26 @@ that spans multiple lines */
         prose: 'The oblique <angle [−90deg,90deg]>? value is super.'
       }]
     }]
+  },
+
+  {
+    title: 'extracts a child selector',
+    html: `
+    <p>The <dfn data-dfn-type="selector" data-export>::first-letter</dfn>
+    pseudo-element represents the first letter.</p>
+    <p>The <dfn data-dfn-type="selector" data-export data-dfn-for="::first-letter">::prefix</dfn>
+    represents the preceding punctuation of the ::first-letter element.</p>
+    `,
+    propertyName: 'selectors',
+    css: [{
+      name: '::first-letter',
+      prose: 'The ::first-letter pseudo-element represents the first letter.',
+      values: [{
+        name: '::prefix',
+        type: 'selector',
+        prose: 'The ::prefix represents the preceding punctuation of the ::first-letter element.'
+      }]
+    }]
   }
 ];
 

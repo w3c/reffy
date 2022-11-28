@@ -43,11 +43,11 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["name", "type", "value"],
+        "required": ["name", "type"],
         "additionalProperties": false,
         "properties": {
           "name": { "$ref": "#/$defs/cssValue" },
-          "type": { "type": "string", "enum": ["type", "function", "value"] },
+          "type": { "type": "string", "enum": ["type", "function", "value", "selector"] },
           "prose": { "type": "string" },
           "value": { "$ref": "#/$defs/cssValue" },
           "legacyValue": { "$ref": "#/$defs/cssValue" },
