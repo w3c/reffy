@@ -4,17 +4,18 @@
 
   "type": "object",
   "additionalProperties": false,
-  "required": ["properties", "atrules", "valuespaces"],
+  "required": ["properties", "atrules", "selectors", "values"],
   "properties": {
     "properties": {
-      "type": "object",
-      "propertyNames": { "$ref": "../common.json#/$defs/cssPropertyName" },
-      "additionalProperties": {
+      "type": "array",
+      "items": {
         "type": "object",
         "additionalProperties": true,
+        "required": ["name"],
         "properties": {
           "name": { "$ref": "../common.json#/$defs/cssPropertyName" },
           "value": { "$ref": "../common.json#/$defs/cssValue" },
+          "values": { "$ref": "../common.json#/$defs/cssValues" },
           "styleDeclaration": {
             "type": "array",
             "items": { "type": "string" },
@@ -25,25 +26,26 @@
     },
 
     "atrules": {
-      "type": "object",
-      "propertyNames": {
-        "type": "string",
-        "pattern": "^@"
-      },
-      "additionalProperties": {
+      "type": "array",
+      "items": {
         "type": "object",
+        "required": ["name", "descriptors"],
         "additionalProperties": false,
         "properties": {
+          "name": { "type": "string", "pattern": "^@" },
           "value": { "$ref": "../common.json#/$defs/cssValue" },
+          "prose": { "type": "string" },
           "descriptors": {
             "type": "array",
             "items": {
               "type": "object",
+              "required": ["name", "for"],
               "additionalProperties": true,
               "properties": {
                 "name": { "type": "string" },
                 "for": { "type": "string" },
-                "value": { "$ref": "../common.json#/$defs/cssValue" }
+                "value": { "$ref": "../common.json#/$defs/cssValue" },
+                "values": { "$ref": "../common.json#/$defs/cssValues" }
               }
             }
           }
@@ -51,21 +53,49 @@
       }
     },
 
-    "valuespaces": {
-      "type": "object",
-      "propertyNames": {
-        "type": "string",
-        "pattern": "^<[^>]+>$"
-      },
-      "additionalProperties": {
+    "selectors": {
+      "type": "array",
+      "items": {
         "type": "object",
+        "required": ["name"],
         "additionalProperties": false,
         "properties": {
+          "name": { "$ref": "../common.json#/$defs/cssPropertyName" },
           "prose": { "type": "string" },
           "value": { "$ref": "../common.json#/$defs/cssValue" },
-          "legacyValue": { "$ref": "../common.json#/$defs/cssValue" }
+          "values": { "$ref": "../common.json#/$defs/cssValues" }
         }
       }
+    },
+
+    "values": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "pattern": "^<[^>]+>$|^.*()$" },
+          "type": { "type": "string", "enum": ["type", "function"] },
+          "prose": { "type": "string" },
+          "value": { "$ref": "../common.json#/$defs/cssValue" },
+          "legacyValue": { "$ref": "../common.json#/$defs/cssValue" },
+          "values": { "$ref": "../common.json#/$defs/cssValues" }
+        }
+      }
+    },
+
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["msg", "name"],
+        "properties": {
+          "msg": { "type": "string" },
+          "name": { "type": "string" }
+        }
+      },
+      "minItems": 1
     }
   }
 }
