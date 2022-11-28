@@ -48,7 +48,8 @@
                 "values": { "$ref": "../common.json#/$defs/cssValues" }
               }
             }
-          }
+          },
+          "values": { "$ref": "../common.json#/$defs/cssValues" }
         }
       }
     },
