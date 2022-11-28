@@ -36,7 +36,9 @@ export default function () {
       warnings
     }),
     selectors: extractDfns({
-      selector: 'dfn[data-dfn-type=selector][data-export]',
+      selector: ['dfn[data-dfn-type=selector][data-export]:not([data-dfn-for])',
+                 'dfn[data-dfn-type=selector][data-export][data-dfn-for=""]'
+                ].join(','),
       extractor: extractTypedDfn,
       duplicates: 'reject',
       warnings
@@ -125,7 +127,8 @@ export default function () {
   const values = extractDfns({
     selector: ['dfn[data-dfn-type=value][data-dfn-for]:not([data-dfn-for=""])',
                'dfn[data-dfn-type=function][data-dfn-for]:not([data-dfn-for=""])',
-               'dfn[data-dfn-type=type][data-dfn-for]:not([data-dfn-for=""])'
+               'dfn[data-dfn-type=type][data-dfn-for]:not([data-dfn-for=""])',
+               'dfn[data-dfn-type=selector][data-dfn-for]:not([data-dfn-for=""])'
               ].join(','),
     extractor: extractTypedDfn,
     duplicates: 'push',
