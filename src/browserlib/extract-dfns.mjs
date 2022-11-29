@@ -106,17 +106,18 @@ function hasValidType(el) {
   return isValid;
 }
 
-// Return true when definition is not already defined in the list,
+// Return true when exported definition is not already defined in the list,
 // Return false and issue a warning when it is already defined.
-function isNotAlreadyDefined(dfn, idx, list) {
+function isNotAlreadyExported(dfn, idx, list) {
   const first = list.find(d => d === dfn ||
-      (d.type === dfn.type &&
+      (d.access === 'public' && dfn.access === 'public' &&
+      d.type === dfn.type &&
       d.linkingText.length === dfn.linkingText.length &&
       d.linkingText.every(lt => dfn.linkingText.find(t => t == lt)) &&
       d.for.length === dfn.for.length &&
       d.for.every(lt => dfn.for.find(t => t === lt))));
   if (first !== dfn) {
-    console.warn('[reffy]', `Duplicate dfn found for "${dfn.linkingText[0]}", type="${dfn.type}", for="${dfn.for[0]}"`);
+    console.warn('[reffy]', `Duplicate dfn found for "${dfn.linkingText[0]}", type="${dfn.type}", for="${dfn.for[0]}", dupl=${dfn.href}, first=${first.href}`);
   }
   return first === dfn;
 }
@@ -267,7 +268,7 @@ export default function (spec, idToHeading = {}) {
       return !link || (node.textContent.trim() !== link.textContent.trim());
     })
     .map(node => definitionMapper(node, idToHeading, usesDfnDataModel))
-    .filter(isNotAlreadyDefined);
+    .filter(isNotAlreadyExported);
 }
 
 function preProcessEcmascript() {
