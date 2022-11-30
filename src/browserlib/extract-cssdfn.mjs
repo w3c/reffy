@@ -586,6 +586,7 @@ const extractTypedDfn = dfn => {
   const dfnType = dfn.getAttribute('data-dfn-type');
   const dfnFor = dfn.getAttribute('data-dfn-for');
   const parent = dfn.parentNode.cloneNode(true);
+  const fnRegExp = /^([a-zA-Z_][a-zA-Z0-9_\-]+)\([^\)]+\)$/;
 
   // Remove note references as in:
   // https://drafts.csswg.org/css-syntax-3/#the-anb-type
@@ -607,7 +608,17 @@ const extractTypedDfn = dfn => {
       // Don't attempt to parse pre tags at this stage, they are tricky to
       // split, we'll parse them as text and map them to the right definitions
       // afterwards.
-      res = { name: getDfnName(dfn) };
+      // That said, we may be looking at a function definition on the right hand
+      // side of a production rule, as in the definition of "linear()" in
+      // css-easing-2: https://drafts.csswg.org/css-easing-2/#funcdef-linear
+      // In such a case, we still want to extract the function parameters
+      if (dfn.textContent.trim().match(fnRegExp)) {
+        const fn = dfn.textContent.trim().match(fnRegExp)[1];
+        res = parseProductionRule(`${fn}() = ${dfn.textContent.trim()}`, { pureSyntax: false });
+      }
+      else {
+        res = { name: getDfnName(dfn) };
+      }
     }
     else if (prod) {
       res = parseProductionRule(prod, { pureSyntax: true });
@@ -620,9 +631,9 @@ const extractTypedDfn = dfn => {
       res = { name: getDfnName(dfn), prose: text.replace(/\s+/g, ' ') };
     }
   }
-  else if (dfn.textContent.trim().match(/^[a-zA-Z_][a-zA-Z0-9_\-]+\([^\)]+\)$/)) {
+  else if (dfn.textContent.trim().match(fnRegExp)) {
     // Definition is "prod(foo bar)", create a "prod() = prod(foo bar)" entry
-    const fn = dfn.textContent.trim().match(/^([a-zA-Z_][a-zA-Z0-9_\-]+)\([^\)]+\)$/)[1];
+    const fn = dfn.textContent.trim().match(fnRegExp)[1];
     res = parseProductionRule(`${fn}() = ${dfn.textContent.trim()}`, { pureSyntax: false });
   }
   else if (parent.nodeName === 'DT') {
