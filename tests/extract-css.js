@@ -1165,6 +1165,29 @@ that spans multiple lines */
         prose: 'The ::prefix represents the preceding punctuation of the ::first-letter element.'
       }]
     }]
+  },
+
+  {
+    title: 'extracts right linking text for a "type" definition',
+    html: `
+    <p><dfn data-dfn-type="type" data-lt="identifiers|<identifier>" data-export>Identifiers</dfn>
+    are a fantastic type.</p>
+    `,
+    propertyName: 'values',
+    css: [{
+      name: '<identifier>',
+      type: 'type',
+      prose: 'Identifiers are a fantastic type.'
+    }]
+  },
+
+  {
+    title: 'throws when definition defines multiple linking texts without any obvious one',
+    html: `
+    <p><dfn data-dfn-type="type" data-lt="a|b|c" data-export>ABC</dfn>, it's
+    easy.</p>
+    `,
+    error: 'Found multiple linking texts for dfn without any obvious one: a, b, c'
   }
 ];
 

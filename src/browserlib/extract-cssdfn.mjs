@@ -545,6 +545,39 @@ const parseProductionRule = (rule, { res = [], pureSyntax = false }) => {
 
 
 /**
+ * Extract the definition name. If multiple linking texts are possible, the
+ * function will select the one that is a "syntax" definition. For instance, it
+ * will pick up "<identifier>" for "identifiers|<identifier>" in CSS 2:
+ * https://drafts.csswg.org/css2/#value-def-identifier
+ *
+ * The function throws if it cannot extract an obvious name from the definition.
+ * We may want to be smarter about that in the future, but this should really
+ * never happen in practice (the above "identifiers" example is the only one
+ * CSS value definition so far to have multiple linking texts)
+ */
+const getDfnName = dfn => {
+  if (dfn.getAttribute('data-lt')) {
+    const names = dfn.getAttribute('data-lt').split('|').map(normalize);
+    let name = names.find(n =>
+      n.startsWith('<') ||      // Looks like a "type"
+      n.startsWith('@') ||      // Looks like an "at-rule"
+      n.startsWith(':') ||      // Looks like a "descriptor"
+      n.endsWith('()'));        // Looks like a "function"
+    if (!name) {
+      if (names.length > 1) {
+        throw new Error(`Found multiple linking texts for dfn without any obvious one: ${names.join(', ')}`);
+      }
+      name = names[0];
+    }
+    return name;
+  }
+  else {
+    return dfn.textContent.trim();
+  }
+};
+
+
+/**
  * Extract the given dfn
  */
 const extractTypedDfn = dfn => {
@@ -574,8 +607,7 @@ const extractTypedDfn = dfn => {
       // Don't attempt to parse pre tags at this stage, they are tricky to
       // split, we'll parse them as text and map them to the right definitions
       // afterwards.
-      const name = (dfn.getAttribute('data-lt') ?? dfn.textContent).trim();
-      res = { name };
+      res = { name: getDfnName(dfn) };
     }
     else if (prod) {
       res = parseProductionRule(prod, { pureSyntax: true });
@@ -585,8 +617,7 @@ const extractTypedDfn = dfn => {
       // https://drafts.csswg.org/css-speech-1/#typedef-voice-volume-decibel
       // It may be worth checking but not an error per se.
       console.warn('[reffy]', `Found "=" next to definition of ${dfn.textContent.trim()} but no production rule. Did I miss something?`);
-      const name = (dfn.getAttribute('data-lt') ?? dfn.textContent).trim();
-      res = { name, prose: text.replace(/\s+/g, ' ') };
+      res = { name: getDfnName(dfn), prose: text.replace(/\s+/g, ' ') };
     }
   }
   else if (dfn.textContent.trim().match(/^[a-zA-Z_][a-zA-Z0-9_\-]+\([^\)]+\)$/)) {
@@ -625,20 +656,23 @@ const extractTypedDfn = dfn => {
         }
       });
 
-      const name = (dfn.getAttribute('data-lt') ?? dfn.textContent).trim();
-      res = { name, prose: dd.textContent.trim().replace(/\s+/g, ' ') };
+      res = {
+        name: getDfnName(dfn),
+        prose: dd.textContent.trim().replace(/\s+/g, ' ')
+      };
     }
   }
   else if (parent.nodeName === 'P') {
     // Definition is in regular prose, extract value from prose.
-    const name = (dfn.getAttribute('data-lt') ?? dfn.textContent).trim();
-    res = { name, prose: parent.textContent.trim().replace(/\s+/g, ' ') };
+    res = {
+      name: getDfnName(dfn),
+      prose: parent.textContent.trim().replace(/\s+/g, ' ')
+    };
   }
   else {
     // Definition is in a heading or a more complex structure, just list the
     // name for now.
-    const name = (dfn.getAttribute('data-lt') ?? dfn.textContent).trim();
-    res = { name };
+    res = { name: getDfnName(dfn) };
   }
 
   res.type = dfnType;
