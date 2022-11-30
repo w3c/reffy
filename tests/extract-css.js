@@ -1188,6 +1188,28 @@ that spans multiple lines */
     easy.</p>
     `,
     error: 'Found multiple linking texts for dfn without any obvious one: a, b, c'
+  },
+
+  {
+    title: 'extracts a function value from the right hand side of a production rule',
+    html: `
+    <pre class="prod">
+      <dfn data-dfn-type="type" data-export="">&lt;linear-easing-function&gt;</dfn> = <dfn data-dfn-type="function" data-export="" data-lt="linear()">linear(&lt;linear-stop-list&gt;)</dfn>
+    </pre>
+    `,
+    propertyName: 'values',
+    css: [
+      {
+        name: '<linear-easing-function>',
+        type: 'type',
+        value: 'linear(<linear-stop-list>)'
+      },
+      {
+        name: 'linear()',
+        type: 'function',
+        value: 'linear(<linear-stop-list>)'
+      }
+    ]
   }
 ];
 

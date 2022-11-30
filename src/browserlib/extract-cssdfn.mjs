@@ -607,7 +607,17 @@ const extractTypedDfn = dfn => {
       // Don't attempt to parse pre tags at this stage, they are tricky to
       // split, we'll parse them as text and map them to the right definitions
       // afterwards.
-      res = { name: getDfnName(dfn) };
+      // That said, we may be looking at a function definition on the right hand
+      // side of a production rule, as in the definition of "linear()" in
+      // css-easing-2: https://drafts.csswg.org/css-easing-2/#funcdef-linear
+      // In such a case, we still want to extract the function parameters
+      if (dfn.textContent.trim().match(/^[a-zA-Z_][a-zA-Z0-9_\-]+\([^\)]+\)$/)) {
+        const fn = dfn.textContent.trim().match(/^([a-zA-Z_][a-zA-Z0-9_\-]+)\([^\)]+\)$/)[1];
+        res = parseProductionRule(`${fn}() = ${dfn.textContent.trim()}`, { pureSyntax: false });
+      }
+      else {
+        res = { name: getDfnName(dfn) };
+      }
     }
     else if (prod) {
       res = parseProductionRule(prod, { pureSyntax: true });
