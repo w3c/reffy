@@ -1229,6 +1229,27 @@ that spans multiple lines */
   },
 
   {
+    title: 'extracts right linking text for a "value" definition',
+    html: `
+    <p><dfn data-dfn-type="type">&lt;my-type&gt;</dfn> is my type.</p>
+    <p><dfn data-dfn-type="value" data-lt="value|val" data-dfn-for="<my-type>">val</dfn>
+    is an interesting value.</p>
+    `,
+    propertyName: 'values',
+    css: [{
+      name: '<my-type>',
+      type: 'type',
+      prose: '<my-type> is my type.',
+      values: [{
+        name: 'val',
+        type: 'value',
+        prose: 'val is an interesting value.',
+        value: 'val'
+      }]
+    }]
+  },
+
+  {
     title: 'throws when definition defines multiple linking texts without any obvious one',
     html: `
     <p><dfn data-dfn-type="type" data-lt="a|b|c" data-export>ABC</dfn>, it's
