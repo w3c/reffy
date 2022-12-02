@@ -893,6 +893,53 @@ that spans multiple lines */
   },
 
   {
+    title: 'does find a deepest structure for values',
+    html: `
+    <pre class="prod">
+      <dfn data-dfn-type="type">&lt;gradient&gt;</dfn> = radial-gradient() | repeating-radial-gradient()
+    </pre>
+    <p><dfn data-dfn-type="function">radial-gradient()</dfn> is nice.</p>
+    <p><dfn data-dfn-type="function">repeating-radial-gradient()</dfn> is nice too.</p>
+    <p>The <dfn data-dfn-type="value" data-dfn-for="radial-gradient(),repeating-radial-gradient()">&lt;extent-keyword></dfn>
+      value is fantastic.</p>
+    `,
+    propertyName: 'values',
+    css: [
+      {
+        name: '<gradient>',
+        type: 'type',
+        value: 'radial-gradient() | repeating-radial-gradient()'
+      },
+      {
+        name: 'radial-gradient()',
+        type: 'function',
+        prose: 'radial-gradient() is nice.',
+        values: [
+          {
+            name: '<extent-keyword>',
+            type: 'value',
+            value: '<extent-keyword>',
+            prose: 'The <extent-keyword> value is fantastic.'
+          }
+        ]
+      },
+      {
+        name: 'repeating-radial-gradient()',
+        type: 'function',
+        prose: 'repeating-radial-gradient() is nice too.',
+        values: [
+          {
+            name: '<extent-keyword>',
+            type: 'value',
+            value: '<extent-keyword>',
+            prose: 'The <extent-keyword> value is fantastic.'
+          }
+        ]
+      }
+    ]
+  },
+
+  {
     title: 'issues a warning when a definition is missing',
     html: `
     <pre class="prod">&lt;my-type&gt; = none | auto
@@ -1178,6 +1225,27 @@ that spans multiple lines */
       name: '<identifier>',
       type: 'type',
       prose: 'Identifiers are a fantastic type.'
+    }]
+  },
+
+  {
+    title: 'extracts right linking text for a "value" definition',
+    html: `
+    <p><dfn data-dfn-type="type">&lt;my-type&gt;</dfn> is my type.</p>
+    <p><dfn data-dfn-type="value" data-lt="value|val" data-dfn-for="<my-type>">val</dfn>
+    is an interesting value.</p>
+    `,
+    propertyName: 'values',
+    css: [{
+      name: '<my-type>',
+      type: 'type',
+      prose: '<my-type> is my type.',
+      values: [{
+        name: 'val',
+        type: 'value',
+        prose: 'val is an interesting value.',
+        value: 'val'
+      }]
     }]
   },
 

@@ -240,21 +240,14 @@ export default function () {
   // <image> again:
   // https://drafts.csswg.org/css-images-4/#typedef-image
   const isAncestorOf = (ancestor, child) => {
-    let seen = [];
-    const checkChild = c => {
-      let res = ancestor === c;
-      if (!res) {
-        res = parents[c]
-          ?.filter(p => !seen.includes(p))
-          ?.find(p => checkChild(ancestor, p));
-      }
-      seen = seen.concat(parents[c]);
-      return res;
-    }
-    return checkChild(child);
+    const checkChild = (c, depth) =>
+      (depth++ < 10) &&
+      (c === ancestor || parents[c]?.find(p => checkChild(p, depth)));
+    return checkChild(child, 0);
   };
-  const isDeepestConstruct = (name, list) =>
-    list.every(p => p === name || !isAncestorOf(name, p));
+  const isDeepestConstruct = (name, list) => {
+    return list.every(p => p === name || !isAncestorOf(name, p));
+  }
 
   // We may now associate values with dfns
   for (const value of values) {
@@ -559,10 +552,11 @@ const getDfnName = dfn => {
   if (dfn.getAttribute('data-lt')) {
     const names = dfn.getAttribute('data-lt').split('|').map(normalize);
     let name = names.find(n =>
-      n.startsWith('<') ||      // Looks like a "type"
-      n.startsWith('@') ||      // Looks like an "at-rule"
-      n.startsWith(':') ||      // Looks like a "descriptor"
-      n.endsWith('()'));        // Looks like a "function"
+      n.startsWith('<') ||            // Looks like a "type"
+      n.startsWith('@') ||            // Looks like an "at-rule"
+      n.startsWith(':') ||            // Looks like a "descriptor"
+      n.endsWith('()')  ||            // Looks like a "function"
+      n === dfn.textContent.trim());  // Looks like the right term
     if (!name) {
       if (names.length > 1) {
         throw new Error(`Found multiple linking texts for dfn without any obvious one: ${names.join(', ')}`);
