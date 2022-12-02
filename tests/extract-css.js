@@ -893,6 +893,53 @@ that spans multiple lines */
   },
 
   {
+    title: 'does find a deepest structure for values',
+    html: `
+    <pre class="prod">
+      <dfn data-dfn-type="type">&lt;gradient&gt;</dfn> = radial-gradient() | repeating-radial-gradient()
+    </pre>
+    <p><dfn data-dfn-type="function">radial-gradient()</dfn> is nice.</p>
+    <p><dfn data-dfn-type="function">repeating-radial-gradient()</dfn> is nice too.</p>
+    <p>The <dfn data-dfn-type="value" data-dfn-for="radial-gradient(),repeating-radial-gradient()">&lt;extent-keyword></dfn>
+      value is fantastic.</p>
+    `,
+    propertyName: 'values',
+    css: [
+      {
+        name: '<gradient>',
+        type: 'type',
+        value: 'radial-gradient() | repeating-radial-gradient()'
+      },
+      {
+        name: 'radial-gradient()',
+        type: 'function',
+        prose: 'radial-gradient() is nice.',
+        values: [
+          {
+            name: '<extent-keyword>',
+            type: 'value',
+            value: '<extent-keyword>',
+            prose: 'The <extent-keyword> value is fantastic.'
+          }
+        ]
+      },
+      {
+        name: 'repeating-radial-gradient()',
+        type: 'function',
+        prose: 'repeating-radial-gradient() is nice too.',
+        values: [
+          {
+            name: '<extent-keyword>',
+            type: 'value',
+            value: '<extent-keyword>',
+            prose: 'The <extent-keyword> value is fantastic.'
+          }
+        ]
+      }
+    ]
+  },
+
+  {
     title: 'issues a warning when a definition is missing',
     html: `
     <pre class="prod">&lt;my-type&gt; = none | auto
