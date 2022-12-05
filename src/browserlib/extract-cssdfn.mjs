@@ -640,7 +640,12 @@ const extractTypedDfn = dfn => {
       return;
     }
     let code = dd.querySelector('p > code, pre.prod');
-    if (code) {
+    if (code && !code.closest(informativeSelector)) {
+      // The assumption here is that normative code in the <dd> element that
+      // follows the definition is the production rule for the definition. This
+      // is a rather bold assumption, which should probably be revisited
+      // (unrelated code could appear in the prose and not have anything to do
+      // with the definition's value)
       if (code.textContent.startsWith(`${text} = `) ||
           code.textContent.startsWith(`<${text}> = `)) {
         res = parseProductionRule(code.textContent, { pureSyntax: true });

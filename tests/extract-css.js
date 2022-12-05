@@ -1278,6 +1278,29 @@ that spans multiple lines */
         value: 'linear(<linear-stop-list>)'
       }
     ]
+  },
+
+  {
+    title: 'does not get confused by informative code in dd',
+    html: `
+    <dl>
+      <dt><dfn data-dfn-type="type" data-export="">&lt;my-type&gt;</dfn></dt>
+      <dd>
+        &lt;my-type&gt; is my type.
+        <div class="example">
+          <p><code>foo</code> is not the value of &lt;my-type&gt;.</p>
+        </div>
+      </dd>
+    </dl>
+    `,
+    propertyName: 'values',
+    css: [
+      {
+        name: '<my-type>',
+        type: 'type',
+        prose: '<my-type> is my type. foo is not the value of <my-type>.'
+      }
+    ]
   }
 ];
 
