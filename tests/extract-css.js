@@ -1281,6 +1281,46 @@ that spans multiple lines */
   },
 
   {
+    title: 'extracts a production rule defined in code in a dd',
+    html: `
+    <dl>
+      <dt><dfn data-dfn-type="type" data-export="">&lt;my-type&gt;</dfn></dt>
+      <dd>
+        <p><code class="prod">none | auto</code> are the values.
+      </dd>
+    </dl>
+    `,
+    propertyName: 'values',
+    css: [
+      {
+        name: '<my-type>',
+        type: 'type',
+        value: 'none | auto'
+      }
+    ]
+  },
+
+  {
+    title: 'does not extract arbitrary code defined in a dd',
+    html: `
+    <dl>
+      <dt><dfn data-dfn-type="type" data-export="">&lt;my-type&gt;</dfn></dt>
+      <dd>
+        <p><code>42</code> is not a value of &lt;my-type&gt;.</p>
+      </dd>
+    </dl>
+    `,
+    propertyName: 'values',
+    css: [
+      {
+        name: '<my-type>',
+        type: 'type',
+        prose: '42 is not a value of <my-type>.'
+      }
+    ]
+  },
+
+  {
     title: 'does not get confused by informative code in dd',
     html: `
     <dl>
@@ -1288,7 +1328,7 @@ that spans multiple lines */
       <dd>
         &lt;my-type&gt; is my type.
         <div class="example">
-          <p><code>foo</code> is not the value of &lt;my-type&gt;.</p>
+          <p class="prod"><code>foo</code> is not the value of &lt;my-type&gt;.</p>
         </div>
       </dd>
     </dl>
