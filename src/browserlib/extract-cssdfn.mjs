@@ -580,7 +580,7 @@ const extractTypedDfn = dfn => {
   const dfnType = dfn.getAttribute('data-dfn-type');
   const dfnFor = dfn.getAttribute('data-dfn-for');
   const parent = dfn.parentNode.cloneNode(true);
-  const fnRegExp = /^([a-zA-Z_][a-zA-Z0-9_\-]+)\([^\)]+\)$/;
+  const fnRegExp = /^([:a-zA-Z_][:a-zA-Z0-9_\-]+)\([^\)]+\)$/;
 
   // Remove note references as in:
   // https://drafts.csswg.org/css-syntax-3/#the-anb-type

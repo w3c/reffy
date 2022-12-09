@@ -1301,6 +1301,19 @@ that spans multiple lines */
         prose: '<my-type> is my type. foo is not the value of <my-type>.'
       }
     ]
+  },
+
+  {
+    title: 'normalizes function-like selectors names',
+    html: `
+    <p><dfn data-dfn-type="selector" data-export="">::blah( &lt;my-type&gt; )</dfn>
+    is a selector that takes <code>&lt;my-type&gt;</code> as input.</p>
+    `,
+    propertyName: 'selectors',
+    css: [{
+      name: '::blah()',
+      value: '::blah( <my-type> )'
+    }]
   }
 ];
 
