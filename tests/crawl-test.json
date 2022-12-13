@@ -45,7 +45,6 @@
         "definedIn": "prose"
       }
     ],
-    "elements": [],
     "events": [],
     "headings": [
       {
@@ -137,7 +136,6 @@
         "definedIn": "pre"
       }
     ],
-    "elements": [],
     "events": [],
     "headings": [
       {
@@ -217,7 +215,6 @@
       "values": []
     },
     "dfns": [],
-    "elements": [],
     "events": [],
     "headings": [],
     "ids": []
