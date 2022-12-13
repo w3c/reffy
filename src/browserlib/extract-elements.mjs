@@ -203,7 +203,7 @@ export default function (spec) {
       return res;
     });
 
-  if (svgSummaryElements.length) {
+  if (svgSummaryElements.length || svgTableElements.length) {
     return svgSummaryElements.concat(svgTableElements);
   }
 
@@ -211,15 +211,15 @@ export default function (spec) {
   // this would work for other specs as well
   const shortname = (typeof spec === 'string') ? spec : spec.shortname;
   const otherElements = [...document.querySelectorAll('dfn[data-dfn-type="element"]')]
-	.map(el => {
-	  const elInfo = { "name": el.textContent.trim()};
-	  // All elements defined in MathML Core
-	  // use the MathMLElement interface
-	  if (shortname === "mathml-core") {
-	   elInfo.interface = "MathMLElement" ;
-	  }
-	  return elInfo;
-    });
+    .map(el => {
+      const elInfo = { "name": el.textContent.trim()};
+      // All elements defined in MathML Core
+      // use the MathMLElement interface
+      if (shortname === "mathml-core") {
+       elInfo.interface = "MathMLElement" ;
+      }
+      return elInfo;
+      });
   if (otherElements.length) {
     return otherElements;
   }
