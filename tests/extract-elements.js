@@ -7,6 +7,7 @@ const { getSchemaValidationFunction } = require('../src/lib/util');
 const tests = [
   {
     title: "extracts an HTML element that defines its own interface",
+    spec: "html",
     html: `<h4 id="the-p-element"><span class="secno">4.4.1</span> The <dfn><code>p</code></dfn> element<a href="#the-p-element" class="self-link"></a></h4>
 <dl class="element">
 <dt><a href="dom.html#concept-element-dom" id="the-p-element:concept-element-dom">DOM interface</a>:</dt>
@@ -29,6 +30,7 @@ const tests = [
 
   {
     title: "extracts an HTML element that uses another interface",
+    spec: "html",
     html: `<h4 id="the-thead-element"><span class="secno">4.9.6</span> The <dfn><code>thead</code></dfn> element<a href="#the-thead-element" class="self-link"></a></h4>
 <dl class="element">
 <dt><a href="dom.html#concept-element-categories" id="the-thead-element:concept-element-categories">Categories</a>:</dt>
@@ -64,6 +66,7 @@ const tests = [
 
   {
     title: "extracts grouped elements",
+    spec: "html",
     html: `<h4 id="the-sub-and-sup-elements"><span class="secno">4.5.19</span> The <dfn id="the-sub-element" data-dfn-type="element"><code>sub</code></dfn> and <dfn id="the-sup-element" data-dfn-type="element"><code>sup</code></dfn> elements<a href="#the-sub-and-sup-elements" class="self-link"></a></h4>
 <dl class="element"><dt><a href="dom.html#concept-element-dom" id="the-sub-and-sup-elements:concept-element-dom">DOM interface</a>:</dt><dd>Use <code id="the-sub-and-sup-elements:htmlelement"><a href="dom.html#htmlelement">HTMLElement</a></code>.</dd>
 </dl>`,
@@ -81,6 +84,7 @@ const tests = [
 
   {
     title: "extracts an SVG element that follows the element-summary pattern",
+    spec: "SVG2",
     html: `<div class="element-summary">
 <div class="element-summary-name"><span class="element-name">‘<dfn data-dfn-type="element" data-export="" id="elementdef-animate">animate</dfn>’</span></div>
 <dl>
@@ -102,6 +106,7 @@ const tests = [
 
   {
     title: "extracts an SVG element that follows the definition-table pattern",
+    spec: "SVG2",
     html: `<table class="definition-table">
     <tbody>
      <tr>
@@ -140,6 +145,7 @@ const tests = [
 
   {
     title: "does not return an interface when none is defined",
+    spec: "SVG2",
     html: `<div class="element-summary"><div class="element-summary-name"><span class="element-name">‘<dfn data-dfn-type="element" data-export="" id="elementdef-discard">discard</dfn>’</span></div>
 <dl>
 <dt>Categories:</dt>
@@ -154,6 +160,20 @@ const tests = [
     res: [
       {
         name: 'discard'
+      }
+    ]
+  },
+
+  {
+    title: "extracts a MathMLElement",
+    spec: "mathml-core",
+    html: `<p>
+      The <dfn data-dfn-type="element">mmm</dfn> element is a MathML element.
+    </p>`,
+    res: [
+      {
+        name: "mmm",
+        interface: "MathMLElement"
       }
     ]
   }
@@ -184,11 +204,11 @@ describe("Markup element extraction", function () {
   tests.forEach(t => {
     it(t.title, async () => {
       const page = await browser.newPage();
-      page.setContent(t.html);
+      page.setContent(t.html + "<script>let spec = '" + t.spec + "';</script>");
       await page.addScriptTag({ content: extractElementsCode });
 
       const extractedElements = await page.evaluate(async () => {
-        return extractElements();
+        return extractElements(spec);
       });
       await page.close();
       assert.deepEqual(extractedElements, t.res);
