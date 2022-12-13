@@ -14,7 +14,7 @@
  * @function
  * @public
  */
-export default function () {
+export default function (spec) {
   function getText(el) {
     return el.textContent.trim().replace(/\s+/g, ' ');
   }
@@ -133,7 +133,9 @@ export default function () {
     .filter(el => !!el)
     .flat();
 
-
+  if (htmlElements.length) {
+    return htmlElements;
+  }
   // Extract SVG elements that use the "element-summary" pattern
   const svgSummaryElements = [...document.querySelectorAll('div.element-summary')]
     .map(el => {
@@ -201,5 +203,24 @@ export default function () {
       return res;
     });
 
-  return htmlElements.concat(svgSummaryElements, svgTableElements);
+  if (svgSummaryElements.length) {
+    return svgSummaryElements.concat(svgTableElements);
+  }
+
+  // MathML Elements rely on the dfn contract
+  // this would work for other specs as well
+  const shortname = (typeof spec === 'string') ? spec : spec.shortname;
+  const otherElements = [...document.querySelectorAll('dfn[data-dfn-type="element"]')]
+	.map(el => {
+	  const elInfo = { "name": el.textContent.trim()};
+	  // All elements defined in MathML Core
+	  // use the MathMLElement interface
+	  if (shortname === "mathml-core") {
+	   elInfo.interface = "MathMLElement" ;
+	  }
+	  return elInfo;
+    });
+  if (otherElements.length) {
+    return otherElements;
+  }
 }
