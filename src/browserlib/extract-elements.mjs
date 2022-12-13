@@ -216,7 +216,14 @@ export default function (spec) {
       // All elements defined in MathML Core
       // use the MathMLElement interface
       if (shortname === "mathml-core") {
-       elInfo.interface = "MathMLElement" ;
+        elInfo.interface = "MathMLElement" ;
+      }
+      else {
+        const interfaces = [...document.querySelectorAll('dfn[data-dfn-type=interface]')]
+          .filter(el => el.textContent.trim().toLowerCase() === `html${elInfo.name}element`);
+        if (interfaces.length === 1) {
+          elInfo.interface = interfaces[0].textContent.trim();
+        }
       }
       return elInfo;
       });

@@ -176,6 +176,21 @@ const tests = [
         interface: "MathMLElement"
       }
     ]
+  },
+
+  {
+    title: "links an element with its interface in simple case",
+    spec: "portals",
+    html: `<p>
+      The <dfn data-dfn-type="element">portal</dfn> element uses the
+      <dfn data-dfn-type="interface">HTMLPortalElement</dfn> interface.
+    </p>`,
+    res: [
+      {
+        name: "portal",
+        interface: "HTMLPortalElement"
+      }
+    ]
   }
 ];
 
