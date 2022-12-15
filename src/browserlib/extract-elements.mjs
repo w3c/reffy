@@ -216,7 +216,12 @@ export default function (spec) {
       // All elements defined in MathML Core
       // use the MathMLElement interface
       if (shortname === "mathml-core") {
-        elInfo.interface = "MathMLElement" ;
+        elInfo.interface = "MathMLElement";
+      }
+      // All elements of the Open Container Format of EPUB
+      // use the Element interface
+      else if (shortname === "epub-33") {
+        elInfo.interface = "Element";
       }
       else {
         const interfaces = [...document.querySelectorAll('dfn[data-dfn-type=interface]')]
