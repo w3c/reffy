@@ -60,7 +60,8 @@ const modules = {
   events: require('../postprocessing/events'),
   idlnames: require('../postprocessing/idlnames'),
   idlparsed: require('../postprocessing/idlparsed'),
-  annotatelinks: require('../postprocessing/annotate-links')
+  annotatelinks: require('../postprocessing/annotate-links'),
+  patchdfns: require('../postprocessing/patch-dfns')
 };
 
 
