@@ -15,6 +15,7 @@
         "properties": {
           "name": { "$ref": "../common.json#/$defs/cssPropertyName" },
           "value": { "$ref": "../common.json#/$defs/cssValue" },
+          "newValues": { "$ref": "../common.json#/$defs/cssValue" },
           "values": { "$ref": "../common.json#/$defs/cssValues" },
           "styleDeclaration": {
             "type": "array",
