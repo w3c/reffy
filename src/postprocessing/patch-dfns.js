@@ -13,7 +13,6 @@
 module.exports = {
   dependsOn: ['dfns'],
   input: 'spec',
-  property: 'dfns',
 
   run: async function (spec, options) {
     // Note the spec object passed to post-processing modules does not contain
