@@ -33,7 +33,7 @@
   "bin": "./reffy.js",
   "dependencies": {
     "abortcontroller-polyfill": "1.7.5",
-    "ajv": "8.11.2",
+    "ajv": "8.12.0",
     "ajv-formats": "2.1.1",
     "commander": "9.4.1",
     "fetch-filecache-for-crawling": "4.1.0",
