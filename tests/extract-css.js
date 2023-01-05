@@ -1217,14 +1217,14 @@ that spans multiple lines */
   {
     title: 'extracts right linking text for a "type" definition',
     html: `
-    <p><dfn data-dfn-type="type" data-lt="identifiers|<identifier>" data-export>Identifiers</dfn>
+    <p><dfn data-dfn-type="type" data-lt="identifiers|<identifier>" data-export>identifiers</dfn>
     are a fantastic type.</p>
     `,
     propertyName: 'values',
     css: [{
       name: '<identifier>',
       type: 'type',
-      prose: 'Identifiers are a fantastic type.'
+      prose: 'identifiers are a fantastic type.'
     }]
   },
 

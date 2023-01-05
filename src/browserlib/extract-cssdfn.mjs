@@ -552,11 +552,14 @@ const getDfnName = dfn => {
   if (dfn.getAttribute('data-lt')) {
     const names = dfn.getAttribute('data-lt').split('|').map(normalize);
     let name = names.find(n =>
-      n.startsWith('<') ||            // Looks like a "type"
-      n.startsWith('@') ||            // Looks like an "at-rule"
-      n.startsWith(':') ||            // Looks like a "descriptor"
-      n.endsWith('()')  ||            // Looks like a "function"
-      n === dfn.textContent.trim());  // Looks like the right term
+      n.startsWith('<') ||              // Looks like a "type"
+      n.startsWith('@') ||              // Looks like an "at-rule"
+      n.startsWith(':') ||              // Looks like a "descriptor"
+      n.endsWith('()'));                // Looks like a "function"
+    if (!name) {
+      // No specific type found in the list, look for the actual term
+      name = names.find(n => n === dfn.textContent.trim());
+    }
     if (!name) {
       if (names.length > 1) {
         throw new Error(`Found multiple linking texts for dfn without any obvious one: ${names.join(', ')}`);
