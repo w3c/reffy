@@ -719,7 +719,7 @@ function completeWithAlternativeUrls(spec) {
  * in the given list of specs that passes the given predicate.
  *
  * "Fullest" means "not a delta spec, unless that is the only level that passes
- * the predicate".
+ * the predicate, and not an outdated spec either (before current one)".
  *
  * @function
  * @public
@@ -736,7 +736,8 @@ function isLatestLevelThatPasses(spec, list, predicate) {
         return false;
     }
     if (spec.seriesComposition === 'delta') {
-        while (spec.seriesPrevious) {
+        while (spec.seriesPrevious &&
+               spec.shortname !== spec.series.currentSpecification) {
             spec = list.find(s => s.shortname === spec.seriesPrevious);
             if (!spec) {
                 break;
@@ -747,16 +748,32 @@ function isLatestLevelThatPasses(spec, list, predicate) {
         }
         return true;
     }
-    while (spec.seriesNext) {
-        spec = list.find(s => s.shortname === spec.seriesNext);
-        if (!spec) {
+
+    let next = spec;
+    while (next.seriesNext) {
+        next = list.find(s => s.shortname === next.seriesNext);
+        if (!next) {
             break;
         }
-        if ((spec.seriesComposition === 'full') && predicate(spec)) {
+        if ((next.seriesComposition === 'full') && predicate(next)) {
             return false;
         }
     }
-    return true;
+
+    // Make sure that spec is the current one or is more recent than the
+    // current one.
+    while (spec) {
+        if (spec.shortname === spec.series.currentSpecification) {
+            return true;
+        }
+        if (!spec.seriesPrevious) {
+            return false;
+        }
+        spec = list.find(s => s.shortname === spec.seriesPrevious);
+    }
+
+    // Spec passes predicate but is too old to be considered
+    return false;
 }
 
 

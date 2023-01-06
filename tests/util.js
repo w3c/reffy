@@ -79,6 +79,22 @@ describe('isLatestLevelThatPasses', () => {
         (s.seriesComposition === 'full')));
     assert.isTrue(isLatestLevelThatPasses(spec, specs, s => s === spec));
   });
+
+  it('returns false if spec is too old', () => {
+    const spec = specs.find(spec => spec.seriesPrevious &&
+      spec.shortname === spec.series.currentSpecification);
+    const previous = specs.find(s => s.shortname === spec.seriesPrevious);
+    assert.isFalse(isLatestLevelThatPasses(previous, specs, s => s === previous));
+  });
+
+  it('returns true for delta spec when full spec is too old', () => {
+    // Note this will fail when CSS Cascade drafts progress on the Rec track,
+    // but that's the only series that has both an outdated version and a delta
+    // spec in the list.
+    const old = specs.find(spec => spec.shortname === 'css-cascade-3');
+    const delta = specs.find(spec => spec.shortname === 'css-cascade-6');
+    assert.isTrue(isLatestLevelThatPasses(delta, specs, s => s === delta || s === old));
+  });
 });
 
 
