@@ -45,7 +45,7 @@
   "devDependencies": {
     "chai": "4.3.7",
     "mocha": "10.2.0",
-    "nock": "13.2.9",
+    "nock": "13.3.0",
     "respec": "32.6.1",
     "respec-hljs": "2.1.1",
     "rollup": "3.9.1"
