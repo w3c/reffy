@@ -221,31 +221,7 @@ export default function (spec, idToHeading = {}) {
     // have some other definition related attribute (because we only want to
     // extract headings that want to be seen as definitions)
     'dfn[id]:not([data-lt=""])',
-    'h2[id][data-dfn-type]:not([data-lt=""])',
-    'h3[id][data-dfn-type]:not([data-lt=""])',
-    'h4[id][data-dfn-type]:not([data-lt=""])',
-    'h5[id][data-dfn-type]:not([data-lt=""])',
-    'h6[id][data-dfn-type]:not([data-lt=""])',
-    'h2[id][data-dfn-for]:not([data-lt=""])',
-    'h3[id][data-dfn-for]:not([data-lt=""])',
-    'h4[id][data-dfn-for]:not([data-lt=""])',
-    'h5[id][data-dfn-for]:not([data-lt=""])',
-    'h6[id][data-dfn-for]:not([data-lt=""])',
-    'h2[id][data-export]:not([data-lt=""])',
-    'h3[id][data-export]:not([data-lt=""])',
-    'h4[id][data-export]:not([data-lt=""])',
-    'h5[id][data-export]:not([data-lt=""])',
-    'h6[id][data-export]:not([data-lt=""])',
-    'h2[id][data-noexport]:not([data-lt=""])',
-    'h3[id][data-noexport]:not([data-lt=""])',
-    'h4[id][data-noexport]:not([data-lt=""])',
-    'h5[id][data-noexport]:not([data-lt=""])',
-    'h6[id][data-noexport]:not([data-lt=""])',
-    'h2[id][data-lt]:not([data-lt=""])',
-    'h3[id][data-lt]:not([data-lt=""])',
-    'h4[id][data-lt]:not([data-lt=""])',
-    'h5[id][data-lt]:not([data-lt=""])',
-    'h6[id][data-lt]:not([data-lt=""])'
+    ':is(h2,h3,h4,h5,h6)[id]:is([data-dfn-type],[data-dfn-for],[data-export],[data-noexport],[data-lt]):not([data-lt=""])'
   ].join(',');
 
   const shortname = (typeof spec === 'string') ? spec : spec.shortname;
@@ -631,13 +607,7 @@ function preProcessEcmascript() {
 }
 
 function preProcessHTML() {
-  const headingSelector = [
-    'h2[id]:not([data-dfn-type]):not([data-export]):not([data-noexport]):not([data-lt]) dfn',
-    'h3[id]:not([data-dfn-type]):not([data-export]):not([data-noexport]):not([data-lt]) dfn',
-    'h4[id]:not([data-dfn-type]):not([data-export]):not([data-noexport]):not([data-lt]) dfn',
-    'h5[id]:not([data-dfn-type]):not([data-export]):not([data-noexport]):not([data-lt]) dfn',
-    'h6[id]:not([data-dfn-type]):not([data-export]):not([data-noexport]):not([data-lt]) dfn'
-  ].join(',');
+  const headingSelector = ':is(h2,h3,h4,h5,h6)[id]:not(:is([data-dfn-type],[data-export],[data-noexport],[data-lt])) dfn';
 
   // we copy the id on the dfn when it is set on the surrounding heading
   document.querySelectorAll(headingSelector)
