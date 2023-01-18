@@ -272,6 +272,15 @@ const tests = [
            definedIn: "heading"}],
    spec: "html"
   },
+  {title: "handles HTML spec conventions of definitions in headings (with extra attributes)",
+   html: '<h4 id="transferable-objects" data-lt="transferable object" data-export=""><span class="secno">2.7.2</span> <dfn>Transferable objects</dfn><a href="#transferable-objects" class="self-link"></a></h4>',
+   changesToBaseDfn: [{id: "transferable-objects",
+           linkingText: ["transferable object"],
+           access: "public",
+           heading: { id: "transferable-objects", href: "about:blank#transferable-objects", title: "Transferable objects", number: "2.7.2"},
+           definedIn: "heading"}],
+   spec: "html"
+  },
   {
     "title": "ignores definitions imported in the HTML spec from other specs",
     html: '<li>The <dfn id="xmlhttprequest"><a href="https://xhr.spec.whatwg.org/#xmlhttprequest"><code>XMLHttpRequest</code></a></dfn> interface</li>',

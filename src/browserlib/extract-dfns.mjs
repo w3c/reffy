@@ -216,12 +216,36 @@ function definitionMapper(el, idToHeading, usesDfnDataModel) {
 export default function (spec, idToHeading = {}) {
   const definitionsSelector = [
     // re data-lt, see https://github.com/w3c/reffy/issues/336#issuecomment-650339747
+    // As for `<dfn>` we'll consider that headings without a `data-dfn-type`
+    // have an implicit `"data-dfn-type"="dfn"` attribute, provided they also
+    // have some other definition related attribute (because we only want to
+    // extract headings that want to be seen as definitions)
     'dfn[id]:not([data-lt=""])',
     'h2[id][data-dfn-type]:not([data-lt=""])',
     'h3[id][data-dfn-type]:not([data-lt=""])',
     'h4[id][data-dfn-type]:not([data-lt=""])',
     'h5[id][data-dfn-type]:not([data-lt=""])',
-    'h6[id][data-dfn-type]:not([data-lt=""])'
+    'h6[id][data-dfn-type]:not([data-lt=""])',
+    'h2[id][data-dfn-for]:not([data-lt=""])',
+    'h3[id][data-dfn-for]:not([data-lt=""])',
+    'h4[id][data-dfn-for]:not([data-lt=""])',
+    'h5[id][data-dfn-for]:not([data-lt=""])',
+    'h6[id][data-dfn-for]:not([data-lt=""])',
+    'h2[id][data-export]:not([data-lt=""])',
+    'h3[id][data-export]:not([data-lt=""])',
+    'h4[id][data-export]:not([data-lt=""])',
+    'h5[id][data-export]:not([data-lt=""])',
+    'h6[id][data-export]:not([data-lt=""])',
+    'h2[id][data-noexport]:not([data-lt=""])',
+    'h3[id][data-noexport]:not([data-lt=""])',
+    'h4[id][data-noexport]:not([data-lt=""])',
+    'h5[id][data-noexport]:not([data-lt=""])',
+    'h6[id][data-noexport]:not([data-lt=""])',
+    'h2[id][data-lt]:not([data-lt=""])',
+    'h3[id][data-lt]:not([data-lt=""])',
+    'h4[id][data-lt]:not([data-lt=""])',
+    'h5[id][data-lt]:not([data-lt=""])',
+    'h6[id][data-lt]:not([data-lt=""])'
   ].join(',');
 
   const shortname = (typeof spec === 'string') ? spec : spec.shortname;
@@ -608,11 +632,11 @@ function preProcessEcmascript() {
 
 function preProcessHTML() {
   const headingSelector = [
-    'h2[id]:not([data-dfn-type]) dfn',
-    'h3[id]:not([data-dfn-type]) dfn',
-    'h4[id]:not([data-dfn-type]) dfn',
-    'h5[id]:not([data-dfn-type]) dfn',
-    'h6[id]:not([data-dfn-type]) dfn'
+    'h2[id]:not([data-dfn-type]):not([data-export]):not([data-noexport]):not([data-lt]) dfn',
+    'h3[id]:not([data-dfn-type]):not([data-export]):not([data-noexport]):not([data-lt]) dfn',
+    'h4[id]:not([data-dfn-type]):not([data-export]):not([data-noexport]):not([data-lt]) dfn',
+    'h5[id]:not([data-dfn-type]):not([data-export]):not([data-noexport]):not([data-lt]) dfn',
+    'h6[id]:not([data-dfn-type]):not([data-export]):not([data-noexport]):not([data-lt]) dfn'
   ].join(',');
 
   // we copy the id on the dfn when it is set on the surrounding heading
