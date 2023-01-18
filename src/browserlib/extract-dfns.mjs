@@ -607,7 +607,7 @@ function preProcessEcmascript() {
 }
 
 function preProcessHTML() {
-  const headingSelector = ':is(h2,h3,h4,h5,h6)[id]:not(:is([data-dfn-type],[data-export],[data-noexport],[data-lt])) dfn';
+  const headingSelector = ':is(h2,h3,h4,h5,h6)[id]:not(:is([data-dfn-type],[data-dfn-for],[data-export],[data-noexport],[data-lt])) dfn';
 
   // we copy the id on the dfn when it is set on the surrounding heading
   document.querySelectorAll(headingSelector)
