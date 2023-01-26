@@ -7,10 +7,11 @@
   "additionalProperties": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["fragment", "parsed"],
+    "required": ["fragment", "parsed", "type"],
     "properties": {
       "fragment": { "type": "string" },
-      "parsed": { "type": "string" }
+      "parsed": { "type": "string" },
+      "type": { "$ref": "../common.json#/$defs/interfacetype" }
     }
   }
 }
