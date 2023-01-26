@@ -74,7 +74,18 @@ describe('isLatestLevelThatPasses', () => {
   });
 
   it('returns true if greater level does not pass predicate', () => {
+    // Only consider specs that are at or after the current specification
+    const isRecentEnough = spec => {
+      while (spec) {
+        if (spec.series.currentSpecification === spec.shortname) {
+          return true;
+        }
+        spec = specs.find(s => s.shortname === spec.seriesPrevious);
+      }
+      return false;
+    };
     const spec = specs.find(spec => spec.seriesNext &&
+      isRecentEnough(spec) &&
       specs.find(s => (s.shortname === spec.seriesNext) &&
         (s.seriesComposition === 'full')));
     assert.isTrue(isLatestLevelThatPasses(spec, specs, s => s === spec));
