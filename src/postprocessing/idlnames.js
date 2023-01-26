@@ -150,7 +150,8 @@ async function saveIndex(names, folder) {
   Object.keys(names).sort().forEach(name => {
     index[name] = {
       fragment: `idlnames/${name}.idl`,
-      parsed: `idlnamesparsed/${name}.json`
+      parsed: `idlnamesparsed/${name}.json`,
+      type: names[name].type
     };
   });
   const filename = path.join(folder, 'idlnames.json');
