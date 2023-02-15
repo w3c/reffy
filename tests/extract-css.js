@@ -1354,6 +1354,48 @@ that spans multiple lines */
       name: '::blah()',
       value: '::blah( <my-type> )'
     }]
+  },
+
+  {
+    title: 'parses a partial property definition',
+    html: `<table class="def propdef partial">
+      <tbody>
+        <tr>
+          <th>Name:</th>
+          <td>text-transform</td>
+        </tr>
+        <tr class="value">
+          <th>New values:</th>
+          <td class="prod">math-auto</td>
+        </tr>
+      </tbody>
+    </table>
+    `,
+    css: [{
+      name: 'text-transform',
+      newValues: 'math-auto'
+    }]
+  },
+
+  {
+    title: 'parses a partial property definition that (singular variant)',
+    html: `<table class="def propdef partial">
+      <tbody>
+        <tr>
+          <th>Name:</th>
+          <td>text-transform</td>
+        </tr>
+        <tr class="value">
+          <th>New value:</th>
+          <td class="prod">math-auto</td>
+        </tr>
+      </tbody>
+    </table>
+    `,
+    css: [{
+      name: 'text-transform',
+      newValues: 'math-auto'
+    }]
   }
 ];
 

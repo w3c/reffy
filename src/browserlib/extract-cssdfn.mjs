@@ -333,7 +333,10 @@ const dfnLabel2Property = label => label.trim()
   .map((str, idx) => (idx === 0) ?
     str.toLowerCase() :
     str.charAt(0).toUpperCase() + str.slice(1))
-  .join('');
+  .join('')
+  // Spec may use singular when there is only one new value
+  // (e.g. new value of "text-transform" in MathML Core)
+  .replace(/^newValue$/, 'newValues');
 
 
 /**
