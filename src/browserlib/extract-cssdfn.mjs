@@ -720,6 +720,11 @@ const extractProductionRules = root => {
     .filter(el => !el.closest(informativeSelector))
     .map(el => el.cloneNode(true))
     .map(el => {
+      [...el.querySelectorAll('aside, .mdn-anno')]
+        .map(aside => aside.parentNode.removeChild(aside));
+      return el;
+    })
+    .map(el => {
       [...el.querySelectorAll('sup')]
         .map(sup => sup.parentNode.removeChild(sup));
       return el;

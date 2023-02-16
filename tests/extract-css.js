@@ -1396,6 +1396,30 @@ that spans multiple lines */
       name: 'text-transform',
       newValues: 'math-auto'
     }]
+  },
+
+  {
+    title: 'ignores asides in production rules',
+    html: `<pre class="prod"><dfn data-dfn-type="function">anchor()</dfn> = anchor( &lt;anchor-element>? &lt;anchor-side>, &lt;length-percentage>? )
+      <dfn data-dfn-type="type">&lt;anchor-element&gt;</dfn>
+      <span><aside class="dfn-panel" role="dialog">
+        Info about the '&lt;anchor-element&gt;' definition.
+      </aside></span> = &lt;dashed-ident&gt; | implicit
+    </pre>
+    `,
+    propertyName: 'values',
+    css: [
+      {
+        name: 'anchor()',
+        type: 'function',
+        value: 'anchor( <anchor-element>? <anchor-side>, <length-percentage>? )'
+      },
+      {
+        name: '<anchor-element>',
+        type: 'type',
+        value: '<dashed-ident> | implicit'
+      }
+    ]
   }
 ];
 
