@@ -428,6 +428,22 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       definedIn: "pre"
     }],
     spec :"SVG2",
+  },
+
+  {
+    title: "includes a dfn that links to CSS2 Vendor-specific extensions section (hardcoded rule)",
+    html: `<p>The CSS2.1 specification reserves a
+    <dfn data-dfn-type="dfn" data-export="" id="prefixed-syntax">
+      <a href="https://www.w3.org/TR/CSS2/syndata.html#vendor-keywords">prefixed syntax</a>
+    </dfn>.</p>
+    `,
+    changesToBaseDfn: [{
+      id: "prefixed-syntax",
+      linkingText: ["prefixed syntax"],
+      type: "dfn",
+      access: "public",
+      definedIn: "prose"
+    }]
   }
 ];
 

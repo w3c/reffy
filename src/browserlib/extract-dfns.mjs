@@ -265,9 +265,15 @@ export default function (spec, idToHeading = {}) {
     // When the whole term links to an external spec, the definition is an
     // imported definition. Such definitions are not "real" definitions, let's
     // skip them.
+    // One hardcoded exception-to-the-rule, see:
+    // https://github.com/w3c/webref/issues/882
+    // (pending a proper dfns curation process, see:
+    // https://github.com/w3c/webref/issues/789)
     .filter(node => {
       const link = node.querySelector('a[href^="http"]');
-      return !link || (node.textContent.trim() !== link.textContent.trim());
+      return !link ||
+        (node.textContent.trim() !== link.textContent.trim()) ||
+        (link.href === 'https://www.w3.org/TR/CSS2/syndata.html#vendor-keywords');
     })
     .map(node => definitionMapper(node, idToHeading, usesDfnDataModel))
     .filter(isNotAlreadyExported);
