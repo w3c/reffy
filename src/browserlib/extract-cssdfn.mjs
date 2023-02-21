@@ -666,6 +666,10 @@ const extractTypedDfn = dfn => {
           c.remove();
         }
       });
+      [...dd.querySelectorAll('sup')]
+        .map(sup => sup.parentNode.removeChild(sup));
+      [...dd.querySelectorAll('aside, .mdn-anno')]
+        .map(annotation => annotation.parentNode.removeChild(annotation));
 
       res = {
         name: getDfnName(dfn),

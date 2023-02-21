@@ -1420,6 +1420,43 @@ that spans multiple lines */
         value: '<dashed-ident> | implicit'
       }
     ]
+  },
+
+  {
+    title: 'ignores aside info panel in p prose',
+    html: `<p>
+      The <dfn data-dfn-type="type" data-export="">&lt;position&gt;</dfn>
+      determines the gradient center <span data-insert="aside"></span> of the
+      gradient.
+    </p>
+    <aside>Info about the 'gradient center' definition.</aside>
+    `,
+    propertyName: 'values',
+    css: [{
+      name: '<position>',
+      type: 'type',
+      prose: 'The <position> determines the gradient center of the gradient.'
+    }]
+  },
+
+  {
+    title: 'ignores aside info panel in dd prose',
+    html: `<dl>
+    <dt><dfn data-dfn-type="type" data-export="">&lt;position&gt;</dfn></dt>
+    <dd>
+      Determines the <dfn data-dfn-type="dfn">gradient center</dfn>
+      <span data-insert="aside"></span> of the gradient.
+    </dd></dl>
+    <aside class="dfn-panel"><span>
+      Info about the 'gradient center' definition.
+    </span></aside>
+    `,
+    propertyName: 'values',
+    css: [{
+      name: '<position>',
+      type: 'type',
+      prose: 'Determines the gradient center of the gradient.'
+    }]
   }
 ];
 
@@ -1453,6 +1490,15 @@ describe("Test CSS properties extraction", function() {
 
       const extractedCss = await page.evaluate(async () => {
         try {
+          // Copy <aside> elements to their inline position
+          // NB: This cannot be done without JS because <aside> is sectioning
+          // content and thus cannot be inserted in phrasing content... And yet
+          // Bikeshed does this for info panels, see discussion in:
+          // https://github.com/speced/bikeshed/issues/2476#issuecomment-1437252932
+          const aside = document.querySelector('aside');
+          if (aside) {
+            document.querySelector('[data-insert=aside]')?.appendChild(aside);
+          }
           return extractCSS();
         }
         catch (err) {
