@@ -253,8 +253,10 @@ Usage notes for some of the options:
     $ reffy -o reports/test -p events -p idlparsed -p idlnames
 
 -r, --release
-  If the flag is not set, the crawler defaults to crawl nightly versions of the
-  specs.
+  The crawler defaults to crawling the nightly version of requested specs.
+  Set this flag to tell the crawler to crawl the published version of the specs
+  instead. When the flag is set, the crawler will ignore specs that do not have
+  a published version.
 
 -s, --spec <specs...>
   If specs to crawl are not specified, all specs in browser-specs get crawled:

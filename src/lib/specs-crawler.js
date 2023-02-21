@@ -320,6 +320,11 @@ async function crawlList(speclist, crawlOptions) {
         list = speclist.map(completeWithAlternativeUrls);
     }
 
+    // Filter out non-published specs when goal is to crawl published versions
+    if (crawlOptions.publishedVersion) {
+        list = list.filter(spec => !!spec.release);
+    }
+
     const listAndPromise = list.map(spec => {
         let resolve = null;
         let reject = null;
