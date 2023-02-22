@@ -18,7 +18,7 @@ export default function (node, { singlePage, attribute } =
   const url = new URL(page ?? window.location.href);
   const hashid = node.getAttribute(attribute);
   if (hashid) {
-    url.hash = '#' + hashid;
+    url.hash = '#' + encodeURIComponent(hashid);
   }
   return url.toString();
 }

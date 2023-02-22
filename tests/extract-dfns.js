@@ -104,6 +104,11 @@ const tests = [
    changesToBaseDfn: [{}]
   },
 
+  {title: "encodes the href fragment",
+   html: "<dfn id='foo-%' data-dfn-type='dfn'>Foo</dfn>",
+   changesToBaseDfn: [{id: 'foo-%', href: 'about:blank#foo-%25'}]
+  },
+
   {title: "ignores a <dfn> without an id",
    html: "<dfn data-dfn-type='dfn'>Foo</dfn>",
    changesToBaseDfn: []

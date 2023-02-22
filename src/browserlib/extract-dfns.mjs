@@ -154,7 +154,7 @@ function definitionMapper(el, idToHeading, usesDfnDataModel) {
   // to ease parsing logic, and we want to get back to the URL of the page)
   const page = el.closest('[data-reffy-page]')?.getAttribute('data-reffy-page');
   const url = new URL(page ?? window.location.href);
-  url.hash = '#' + el.getAttribute('id');
+  url.hash = '#' + encodeURIComponent(el.getAttribute('id'));
   const href = url.toString();
 
   return {

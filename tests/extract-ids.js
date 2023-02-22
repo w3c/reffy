@@ -12,6 +12,12 @@ const testIds = [
   },
 
   {
+    title: "encodes the href fragment",
+    html: "<h1 id='title-%'>%</h1>",
+    res: ["about:blank#title-%25"]
+  },
+
+  {
     title: "extracts all IDs",
     html: "<h1 id=title>Title <span id=subtitle>Subtitle</span></h1>",
     res: ["about:blank#title", "about:blank#subtitle"]
