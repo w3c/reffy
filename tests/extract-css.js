@@ -298,28 +298,6 @@ const tests = [
   },
 
   {
-    title: "knows that second definition of rgb() is legacy",
-    html: `
-      <p>The <dfn data-dfn-type="function">rgb()</dfn> function has a
-      legacy value.</p>
-      <pre class="prod">
-        &lt;rgb()> = rgb( modern )
-      </pre>
-      <pre class="prod">
-        &lt;rgb()> = rgb( legacy )
-      </pre>
-    `,
-    propertyName: "values",
-    css: [{
-        "name": "rgb()",
-        "type": "function",
-        "prose": "The rgb() function has a legacy value.",
-        "value": "rgb( modern )",
-        "legacyValue": "rgb( legacy )"
-    }]
-  },
-
-  {
     title: "extracts an at-rule syntax",
     html: `
       <dfn data-dfn-type="at-rule">@layer</dfn> is an at-rule.

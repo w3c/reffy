@@ -81,7 +81,6 @@
           "type": { "type": "string", "enum": ["type", "function"] },
           "prose": { "type": "string" },
           "value": { "$ref": "../common.json#/$defs/cssValue" },
-          "legacyValue": { "$ref": "../common.json#/$defs/cssValue" },
           "values": { "$ref": "../common.json#/$defs/cssValues" }
         }
       }

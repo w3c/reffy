@@ -50,7 +50,6 @@
           "type": { "type": "string", "enum": ["type", "function", "value", "selector"] },
           "prose": { "type": "string" },
           "value": { "$ref": "#/$defs/cssValue" },
-          "legacyValue": { "$ref": "#/$defs/cssValue" },
           "values": { "$ref": "#/$defs/cssValues" }
         }
       }
