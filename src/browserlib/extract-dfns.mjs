@@ -292,7 +292,9 @@ function preProcessEcmascript() {
     el.appendChild(dfn);
     // set id
     dfn.setAttribute("id", el.parentNode.getAttribute("id"));
-    dfn.dataset.ltNodefault = true;
+    if (el.parentNode.hasAttribute("aoid")) {
+      dfn.setAttribute("aoid", el.parentNode.getAttribute("aoid"));
+    }
     return dfn;
   };
 
@@ -313,18 +315,41 @@ function preProcessEcmascript() {
   const abstractMethodCaptions = [...document.querySelectorAll("figcaption")]
         .filter(el => el.textContent.match(/(abstract|additional) method/i) && el.parentNode.querySelector("emu-xref"));
   for (const figcaption of abstractMethodCaptions) {
-    const scope = figcaption.querySelector("emu-xref").textContent;
+    let scope = figcaption.querySelector("emu-xref").textContent;
+    if (scope.endsWith('Environment Records')) {
+      // Environment records come with an abstract class, and subclasses:
+      // https://tc39.es/ecma262/multipage/executable-code-and-execution-contexts.html#sec-environment-records
+      // Methods are defined for each class. We pretend that the scope is the
+      // abstract class for now. Exact scope will be determined by looking at
+      // the title of the section under which the method is found.
+      scope = 'Environment Records';
+    }
     const table = figcaption.parentNode.querySelector("tbody");
     for (const td of table.querySelectorAll("tr td:first-child")) {
       // We only consider the name of the method, not the potential parameters
       // as they're not necessarily consistently named across
       // the list and the definition
-      const methodName = td.textContent.trim().split('(')[0];
+      const methodName = td.textContent.split('(')[0].trim();
       abstractMethods[methodName] = scope;
     }
   }
 
+  // Regular expression used to drop section numbers from section titles
   const sectionNumberRegExp = /^([A-Z]\.)?[0-9\.]+ /;
+
+  // Regular expression that matches scoped methods à la "JSON.parse"
+  const scopedNameRegExp = /^[a-z0-9]+\.[a-z0-9]+/i;
+
+  // Regular expression that matches general unscoped method names à la
+  // "ArrayCreate (", "ToInt32 (" or "decodeURI (". The expression also matches
+  // constructors.
+  const methodNameRegExp = /^([a-z0-9]+)+ *\(/i;
+
+  // More specific regular expression that matches abstract operations methods
+  // à la "ToInt32 (". Does not match "decodeURI (" for instance as it does not
+  // start with an upper case character.
+  const abstractOpRegExp = /^[A-Z][a-zA-Z0-9]+ *\(/;
+
   [...document.querySelectorAll("h1")]
     .filter(legacySectionFilter)
     .forEach(el => {
@@ -441,8 +466,8 @@ function preProcessEcmascript() {
         if (el.querySelector("dfn")) return;
 
         // only dealing with well-known patterns
-        if (!dfnName.match(/^[a-z]+\.[a-z]+/i) // à la JSON.parse
-            && !dfnName.match(/^([a-z]+)+ *\(/i) // à la ArrayCreate ( or decodeURI (
+        if (!dfnName.match(scopedNameRegExp)
+            && !dfnName.match(methodNameRegExp)
            ) return;
         // Skip symbol-based property definitions
         if (dfnName.match(/@@/)) return;
@@ -460,7 +485,7 @@ function preProcessEcmascript() {
 
         const dfn = wrapWithDfn(el);
 
-        if (dfnName.match(/^[a-z]+\.[a-z]+/i)) {
+        if (dfnName.match(scopedNameRegExp)) {
           // set definition scope
           // This assumes that such methods and attributes are only defined
           // one-level deep from the global scope
@@ -478,7 +503,7 @@ function preProcessEcmascript() {
               dfn.dataset.dfnType = "attribute";
             }
           }
-        } else if (dfnName.match(/^([A-Z]+[a-z]*)+ *\(/)) { // Abstract ops à la ArrayCreate or global constructor
+        } else if (dfnName.match(abstractOpRegExp)) {
           dfnName = cleanMethodName(dfnName);
           dfn.dataset.lt = dfnName;
           const opName = dfnName.split('(')[0];
@@ -490,10 +515,27 @@ function preProcessEcmascript() {
           } else {
             // If the name is listed as an Abstract Method
             // we set the dfn-for accordingly
+            // Note we look for a possibly more specific scope by looking at the
+            // title of the containing section. This is useful for
+            // "Environment Records" methods.
             if (abstractMethods[opName]) {
-              dfn.dataset.dfnFor = abstractMethods[opName];
+              const baseClass = abstractMethods[opName];
+              let parent = dfn.parentNode.closest('emu-clause');
+              while (parent) {
+                const title = parent.querySelector('h1')?.textContent.replace(sectionNumberRegExp, '').trim();
+                if (title?.toLowerCase().endsWith(baseClass.toLowerCase())) {
+                  dfn.dataset.dfnFor = title;
+                  break;
+                }
+                parent = parent.parentNode.closest('emu-clause');
+              }
+              if (!dfn.dataset.dfnFor) {
+                dfn.dataset.dfnFor = baseClass;
+              }
             }
-
+            if (dfn.getAttribute("aoid")) {
+              dfn.dataset.lt = dfn.getAttribute("aoid") + '|' + dfn.dataset.lt;
+            }
             dfn.dataset.dfnType = "abstract-op";
           }
         } else { // methods of the global object
