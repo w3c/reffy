@@ -19,6 +19,11 @@ const testHeadings = [
     title: "extracts a heading title without its section number",
     html: "<h2 id=title>2.3 Title</h2>",
     res: [{id: "title", href: "about:blank#title", title: "Title", number: "2.3", level: 2}]
+  },
+  {
+    title: "encodes the href fragment",
+    html: "<h1 id='title-%'>%</h1>",
+    res: [{id: "title-%", href: "about:blank#title-%25", title: "%", level: 1}]
   }
 ];
 
