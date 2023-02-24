@@ -236,13 +236,40 @@ const tests = [
   {
     title: 'extracts abstract operations from ecmascript spec',
     html: '<emu-clause id="sec-toprimitive" oldids="table-9" aoid="ToPrimitive"><span id="table-9"></span><h1><span class="secnum">7.1.1</span> ToPrimitive ( <var>input</var> [ , <var>preferredType</var> ] )</h1>',
-    changesToBaseDfn: [{linkingText: [ "ToPrimitive(input, preferredType)"], type: "abstract-op", access: "public", definedIn: "heading", id: "sec-toprimitive", heading: { number: "7.1.1", id: "sec-toprimitive", href: "about:blank#sec-toprimitive", title: "ToPrimitive ( input [ , preferredType ] )"}}],
+    changesToBaseDfn: [{linkingText: [ "ToPrimitive", "ToPrimitive(input, preferredType)"], type: "abstract-op", access: "public", definedIn: "heading", id: "sec-toprimitive", heading: { number: "7.1.1", id: "sec-toprimitive", href: "about:blank#sec-toprimitive", title: "ToPrimitive ( input [ , preferredType ] )"}}],
+    spec: "ecmascript"
+  },
+  {
+    title: 'extracts abstract operations with digits in their name from ecmascript spec',
+    html: '<emu-clause id="sec-toint32" aoid="ToInt32"><h1><span class="secnum">7.1.6</span> ToInt32 ( <var>argument</var> )</h1>',
+    changesToBaseDfn: [{linkingText: [ "ToInt32", "ToInt32(argument)"], type: "abstract-op", access: "public", definedIn: "heading", id: "sec-toint32", heading: { number: "7.1.6", id: "sec-toint32", href: "about:blank#sec-toint32", title: "ToInt32 ( argument )"}}],
     spec: "ecmascript"
   },
   {
     title: 'extracts abstract methods (scoped abstract ops) from ecmascript spec',
-    html: '<emu-clause id="bar"><h1>Heading</h1><figure><figcaption>Abstract Methods for <emu-xref>Scope</emu-xref></figcaption><table><tbody><tr><td>AbstractMethod()</td></tr></tbody></table></figure></emu-clause><emu-clause id="foo"><h1>AbstractMethod(param)</h1></emu-clause>',
+    html: '<emu-clause id="bar"><h1>Heading</h1><figure><figcaption>Abstract Methods for <emu-xref>Scope</emu-xref></figcaption><table><tbody><tr><td>AbstractMethod ()</td></tr></tbody></table></figure></emu-clause><emu-clause id="foo"><h1>AbstractMethod(param)</h1></emu-clause>',
     changesToBaseDfn: [{linkingText: [ "AbstractMethod(param)"], type: "abstract-op", "for": ["Scope"], access: "public", definedIn: "heading", heading: { id: "foo", href: "about:blank#foo", title: "AbstractMethod(param)"}}],
+    spec: "ecmascript"
+  },
+  {
+    title: 'extracts abstract methods in hierarchy of classes from ecmascript spec',
+    html: `<emu-clause id="bar">
+      <h1>Heading</h1>
+      <figure>
+        <figcaption>Abstract Methods for <emu-xref>Scope</emu-xref></figcaption>
+        <table><tbody><tr><td>AbstractMethod ()</td></tr></tbody></table>
+      </figure>
+    </emu-clause>
+    <emu-clause id="ab">
+      <h1>Scope</h1>
+      <emu-clause id="concrete">
+        <h1>Concrete Scope</h1>
+        <emu-clause id="foo">
+          <h1>AbstractMethod(param)</h1>
+        </emu-clause>
+      </emu-clause>
+    </emu-clause>`,
+    changesToBaseDfn: [{linkingText: [ "AbstractMethod(param)"], type: "abstract-op", "for": ["Concrete Scope"], access: "public", definedIn: "heading", heading: { id: "foo", href: "about:blank#foo", title: "AbstractMethod(param)"}}],
     spec: "ecmascript"
   },
   {
