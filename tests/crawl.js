@@ -162,6 +162,22 @@ if (global.describe && describe instanceof Function) {
       assert.include(results[0].error, "CSS server issue detected");
     });
 
+    it("crawls the published spec when `--release` is set", async () => {
+      const url = "https://www.w3.org/TR/remote-playback/";
+      const results = await crawlSpecs(
+        [{ url, nightly: { url: 'https://w3c.github.io/idontexist' }, release: { url } }],
+        { publishedVersion: true, forceLocalFetch: true });
+      assert.equal(results[0].title, "Published version");
+    });
+
+    it("skips non-published specs when `--release` is set", async () => {
+      const url = "https://w3c.github.io/non-published/";
+      const results = await crawlSpecs(
+        [{ url, nightly: { url } }],
+        { publishedVersion: true });
+      assert.equal(results.length, 0);
+    });
+
     after(() => {
       if (!nock.isDone()) {
         throw new Error("Additional network requests expected: " + nock.pendingMocks());
