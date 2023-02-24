@@ -158,9 +158,6 @@ export default function () {
       rootDfns.find(matchName(rule.name, { approx: true }));
     if (dfn) {
       dfn.value = rule.value;
-      if (rule.legacyValue) {
-        dfn.legacyValue = rule.legacyValue;
-      }
     }
     else {
       let matchingValues = values.filter(matchName(rule.name));
@@ -169,9 +166,6 @@ export default function () {
       }
       for (const matchingValue of matchingValues) {
         matchingValue.value = rule.value;
-        if (rule.legacyValue) {
-          matchingValue.legacyValue = rule.legacyValue;
-        }
       }
       if (matchingValues.length === 0) {
         // Dangling production rule. That should never happen for properties,
@@ -526,14 +520,7 @@ const parseProductionRule = (rule, { res = [], pureSyntax = false }) => {
     // Second definition found. Typically happens for the statement and
     // block @layer definitions in css-cascade-5. We'll combine the values
     // as alternative.
-    // Hardcoded exception: re-definitions of rgb() and hsl() are legacy
-    // constructs, stored separately not to pollute `value`.
-    if (name === '<rgb()>' || name === '<hsl()>') {
-      entry.legacyValue = normalizedValue;
-    }
-    else {
-      entry.value += ` | ${normalizedValue}`;
-    }
+    entry.value += ` | ${normalizedValue}`;
   }
 
   return entry;
