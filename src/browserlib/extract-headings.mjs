@@ -19,7 +19,13 @@ export default function (spec, idToHeading) {
       number: headingNumber
     };
   });
-  return esHeadings.concat([...document.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id] ,h6[id]')].map(n => {
+
+  const headingsSelector = [
+    ':is(h1,h2,h3,h4,h5,h6)[id]',                 // Regular headings
+    ':is(h1,h2,h3,h4,h5,h6):not([id]) > a[name]'  // CSS 2.1 headings
+  ].join(',');
+
+  return esHeadings.concat([...document.querySelectorAll(headingsSelector)].map(n => {
     // Note: In theory, all <hX> heading elements that have an ID are associated
     // with a heading in idToHeading. One exception to the rule: when the
     // heading element appears in a <hgroup> element, the mapping is not
@@ -27,9 +33,11 @@ export default function (spec, idToHeading) {
     // headings not to create a mess in the outline). In practice, this only
     // really happens so far for WHATWG spec titles that (correctly) group the
     // title and subtitle headings in a <hgroup>.
-    const href = getAbsoluteUrl(n, { singlePage });
+    const idAttr = n.hasAttribute('id') ? 'id' : 'name';
+    const headingEl = n.hasAttribute('id') ? n : n.parentNode;
+    const href = getAbsoluteUrl(n, { singlePage, attribute: idAttr });
     const heading = idToHeading[href] || {
-      id: n.id,
+      id: n.getAttribute(idAttr),
       href,
       title: n.textContent.trim()
     };
@@ -37,7 +45,7 @@ export default function (spec, idToHeading) {
     const res = {
       id: heading.id,
       href: heading.href,
-      level: parseInt(n.tagName.slice(1), 10),
+      level: parseInt(headingEl.tagName.slice(1), 10),
       title: heading.title
     };
     if (heading.number) {

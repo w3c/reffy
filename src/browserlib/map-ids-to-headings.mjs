@@ -2,14 +2,18 @@ import createOutline from './create-outline.mjs';
 import getAbsoluteUrl from './get-absolute-url.mjs';
 
 // Regular expression to capture the numbering of a heading. The expression
-// extracts numbers such as "1.", "A.", "A.3", "13.3.4.". Note: a top-level
-// number always ends with a ".", but there may be no final "." in sublevels
-// (Bikeshed adds one, ReSpec does not).
-const reNumber = /^([A-Z0-9]\.|[A-Z](\.[0-9]+)+\.?|[0-9]+(\.[0-9]+)+\.?)\s/;
+// extracts numbers such as "1.", "A.", "A.3", "13.3.4.". Notes:
+// - A top-level number always ends with a ".", except in CSS 2.1, some IETF RFCs
+// and WebGL specs.
+// - There may be no final "." in sublevels (Bikeshed adds one, not ReSpec)
+// - Top level appendices (e.g. in CSS 2.1, IETF RFCs and Bikeshed specs) start
+// with "Appendix", sometimes followed by ":"
+const reNumber = /^([A-Z\d]\.|[A-Z](\.\d+)+\.?|\d+(\.\d+)+\.?|\d|Appendix [A-Z][\.:])\s/;
 
 /**
- * Generate a mapping between elements that have an ID and the closest heading
- * (that also has an ID) under which these elements appear in the DOM tree.
+ * Generate a mapping between elements that have an ID (or a "name") and the
+ * closest heading (that also has an ID) under which these elements appear in
+ * the DOM tree.
  *
  * The main difficulty is that the structure of a DOM tree does not necessarily
  * follow the structure of the outline of the document, which means that there
@@ -48,7 +52,7 @@ export default function () {
   const singlePage = !document.querySelector('[data-reffy-page]');
 
   const mappingTable = {};
-  [...document.querySelectorAll('[id]')].forEach(node => {
+  [...document.querySelectorAll('[id],[name]')].forEach(node => {
     let parentSection = nodeToSection.get(node);
     while (parentSection) {
       if (parentSection.heading !== '__implied') {
@@ -62,13 +66,25 @@ export default function () {
     // Compute the absolute URL with fragment
     // (Note the crawler merges pages of a multi-page spec in the first page
     // to ease parsing logic, and we want to get back to the URL of the page)
-    const nodeid = getAbsoluteUrl(node, { singlePage });
+    const idAttr = node.hasAttribute('id') ? 'id' : 'name';
+    const nodeid = getAbsoluteUrl(node, { singlePage, attribute: idAttr });
     let href = nodeid;
 
     if (parentSection) {
+      let id;
+
       const heading = parentSection.heading;
-      let id = heading.id;
-      href = getAbsoluteUrl(heading, { singlePage });
+      if (heading.hasAttribute('id')) {
+        id = heading.id;
+        href = getAbsoluteUrl(heading, { singlePage });
+      }
+      else {
+        const anchor = heading.querySelector('a[name]');
+        if (anchor) {
+          id = anchor.getAttribute('name');
+          href = getAbsoluteUrl(anchor, { singlePage, attribute: 'name' });
+        }
+      }
 
       if (parentSection.root && parentSection.root.hasAttribute('id')) {
         id = parentSection.root.id;
@@ -88,8 +104,9 @@ export default function () {
       mappingTable[nodeid] = mapping;
 
       if (number) {
-        // Store the number without the final "."
-        mappingTable[nodeid].number = number.replace(/\.$/, '');
+        // Store the number without the final "." or ":"
+        // (and without the "Appendix" prefix in the CSS 2.1 case)
+        mappingTable[nodeid].number = number.replace(/[\.:]$/, '').replace(/^Appendix /, '');
       }
     }
   });

@@ -8,7 +8,7 @@
  * As a by-product of generating the outline, the function also generates a
  * mapping between elements and the (conceptual) section that contains them in
  * the outline. To save memory, this mapping is only done for elements that have
- * an ID.
+ * an ID (or a "name" attribute).
  *
  * Both the outline and the mapping are returned.
  */
@@ -307,8 +307,9 @@ export default function (root) {
     // In addition, whenever the walk exits a node, after doing the steps above,
     // if the node is not associated with a section yet, associate the node with
     // the section current section.
-    // (we will only do that for elements that have an ID)
-    if (node.getAttribute('id') && !nodeToSection.has(node)) {
+    // (we will only do that for elements that have an ID or a "name" attribute)
+    if ((node.getAttribute('id') || node.getAttribute('name')) &&
+        !nodeToSection.has(node)) {
       nodeToSection.set(node, currentSection);
     }
   }
