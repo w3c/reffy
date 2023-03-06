@@ -476,7 +476,83 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       access: "public",
       definedIn: "prose"
     }]
-  }
+  },
+
+  {
+    title: "extracts a definition that starts with a '<span>' in CSS 2.1",
+    html: `<p>
+      A <span class="index-def" title="selector"><a name="x4">selector</a></span>
+      is a chain of one or more simple selectors separated by combinators.
+    </p>`,
+    changesToBaseDfn: [{
+      id: "x4",
+      linkingText: ["selector"],
+      access: "public"
+    }],
+    spec: "CSS2"
+  },
+
+  {
+    title: "extracts a definition that starts with a '<a>' in CSS 2.1",
+    html: `<p>
+      A <a name="x4"><span class="index-def" title="selector"><dfn>selector</dfn></span></a>
+      is a chain of one or more simple selectors separated by combinators.
+    </p>`,
+    changesToBaseDfn: [{
+      id: "x4",
+      linkingText: ["selector"],
+      access: "public"
+    }],
+    spec: "CSS2"
+  },
+
+  {
+    title: "extracts linking text in CSS 2.1 definitions",
+    html: `<p>
+      A <a name="x4"><span class="index-def" title="sel">selector</span></a>
+      is a chain of one or more simple selectors separated by combinators.
+    </p>`,
+    changesToBaseDfn: [{
+      id: "x4",
+      linkingText: ["sel"],
+      access: "public"
+    }],
+    spec: "CSS2"
+  },
+
+  {
+    title: "maps CSS 2.1 property definitions to the right type",
+    html: `<dl><dt>
+      <span class="index-def" title="'width'">
+        <a name="propdef-width" class="propdef-title"><strong>'width'</strong></a>
+      </span>
+    </dt>
+    <dd>Blah</dd></dl>`,
+    changesToBaseDfn: [{
+      id: "propdef-width",
+      linkingText: ["'width'"],
+      access: "public",
+      type: "property",
+      definedIn: "dt"
+    }],
+    spec: "CSS2"
+  },
+
+  {
+    title: "maps CSS 2.1 value definitions to the right type",
+    html: `<p>Some value types may have integer values (denoted by
+      <span class="index-def">
+        <a name="value-def-integer" class="value-def">&lt;integer&gt;</a>
+      </span>) or real number values.
+    </p>`,
+    changesToBaseDfn: [{
+      id: "value-def-integer",
+      linkingText: ["<integer>"],
+      access: "public",
+      type: "value"
+    }],
+    spec: "CSS2"
+  },
 ];
 
 describe("Test definition extraction", function () {

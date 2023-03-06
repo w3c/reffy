@@ -226,6 +226,9 @@ export default function (spec, idToHeading = {}) {
 
   const shortname = (typeof spec === 'string') ? spec : spec.shortname;
   switch (shortname) {
+  case "CSS2":
+    preProcessCSS21();
+    break;
   case "html":
     preProcessHTML();
     break;
@@ -663,6 +666,52 @@ function preProcessHTML() {
       const headingId = el.closest("h2, h3, h4, h5, h6").id;
       if (!el.id) {
         el.id = headingId;
+      }
+    });
+}
+
+function preProcessCSS21() {
+  document.querySelectorAll('span.index-def')
+    .forEach(span => {
+      // Definition ID is to be found in a nearby anchor
+      const anchor = span.querySelector('a[name]') ?? span.closest('a[name]');
+      if (!anchor) {
+        return;
+      }
+
+      // Once in a while, definition has a "<dfn>", and once in a while, that
+      // "<dfn>" already follows the dfn data model.
+      let dfn = span.querySelector('dfn') ?? span.closest('dfn');
+      if (dfn?.id) {
+        return;
+      }
+
+      // No "<dfn>"? Let's create it
+      if (!dfn) {
+        dfn = document.createElement('dfn');
+        for (let child of [...span.childNodes]) {
+          dfn.appendChild(child);
+        }
+        span.appendChild(dfn);
+      }
+
+      // Complete the "<dfn>" with expected attributes
+      dfn.id = anchor.getAttribute('name');
+      dfn.dataset.export = '';
+      if (span.getAttribute('title')) {
+        dfn.dataset.lt = span.getAttribute('title');
+      }
+      let dfnType = null;
+      switch (anchor.getAttribute('class') ?? '') {
+        case 'propdef-title':
+          dfnType = 'property';
+          break;
+        case 'value-def':
+          dfnType = 'value';
+          break;
+      }
+      if (dfnType) {
+        dfn.dataset.dfnType = dfnType;
       }
     });
 }
