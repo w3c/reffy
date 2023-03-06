@@ -24,6 +24,26 @@ const testHeadings = [
     title: "encodes the href fragment",
     html: "<h1 id='title-%'>%</h1>",
     res: [{id: "title-%", href: "about:blank#title-%25", title: "%", level: 1}]
+  },
+  {
+    title: "extracts a CSS 2.1 heading at level 1",
+    html: "<h1><a name=title>2 Title</a></h1>",
+    res: [{id: "title", "href": "about:blank#title", title: "Title", number: "2", level: 1}]
+  },
+  {
+    title: "extracts a CSS 2.1 heading at level 3",
+    html: "<h3><a name=title>4.5.1 Title</a></h1>",
+    res: [{id: "title", "href": "about:blank#title", title: "Title", number: "4.5.1", level: 3}]
+  },
+  {
+    title: "extracts a CSS 2.1 appendix heading",
+    html: "<h1><a name=title>Appendix A. Title</a></h1>",
+    res: [{id: "title", "href": "about:blank#title", title: "Title", number: "A", level: 1}]
+  },
+  {
+    title: "extracts an appendix that starts with Appendix and uses ':'",
+    html: "<h1 id=title>Appendix A: Title</a></h1>",
+    res: [{id: "title", "href": "about:blank#title", title: "Title", number: "A", level: 1}]
   }
 ];
 
