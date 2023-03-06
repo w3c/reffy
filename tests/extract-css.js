@@ -1435,6 +1435,27 @@ that spans multiple lines */
       type: 'type',
       prose: 'Determines the gradient center of the gradient.'
     }]
+  },
+
+  {
+    title: 'ignores lists of tests in dd prose',
+    html: `<dl>
+    <dt><dfn data-dfn-type="type" data-export="">&lt;position&gt;</dfn></dt>
+    <dd>
+      Determines the <dfn data-dfn-type="dfn">gradient center</dfn>
+      of the gradient.
+      <details class="wpt-tests-block">
+        <summary>Tests</summary>
+        <p>A list of tests.</p>
+      </details>
+    </dd></dl>
+    `,
+    propertyName: 'values',
+    css: [{
+      name: '<position>',
+      type: 'type',
+      prose: 'Determines the gradient center of the gradient.'
+    }]
   }
 ];
 
