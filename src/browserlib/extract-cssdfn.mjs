@@ -340,6 +340,14 @@ const dfnLabel2Property = label => label.trim()
 
 
 /**
+ * Selector to use to exclude inner blocks that list tests, references and/or
+ * link to implementation statuses, which would provide too much detailed info
+ * in prose content.
+ */
+const asideSelector = 'aside, .mdn-anno, .wpt-tests-block';
+
+
+/**
  * Extract a CSS definition from a table
  *
  * All recent CSS specs should follow that pattern
@@ -349,7 +357,7 @@ const extractTableDfn = table => {
   const lines = [...table.querySelectorAll('tr')]
     .map(line => {
       const cleanedLine = line.cloneNode(true);
-      const annotations = cleanedLine.querySelectorAll("aside, .mdn-anno");
+      const annotations = cleanedLine.querySelectorAll(asideSelector);
       annotations.forEach(n => n.remove());
       return {
         name: dfnLabel2Property(cleanedLine.querySelector(':first-child').textContent),
@@ -593,7 +601,7 @@ const extractTypedDfn = dfn => {
   // and remove MDN annotations as well
   [...parent.querySelectorAll('sup')]
     .map(sup => sup.parentNode.removeChild(sup));
-  [...parent.querySelectorAll('aside, .mdn-anno')]
+  [...parent.querySelectorAll(asideSelector)]
     .map(annotation => annotation.parentNode.removeChild(annotation));
 
   const text = parent.textContent.trim();
@@ -668,7 +676,7 @@ const extractTypedDfn = dfn => {
       });
       [...dd.querySelectorAll('sup')]
         .map(sup => sup.parentNode.removeChild(sup));
-      [...dd.querySelectorAll('aside, .mdn-anno')]
+      [...dd.querySelectorAll(asideSelector)]
         .map(annotation => annotation.parentNode.removeChild(annotation));
 
       res = {
@@ -724,7 +732,7 @@ const extractProductionRules = root => {
     .filter(el => !el.closest(informativeSelector))
     .map(el => el.cloneNode(true))
     .map(el => {
-      [...el.querySelectorAll('aside, .mdn-anno')]
+      [...el.querySelectorAll(asideSelector)]
         .map(aside => aside.parentNode.removeChild(aside));
       return el;
     })
