@@ -44,6 +44,11 @@ const testHeadings = [
     title: "extracts an appendix that starts with Appendix and uses ':'",
     html: "<h1 id=title>Appendix A: Title</a></h1>",
     res: [{id: "title", "href": "about:blank#title", title: "Title", number: "A", level: 1}]
+  },
+  {
+    title: "ignores test annotations in the heading",
+    html: "<h2 id=title><div class='annotation'>18 tests</div>2.3 Title</a></h2>",
+    res: [{id: "title", "href": "about:blank#title", title: "Title", number: "2.3", level: 2}]
   }
 ];
 

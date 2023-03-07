@@ -11,6 +11,21 @@ import getAbsoluteUrl from './get-absolute-url.mjs';
 const reNumber = /^([A-Z\d]\.|[A-Z](\.\d+)+\.?|\d+(\.\d+)+\.?|\d|Appendix [A-Z][\.:])\s/;
 
 /**
+ * Retrieve a "cleaned" version of the node's text content, without aside notes
+ * such as links to tests, MDN or references.
+ *
+ * Note that this is mainly intended for CSS Color 3, which has test annotations
+ * within headings.
+ */
+function getCleanTextContent(node) {
+  const asideSelector = 'aside, .mdn-anno, .wpt-tests-block, .annotation';
+  const cleanedNode = node.cloneNode(true);
+  const annotations = cleanedNode.querySelectorAll(asideSelector);
+  annotations.forEach(n => n.remove());
+  return cleanedNode.textContent.trim().replace(/\s+/g, ' ');
+}
+
+/**
  * Generate a mapping between elements that have an ID (or a "name") and the
  * closest heading (that also has an ID) under which these elements appear in
  * the DOM tree.
@@ -91,7 +106,7 @@ export default function () {
         href = getAbsoluteUrl(parentSection.root, { singlePage });
       }
 
-      const trimmedText = heading.textContent.trim();
+      const trimmedText = getCleanTextContent(heading);
       const match = trimmedText.match(reNumber);
       const number = match ? match[1] : null;
 
@@ -100,7 +115,7 @@ export default function () {
         mapping.id = id;
       }
       mapping.href = href;
-      mapping.title = trimmedText.replace(reNumber, '').trim().replace(/\s+/g, ' ');
+      mapping.title = trimmedText.replace(reNumber, '');
       mappingTable[nodeid] = mapping;
 
       if (number) {
@@ -132,7 +147,7 @@ function esMapIdToHeadings() {
       if (!section) return;
 
       const heading = section.querySelector("h1");
-      const trimmedText = heading.textContent.trim();
+      const trimmedText = getCleanTextContent(heading);
       const nodeid = getAbsoluteUrl(el, { singlePage });
       const href = getAbsoluteUrl(section, { singlePage });
 
@@ -144,7 +159,7 @@ function esMapIdToHeadings() {
         mapping.id = section.id;
       }
       mapping.href = href;
-      mapping.title = trimmedText.replace(reNumber, '').trim().replace(/\s+/g, ' ');
+      mapping.title = trimmedText.replace(reNumber, '');
       mappingTable[nodeid] = mapping;
 
       if (number) {
