@@ -524,13 +524,13 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
     title: "maps CSS 2.1 property definitions to the right type",
     html: `<dl><dt>
       <span class="index-def" title="'width'">
-        <a name="propdef-width" class="propdef-title"><strong>'width'</strong></a>
+        <a name="propdef-width" class="propdef-title"><strong>width</strong></a>
       </span>
     </dt>
     <dd>Blah</dd></dl>`,
     changesToBaseDfn: [{
       id: "propdef-width",
-      linkingText: ["'width'"],
+      linkingText: ["width"],
       access: "public",
       type: "property",
       definedIn: "dt"
@@ -540,6 +540,20 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
 
   {
     title: "maps CSS 2.1 value definitions to the right type",
+    html: `<span class="index-def">
+      <a name="value" class="value-def">val</a>
+    </span>`,
+    changesToBaseDfn: [{
+      id: "value",
+      linkingText: ["val"],
+      access: "public",
+      type: "value"
+    }],
+    spec: "CSS2"
+  },
+
+  {
+    title: "maps CSS 2.1 type definitions to the right type",
     html: `<p>Some value types may have integer values (denoted by
       <span class="index-def">
         <a name="value-def-integer" class="value-def">&lt;integer&gt;</a>
@@ -549,7 +563,43 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       id: "value-def-integer",
       linkingText: ["<integer>"],
       access: "public",
-      type: "value"
+      type: "type"
+    }],
+    spec: "CSS2"
+  },
+
+  {
+    title: "suppresses wrapping quotes in CSS 2.1 property definitions",
+    html: `<dl><dt>
+      <span class="index-def" title="'width'">
+        <a name="propdef-width" class="propdef-title"><strong>'width'</strong></a>
+      </span>
+    </dt>
+    <dd>Blah</dd></dl>`,
+    changesToBaseDfn: [{
+      id: "propdef-width",
+      linkingText: ["width"],
+      access: "public",
+      type: "property",
+      definedIn: "dt"
+    }],
+    spec: "CSS2"
+  },
+
+  {
+    title: "suppresses useless suffix in CSS 2.1 property definitions",
+    html: `<dl><dt>
+      <span class="index-def" title="<integer>::definition of">
+        <a name="value-def-integer" class="value-def">&lt;integer&gt;</a>
+      </span>
+    </dt>
+    <dd>Blah</dd></dl>`,
+    changesToBaseDfn: [{
+      id: "value-def-integer",
+      linkingText: ["<integer>"],
+      access: "public",
+      type: "type",
+      definedIn: "dt"
     }],
     spec: "CSS2"
   },

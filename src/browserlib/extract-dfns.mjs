@@ -698,16 +698,27 @@ function preProcessCSS21() {
       // Complete the "<dfn>" with expected attributes
       dfn.id = anchor.getAttribute('name');
       dfn.dataset.export = '';
-      if (span.getAttribute('title')) {
-        dfn.dataset.lt = span.getAttribute('title');
-      }
+      // Drop suffixes such "::definition of" and wrapping quotes,
+      // and drop possible duplicates
+      dfn.dataset.lt = (span.getAttribute('title') ?? dfn.textContent).split('|')
+        .map(normalize)
+        .map(text => text.replace(/::definition of$/, '')
+          .replace(/, definition of$/, '')
+          .replace(/^'(.*)'$/, '$1'))
+        .filter((text, idx, array) => array.indexOf(text) === idx)
+        .join('|');
       let dfnType = null;
       switch (anchor.getAttribute('class') ?? '') {
         case 'propdef-title':
           dfnType = 'property';
           break;
         case 'value-def':
-          dfnType = 'value';
+          if (dfn.dataset.lt.match(/^<.*>$/)) {
+            dfnType = 'type';
+          }
+          else {
+            dfnType = 'value';
+          }
           break;
       }
       if (dfnType) {
