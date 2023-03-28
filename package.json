@@ -1,6 +1,6 @@
 {
   "name": "reffy",
-  "version": "12.1.2",
+  "version": "12.1.3",
   "description": "W3C/WHATWG spec dependencies exploration companion. Features a short set of tools to study spec references as well as WebIDL term definitions and references found in W3C specifications.",
   "repository": {
     "type": "git",
