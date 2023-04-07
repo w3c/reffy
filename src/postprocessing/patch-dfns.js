@@ -32,6 +32,16 @@ module.exports = {
         spec.dfns = spec.dfns.filter(dfn =>
           dfn.linkingText[0] !== 'MessageEventSource');
       }
+
+      // The /TR version of the WebCrypto API does not follow the usual dfn data
+      // model. Definitions get extracted as "exported" as a result. This
+      // creates collisions. The nightly version of the API respects the dfn
+      // data model, so let's force /TR dfns to be "non-exported" (most don't
+      // have the right "type" in any case). Also see discussion in:
+      // https://github.com/w3c/reffy/issues/1250
+      else if (spec.crawled.includes('/TR/WebCryptoAPI/')) {
+        spec.dfns.forEach(dfn => dfn.access = 'private');
+      }
     }
 
     return spec;
