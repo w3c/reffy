@@ -163,13 +163,7 @@ export default function (spec) {
       // Clone and drop possible annotations to avoid extracting asides.
       // (note the need to temporarily add the cloned node to the document
       // so that ranges can be used)
-      let apos = 0;
-      for (let i = 0; i < a.parentNode.children.length; i++) {
-        if (a.parentNode.children[i] === a) {
-          apos = i;
-          break;
-        }
-      }
+      const apos = [...a.parentNode.children].findIndex(c => c === a);
       const container = a.parentNode.cloneNode(true);
       const aclone = container.children[apos];
 
