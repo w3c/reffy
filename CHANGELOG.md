@@ -6,6 +6,31 @@ Minor and patch release notes are currently only documented in
 
 Reffy adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v12.0.0 - 2023-02-24
+
+### Breaking changes
+
+- Skip non-published specs when `--release` option is set (#1214)
+
+The change is breaking in that a crawl on released versions of specs no longer
+contains info about specs that do not have a released version. For example,
+specs that only exist as living standards such as WHATWG specs are no longer
+crawled when the `--release` option is set. The `--release` option is typically
+used to run a crawl that completes a crawl on the nightly versions of specs.
+Goal of the change is to avoid crawling specs that are already in the nightly
+crawl.
+
+Crawl results are unaltered otherwise. Tools that use Reffy should only need to
+update their logic if they expect a `--release` crawl to also yield info about
+non-released specs.
+
+### Feature patches
+
+- ECMAScript spec: Fix dfn scoping and abstract op extraction (#1217)
+- Drop legacyValue extraction logic (#1218)
+- Encode URI fragments (#1216)
+
+
 ## v11.0.0 - 2022-11-28
 
 This new major version modifies and completes the CSS extraction logic. See
