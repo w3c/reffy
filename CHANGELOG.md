@@ -6,11 +6,13 @@ Minor and patch release notes are currently only documented in
 
 Reffy adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+
 ## v12.0.0 - 2023-02-24
 
 ### Breaking changes
 
-- Skip non-published specs when `--release` option is set (#1214)
+- Skip non-published specs when `--release` option is set ([#1214](https://github.com/w3c/reffy/pull/1214))
 
 The change is breaking in that a crawl on released versions of specs no longer
 contains info about specs that do not have a released version. For example,
@@ -26,9 +28,9 @@ non-released specs.
 
 ### Feature patches
 
-- ECMAScript spec: Fix dfn scoping and abstract op extraction (#1217)
-- Drop legacyValue extraction logic (#1218)
-- Encode URI fragments (#1216)
+- ECMAScript spec: Fix dfn scoping and abstract op extraction ([#1217](https://github.com/w3c/reffy/pull/1217))
+- Drop legacyValue extraction logic ([#1218](https://github.com/w3c/reffy/pull/1218))
+- Encode URI fragments ([#1216](https://github.com/w3c/reffy/pull/1216))
 
 
 ## v11.0.0 - 2022-11-28
