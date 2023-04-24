@@ -10,7 +10,7 @@ The code features a generic crawler that can fetch Web specifications and genera
 
 ### Pre-requisites
 
-To install Reffy, you need [Node.js](https://nodejs.org/en/) 14 or greater.
+To install Reffy, you need [Node.js](https://nodejs.org/en/) 18 or greater (the crawler itself may still run with earlier versions of Node.js, but version 18 is needed to run tests).
 
 ### Installation
 
