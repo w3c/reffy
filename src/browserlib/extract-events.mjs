@@ -160,24 +160,40 @@ export default function (spec) {
   [...document.querySelectorAll("a")]
     .filter(a => !a.closest(informativeSelector) && isFiringLink(a))
     .forEach(a => {
-      const container = a.parentNode;
-      // There can be multiple "fire an event" links in a container
-      // limiting our text parsing to content in between two such links
-      // (or the end of the container if there is only one such link)
+      // Clone and drop possible annotations to avoid extracting asides.
+      // (note the need to temporarily add the cloned node to the document
+      // so that ranges can be used)
+      const apos = [...a.parentNode.children].findIndex(c => c === a);
+      const container = a.parentNode.cloneNode(true);
+      const aclone = container.children[apos];
+
+      const annotations = container.querySelectorAll("aside, .mdn-anno");
+      annotations.forEach(n => n.remove());
+      document.body.appendChild(container);
+
+
+      // There can be multiple "fire an event" links in a container,
+      // limiting our text parsing to content in between two such links,
+      // or to the first time aside appears (no whitespaces in Bikeshed
+      // so code would extract the beginning of the annotation otherwise),
+      // or the end of the container if neither of the above occurs.
       const range = document.createRange();
       range.selectNode(container);
-      range.setStart(a, 0);
+      range.setStart(aclone, 0);
 
-      let nextFiringLink, curEl = a;
+      let nextFiringEl, curEl = aclone;
       while ((curEl = curEl.nextElementSibling)) {
         if (curEl.tagName === "A" && isFiringLink(curEl)) {
-          nextFiringLink = curEl;
+          nextFiringEl = curEl;
+          break;
         }
       }
-      if (nextFiringLink) {
-        range.setEndBefore(nextFiringLink);
+
+      if (nextFiringEl) {
+        range.setEndBefore(nextFiringEl);
       }
       const parsedText = range.toString();
+      document.body.removeChild(container);
       let phrasing;
       let m = parsedText.match(/fir(e|ing)\s+a(n|\s+pointer)\s+event\s+named\s+"?(?<eventName>[a-z]+)/i);
       if (m) {
@@ -225,8 +241,8 @@ export default function (spec) {
           }
         }
         if (!event.interface) {
-          let curEl = a, iface;
-          while ((curEl = curEl.nextElementSibling)) {
+          let curEl = aclone, iface;
+          while ((curEl = curEl.nextElementSibling) && curEl !== nextFiringEl) {
             if (curEl.textContent.match(/^([A-Z]+[a-z0-9]*)+Event$/)) {
               iface = curEl.textContent.trim();
               break;
