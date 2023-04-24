@@ -6,6 +6,24 @@ Minor and patch release notes are currently only documented in
 
 Reffy adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v13.0.0 - 2023-04-24
+
+### Breaking changes
+
+- Bump minimal supported version of Node.js from v14 to v18 ([#1271](https://github.com/w3c/reffy/pull/1271))
+
+Required by dependency on ReSpec, although note this dependency is only for tests (`devDependencies` in `package.json`). The crawler itself should continue to run under previous versions of Node for now but this may not last!
+
+### Dependency bumps
+
+- Bump respec from 32.8.0 to 34.0.1 ([#1270](https://github.com/w3c/reffy/pull/1270)). This triggers the need to bump the minimal supported version of Node.js.
+- Bump puppeteer from 19.9.1 to 19.10.1 ([#1267](https://github.com/w3c/reffy/pull/1267))
+- Bump rollup from 3.20.4 to 3.20.7 ([#1266](https://github.com/w3c/reffy/pull/1266))
+- Bump semver from 7.4.0 to 7.5.0 ([#1264](https://github.com/w3c/reffy/pull/1264))
+
+### Feature patches
+
+- Events: Skip asides in "fire an event" phrasing ([#1269](https://github.com/w3c/reffy/pull/1269))
 
 
 ## v12.0.0 - 2023-02-24
