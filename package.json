@@ -40,7 +40,7 @@
     "puppeteer": "20.2.0",
     "semver": "^7.3.5",
     "web-specs": "2.57.0",
-    "webidl2": "24.2.2"
+    "webidl2": "24.3.0"
   },
   "devDependencies": {
     "chai": "4.3.7",
