@@ -7,7 +7,7 @@ const { existsSync, readdirSync } = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer');
 const crypto = require('crypto');
-const { AbortController } = require('abortcontroller-polyfill/dist/cjs-ponyfill');
+const { Buffer } = require('buffer');
 const Ajv = require('ajv');
 const addFormats = require('ajv-formats');
 const commonSchema = require('../../schemas/common.json');
@@ -413,19 +413,19 @@ async function processSpecification(spec, processFunction, args, options) {
                         await cdp.send('Fetch.continueRequest', { requestId });
                         return;
                     }
-                    const response = prefetchedResponse[request.url] ?? await fetch(request.url, { signal: controller.signal, headers: request.headers });
+                    const response = prefetchedResponse[request.url] ??
+                        await fetch(request.url, { signal: controller.signal, headers: request.headers });
+                    const body = Buffer.from(await response.arrayBuffer());
 
-                    const body = await response.buffer();
+                    const headers = [];
+                    response.headers.forEach((value, name) => {
+                        headers.push({ name, value });
+                    });
 
                     await cdp.send('Fetch.fulfillRequest', {
                         requestId,
                         responseCode: response.status,
-                        responseHeaders: Object.keys(response.headers.raw()).map(header => {
-                          return {
-                            name: header,
-                            value: response.headers.raw()[header].join(',')
-                          };
-                        }),
+                        responseHeaders: headers,
                         body: body.toString('base64')
                     });
                 }
