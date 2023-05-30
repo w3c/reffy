@@ -1,5 +1,5 @@
 const { crawlSpecs } = require("../src/lib/specs-crawler");
-const nock = require('../src/lib/nock-server');
+const mockServer = require('../src/lib/mock-server');
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
@@ -179,8 +179,8 @@ if (global.describe && describe instanceof Function) {
     });
 
     after(() => {
-      if (!nock.isDone()) {
-        throw new Error("Additional network requests expected: " + nock.pendingMocks());
+      if (mockServer.pendingInterceptors().length > 0) {
+        throw new Error("Additional network requests expected on:\n- " + mockServer.pendingInterceptors().map(miss => miss.origin + miss.path).join('\n- '));
       }
     });
   });

@@ -32,11 +32,10 @@
   "main": "index.js",
   "bin": "./reffy.js",
   "dependencies": {
-    "abortcontroller-polyfill": "1.7.5",
     "ajv": "8.12.0",
     "ajv-formats": "2.1.1",
     "commander": "10.0.1",
-    "fetch-filecache-for-crawling": "4.1.0",
+    "fetch-filecache-for-crawling": "5.0.0",
     "puppeteer": "20.3.0",
     "semver": "^7.3.5",
     "web-specs": "2.59.0",
@@ -45,10 +44,10 @@
   "devDependencies": {
     "chai": "4.3.7",
     "mocha": "10.2.0",
-    "nock": "13.3.1",
     "respec": "34.1.1",
     "respec-hljs": "2.1.1",
-    "rollup": "3.23.0"
+    "rollup": "3.23.0",
+    "undici": "^5.22.1"
   },
   "scripts": {
     "test": "mocha --recursive tests/"

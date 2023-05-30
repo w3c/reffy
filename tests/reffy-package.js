@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
-const nock = require('../src/lib/nock-server');
+const mock = require('../src/lib/mock-server');
 
 const specs = [
   {url: "https://www.w3.org/TR/WOFF2/", nightly: {url: "https://w3c.github.io/woff/woff2/", pages:["https://w3c.github.io/woff/woff2/page.html"]}},
