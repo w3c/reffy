@@ -44,7 +44,7 @@
   "devDependencies": {
     "chai": "4.3.7",
     "mocha": "10.2.0",
-    "respec": "34.1.1",
+    "respec": "34.1.2",
     "respec-hljs": "2.1.1",
     "rollup": "3.24.0",
     "undici": "^5.22.1"
