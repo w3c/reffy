@@ -148,15 +148,23 @@ mockAgent
   .get("https://www.w3.org")
   .intercept({ method: "GET", path: "/TR/ididnotchange/" })
   .reply(({ headers }) => {
-    // NB: the headers parameters is not an instance of Headers as suggested in
-    // examples, e.g.:
-    // https://github.com/nodejs/undici/blob/main/docs/api/MockPool.md#example---mocked-request-using-reply-options-callback
-    // It is rather an array that alternates header names and header values.
-    const pos = headers.findIndex(h => h === 'If-Modified-Since');
-    if (pos === -1) {
-      return { statusCode: 200, data: 'Unexpected If-Modified-Since header' };
+    // NB: Before Node.js v18.17.0, the headers parameters is not an instance
+    // of Headers as suggested in examples, but rather an array that alternates
+    // header names and header values. Bug detailed at:
+    // https://github.com/nodejs/undici/issues/2078
+    // Bug fix was integrated in Node.js v18.17.0.
+    // Code below can be simplified when support for Node.js v18 gets dropped.
+    let value;
+    if (Array.isArray(headers)) {
+      const pos = headers.findIndex(h => h === 'If-Modified-Since');
+      if (pos === -1) {
+        return { statusCode: 200, data: 'Unexpected If-Modified-Since header' };
+      }
+      value = headers[pos+1];
     }
-    const value = headers[pos+1];
+    else {
+      value = headers['If-Modified-Since'];
+    }
     if (value === "Fri, 11 Feb 2022 00:00:42 GMT") {
       return { statusCode: 304 };
     } else {
