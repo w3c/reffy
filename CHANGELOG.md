@@ -6,6 +6,29 @@ Minor and patch release notes are currently only documented in
 
 Reffy adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v14.0.0 - 2023-08-01
+
+### Breaking changes
+
+- Make Reffy skip discontinued specs by default ([#1341](https://github.com/w3c/reffy/pull/1341))
+
+Specs in browser-specs will be more consistently preserved in the list, even when they get abandoned or replaced by other proposals, so that browser-specs can act as a useful source for Specref. Reffy will no longer crawl specs that have a "discontinued" standing in browser-specs. At the time of the change, this affects 5 specs, which used to be crawled by default, and no longer are: DOM-Level-2-Style, selectors-non-element-1, tracking-dnt, wpub-ann, wpub.
+
+### Feature patches
+
+- Bump action versions in job (#1342)
+- [tests] Adapt to mock headers structure (#1343) 
+
+### Dependency bumps
+
+- Bump rollup from 3.26.2 to 3.27.0 (#1345)
+- Bump semver from 7.5.3 to 7.5.4 (#1330)
+- Bump respec from 34.1.4 to 34.1.6 (#1339)
+- Bump webidl2 from 24.4.0 to 24.4.1 (#1332)
+- Bump puppeteer from 20.8.0 to 20.9.0 (#1338)
+- Bump web-specs from 2.63.0 to 2.65.0 (#1346)
+
+
 ## v13.0.0 - 2023-04-24
 
 ### Breaking changes
