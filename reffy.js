@@ -56,7 +56,9 @@ function parseModuleOption(input) {
 
 function parseSpecOption(input) {
     if (input === 'all') {
-        return specs.map(s => s.shortname);
+        return specs
+            .filter(s => s.standing !== 'discontinued')
+            .map(s => s.shortname)
     }
     else {
         const list = requireFromWorkingDirectory(input);
@@ -117,6 +119,9 @@ will dump ~100MB of data to the console:
         }
         if (options.spec) {
             crawlOptions.specs = options.spec.map(parseSpecOption).flat();
+        }
+        else {
+            crawlOptions.specs = parseSpecOption('all');
         }
         if (options.post) {
             crawlOptions.post = options.post.map(parsePostOption).flat();
@@ -259,7 +264,8 @@ Usage notes for some of the options:
   a published version.
 
 -s, --spec <specs...>
-  If specs to crawl are not specified, all specs in browser-specs get crawled:
+  If specs to crawl are not specified, all specs in browser-specs that are not
+  identified as being discontinued get crawled:
     https://github.com/w3c/browser-specs/
 
   Valid spec values may be a shortname, a URL, or a relative path to a file that
@@ -272,6 +278,12 @@ Usage notes for some of the options:
   Use "all" to include all specs in browser-specs in the crawl. For instance, to
   crawl all specs plus one custom spec that does not exist in browser-specs:
     $ reffy -o reports/test -s all https://example.org/myspec
+
+  When "all" is used, to force a crawl on some of the discontinued specs too,
+  include their shortname explicitly (or point to a JSON file that lists their
+  shortnames). For instance, to also crawl the discontinued DOM Level 2 Style
+  spec, run:
+    $ reffy -o reports/test -s all DOM-Level-2-Style
 
 -t, --terse
   This flag cannot be combined with the --output option and cannot be set if
