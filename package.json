@@ -49,6 +49,9 @@
     "rollup": "3.27.0",
     "undici": "^5.22.1"
   },
+  "overrides": {
+    "puppeteer": "$puppeteer"
+  },
   "scripts": {
     "test": "mocha --recursive tests/"
   }
