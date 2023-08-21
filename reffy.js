@@ -132,7 +132,7 @@ will dump ~100MB of data to the console:
             process.exit(2);
         }
         if (crawlOptions.terse && (!crawlOptions.modules || crawlOptions.modules.length === 0 || crawlOptions.modules.length > 1)) {
-            console.error('The --terse option can be only be set when only one core processing module runs');
+            console.error('The --terse option can only be set when only one core processing module runs');
             process.exit(2);
         }
         crawlSpecs(crawlOptions)
