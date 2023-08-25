@@ -570,7 +570,7 @@ async function processSpecification(spec, processFunction, args, options) {
                     // (Note HTTP status is 0 when `file://` URLs are loaded)
                     const subresult = await subPage.goto(url, loadOptions);
                     if ((subresult.status() !== 200) && (!url.startsWith('file://') || (subresult.status() !== 0))) {
-                        throw new Error(`Loading ${spec.url} triggered HTTP status ${result.status()}`);
+                        throw new Error(`Loading ${spec.url} triggered HTTP status ${subresult.status()} when loading ${url}`);
                     }
                     const html = await subPage.evaluate(() => {
                         return document.body.outerHTML
