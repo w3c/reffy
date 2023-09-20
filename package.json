@@ -38,7 +38,7 @@
     "fetch-filecache-for-crawling": "5.0.0",
     "puppeteer": "21.1.0",
     "semver": "^7.3.5",
-    "web-specs": "2.66.0",
+    "web-specs": "2.68.0",
     "webidl2": "24.4.1"
   },
   "devDependencies": {
