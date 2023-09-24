@@ -30,7 +30,7 @@ export default function () {
     // Note some selectors are re-defined locally in HTML and Fullscreen. We
     // won't import them.
     atrules: extractDfns({
-      selector: 'dfn[data-dfn-type=at-rule]',
+      selector: 'dfn[data-dfn-type=at-rule]:not([data-dfn-for])',
       extractor: extractTypedDfn,
       duplicates: 'reject',
       warnings
@@ -90,7 +90,18 @@ export default function () {
     });
   }
 
-  // Move descriptors to at-rules structure
+  // Subsidiary at-rules are at-rules that can be used within a parent at-rule,
+  // we'll consider that they are "descriptors".
+  const subsidiary = extractDfns({
+    selector: 'dfn[data-dfn-type=at-rule][data-dfn-for]',
+    extractor: extractTypedDfn,
+    duplicates: 'reject',
+    keepDfnType: true,
+    warnings
+  });
+  descriptors = descriptors.concat([subsidiary]);
+
+  // Move descriptors, and subsidiary at-rules, to at-rules structure
   for (const desclist of descriptors) {
     for (const desc of desclist) {
       let rule = res.atrules.find(r => r.name === desc.for);

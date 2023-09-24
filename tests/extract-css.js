@@ -438,6 +438,34 @@ const tests = [
 
 
   {
+    title: "understands subsidiary at-rules",
+    html: `
+      <pre class="prod">
+        @font-feature-values = &lt;family-name&gt;# { &lt;declaration-rule-list&gt; }
+      </pre>
+      <p><dfn data-dfn-type="at-rule" data-export="" id="at-ruledef-font-feature-values">@font-feature-values</dfn></p>
+      <pre class="prod">
+        <dfn data-dfn-for="@font-feature-values" data-dfn-type="at-rule" data-export="" id="at-ruledef-font-feature-values-stylistic">@stylistic</dfn> = @stylistic { &lt;declaration-list&gt; }
+      </pre>
+    `,
+    propertyName: "atrules",
+    css: [{
+      name: "@font-feature-values",
+      prose: "@font-feature-values",
+      value: "<family-name># { <declaration-rule-list> }",
+      descriptors: [
+        {
+          for: "@font-feature-values",
+          name: "@stylistic",
+          type: "at-rule",
+          value: "@stylistic { <declaration-list> }"
+        }
+      ]
+    }]
+  },
+
+
+  {
     title: "ignores definitions that describe changes",
     html: `<table class="propdef">
       <tbody>
