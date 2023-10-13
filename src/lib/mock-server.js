@@ -44,7 +44,7 @@ const mockSpecs = {
     <script src='https://www.w3.org/Tools/respec/respec-w3c'></script>
     <div id=abstract></div>
     <pre class='idl'>[Exposed=Window] interface Foo { attribute DOMString bar; };</pre>`,
-  "/accelerometer/": `<html>
+  "/accelerometer/": `<html><meta name='document-revision' content='c0917d216986f88bdd43c72c0b13352c71f283aa'>
     <h2>Normative references</h2>
     <dl>
       <dt>FOO</dt>

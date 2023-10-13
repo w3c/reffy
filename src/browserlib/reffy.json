@@ -15,6 +15,11 @@
     "metadata": true
   },
   {
+    "href": "./get-revision.mjs",
+    "property": "revision",
+    "metadata": true
+  },
+  {
     "href": "./extract-links.mjs",
     "property": "links"
   },
