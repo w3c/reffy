@@ -5,7 +5,7 @@ export default function () {
   const meta = document.querySelector('meta[name="document-revision"], meta[name="revision"]');
   const revision = meta?.content.trim();
   // git commit shas are 40 hexadecimal characters
-  if (revision && revision.match(/[0-9a-f]{40}/)) {
+  if (revision?.match(/[0-9a-f]{40}/)) {
     return revision;
   }
   return null;
