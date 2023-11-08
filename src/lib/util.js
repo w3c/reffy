@@ -61,23 +61,16 @@ function requireFromWorkingDirectory(filename) {
 
 
 /**
- * Determine the path to the "node_modules" folder to resolve relative links
- * in the ES6 browser lib modules. The path depends on whether Reffy is run
- * directly, or installed as a library.
+ * Path to the "webidl2" folder to resolve relative links in the ES6 browser
+ * lib modules. The path depends on whether Reffy is run directly, or installed
+ * as a library.
  *
- * @function
- * @return {String} Path to the node_modules folder.
+ * Code relies on the "require.resolve" function, but note that, when given a
+ * simple module name, that function returns the path to the file targeted by
+ * the "main" property in "package.json" which, in the case of the webidl2
+ * module, is "dist/webidl2.js".
  */
-function getModulesFolder() {
-    const rootFolder = path.resolve(__dirname, '../..');
-    let folder = path.resolve(rootFolder, 'node_modules');
-    if (existsSync(folder)) {
-        return folder;
-    }
-    folder = path.resolve(rootFolder, '..');
-    return folder;
-}
-const modulesFolder = getModulesFolder();
+const webidl2Folder = path.resolve(path.dirname(require.resolve('webidl2')), '..');
 
 
 /**
@@ -381,7 +374,7 @@ async function processSpecification(spec, processFunction, args, options) {
                         body = Buffer.from(browserlib);
                     }
                     else if (request.url.includes(webidl2Path)) {
-                        const file = path.resolve(modulesFolder, 'webidl2',
+                        const file = path.resolve(webidl2Folder,
                             request.url.substring(request.url.indexOf(webidl2Path) + webidl2Path.length));
                         body = await fs.readFile(file);
                     }
