@@ -33,8 +33,8 @@ export default function (spec, idToHeading) {
     // headings not to create a mess in the outline). In practice, this only
     // really happens so far for WHATWG spec titles that (correctly) group the
     // title and subtitle headings in a <hgroup>.
-    const idAttr = n.hasAttribute('id') ? 'id' : 'name';
-    const headingEl = n.hasAttribute('id') ? n : n.parentNode;
+    const idAttr = n.id ? 'id' : 'name';
+    const headingEl = n.id ? n : n.parentNode;
     const href = getAbsoluteUrl(n, { singlePage, attribute: idAttr });
     const heading = idToHeading[href] || {
       id: n.getAttribute(idAttr),

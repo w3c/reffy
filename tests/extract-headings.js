@@ -49,7 +49,12 @@ const testHeadings = [
     title: "ignores test annotations in the heading",
     html: "<h2 id=title><div class='annotation'>18 tests</div>2.3 Title</a></h2>",
     res: [{id: "title", "href": "about:blank#title", title: "Title", number: "2.3", level: 2}]
-  }
+  },
+  {
+    title: "ignores an empty id if there's a better one",
+    html: "<section id><h1 id=title>Heading in a section with empty id</h1>",
+    res: [{id: "title", "href": "about:blank#title", title: "Heading in a section with empty id", level: 1}]
+  },
 ];
 
 describe("Test headings extraction", function () {
