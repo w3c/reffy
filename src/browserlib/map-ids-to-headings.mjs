@@ -81,7 +81,7 @@ export default function () {
     // Compute the absolute URL with fragment
     // (Note the crawler merges pages of a multi-page spec in the first page
     // to ease parsing logic, and we want to get back to the URL of the page)
-    const idAttr = node.hasAttribute('id') ? 'id' : 'name';
+    const idAttr = node.id ? 'id' : 'name';
     const nodeid = getAbsoluteUrl(node, { singlePage, attribute: idAttr });
     let href = nodeid;
 
@@ -89,7 +89,7 @@ export default function () {
       let id;
 
       const heading = parentSection.heading;
-      if (heading.hasAttribute('id')) {
+      if (heading.id) {
         id = heading.id;
         href = getAbsoluteUrl(heading, { singlePage });
       }
@@ -101,7 +101,7 @@ export default function () {
         }
       }
 
-      if (parentSection.root && parentSection.root.hasAttribute('id')) {
+      if (parentSection.root && parentSection.root.id) {
         id = parentSection.root.id;
         href = getAbsoluteUrl(parentSection.root, { singlePage });
       }
