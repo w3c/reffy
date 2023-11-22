@@ -7,7 +7,9 @@ export default function () {
     // Ignore links from the "head" section, which either link to
     // self, the GitHub repo, the implementation report, and other
     // documents that don't need to appear in the list of references.
-    if (n.closest('.head')) return;
+    // Also ignore links in <del> elements that appear when specs
+    // carry their diff (e.g. W3C Recs with candidate corrections)
+    if (n.closest('.head, del')) return;
     const pageUrl = n.href.split('#')[0];
     if (!links[pageUrl]) {
       links[pageUrl] = {anchors: new Set()};
