@@ -73,7 +73,7 @@ if (global.describe && describe instanceof Function) {
         forceLocalFetch: true
       });
       const results = require(path.resolve(output, 'index.json'));
-      assert.equal(refResults.title, results.results[0].title);
+      assert.equal(results.results[0].title, 'Accelerometer');
     });
 
     it("matches spec series shortnames", async () => {
