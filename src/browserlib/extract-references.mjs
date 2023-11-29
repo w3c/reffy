@@ -74,9 +74,8 @@ function getExtractionRules(generator) {
  */
 function nextTag(node, name, until) {
   let nextEl = node.nextElementSibling;
-  while (nextEl && nextEl !== until &&
-      ((name === 'heading' && !nextEl.tagName.match(/^(H\d$|HGROUP)$/)) ||
-       (name !== 'heading' && nextEl.tagName !== name.toUpperCase()))) {
+  const selector = name === "heading" ? "h1,h2,h3,h4,h5,h6,hgroup" : name;
+  while (nextEl && nextEl !== until && !nextEl.matches(selector)) {
     nextEl = nextEl.nextElementSibling;
   }
   if (nextEl === until) {
@@ -101,7 +100,7 @@ function parseReferences(referenceList, options) {
   var defaultRef = [], informativeRef = [];
   options = options || {};
   if (referenceList.tagName === "DL") {
-    [...referenceList.childNodes]
+    [...referenceList.children]
       .filter(child => child.tagName === "DT")
       .forEach(function (dt) {
         var ref = {};
@@ -122,9 +121,15 @@ function parseReferences(referenceList, options) {
       });
   }
   else if (referenceList.tagName === "UL") {
-    [...referenceList.childNodes]
+    [...referenceList.children]
       .filter(child => child.tagName === "LI")
       .forEach(function (li) {
+        // The ECMA-402 spec lists nests another list for more atomic
+        // references with "URLs in your face":
+        // https://tc39.es/ecma402/#normative-references
+        // Let's drop nested lists for now to avoid extracting noise
+        // (TODO: consider smarter code or creating an exception to the rule
+        // for ECMA-402)
         li = li.cloneNode(true);
         [...li.querySelectorAll("ul")].map(el => el.remove());
         var anchor = li.querySelector("a[href]");

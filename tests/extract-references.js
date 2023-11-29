@@ -180,19 +180,19 @@ const testRefs = [
   },
 
   {
-    title: "does not use a nested URL as URL of a reference",
+    title: "skips nested references as they usually target subparts of the main reference",
     html: `
 <h2>Normative references</h2>
 <ul>
   <li>
-    ISO/IEC 10646:2014
+    RFC3711
     <ul>
-      <li><a href="https://www.iso.org/iso/catalogue_detail.htm?csnumber=63182">https://www.iso.org/iso/catalogue_detail.htm?csnumber=63182</a></li>
+      <li><a href="https://tools.ietf.org/html/rfc3711#section-2">RFC3711 - Section 2</a></li>
     </ul>
   </li>
 </ul>`,
     res: {
-      normative: [{ name: 'ISO/IEC 10646:2014' }],
+      normative: [{ name: "RFC3711" }],
       informative: []
     }
   },
@@ -246,7 +246,7 @@ describe("References extraction", function () {
       input: path.resolve(__dirname, '../src/browserlib/extract-references.mjs')
     });
     const extractRefsOutput = (await extractRefsBundle.generate({
-      name: 'extractIds',
+      name: 'extractRefs',
       format: 'iife'
     })).output;
     extractRefsCode = extractRefsOutput[0].code;
@@ -260,7 +260,7 @@ describe("References extraction", function () {
       page.setContent(t.html);
       await page.addScriptTag({ content: extractRefsCode });
 
-      const extractedRefs = await page.evaluate(async () => extractIds());
+      const extractedRefs = await page.evaluate(async () => extractRefs());
       await page.close();
       assert.deepEqual(extractedRefs, t.res);
 
