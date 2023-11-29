@@ -1,0 +1,278 @@
+const { assert } = require('chai');
+const puppeteer = require('puppeteer');
+const path = require('path');
+const rollup = require('rollup');
+const { getSchemaValidationFunction } = require('../src/lib/util');
+
+const testRefs = [
+  {
+    title: "extracts normative references",
+    html: `
+<section>
+  <h3>F.1 Normative references</h3>
+  <dl>
+    <dt id="bib-dom">[dom]</dt>
+    <dd><a href="https://dom.spec.whatwg.org/"><cite>DOM Standard</cite></a>. Anne van Kesteren.  WHATWG. Living Standard. URL: <a href="https://dom.spec.whatwg.org/">https://dom.spec.whatwg.org/</a></dd>
+  </dl>
+</section>`,
+    res: {
+      normative: [{ name: "dom", url: "https://dom.spec.whatwg.org/" }],
+      informative: []
+    }
+  },
+
+  {
+    title: "extracts informative references",
+    html: `
+<section>
+  <h2>F. References</h2>
+  <section>
+    <h3>F.2 Informative references</h3>
+    <dl>
+      <dt id="bib-webrtc">[webrtc]</dt>
+      <dd><a href="https://www.w3.org/TR/webrtc/"><cite>WebRTC: Real-Time Communication in Browsers</cite></a>. Cullen Jennings; Florent Castelli; Henrik Boström; Jan-Ivar Bruaroey.  W3C. 6 March 2023. W3C Recommendation. URL: <a href="https://www.w3.org/TR/webrtc/">https://www.w3.org/TR/webrtc/</a></dd>
+    </dl>
+  </section>
+</section>`,
+    res: {
+      normative: [],
+      informative: [{ name: "webrtc", url: "https://www.w3.org/TR/webrtc/" }]
+    }
+  },
+
+  {
+    title: "extracts normative/informative references",
+    html: `
+<section>
+  <h2>F. References</h2>
+  <section>
+    <h3>F.1 Normative references</h3>
+    <dl>
+      <dt id="bib-dom">[dom]</dt>
+      <dd><a href="https://dom.spec.whatwg.org/"><cite>DOM Standard</cite></a>. Anne van Kesteren.  WHATWG. Living Standard. URL: <a href="https://dom.spec.whatwg.org/">https://dom.spec.whatwg.org/</a></dd>
+    </dl>
+  </section>
+  <section>
+    <h3>F.2 Informative references</h3>
+    <dl>
+      <dt id="bib-webrtc">[webrtc]</dt>
+      <dd><a href="https://www.w3.org/TR/webrtc/"><cite>WebRTC: Real-Time Communication in Browsers</cite></a>. Cullen Jennings; Florent Castelli; Henrik Boström; Jan-Ivar Bruaroey.  W3C. 6 March 2023. W3C Recommendation. URL: <a href="https://www.w3.org/TR/webrtc/">https://www.w3.org/TR/webrtc/</a></dd>
+    </dl>
+  </section>
+</section>`,
+    res: {
+      normative: [{ name: "dom", url: "https://dom.spec.whatwg.org/" }],
+      informative: [{ name: "webrtc", url: "https://www.w3.org/TR/webrtc/" }]
+    }
+  },
+
+  {
+    title: "extracts a flat list of references",
+    html: `
+<h2>F. References</h2>
+<p>All references are normative unless marked "Non-normative".</p>
+<dl>
+  <dt id="refsABNF">[ABNF]</dt>
+  <dd><cite><a href="https://www.rfc-editor.org/rfc/rfc5234">Augmented BNF for Syntax Specifications: ABNF</a></cite>, D. Crocker, P. Overell. IETF.</dd>
+  <dt id="refsAPNG">[APNG]</dt>
+  <dd>(Non-normative) <cite><a href="https://wiki.mozilla.org/APNG_Specification">APNG Specification</a></cite>. S. Parmenter, V. Vukicevic, A. Smith. Mozilla.</dd>
+</dl>`,
+    res: {
+      normative: [{ name: "ABNF", url: "https://www.rfc-editor.org/rfc/rfc5234" }],
+      informative: [{ name: "APNG", url: "https://wiki.mozilla.org/APNG_Specification" }]
+    }
+  },
+
+  {
+    title: "does not get confused by the absence of sections",
+    html: `
+<h2>References</h2>
+<h3>Normative References</h3>
+<dl>
+   <dt id="biblio-css-align-3">[CSS-ALIGN-3]</dt>
+   <dd>Elika Etemad; Tab Atkins Jr.. <a href="https://drafts.csswg.org/css-align/"><cite>CSS Box Alignment Module Level 3</cite></a>. URL: <a href="https://drafts.csswg.org/css-align/">https://drafts.csswg.org/css-align/</a></dd>
+</dl>
+<h3>Informative References</h3>
+<dl>
+  <dt>[CSS-MULTICOL-1]</dt>
+  <dd>Florian Rivoal; Rachel Andrew. <a href="https://drafts.csswg.org/css-multicol/"><cite>CSS Multi-column Layout Module Level 1</cite></a>. URL: <a href="https://drafts.csswg.org/css-multicol/">https://drafts.csswg.org/css-multicol/</a></dd>
+</dl>`,
+    res: {
+      normative: [{ name: "CSS-ALIGN-3", url: "https://drafts.csswg.org/css-align/" }],
+      informative: [{ name: "CSS-MULTICOL-1", url: "https://drafts.csswg.org/css-multicol/" }]
+    }
+  },
+
+  {
+    title: "does not get confused by further lists",
+    html: `
+<h2>Normative references</h2>
+<p>No references.</p>
+<h2>A few terms</h2>
+<dl>
+   <dt>A term</dt>
+   <dd>but not a ref</dd>
+</dl>`,
+    res: null
+  },
+
+  {
+    title: "extracts references defined in ul lists",
+    html: `
+<h2>11 References</h2>
+<h3>11.1 Normative References</h3>
+<ul>
+  <li>
+    <p><a href="https://aomediacodec.github.io/av1-spec/av1-spec.pdf">AV1</a> <strong>AV1 Bitstream &amp; Decoding Process Specification, Version 1.0.0 with Errata 1</strong>, January 2019.</p>
+  </li>
+</ul>
+<h3>11.2 Informative References</h3>
+<ul>
+  <li>
+    <p><a href="https://tools.ietf.org/html/rfc3711">RFC3711</a> <strong>The Secure Real-time Transport Protocol (SRTP)</strong>, M. Baugher, D. McGrew, M. Naslund, E. Carrara, and K. Norrman, March 2004.</p>
+  </li>
+</ul>`,
+    res: {
+      normative: [{ name: "AV1", url: "https://aomediacodec.github.io/av1-spec/av1-spec.pdf" }],
+      informative: [{ name: "RFC3711", url: "https://tools.ietf.org/html/rfc3711" }]
+    }
+  },
+
+  {
+    title: "looks for references in the last candidate section",
+    html: `
+<h2>Named character references</h2>
+<dl>
+  <dt>A name</dt>
+  <dd>Not a ref</dd>
+</dl>
+<h2>References</h2>
+<dl>
+  <dt id="refsABNF">[ABNF]</dt>
+  <dd><cite><a href="https://www.rfc-editor.org/rfc/rfc5234">Augmented BNF for Syntax Specifications: ABNF</a></cite>, D. Crocker, P. Overell. IETF.</dd>
+  <dt id="refsAPNG">[APNG]</dt>
+  <dd>(Non-normative) <cite><a href="https://wiki.mozilla.org/APNG_Specification">APNG Specification</a></cite>. S. Parmenter, V. Vukicevic, A. Smith. Mozilla.</dd>
+</dl>`,
+    res: {
+      normative: [{ name: "ABNF", url: "https://www.rfc-editor.org/rfc/rfc5234" }],
+      informative: [{ name: "APNG", url: "https://wiki.mozilla.org/APNG_Specification" }]
+    }
+  },
+
+  {
+    title: "does not extract nested links to sections of a reference",
+    html: `
+<h2>Normative references</h2>
+<ul>
+  <li>
+    <a href="https://unicode.org/reports/tr35/">Unicode Locale Data Markup Language (LDML)</a>
+    <ul>
+      <li>
+        <a href="https://unicode.org/reports/tr35/#Unicode_Language_and_Locale_Identifiers">Part 1 Core, Section 3 Unicode Language and Locale Identifiers</a>
+      </li>
+    </ul>
+  </li>
+</ul>`,
+    res: {
+      normative: [{ name: "Unicode Locale Data Markup Language (LDML)", url: "https://unicode.org/reports/tr35/" }],
+      informative: []
+    }
+  },
+
+  {
+    title: "skips nested references as they usually target subparts of the main reference",
+    html: `
+<h2>Normative references</h2>
+<ul>
+  <li>
+    RFC3711
+    <ul>
+      <li><a href="https://tools.ietf.org/html/rfc3711#section-2">RFC3711 - Section 2</a></li>
+    </ul>
+  </li>
+</ul>`,
+    res: {
+      normative: [{ name: "RFC3711" }],
+      informative: []
+    }
+  },
+
+  {
+    title: "finds references in the right section",
+    html: `
+<h2>  12.1. Normative
+  References
+</h2>
+<dl>
+  <dt id="refsABNF">[ABNF]</dt>
+  <dd><cite><a href="https://www.rfc-editor.org/rfc/rfc5234">Augmented BNF for Syntax Specifications: ABNF</a></cite>, D. Crocker, P. Overell. IETF.</dd>
+</dl>
+<h2>C.1 Changes to section 12.1. Normative References</h2>
+<dl>
+   <dt>A term</dt>
+   <dd>but not a ref</dd>
+</dl>`,
+    res: {
+      normative: [{ name: "ABNF", url: "https://www.rfc-editor.org/rfc/rfc5234" }],
+      informative: []
+    }
+  },
+
+  {
+    title: "finds 'non-normative' references",
+    html: `
+<h2>Non-normative references</h2>
+<dl>
+  <dt>[CSS-MULTICOL-1]</dt>
+  <dd>Florian Rivoal; Rachel Andrew. <a href="https://drafts.csswg.org/css-multicol/"><cite>CSS Multi-column Layout Module Level 1</cite></a>. URL: <a href="https://drafts.csswg.org/css-multicol/">https://drafts.csswg.org/css-multicol/</a></dd>
+</dl>`,
+    res: {
+      normative: [],
+      informative: [{ name: "CSS-MULTICOL-1", url: "https://drafts.csswg.org/css-multicol/" }]
+    }
+  }
+
+];
+
+describe("References extraction", function () {
+  this.slow(5000);
+
+  let browser;
+  let extractRefsCode;
+  const validateSchema = getSchemaValidationFunction('extract-refs');
+
+  before(async () => {
+    const extractRefsBundle = await rollup.rollup({
+      input: path.resolve(__dirname, '../src/browserlib/extract-references.mjs')
+    });
+    const extractRefsOutput = (await extractRefsBundle.generate({
+      name: 'extractRefs',
+      format: 'iife'
+    })).output;
+    extractRefsCode = extractRefsOutput[0].code;
+
+    browser = await puppeteer.launch({ headless: true });
+  });
+
+  testRefs.forEach(t => {
+    it(t.title, async () => {
+      const page = await browser.newPage();
+      page.setContent(t.html);
+      await page.addScriptTag({ content: extractRefsCode });
+
+      const extractedRefs = await page.evaluate(async () => extractRefs());
+      await page.close();
+      assert.deepEqual(extractedRefs, t.res);
+
+      if (extractedRefs) {
+        const errors = validateSchema(extractedRefs);
+        assert.strictEqual(errors, null, JSON.stringify(errors, null, 2));
+      }
+    });
+  });
+
+
+  after(async () => {
+    await browser.close();
+  });
+});

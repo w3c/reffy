@@ -68,13 +68,18 @@ function getExtractionRules(generator) {
  * @function
  * @private
  * @param {Node} node The DOM node to use as starting point
- * @param {String} name The sibling name to find
+ * @param {String} name The sibling name to find, "heading" to match any heading
+ * @param {Node} until The optional DOM sibling at which to stop no matter what
  * @return {Node} The next sibling with the given name, null if not found
  */
-function nextTag(node, name) {
+function nextTag(node, name, until) {
   let nextEl = node.nextElementSibling;
-  while(nextEl && nextEl.tagName !== name.toUpperCase()) {
+  const selector = name === "heading" ? "h1,h2,h3,h4,h5,h6,hgroup" : name;
+  while (nextEl && nextEl !== until && !nextEl.matches(selector)) {
     nextEl = nextEl.nextElementSibling;
+  }
+  if (nextEl === until) {
+    nextEl = null;
   }
   return nextEl;
 }
@@ -94,23 +99,51 @@ function nextTag(node, name) {
 function parseReferences(referenceList, options) {
   var defaultRef = [], informativeRef = [];
   options = options || {};
-  [].forEach.call(referenceList.querySelectorAll("dt"), function (dt) {
-    var ref = {};
-    ref.name = dt.textContent.replace(/[\[\] \n]/g, '');
-    var desc = nextTag(dt, "dd");
-    if (!desc || !ref.name) {
-      return;
-    }
-    const url = desc.querySelector('a[href*="://"]')?.href;
-    if (url) {
-      ref.url = url;
-    }
-    if (options.filterInformative &&
-        desc.textContent.match(/non-normative/i)) {
-      return informativeRef.push(ref);
-    }
-    defaultRef.push(ref);
-  });
+  if (referenceList.tagName === "DL") {
+    [...referenceList.children]
+      .filter(child => child.tagName === "DT")
+      .forEach(function (dt) {
+        var ref = {};
+        ref.name = dt.textContent.replace(/[\[\] \n]/g, '');
+        var desc = nextTag(dt, "dd");
+        if (!desc || !ref.name) {
+          return;
+        }
+        const url = desc.querySelector('a[href*="://"]')?.href;
+        if (url) {
+          ref.url = url;
+        }
+        if (options.filterInformative &&
+            desc.textContent.match(/non-normative/i)) {
+          return informativeRef.push(ref);
+        }
+        defaultRef.push(ref);
+      });
+  }
+  else if (referenceList.tagName === "UL") {
+    [...referenceList.children]
+      .filter(child => child.tagName === "LI")
+      .forEach(function (li) {
+        // The ECMA-402 spec lists nests another list for more atomic
+        // references with "URLs in your face":
+        // https://tc39.es/ecma402/#normative-references
+        // Let's drop nested lists for now to avoid extracting noise
+        // (TODO: consider smarter code or creating an exception to the rule
+        // for ECMA-402)
+        li = li.cloneNode(true);
+        [...li.querySelectorAll("ul")].map(el => el.remove());
+        var anchor = li.querySelector("a[href]");
+        var ref = {};
+        if (anchor) {
+          ref.name = anchor.innerText.trim();
+          ref.url = anchor.getAttribute("href");
+        }
+        else {
+          ref.name = li.innerText.trim();
+        }
+        defaultRef.push(ref);
+      });
+  }
   return [defaultRef, informativeRef];
 };
 
@@ -130,38 +163,75 @@ function extractReferencesWithoutRules() {
     informative: []
   };
   const anchors = [...document.querySelectorAll("h1, h2, h3")];
-  const referenceHeadings = anchors.filter(textMatch(/references/i));
-  if (!referenceHeadings.length) {
-    return references;
-  }
-  if (referenceHeadings.length > 1) {
-    const normative = referenceHeadings.find(textMatch(/normative/i));
-    if (normative) {
-      const nList = nextTag(normative, "dl");
-      if (nList) {
-        references.normative = parseReferences(nList)[0];
-      }
+  console.log('[reffy]', 'extract refs without rules');
+
+  // Look for a "Normative references" heading
+  const normative = anchors.findLast(
+    textMatch(/^\s*((\w|\d+)(\.\d+)*\.?)?\s*normative\s+references\s*$/i));
+  if (normative) {
+    console.log('[reffy]', 'normative references section found', normative.textContent);
+    const nextHeading = nextTag(normative, "heading");
+    let nList = nextTag(normative, "dl", nextHeading);
+    if (!nList) {
+      nList = nextTag(normative, "ul", nextHeading);
     }
-    const informative = referenceHeadings.find(textMatch(/informative/i));
-    if (informative) {
-      const iList = nextTag(informative, "dl");
-      if (iList) {
-        references.informative = parseReferences(iList)[0];
-      }
-    }
-    if (informative || normative) {
-      return references;
+    if (nList) {
+      references.normative = parseReferences(nList)[0];
     }
   }
 
-  // If there are still multiple reference headings,
-  // keep only the last one
-  const referenceHeading = referenceHeadings.pop();
-  const list = nextTag(referenceHeading, "dl");
-  if (list) {
-    const refs = parseReferences(list, { filterInformative: true });
-    references.normative = refs[0];
-    references.informative = refs[1];
+  // Look for an "Informative references" heading
+  const informative = anchors.findLast(
+    textMatch(/^\s*((\w|\d+)(\.\d+)*\.?)?\s*(informative|non-normative)\s+references\s*$/i));
+  if (informative) {
+    const nextHeading = nextTag(informative, "heading");
+    let iList = nextTag(informative, "dl", nextHeading);
+    if (!iList) {
+      iList = nextTag(informative, "ul", nextHeading);
+    }
+    if (iList) {
+      references.informative = parseReferences(iList)[0];
+    }
+  }
+
+  if (informative || normative) {
+    return references;
+  }
+
+  // Look for a generic "references" heading
+  const refHeading = anchors.findLast(textMatch(/references/i));
+  if (refHeading) {
+    const nextSection = nextTag(refHeading, refHeading.tagName);
+    const subHeadingLevel = "h" + (parseInt(refHeading.tagName.substring(1), 10) + 1);
+    let subHeading = refHeading;
+    while (subHeading = nextTag(subHeading, subHeadingLevel, nextSection)) {
+      if (subHeading.textContent.match(/normative/i) ||
+          subHeading.textContent.match(/informative/i)) {
+        let list = nextTag(subHeading, "dl", nextSection);
+        if (!list) {
+          list = nextTag(subHeading, "ul", nextSection);
+        }
+        if (list) {
+          const type = subHeading.textContent.match(/normative/i) ?
+            "normative" : "informative";
+          references[type] = parseReferences(list)[0];
+        }
+      }
+    }
+
+    if (references.normative.length === 0 &&
+        references.informative.length === 0) {
+      // No subheading, flat list of references
+      let list = nextTag(refHeading, "dl", nextSection);
+      if (!list) {
+        list = nextTag(refHeading, "ul", nextSection);
+      }
+      if (list) {
+        const refs = parseReferences(list, { filterInformative: true });
+        references.normative = refs[0];
+        references.informative = refs[1];
+      }
+    }
   }
   return references;
 }
