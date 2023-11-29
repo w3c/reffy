@@ -350,6 +350,19 @@ async function processSpecification(spec, processFunction, args, options) {
                     return;
                 }
 
+                // Puppeteer does not support loading PDF files and we would
+                // not know how to parse them in any case. Let's return an
+                // empty HTML page instead.
+                if (/\.pdf$/i.test(request.url)) {
+                    await cdp.send('Fetch.fulfillRequest', {
+                        requestId,
+                        responseCode: 200,
+                        responseHeaders: [{ name: 'Content-Type', value: 'text/html' }],
+                        body: ''
+                    });
+                    return;
+                }
+
                 // Abort network requests that return a "stream", they won't
                 // play well with Puppeteer's "networkidle0" option, and our
                 // custom "fetch" function does not handle streams in any case
