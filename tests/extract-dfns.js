@@ -603,6 +603,77 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
     }],
     spec: "CSS2"
   },
+
+  {
+    title: "extracts the prose that defines a term",
+    html: `<p data-defines='#foo'>
+      <dfn id='foo' data-dfn-type='dfn'>Foo</dfn> enters a bar.
+    </p>`,
+    changesToBaseDfn: [{
+      prose: "<dfn>Foo</dfn> enters a bar."
+    }]
+  },
+
+  {
+    title: "keeps basic structure for the prose that defines a term",
+    html: `<div data-defines='#foo'>
+      <p><dfn id='foo' data-dfn-type='dfn'>Foo</dfn> <i>enters</i> a <b>bar</b>.
+      <br>The bar has <strong>2 baz</strong> on tap:</p>
+      <ul>
+        <li>Baz<sub>1</sub></li>
+        <li>Baz<sup>2</sup></li>
+      </ul>
+      <pre>Foo bar baz</pre>
+    </div>`,
+    changesToBaseDfn: [{
+      prose: `<p><dfn>Foo</dfn> <i>enters</i> a <b>bar</b>.
+      <br>The bar has <strong>2 baz</strong> on tap:</p>
+      <ul>
+        <li>Baz<sub>1</sub></li>
+        <li>Baz<sup>2</sup></li>
+      </ul>
+      <pre>Foo bar baz</pre>`
+    }]
+  },
+
+  {
+    title: "extracts prose that defines a term without attributes",
+    html: `<p data-defines='#foo'>
+      <dfn id='foo' data-dfn-type='dfn'>Foo</dfn> <i class="verb">enters</i> a <a href="#bar">bar</a>.
+    </p>`,
+    changesToBaseDfn: [{
+      prose: "<dfn>Foo</dfn> <i>enters</i> a <a>bar</a>."
+    }]
+  },
+
+  {
+    title: "suppresses asides from the prose that defines a term",
+    html: `<div data-defines='#foo'>
+      <dfn id='foo' data-dfn-type='dfn'>Foo</dfn> enters a bar.
+      <aside><p>I'm an aside</p></aside>
+      <p class='mdn-anno'>So am I</p>
+      <span class='wpt-tests-block'>Lots of tests</span>
+      <span class='annotation'>And annotations</span>
+      <div id='dfn-panel-foo'>A list of references</div>
+    </div>`,
+    changesToBaseDfn: [{
+      prose: "<dfn>Foo</dfn> enters a bar."
+    }]
+  },
+
+  {
+    title: "suppresses more complex structure from the prose that defines a term",
+    html: `<div data-defines='#foo'>
+      <dfn id='foo' data-dfn-type='dfn'>Foo</dfn> <i class="verb">enters</i> a <a href="#bar">bar</a>.
+      <section>
+        <h4>An inner section</h4>
+      </section>
+      <img src="bar.png" alt="A bar">
+    </div>`,
+    changesToBaseDfn: [{
+      prose: "<dfn>Foo</dfn> <i>enters</i> a <a>bar</a>."
+    }]
+  }
 ];
 
 describe("Test definition extraction", function () {

@@ -63,6 +63,10 @@
       },
       "definedIn": {
         "type": "string"
+      },
+      "prose": {
+        "type": "string",
+        "minLength": 1
       }
     }
   }
