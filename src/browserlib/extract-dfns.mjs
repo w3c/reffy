@@ -256,9 +256,9 @@ function definitionMapper(el, idToHeading, usesDfnDataModel) {
   // Extract a prose definition in HTML for the term, if available
   const proseEl = document.querySelector(`[data-defines="#${dfn.id}"]`);
   if (proseEl) {
-    const prose = getHtmlProseDefinition(proseEl);
-    if (prose) {
-      dfn.prose = prose;
+    const htmlProse = getHtmlProseDefinition(proseEl);
+    if (htmlProse) {
+      dfn.htmlProse = htmlProse;
     }
   }
 

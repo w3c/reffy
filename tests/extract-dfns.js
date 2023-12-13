@@ -610,7 +610,7 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       <dfn id='foo' data-dfn-type='dfn'>Foo</dfn> enters a bar.
     </p>`,
     changesToBaseDfn: [{
-      prose: "<dfn>Foo</dfn> enters a bar."
+      htmlProse: "<dfn>Foo</dfn> enters a bar."
     }]
   },
 
@@ -626,7 +626,7 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       <pre>Foo bar baz</pre>
     </div>`,
     changesToBaseDfn: [{
-      prose: `<p><dfn>Foo</dfn> <i>enters</i> a <b>bar</b>.
+      htmlProse: `<p><dfn>Foo</dfn> <i>enters</i> a <b>bar</b>.
       <br>The bar has <strong>2 baz</strong> on tap:</p>
       <ul>
         <li>Baz<sub>1</sub></li>
@@ -642,7 +642,7 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       <dfn id='foo' data-dfn-type='dfn'>Foo</dfn> <i class="verb">enters</i> a <a href="#bar">bar</a>.
     </p>`,
     changesToBaseDfn: [{
-      prose: "<dfn>Foo</dfn> <i>enters</i> a <a>bar</a>."
+      htmlProse: "<dfn>Foo</dfn> <i>enters</i> a <a>bar</a>."
     }]
   },
 
@@ -657,7 +657,7 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       <div id='dfn-panel-foo'>A list of references</div>
     </div>`,
     changesToBaseDfn: [{
-      prose: "<dfn>Foo</dfn> enters a bar."
+      htmlProse: "<dfn>Foo</dfn> enters a bar."
     }]
   },
 
@@ -671,7 +671,7 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       <img src="bar.png" alt="A bar">
     </div>`,
     changesToBaseDfn: [{
-      prose: "<dfn>Foo</dfn> <i>enters</i> a <a>bar</a>."
+      htmlProse: "<dfn>Foo</dfn> <i>enters</i> a <a>bar</a>."
     }]
   }
 ];
