@@ -155,9 +155,19 @@ function getHtmlProseDefinition(proseEl) {
     el.remove();
   }
 
-  // Drop all attributes
+  // Drop all attributes except "href", "dir", "lang" and "title"
+  // For "href", let's make sure that we have an absolute URL
   [...proseEl.querySelectorAll('*')].forEach(el => {
-    el.getAttributeNames().forEach(attr => el.removeAttribute(attr));
+    el.getAttributeNames().forEach(attr => {
+      if (attr === 'href') {
+        const page = el.closest('[data-reffy-page]')?.getAttribute('data-reffy-page');
+        const url = new URL(el.getAttribute('href'), page ?? window.location.href);
+        el.setAttribute('href', url.toString());
+      }
+      else if (!['dir', 'lang', 'title'].includes(attr)) {
+        el.removeAttribute(attr);
+      }
+    });
   });
 
   return proseEl.innerHTML.trim();

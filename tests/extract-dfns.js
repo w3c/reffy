@@ -637,9 +637,44 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
   },
 
   {
-    title: "extracts prose that defines a term without attributes",
+    title: "keeps useful attributes in prose that defines a term",
     html: `<p data-defines='#foo'>
-      <dfn id='foo' data-dfn-type='dfn'>Foo</dfn> <i class="verb">enters</i> a <a href="#bar">bar</a>.
+      <dfn id='foo' data-dfn-type='dfn'>Foo</dfn> <i dir="ltr">enters</i> a <a lang="en" title="Ze ol' tavern">bar</a>.
+    </p>`,
+    changesToBaseDfn: [{
+      htmlProse: `<dfn>Foo</dfn> <i dir="ltr">enters</i> a <a lang="en" title="Ze ol' tavern">bar</a>.`
+    }]
+  },
+
+  {
+    title: "keeps href in prose that defines a term",
+    html: `<p data-defines='#foo'>
+      <dfn id='foo' data-dfn-type='dfn'>Foo</dfn> enters a <a href="#bar">bar</a>.
+    </p>`,
+    changesToBaseDfn: [{
+      htmlProse: `<dfn>Foo</dfn> enters a <a href="about:blank#bar">bar</a>.`
+    }]
+  },
+
+  {
+    title: "keeps href in prose that defines a term in multi-page specs too",
+    html: `<p data-defines='#foo' data-reffy-page="https://www.w3.org/TR/foo/page1.html">
+      <dfn id='foo' data-dfn-type='dfn'>Foo</dfn> enters a <a href="page2.html#bar">bar</a>.
+    </p>`,
+    changesToBaseDfn: [{
+      href: "https://www.w3.org/TR/foo/page1.html#foo",
+      htmlProse: `<dfn>Foo</dfn> enters a <a href="https://www.w3.org/TR/foo/page2.html#bar">bar</a>.`,
+      heading: {
+        href: 'https://www.w3.org/TR/foo/page1.html',
+        title: ''
+      }
+    }]
+  },
+
+  {
+    title: "extracts prose that defines a term without extra attributes",
+    html: `<p data-defines='#foo'>
+      <dfn id='foo' data-dfn-type='dfn'>Foo</dfn> <i class="verb">enters</i> a <a hidden inert tabindex=2>bar</a>.
     </p>`,
     changesToBaseDfn: [{
       htmlProse: "<dfn>Foo</dfn> <i>enters</i> a <a>bar</a>."
@@ -664,7 +699,7 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
   {
     title: "suppresses more complex structure from the prose that defines a term",
     html: `<div data-defines='#foo'>
-      <dfn id='foo' data-dfn-type='dfn'>Foo</dfn> <i class="verb">enters</i> a <a href="#bar">bar</a>.
+      <dfn id='foo' data-dfn-type='dfn'>Foo</dfn> <i class="verb">enters</i> a <a autofocus>bar</a>.
       <section>
         <h4>An inner section</h4>
       </section>
