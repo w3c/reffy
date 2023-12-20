@@ -122,6 +122,57 @@ function isNotAlreadyExported(dfn, idx, list) {
   return first === dfn;
 }
 
+// Extract the element's inner HTML content, removing any complex structure,
+// so that the result can be injected elsewhere without creating problems.
+function getHtmlProseDefinition(proseEl) {
+  // Apply modifications to a copy of the element
+  proseEl = proseEl.cloneNode(true);
+
+  // Drop asides that authoring tools add here and there
+  let el;
+  const asideSelector = [
+    'aside', '.mdn-anno', '.wpt-tests-block', '.annotation',
+    '[id^=dfn-panel-]'
+  ].join(',');
+  while (el = proseEl.querySelector(asideSelector)) {
+    el.remove();
+  }
+
+  // Keep simple grouping content and text-level semantics elements
+  const keepSelector = [
+    'blockquote', 'dd', 'div', 'dl', 'dt', 'figcaption', 'figure', 'hr', 'li',
+    'ol', 'p', 'pre', 'ul',
+    'a', 'abbr', 'b', 'bdi', 'bdo', 'br', 'cite', 'code', 'data', 'dfn', 'em',
+    'i', 'kbd', 'mark', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'small', 'span',
+    'strong', 'sub', 'sup', 'time', 'u', 'var', 'wbr'
+  ].join(',');
+  while (el = proseEl.querySelector(`:not(${keepSelector})`)) {
+    // The content is more complex than anticipated. It may be worth checking
+    // the definition to assess whether the extraction logic needs to become
+    // smarter. For lack of a better reporting mechanism for now, let's record
+    // a warning.
+    console.warn('[reffy]', `Unexpected element "${el.nodeName}" found in textual definition of "${proseEl.getAttribute('data-defines')}"`);
+    el.remove();
+  }
+
+  // Drop all attributes except "href", "dir", "lang" and "title"
+  // For "href", let's make sure that we have an absolute URL
+  [...proseEl.querySelectorAll('*')].forEach(el => {
+    el.getAttributeNames().forEach(attr => {
+      if (attr === 'href') {
+        const page = el.closest('[data-reffy-page]')?.getAttribute('data-reffy-page');
+        const url = new URL(el.getAttribute('href'), page ?? window.location.href);
+        el.setAttribute('href', url.toString());
+      }
+      else if (!['dir', 'lang', 'title'].includes(attr)) {
+        el.removeAttribute(attr);
+      }
+    });
+  });
+
+  return proseEl.innerHTML.trim();
+}
+
 function definitionMapper(el, idToHeading, usesDfnDataModel) {
   let definedIn = 'prose';
   const enclosingEl = el.closest('dt,pre,table,h1,h2,h3,h4,h5,h6,.note,.example') || el;
@@ -157,7 +208,7 @@ function definitionMapper(el, idToHeading, usesDfnDataModel) {
   url.hash = '#' + encodeURIComponent(el.getAttribute('id'));
   const href = url.toString();
 
-  return {
+  const dfn = {
     // ID is the id attribute
     // (ID may not be unique in a multi-page spec)
     id: el.getAttribute('id'),
@@ -211,6 +262,17 @@ function definitionMapper(el, idToHeading, usesDfnDataModel) {
     // indicates that definition appears in the main body of the specification)
     definedIn
   };
+
+  // Extract a prose definition in HTML for the term, if available
+  const proseEl = document.querySelector(`[data-defines="#${dfn.id}"]`);
+  if (proseEl) {
+    const htmlProse = getHtmlProseDefinition(proseEl);
+    if (htmlProse) {
+      dfn.htmlProse = htmlProse;
+    }
+  }
+
+  return dfn;
 }
 
 export default function (spec, idToHeading = {}) {
