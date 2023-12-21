@@ -140,9 +140,9 @@ function getHtmlProseDefinition(proseEl) {
 
   // Remove comments
   const commentsIterator = document.createNodeIterator(proseEl, NodeFilter.SHOW_COMMENT);
-  let c;
-  while ((c = commentsIterator.nextNode())) {
-    c.remove();
+  let comment;
+  while ((comment = commentsIterator.nextNode())) {
+    comment.remove();
   }
 
   // Keep simple grouping content and text-level semantics elements
