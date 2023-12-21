@@ -708,7 +708,18 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
     changesToBaseDfn: [{
       htmlProse: "<dfn>Foo</dfn> <i>enters</i> a <a>bar</a>."
     }]
-  }
+  },
+
+  {
+    title: "skips HTML comments when it extracts the prose that defines a term",
+    html: `<p data-defines='#foo'>
+      <!-- No comment -->
+      <dfn id='foo' data-dfn-type='dfn'>Foo</dfn> enters a bar.
+    </p>`,
+    changesToBaseDfn: [{
+      htmlProse: "<dfn>Foo</dfn> enters a bar."
+    }]
+  },
 ];
 
 describe("Test definition extraction", function () {
