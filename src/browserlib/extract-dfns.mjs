@@ -138,6 +138,13 @@ function getHtmlProseDefinition(proseEl) {
     el.remove();
   }
 
+  // Remove comments
+  const commentsIterator = document.createNodeIterator(proseEl, NodeFilter.SHOW_COMMENT);
+  let c;
+  while ((c = commentsIterator.nextNode())) {
+    c.remove();
+  }
+
   // Keep simple grouping content and text-level semantics elements
   const keepSelector = [
     'blockquote', 'dd', 'div', 'dl', 'dt', 'figcaption', 'figure', 'hr', 'li',
