@@ -15,7 +15,7 @@
 
     "shortname": {
       "type": "string",
-      "pattern": "^[\\w\\-]+((?<=-\\d+)\\.\\d+)?$",
+      "pattern": "^[\\w\\-]+((?<=-v?\\d+)\\.\\d+)?$",
       "$comment": "Same definition as in browser-specs"
     },
 
