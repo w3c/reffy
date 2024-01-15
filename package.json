@@ -42,7 +42,7 @@
     "webidl2": "24.4.1"
   },
   "devDependencies": {
-    "chai": "4.3.10",
+    "chai": "5.0.0",
     "mocha": "10.2.0",
     "respec": "34.3.0",
     "respec-hljs": "2.1.1",
