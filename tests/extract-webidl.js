@@ -112,6 +112,36 @@ interface GreatIdl4 {}`
 <h2 id="idl-index">IDL index</h2>index
 <pre class="idl">interface GreatIdl {}</pre>`,
     res: 'interface GreatIdl {}'
+  },
+
+  {
+    title: "ignores any embedded header",
+    html: `<h1 id=title>Title</h1>
+<pre class="idl">
+  <div class="idlHeader">Look at this great IDL</div>
+  interface GreatIdl {}
+  <div class="idlHeader">There will be more</div>
+</pre>`,
+    res: 'interface GreatIdl {}'
+  },
+
+  {
+    title: "ignores links to tests",
+    html: `<h1 id=title>Title</h1>
+<pre class="idl">
+  interface <details class="respec-tests-details"><summary>3 tests</summary>See WPT</details>GreatIdl {}
+  interface <details class="respec-tests-details"><summary>2 tests</summary>See WPT</details>AnotherGreatIdl {}
+</pre>`,
+    res: `interface GreatIdl {}
+interface AnotherGreatIdl {}`
+  },
+
+  {
+    title: "ignores asides",
+    html: `<h1 id=title>Title</h1>
+<pre class="idl">
+  interface GreatIdl<aside>The interface is referenced from...</aside> {}</pre>`,
+    res: 'interface GreatIdl {}'
   }
 ];
 
