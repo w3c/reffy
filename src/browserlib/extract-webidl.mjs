@@ -118,13 +118,10 @@ function extractRespecIdl() {
         .filter(el => !el.closest(informativeSelector))
         .map(el => el.cloneNode(true))
         .map(el => {
-            const header = el.querySelector('.idlHeader');
-            if (header) {
-                header.remove();
-            }
-            const tests = el.querySelector('details.respec-tests-details');
-            if (tests) {
-                tests.remove();
+            for (const ignore of el.querySelectorAll([
+                'aside', '.idlHeader', 'details.respec-tests-details',
+            ].join(','))) {
+                ignore.remove();
             }
             return el;
         })
