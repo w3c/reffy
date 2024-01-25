@@ -14,6 +14,7 @@
         "required": ["name"],
         "properties": {
           "name": { "$ref": "../common.json#/$defs/cssPropertyName" },
+          "href": { "$ref": "../common.json#/$defs/url" },
           "value": { "$ref": "../common.json#/$defs/cssValue" },
           "newValues": { "$ref": "../common.json#/$defs/cssValue" },
           "values": { "$ref": "../common.json#/$defs/cssValues" },
@@ -34,6 +35,7 @@
         "additionalProperties": false,
         "properties": {
           "name": { "type": "string", "pattern": "^@" },
+          "href": { "$ref": "../common.json#/$defs/url" },
           "value": { "$ref": "../common.json#/$defs/cssValue" },
           "prose": { "type": "string" },
           "descriptors": {
@@ -45,6 +47,7 @@
               "properties": {
                 "name": { "type": "string" },
                 "for": { "type": "string" },
+                "href": { "$ref": "../common.json#/$defs/url" },
                 "value": { "$ref": "../common.json#/$defs/cssValue" },
                 "values": { "$ref": "../common.json#/$defs/cssValues" }
               }
@@ -63,6 +66,7 @@
         "additionalProperties": false,
         "properties": {
           "name": { "$ref": "../common.json#/$defs/cssPropertyName" },
+          "href": { "$ref": "../common.json#/$defs/url" },
           "prose": { "type": "string" },
           "value": { "$ref": "../common.json#/$defs/cssValue" },
           "values": { "$ref": "../common.json#/$defs/cssValues" }
@@ -78,6 +82,7 @@
         "additionalProperties": false,
         "properties": {
           "name": { "type": "string", "pattern": "^<[^>]+>$|^.*()$" },
+          "href": { "$ref": "../common.json#/$defs/url" },
           "type": { "type": "string", "enum": ["type", "function"] },
           "prose": { "type": "string" },
           "value": { "$ref": "../common.json#/$defs/cssValue" },

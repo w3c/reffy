@@ -35,6 +35,7 @@ const tests = [
    </td></tr></tbody></table>`,
    css: [{
       "name": "background-color",
+      "href": "about:blank#propdef-background-color",
       "value": "<color>",
       "initial": "transparent",
       "appliesTo": "all elements",
@@ -107,6 +108,7 @@ const tests = [
    </td></tr></tbody></table>`,
    css: [{
        "name": "align-content",
+       "href": "about:blank#propdef-align-content",
        "value": "normal | <baseline-position> | <content-distribution> | <overflow-position>? <content-position>",
        "initial": "normal",
        "appliesTo": "block containers, multicol containers, flex containers, and grid containers",
@@ -164,6 +166,7 @@ const tests = [
     propertyName: "values",
     css: [{
         "name": "<percentage>",
+        "href": "about:blank#valdef-text-indent-percentage",
         "type": "type",
         "prose": "Gives the amount of the indent as a percentage of the block container’s own logical width. Percentages must be treated as 0 for the purpose of calculating intrinsic size contributions, but are always resolved normally when performing layout."
     }]
@@ -210,6 +213,7 @@ const tests = [
     propertyName: "values",
     css: [{
         "name": "<percentage>",
+        "href": "about:blank#valdef-text-indent-percentage",
         "type": "type",
         "prose": "Gives the amount of the indent as a percentage of the block container’s own logical width. Percentages must be treated as 0 for the purpose of calculating intrinsic size contributions, but are always resolved normally when performing layout."
     }]
@@ -243,37 +247,43 @@ const tests = [
       </dd></dl>`,
     propertyName: "values",
     css: [{
-        "name": "<size>",
-        "type": "type",
-        "value": "[ closest-side | closest-corner | farthest-side | farthest-corner | sides ]",
+      "name": "<size>",
+      "href": "about:blank#valdef-ray-size",
+      "type": "type",
+      "value": "[ closest-side | closest-corner | farthest-side | farthest-corner | sides ]",
       "type": "type",
       "values": [
         {
           "name": "closest-side",
+          "href": "about:blank#size-closest-side",
           "prose": "The perpendicular distance is measured between the initial position and the closest side of the box from it.",
           "value": "closest-side",
           "type": "value"
         },
         {
           "name": "closest-corner",
+          "href": "about:blank#size-closest-corner",
           "prose": "The distance is measured between the initial position and the closest corner of the box from it.",
           "value": "closest-corner",
           "type": "value"
         },
         {
           "name": "farthest-side",
+          "href": "about:blank#size-farthest-side",
           "prose": "The perpendicular distance is measured between the initial position and the farthest side of the box from it.",
           "value": "farthest-side",
           "type": "value"
         },
         {
           "name": "farthest-corner",
+          "href": "about:blank#size-farthest-corner",
           "prose": "The distance is measured between the initial position and the farthest corner of the box from it.",
           "value": "farthest-corner",
           "type": "value"
         },
         {
           "name": "sides",
+          "href": "about:blank#size-sides",
           "prose": "The distance is measured between the initial position and the intersection of the ray with the box. If the initial position is not within the box, the distance is 0.",
           "value": "sides",
           "type": "value"
@@ -369,6 +379,7 @@ const tests = [
             for: "@font-face",
             initial: "auto",
             name: "font-display",
+            href: "about:blank#descdef-font-face-font-display",
             value: "auto | block | swap | fallback | optional"
           }
         ]
@@ -418,6 +429,7 @@ const tests = [
             for: "@font-face",
             initial: "auto",
             name: "font-display",
+            href: "about:blank#descdef-font-face-font-display",
             value: "auto | block | swap | fallback | optional"
           }
         ]
@@ -429,6 +441,7 @@ const tests = [
             for: "@font-feature-values",
             initial: "auto",
             name: "font-display",
+            href: "about:blank#descdef-font-feature-values-font-display",
             value: "auto | block | swap | fallback | optional"
           }
         ]
@@ -451,12 +464,14 @@ const tests = [
     propertyName: "atrules",
     css: [{
       name: "@font-feature-values",
+      href: "about:blank#at-ruledef-font-feature-values",
       prose: "@font-feature-values",
       value: "<family-name># { <declaration-rule-list> }",
       descriptors: [
         {
           for: "@font-feature-values",
           name: "@stylistic",
+          href: "about:blank#at-ruledef-font-feature-values-stylistic",
           type: "at-rule",
           value: "@stylistic { <declaration-list> }"
         }
@@ -704,6 +719,7 @@ that spans multiple lines */
     `,
     css: [{
       "name": "animation-name",
+      "href": "about:blank#propdef-animation-name",
       "animationType": "not animatable",
       "appliesTo": "all elements",
       "canonicalOrder": "per grammar",
@@ -715,12 +731,14 @@ that spans multiple lines */
       "values": [
         {
           "name": "none",
+          "href": "about:blank#valdef-animation-name-none",
           "prose": "No keyframes are specified at all, so there will be no animation. Any other animations properties specified for this animation have no effect.",
           "type": "value",
           "value": "none"
         },
         {
           "name": "<keyframes-name>",
+          "href": "about:blank#valdef-animation-name-keyframes-name",
           "prose": "The animation will use the keyframes with the name specified by the <keyframes-name>, if they exist. If no @keyframes rule with that name exists, there is no animation.",
           "type": "value",
           "value": "<keyframes-name>"
@@ -760,6 +778,7 @@ that spans multiple lines */
         {
           name: 'system',
           for: '@counter-style',
+          href: "about:blank#descdef-counter-style-system",
           initial: 'symbolic',
           value: 'cyclic | numeric | alphabetic | symbolic | additive | [fixed <integer>?] | [ extends <counter-style-name> ]',
           values: [

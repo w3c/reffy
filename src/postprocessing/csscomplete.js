@@ -22,7 +22,8 @@ module.exports = {
           propDfn.linkingText.forEach(lt => {
             if (!spec.css.properties.find(p => p.name === lt)) {
               spec.css.properties.push({
-                name: lt
+                name: lt,
+                href: propDfn.href
               });
             }
           });
