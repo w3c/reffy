@@ -1503,6 +1503,28 @@ that spans multiple lines */
       type: 'type',
       prose: 'Determines the gradient center of the gradient.'
     }]
+  },
+
+  {
+    title: 'ignores empty lines in table definitions',
+    html: `<table class="propdef">
+    <tbody>
+     <tr>
+      <th>Name:</th>
+      <td>background-color</td>
+     </tr>
+     <tr>
+      <th><a href="#values">Value</a>:</th>
+      <td>&lt;color&gt;</td>
+     </tr>
+     <tr>
+      <th></th>
+     </tr>
+    </tbody></table>`,
+   css: [{
+      "name": "background-color",
+      "value": "<color>"
+   }]
   }
 ];
 

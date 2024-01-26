@@ -1,6 +1,6 @@
 {
   "name": "reffy",
-  "version": "14.5.2",
+  "version": "14.5.3",
   "description": "W3C/WHATWG spec dependencies exploration companion. Features a short set of tools to study spec references as well as WebIDL term definitions and references found in W3C specifications.",
   "repository": {
     "type": "git",
@@ -36,9 +36,9 @@
     "ajv-formats": "2.1.1",
     "commander": "11.1.0",
     "fetch-filecache-for-crawling": "5.1.1",
-    "puppeteer": "21.7.0",
+    "puppeteer": "21.9.0",
     "semver": "^7.3.5",
-    "web-specs": "2.76.0",
+    "web-specs": "2.77.0",
     "webidl2": "24.4.1"
   },
   "devDependencies": {
@@ -46,7 +46,7 @@
     "mocha": "10.2.0",
     "respec": "34.3.0",
     "respec-hljs": "2.1.1",
-    "rollup": "4.9.5",
+    "rollup": "4.9.6",
     "undici": "^6.1.0"
   },
   "overrides": {
