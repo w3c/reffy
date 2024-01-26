@@ -371,9 +371,14 @@ const extractTableDfns = table => {
   let res = [];
   const properties = [...table.querySelectorAll('tr')]
     .map(line => {
-      const propName = dfnLabel2Property(line.querySelector(':first-child').textContent);
+      const nameEl = line.querySelector(':first-child');
+      const valueEl = line.querySelector('td:last-child');
+      if (!nameEl || !valueEl) {
+        return null;
+      }
+      const propName = dfnLabel2Property(nameEl.textContent);
       if (propName === 'name') {
-        const dfns = [...line.querySelectorAll('td:last-child dfn[id]')];
+        const dfns = [...valueEl.querySelectorAll('dfn[id]')];
         if (dfns.length > 0) {
           res = dfns.map(dfn => Object.assign({
             name: normalize(dfn.textContent),
@@ -383,18 +388,21 @@ const extractTableDfns = table => {
         else {
           // Some tables may not have proper dfns, we won't be able to extract
           // IDs, but we can still extract the text
-          const value = normalize(line.querySelector('td:last-child').textContent);
+          const value = normalize(valueEl.textContent);
           res = value.split(',').map(name => Object.assign({
             name: name.trim()
           }));
         }
         return null;
       }
-      else {
+      else if (propName) {
         return {
           name: propName,
-          value: normalize(line.querySelector('td:last-child').textContent)
+          value: normalize(valueEl.textContent)
         };
+      }
+      else {
+        return null;
       }
     })
     .filter(property => !!property);
