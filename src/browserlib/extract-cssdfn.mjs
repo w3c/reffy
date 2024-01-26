@@ -364,11 +364,19 @@ const extractTableDfn = table => {
       const cleanedLine = line.cloneNode(true);
       const annotations = cleanedLine.querySelectorAll(asideSelector);
       annotations.forEach(n => n.remove());
-      return {
-        name: dfnLabel2Property(cleanedLine.querySelector(':first-child').textContent),
-        value: normalize(cleanedLine.querySelector('td:last-child').textContent)
-      };
-    });
+      const nameEl = cleanedLine.querySelector(':first-child');
+      const valueEl = cleanedLine.querySelector('td:last-child');
+      if (nameEl && valueEl) {
+        return {
+          name: dfnLabel2Property(nameEl.textContent),
+          value: normalize(valueEl.textContent)
+        };
+      }
+      else {
+        return null;
+      }
+    })
+    .filter(line => !!line);
   for (let prop of lines) {
     res[prop.name] = prop.value;
   }
