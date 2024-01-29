@@ -1,4 +1,6 @@
 import informativeSelector from './informative-selector.mjs';
+import getAbsoluteUrl from './get-absolute-url.mjs';
+
 
 /**
  * Extract the list of CSS definitions in the current spec
@@ -19,9 +21,8 @@ export default function () {
     // Properties are always defined in dedicated tables in modern CSS specs
     properties: extractDfns({
       selector: 'table.propdef:not(.attrdef)',
-      extractor: extractTableDfn,
+      extractor: extractTableDfns,
       duplicates: 'merge',
-      mayReturnMultipleDfns: true,
       warnings
     }),
 
@@ -64,9 +65,8 @@ export default function () {
   // https://compat.spec.whatwg.org/#css-media-queries-webkit-device-pixel-ratio
   let descriptors = extractDfns({
     selector: 'table.descdef:not(.attrdef)',
-    extractor: extractTableDfn,
+    extractor: extractTableDfns,
     duplicates: 'push',
-    mayReturnMultipleDfns: true,
     keepDfnType: true,
     warnings
   });
@@ -76,16 +76,14 @@ export default function () {
   if (res.properties.length === 0 && descriptors.length === 0) {
     res.properties = extractDfns({
       selector: 'div.propdef dl',
-      extractor: extractDlDfn,
+      extractor: extractDlDfns,
       duplicates: 'merge',
-      mayReturnMultipleDfns: true,
       warnings
     });
     descriptors = extractDfns({
       selector: 'div.descdef dl',
-      extractor: extractDlDfn,
+      extractor: extractDlDfns,
       duplicates: 'push',
-      mayReturnMultipleDfns: true,
       warnings
     });
   }
@@ -353,22 +351,53 @@ const asideSelector = 'aside, .mdn-anno, .wpt-tests-block';
 
 
 /**
- * Extract a CSS definition from a table
+ * Extract CSS definitions from a table.
  *
- * All recent CSS specs should follow that pattern
+ * Tables often contain one CSS definition, but they may actual contain a whole
+ * list of them, as in:
+ * https://drafts.csswg.org/css-borders-4/#corner-sizing-side-shorthands
+ *
+ * The "Name" line contains the list of definitions, the other lines are the
+ * properties shared by all of these definitions.
+ *
+ * All recent CSS specs should follow that pattern.
  */
-const extractTableDfn = table => {
-  let res = {};
-  const lines = [...table.querySelectorAll('tr')]
+const extractTableDfns = table => {
+  // Remove annotations that we do not want to extract
+  const tableCopy = table.cloneNode(true);
+  const annotations = tableCopy.querySelectorAll(asideSelector);
+  annotations.forEach(n => n.remove());
+
+  let res = [];
+  const properties = [...table.querySelectorAll('tr')]
     .map(line => {
-      const cleanedLine = line.cloneNode(true);
-      const annotations = cleanedLine.querySelectorAll(asideSelector);
-      annotations.forEach(n => n.remove());
-      const nameEl = cleanedLine.querySelector(':first-child');
-      const valueEl = cleanedLine.querySelector('td:last-child');
-      if (nameEl && valueEl) {
+      const nameEl = line.querySelector(':first-child');
+      const valueEl = line.querySelector('td:last-child');
+      if (!nameEl || !valueEl) {
+        return null;
+      }
+      const propName = dfnLabel2Property(nameEl.textContent);
+      if (propName === 'name') {
+        const dfns = [...valueEl.querySelectorAll('dfn[id]')];
+        if (dfns.length > 0) {
+          res = dfns.map(dfn => Object.assign({
+            name: normalize(dfn.textContent),
+            href: getAbsoluteUrl(dfn)
+          }));
+        }
+        else {
+          // Some tables may not have proper dfns, we won't be able to extract
+          // IDs, but we can still extract the text
+          const value = normalize(valueEl.textContent);
+          res = value.split(',').map(name => Object.assign({
+            name: name.trim()
+          }));
+        }
+        return null;
+      }
+      else if (propName) {
         return {
-          name: dfnLabel2Property(nameEl.textContent),
+          name: propName,
           value: normalize(valueEl.textContent)
         };
       }
@@ -376,29 +405,52 @@ const extractTableDfn = table => {
         return null;
       }
     })
-    .filter(line => !!line);
-  for (let prop of lines) {
-    res[prop.name] = prop.value;
+    .filter(property => !!property);
+
+  for (const dfn of res) {
+    for (const property of properties) {
+      dfn[property.name] = property.value;
+    }
   }
   return res;
 };
 
 
 /**
- * Extract a CSS definition from a dl list
+ * Extract CSS definitions from a dl list.
  *
- * Used in "old" CSS specs
+ * As with tables, a dl list often contains one CSS definition, but it may
+ * contain a whole list of them, as in:
+ * https://www.w3.org/TR/CSS21/box.html#border-width-properties
+ *
+ * Used in "old" CSS specs.
  */
-const extractDlDfn = dl => {
-  let res = {};
-  res.name = dl.querySelector('dt').textContent.replace(/'/g, '').trim();
-  const lines = [...dl.querySelectorAll('dd table tr')]
+const extractDlDfns = dl => {
+  let res = [];
+  const dfns = [...dl.querySelectorAll('dt:first-child dfn[id],dt:first-child a[name]')];
+  if (dfns.length > 0) {
+    res = dfns.map(dfn => Object.assign({
+      name: normalize(dfn.textContent.replace(/'/g, '')),
+      href: getAbsoluteUrl(dfn, { attribute: dfn.id ? 'id' : 'name' })
+    }));
+  }
+  else {
+    // Markup does not seem to contain IDs, let's extract the text instead
+    const value = normalize(cleanedLine.querySelector('td:last-child').textContent);
+    res = value.split(',').map(name => Object.assign({
+      name: normalize(name.replace(/'/g, ''))
+    }));
+  }
+
+  const properties = [...dl.querySelectorAll('dd table tr')]
     .map(line => Object.assign({
       name: dfnLabel2Property(line.querySelector(':first-child').textContent),
       value: normalize(line.querySelector('td:last-child').textContent)
     }));
-  for (let prop of lines) {
-    res[prop.name] = prop.value;
+  for (const dfn of res) {
+    for (const property of properties) {
+      dfn[property.name] = property.value;
+    }
   }
   return res;
 };
@@ -457,7 +509,6 @@ const extractDfns = ({ root = document,
                        selector,
                        extractor,
                        duplicates = 'reject',
-                       mayReturnMultipleDfns = false,
                        keepDfnType = false,
                        warnings = [] }) => {
   const res = [];
@@ -465,10 +516,9 @@ const extractDfns = ({ root = document,
     .filter(el => !el.closest(informativeSelector))
     .filter(el => !el.querySelector('ins, del'))
     .map(extractor)
-    .filter(dfn => !!dfn?.name)
-    .map(dfn => !mayReturnMultipleDfns ? [dfn] :
-      dfn.name.split(',').map(name => Object.assign({}, dfn, { name: name.trim() })))
+    .map(dfns => Array.isArray(dfns) ? dfns : [dfns])
     .reduce((acc, val) => acc.concat(val), [])
+    .filter(dfn => !!dfn?.name)
     .forEach(dfn => {
       if (dfn.type && !keepDfnType) {
         delete dfn.type;
@@ -702,6 +752,10 @@ const extractTypedDfn = dfn => {
     // Definition is in a heading or a more complex structure, just list the
     // name for now.
     res = { name: getDfnName(dfn) };
+  }
+
+  if (dfn.id) {
+    res.href = getAbsoluteUrl(dfn);
   }
 
   res.type = dfnType;

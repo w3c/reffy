@@ -48,6 +48,7 @@
         "properties": {
           "name": { "$ref": "#/$defs/cssValue" },
           "type": { "type": "string", "enum": ["type", "function", "value", "selector"] },
+          "href": { "$ref": "#/$defs/url" },
           "prose": { "type": "string" },
           "value": { "$ref": "#/$defs/cssValue" },
           "values": { "$ref": "#/$defs/cssValues" }
