@@ -435,11 +435,19 @@ const extractDlDfns = dl => {
     }));
   }
   else {
-    // Markup does not seem to contain IDs, let's extract the text instead
-    const value = normalize(cleanedLine.querySelector('td:last-child').textContent);
-    res = value.split(',').map(name => Object.assign({
-      name: normalize(name.replace(/'/g, ''))
-    }));
+    // Markup does not use definitions, let's look for an ID in the dt itself
+    const dt = dl.querySelector('dt');
+    if (dt.id) {
+      res = [{
+        name: normalize(dt.textContent.replace(/'/g, '')),
+        href: getAbsoluteUrl(dt)
+      }];
+    }
+    else {
+      res = dt.textContent.split(',').map(name => Object.assign({
+        name: normalize(name.replace(/'/g, ''))
+      }));
+    }
   }
 
   const properties = [...dl.querySelectorAll('dd table tr')]
