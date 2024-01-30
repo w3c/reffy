@@ -1525,6 +1525,59 @@ that spans multiple lines */
       "name": "background-color",
       "value": "<color>"
    }]
+  },
+
+  {
+    title: 'extracts the definition ID from a dt element when needed (SVG11)',
+    html: `<div class="propdef">
+      <dl>
+        <dt id="lighting-color">‘lighting-color’</dt>
+        <dd>
+          <table><tbody>
+            <tr>
+              <td><em>Value:</em>&nbsp;&nbsp;</td>
+              <td>currentColor |<br> &lt;color&gt;</a> [&lt;icccolor&gt;] |<br> inherit</td>
+            </tr>
+            <tr>
+              <td><em>Initial:</em>&nbsp;&nbsp;</td>
+              <td>white</td>
+            </tr>
+          </tbody></table>
+        </dd>
+      </dl>
+    </div>`,
+   css: [{
+      "name": "‘lighting-color’",
+      "href": "about:blank#lighting-color",
+      "value": "currentColor | <color> [<icccolor>] | inherit",
+      "initial": "white"
+   }]
+  },
+
+  {
+    title: 'does not choke on the absence of a definition ID when dt elements are used (SVG11)',
+    html: `<div class="propdef">
+      <dl>
+        <dt>‘lighting-color’</dt>
+        <dd>
+          <table><tbody>
+            <tr>
+              <td><em>Value:</em>&nbsp;&nbsp;</td>
+              <td>currentColor |<br> &lt;color&gt;</a> [&lt;icccolor&gt;] |<br> inherit</td>
+            </tr>
+            <tr>
+              <td><em>Initial:</em>&nbsp;&nbsp;</td>
+              <td>white</td>
+            </tr>
+          </tbody></table>
+        </dd>
+      </dl>
+    </div>`,
+   css: [{
+      "name": "‘lighting-color’",
+      "value": "currentColor | <color> [<icccolor>] | inherit",
+      "initial": "white"
+   }]
   }
 ];
 
