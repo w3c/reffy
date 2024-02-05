@@ -32,7 +32,8 @@
             "required": ["fragment", "type"],
             "properties": {
               "fragment": { "type": "string" },
-              "type": { "$ref": "../common.json#/$defs/interfacetype" }
+              "type": { "$ref": "../common.json#/$defs/interfacetype" },
+              "href": { "$ref": "../common.json#/$defs/url" }
             }
           }
         },
