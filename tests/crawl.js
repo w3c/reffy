@@ -178,6 +178,14 @@ if (global.describe && describe instanceof Function) {
       assert.equal(results.length, 0);
     });
 
+    it("does not attempt to crawl specs without a nightly URL", async () => {
+      const url = "https://www.iso.org/standard/85253.html";
+      const results = await crawlSpecs(
+        [{ url }],
+        { forceLocalFetch: true });
+      assert.deepStrictEqual(results[0], { url, versions: [url] });
+    });
+
     after(() => {
       if (mockServer.pendingInterceptors().length > 0) {
         throw new Error("Additional network requests expected on:\n- " + mockServer.pendingInterceptors().map(miss => miss.origin + miss.path).join('\n- '));

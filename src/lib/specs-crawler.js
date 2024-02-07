@@ -88,6 +88,11 @@ async function crawlSpec(spec, crawlOptions) {
         if (crawlOptions.useCrawl) {
             result = await expandSpecResult(spec, crawlOptions.useCrawl);
         }
+        else if (!urlToCrawl) {
+            // No nightly URL? That means the spec is not public (typical
+            // example here is ISO specs). Nothing to crawl in such cases.
+            result = {};
+        }
         else {
             result = await processSpecification(
                 urlToCrawl,
@@ -120,7 +125,9 @@ async function crawlSpec(spec, crawlOptions) {
         }
 
         // Copy results back into initial spec object
-        spec.crawled = result.crawled;
+        if (result.crawled) {
+            spec.crawled = result.crawled;
+        }
         if (result.crawlCacheInfo) {
           spec.crawlCacheInfo = result.crawlCacheInfo;
         }
