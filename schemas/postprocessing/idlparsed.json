@@ -48,7 +48,8 @@
               "required": ["fragment", "type"],
               "properties": {
                 "fragment": { "type": "string" },
-                "type": { "$ref": "../common.json#/$defs/extensiontype" }
+                "type": { "$ref": "../common.json#/$defs/extensiontype" },
+                "href": { "$ref": "../common.json#/$defs/url" }
               }
             }
           }
