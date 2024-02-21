@@ -10,6 +10,7 @@
     "properties": {
       "name": { "type": "string" },
       "interface": { "$ref": "../common.json#/$defs/interface" },
+      "href": { "$ref": "../common.json#/$defs/url" },
       "obsolete": { "type": "boolean" }
     }
   }
