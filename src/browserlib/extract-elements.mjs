@@ -1,3 +1,5 @@
+import getAbsoluteUrl from './get-absolute-url.mjs';
+
 /**
  * Extract the list of markup elements that the spec defines
  *
@@ -43,7 +45,10 @@ export default function (spec) {
       // In most cases, there will be only one element, but some elements are
       // defined together, typically h1-h6 or sub and sup
       return dfns.map(dfn => {
-        const res = { name: getText(dfn) };
+        const res = {
+          name: getText(dfn),
+          href: getAbsoluteUrl(dfn)
+        };
         const dts = [...el.querySelectorAll('dt')];
         dts.forEach(dt => {
           const prop = ({
@@ -143,8 +148,27 @@ export default function (spec) {
       if (!name) {
         throw new Error('Could not extract name from element-summary element');
       }
+      let dfn = el.querySelector('dfn');
+      if (!dfn) {
+        // The SVG 1.1 spec does not use dfns, look for an ID on the parent div
+        // if defined (happens when there are multiple elements defined in the
+        // same section) or at a nearby heading (all other cases).
+        dfn = el.parentElement;
+        if (!dfn.id) {
+          dfn = el.previousElementSibling;
+          while (dfn && !dfn.nodeName.match(/^H\d$/)) {
+            dfn = dfn.previousElementSibling;
+          }
+          if (!dfn) {
+            throw new Error('Could not locate heading associated with element ' + getText(name));
+          }
+        }
+      }
 
-      const res = { name: getText(name).replace(/‘|’/g, '') };
+      const res = {
+        name: getText(name).replace(/‘|’/g, ''),
+        href: getAbsoluteUrl(dfn)
+      };
       const dts = [...el.querySelectorAll('dt')];
       dts.forEach(dt => {
         const prop = ({
@@ -180,7 +204,10 @@ export default function (spec) {
         throw new Error('Could not extract name from definition-table element');
       }
 
-      const res = { name: getText(dfn) };
+      const res = {
+        name: getText(dfn),
+        href: getAbsoluteUrl(dfn)
+      };
       const ths = [...el.querySelectorAll('th')];
       ths.forEach(th => {
         const prop = ({
@@ -212,7 +239,10 @@ export default function (spec) {
   const shortname = (typeof spec === 'string') ? spec : spec.shortname;
   const otherElements = [...document.querySelectorAll('dfn[data-dfn-type="element"]')]
     .map(el => {
-      const elInfo = { "name": el.textContent.trim()};
+      const elInfo = {
+        name: el.textContent.trim(),
+        href: getAbsoluteUrl(el)
+      };
       // All elements defined in MathML Core
       // use the MathMLElement interface
       if (shortname === "mathml-core") {

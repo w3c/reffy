@@ -8,7 +8,7 @@ const tests = [
   {
     title: "extracts an HTML element that defines its own interface",
     spec: "html",
-    html: `<h4 id="the-p-element"><span class="secno">4.4.1</span> The <dfn><code>p</code></dfn> element<a href="#the-p-element" class="self-link"></a></h4>
+    html: `<h4 id="the-p-element"><span class="secno">4.4.1</span> The <dfn id="the-p"><code>p</code></dfn> element<a href="#the-p-element" class="self-link"></a></h4>
 <dl class="element">
 <dt><a href="dom.html#concept-element-dom" id="the-p-element:concept-element-dom">DOM interface</a>:</dt>
 <dd>
@@ -23,7 +23,8 @@ const tests = [
     res: [
       {
         name: "p",
-        interface: "HTMLParagraphElement"
+        interface: "HTMLParagraphElement",
+        href: "about:blank#the-p"
       }
     ]
   },
@@ -31,7 +32,7 @@ const tests = [
   {
     title: "extracts an HTML element that uses another interface",
     spec: "html",
-    html: `<h4 id="the-thead-element"><span class="secno">4.9.6</span> The <dfn><code>thead</code></dfn> element<a href="#the-thead-element" class="self-link"></a></h4>
+    html: `<h4 id="the-thead-element"><span class="secno">4.9.6</span> The <dfn id="thead"><code>thead</code></dfn> element<a href="#the-thead-element" class="self-link"></a></h4>
 <dl class="element">
 <dt><a href="dom.html#concept-element-categories" id="the-thead-element:concept-element-categories">Categories</a>:</dt>
 <dd>None.</dd>
@@ -59,7 +60,8 @@ const tests = [
     res: [
       {
         name: "thead",
-        interface: "HTMLTableSectionElement"
+        interface: "HTMLTableSectionElement",
+        href: "about:blank#thead"
       }
     ]
   },
@@ -73,11 +75,13 @@ const tests = [
     res: [
       {
         name: "sub",
-        interface: "HTMLElement"
+        interface: "HTMLElement",
+        href: "about:blank#the-sub-element"
       },
       {
         name: "sup",
-        interface: "HTMLElement"
+        interface: "HTMLElement",
+        href: "about:blank#the-sup-element"
       }
     ]
   },
@@ -99,7 +103,8 @@ const tests = [
     res: [
       {
         name: 'animate',
-        interface: 'SVGAnimateElement'
+        interface: 'SVGAnimateElement',
+        href: "about:blank#elementdef-animate"
       }
     ]
   },
@@ -138,7 +143,8 @@ const tests = [
     res: [
       {
         name: 'feBlend',
-        interface: 'SVGFEBlendElement'
+        interface: 'SVGFEBlendElement',
+        href: "about:blank#elementdef-feblend"
       }
     ]
   },
@@ -159,7 +165,8 @@ const tests = [
 </dl></div>`,
     res: [
       {
-        name: 'discard'
+        name: 'discard',
+        href: "about:blank#elementdef-discard"
       }
     ]
   },
@@ -168,12 +175,13 @@ const tests = [
     title: "extracts a MathMLElement",
     spec: "mathml-core",
     html: `<p>
-      The <dfn data-dfn-type="element">mmm</dfn> element is a MathML element.
+      The <dfn id="mmm" data-dfn-type="element">mmm</dfn> element is a MathML element.
     </p>`,
     res: [
       {
         name: "mmm",
-        interface: "MathMLElement"
+        interface: "MathMLElement",
+        href: "about:blank#mmm"
       }
     ]
   },
@@ -182,13 +190,14 @@ const tests = [
     title: "links an element with its interface in simple case",
     spec: "portals",
     html: `<p>
-      The <dfn data-dfn-type="element">portal</dfn> element uses the
+      The <dfn id="portal" data-dfn-type="element">portal</dfn> element uses the
       <dfn data-dfn-type="interface">HTMLPortalElement</dfn> interface.
     </p>`,
     res: [
       {
         name: "portal",
-        interface: "HTMLPortalElement"
+        interface: "HTMLPortalElement",
+        href: "about:blank#portal"
       }
     ]
   }
