@@ -38,10 +38,10 @@ module.exports = {
         else {
           dfnType = member.type;
         }
-        if (!['constructor', 'method', 'attribute', 'enum-value', 'dict-member', 'const'].includes(dfnType)) {
-          console.error(`[error] Found unexpected IDL member type "${dfnType}" in ${spec.shortname}`);
-        }
         dfnName = member.name ?? member.value;
+        if (member.type === 'constructor') {
+          dfnName = 'constructor';
+        }
         dfnFor = idl.name;
       }
       else {
@@ -52,22 +52,32 @@ module.exports = {
         dfnName = idl.name;
       }
 
+      if (!['attribute', 'callback', 'const', 'constructor',
+            'dict-member', 'dictionary', 'enum', 'enum-value',
+            'interface', 'method', 'namespace', 'typedef'
+           ].includes(dfnType)) {
+        console.error(`[error] Found unexpected IDL type "${dfnType}" in ${spec.shortname}`);
+      }
+
       const dfnNames = [];
       if (dfnType === 'enum-value') {
         // Bikeshed keeps wrapping quotes in the dfn linking text, not ReSpec.
         dfnNames.push(dfnName);
         dfnNames.push(`"${dfnName}"`);
       }
-      else if (dfnType === 'method') {
-        // Bikeshed adds "..." for variadic arguments, not ReSpec. Let's try
-        // both variants. For overloads, Bikeshed essentially expects arguments
-        // to have different names, while ReSpec adds "!overload-x" to
-        // overloaded methods. We'll test all possibilities in order. If the
-        // spec only has a dfn for the most basic method, it's possible that we
-        // end up linking to that dfn from the overloaded methods too, but that
-        // seems good enough in practice.
-        // Last, method definitions sometimes appear without arguments (notably
-        // in the HTML spec).
+      else if (dfnType === 'method' || dfnType === 'constructor') {
+        // Spec authoring tools use different naming conventions in dfns:
+        // - For variadic arguments, Bikeshed adds "...", not ReSpec.
+        // - For overloads, Bikeshed relies on argument names, ReSpec adds
+        // "!overload-x" to the name of the second, third, etc. overloads.
+        // - The HTML spec sometimes excludes argument names from method dfns.
+        // We'll give these different variants a try, roughly starting from the
+        // most specific ones, in other words starting by looking at a specific
+        // overload dfn.
+        // When a method has overloads but the spec only has one dfn for the
+        // first variant, this approach will link the other overloads to that
+        // first dfn. That's slightly incorrect but a good enough approximation
+        // in practice.
         const argsVariadic = member.arguments.map(arg => (arg.variadic ? '...' : '') + arg.name);
         const args = member.arguments.map(arg => arg.name);
         dfnNames.push(`${dfnName}!overload-${dfnOverload}(${args.join(', ')})`);
@@ -75,23 +85,13 @@ module.exports = {
         dfnNames.push(`${dfnName}(${args.join(', ')})`);
         dfnNames.push(`${dfnName}()`);
       }
-      else if (dfnType === 'constructor') {
-        // Same as for methods
-        const argsVariadic = member.arguments.map(arg => (arg.variadic ? '...' : '') + arg.name);
-        const args = member.arguments.map(arg => arg.name);
-        dfnNames.push(`constructor!overload-${dfnOverload}(${args.join(', ')})`);
-        dfnNames.push(`constructor(${argsVariadic.join(', ')})`);
-        dfnNames.push(`constructor(${args.join(', ')})`);
-        dfnNames.push(`constructor()`);
-      }
       else {
         dfnNames.push(dfnName);
       }
 
       // Look for definitions that look like good initial candidates
-      const candidateDfns = spec.dfns
-        .filter(dfn => dfn.type === dfnType && !dfn.informative &&
-          (dfnFor ? dfn.for.includes(dfnFor) : true));
+      const candidateDfns = spec.dfns.filter(dfn =>
+        dfn.type === dfnType && (dfnFor ? dfn.for.includes(dfnFor) : true));
 
       // Look for names in turn in that list of candidates.
       for (const name of dfnNames) {
@@ -108,11 +108,6 @@ module.exports = {
         }
       }
 
-      // Report missing dfns except for specs that we know already lack them
-      if (!['webgl1', 'webgl2', 'svg-animations', 'SVG2'].includes(spec.shortname)) {
-        const forLabel = dfnFor ? ` for \`${dfnFor}\`` : '';
-        console.warn(`[warn] No dfn for ${dfnType} \`${dfnName}\`${forLabel} in [${spec.shortname}](${spec.crawled})`);
-      }
       return null;
     }
 
