@@ -32,7 +32,8 @@
             "required": ["fragment", "type"],
             "properties": {
               "fragment": { "type": "string" },
-              "type": { "$ref": "../common.json#/$defs/interfacetype" }
+              "type": { "$ref": "../common.json#/$defs/interfacetype" },
+              "href": { "$ref": "../common.json#/$defs/url" }
             }
           }
         },
@@ -47,7 +48,8 @@
               "required": ["fragment", "type"],
               "properties": {
                 "fragment": { "type": "string" },
-                "type": { "$ref": "../common.json#/$defs/extensiontype" }
+                "type": { "$ref": "../common.json#/$defs/extensiontype" },
+                "href": { "$ref": "../common.json#/$defs/url" }
               }
             }
           }

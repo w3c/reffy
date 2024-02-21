@@ -33,4 +33,44 @@ describe('The parsed IDL generator', function () {
 intraface foo {};
 ^ Unrecognised tokens`);
   });
+
+
+  function getIdlSpecWithDfn(type) {
+    return {
+      dfns: [{
+        href: 'about:blank/#foo',
+        linkingText: ['foo'],
+        localLinkingText: [],
+        type: type.split(' ')[0],
+        for: [],
+        access: 'public',
+        informative: false
+      }],
+      idl: `${type} foo {};`
+    };
+  }
+
+  // Note: we could also test "enum", "typedef" and "callback" IDL types, but
+  // the IDL syntax would need to be different (e.g., "enum foo {}" is invalid)
+  for (const type of [
+    'dictionary', 'interface', 'interface mixin',
+    'callback interface', 'namespace'
+  ]) {
+    it(`links back to the definition in the spec when available (${type})`, async () => {
+      const spec = getIdlSpecWithDfn(type);
+      const result = await run(spec);
+      assert.deepEqual(result?.idlparsed?.idlNames, {
+        foo: {
+          extAttrs: [],
+          fragment: `${type} foo {};`,
+          inheritance: null,
+          members: [],
+          name: 'foo',
+          partial: false,
+          type: type,
+          href: 'about:blank/#foo'
+        }
+      });
+    });
+  }
 });
