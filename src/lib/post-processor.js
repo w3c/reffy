@@ -126,7 +126,7 @@ async function run(mod, crawlResult, options) {
   mod = getModule(mod);
 
   if (mod.input === 'crawl') {
-    if (crawlResult.crawled) {
+    if (crawlResult.crawled || !crawlResult.results) {
       // Post-processing module runs at the crawl level and we received
       // a spec crawl result
       return;
