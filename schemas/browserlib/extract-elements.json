@@ -6,7 +6,7 @@
   "items": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["name"],
+    "required": ["name", "href"],
     "properties": {
       "name": { "type": "string" },
       "interface": { "$ref": "../common.json#/$defs/interface" },
