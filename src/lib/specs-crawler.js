@@ -13,6 +13,7 @@
 const fs = require('fs');
 const path = require('path');
 const specs = require('web-specs');
+const inspect = require('util').inspect;
 const cssDfnParser = require('./css-grammar-parser');
 const postProcessor = require('./post-processor');
 const {
@@ -145,7 +146,7 @@ async function crawlSpec(spec, crawlOptions) {
     }
     catch (err) {
         spec.title = spec.title || '[Could not be determined, see error]';
-        spec.error = err.toString() + (err.stack ? ' ' + err.stack : '');
+        spec.error = inspect(err);
     }
 
     return specOrFallback(spec, fallbackFolder, crawlOptions.fallbackData?.results);
