@@ -490,7 +490,7 @@ async function processSpecification(spec, processFunction, args, options) {
             }
             prefetchedResponse[spec.url] = response;
           } catch (err) {
-            throw new Error(`Loading ${spec.url} triggered network error ${err}`);
+            throw new Error(`Loading ${spec.url} triggered network error`, { cause: err });
           }
           if (response.status !== 200) {
             throw new Error(`Loading ${spec.url} triggered HTTP status ${response.status}`);
@@ -545,7 +545,7 @@ async function processSpecification(spec, processFunction, args, options) {
             try {
               result = await page.goto(spec.url, loadOptions);
             } catch (err) {
-              throw new Error(`Loading ${spec.url} triggered network error ${err}`);
+              throw new Error(`Loading ${spec.url} triggered network error`, { cause: err });
             }
             if ((result.status() !== 200) && (!spec.url.startsWith('file://') || (result.status() !== 0))) {
               throw new Error(`Loading ${spec.url} triggered HTTP status ${result.status()}`);
