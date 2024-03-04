@@ -1,4 +1,4 @@
-const { expect } = require('chai');
+const assert = require('assert');
 
 describe('The WebIDL parser understands includes statements', () => {
   var parse = require('../../src/cli/parse-webidl').parse;
@@ -9,7 +9,6 @@ interface Base {};
 interface Extended {};
 Extended includes Base;
     `);
-    expect(data).to.have.property('idlNames');
-    expect(data.idlNames).to.have.property('Extended');
+    assert(data?.idlNames?.Extended, 'idlNames.Extended is not set');
   });
 });

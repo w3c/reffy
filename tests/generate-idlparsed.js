@@ -1,4 +1,4 @@
-const { assert } = require('chai');
+const assert = require('assert');
 const { run } = require('../src/postprocessing/idlparsed');
 
 describe('The parsed IDL generator', function () {

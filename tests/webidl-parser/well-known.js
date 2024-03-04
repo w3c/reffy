@@ -1,4 +1,4 @@
-const { expect } = require('chai');
+const assert = require('assert');
 
 describe('When it parses well-known types, the WebIDL parser', () => {
   const parse = require('../../src/cli/parse-webidl').parse;
@@ -12,11 +12,10 @@ describe('When it parses well-known types, the WebIDL parser', () => {
           ${type} doNothing();
         };
       `);
-      expect(data).to.be.an('object').with.property('dependencies');
-      expect(data.dependencies).to.have.property('test');
-      expect(data.dependencies.test).to.have.length(0);
-      expect(data).to.be.an('object').with.property('externalDependencies');
-      expect(data.externalDependencies).to.have.length(0);
+      assert(data?.dependencies?.test, 'dependencies does not list "test"');
+      assert(data?.externalDependencies, 'externalDependencies is not set');
+      assert.strictEqual(data.dependencies.test.length, 0);
+      assert.strictEqual(data.externalDependencies.length, 0);
     });
   });
 });
