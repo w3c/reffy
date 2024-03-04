@@ -1,4 +1,4 @@
-const { assert } = require('chai');
+const assert = require('assert');
 const puppeteer = require('puppeteer');
 const path = require('path');
 const rollup = require('rollup');

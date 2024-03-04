@@ -1,4 +1,4 @@
-const { expect } = require('chai');
+const assert = require('assert');
 
 describe('For Global/Exposed attributes, the WebIDL parser', () => {
   var parse = require('../../src/cli/parse-webidl').parse;
@@ -7,13 +7,10 @@ describe('For Global/Exposed attributes, the WebIDL parser', () => {
     const data = await parse(`
       interface notExposedOnWindow {};
     `);
-    expect(data).to.have.property('jsNames');
-    expect(data.jsNames).to.have.property('functions');
-    expect(data.jsNames.functions).not.to.have.property('Window');
-    expect(data).to.have.property('globals');
-    expect(data.globals).to.deep.equal({});
-    expect(data).to.have.property('exposed');
-    expect(data.exposed).to.deep.equal({});
+    assert(data?.jsNames?.functions, 'jsNames.functions property is missing');
+    assert(!data.jsNames.functions.hasOwnProperty('Window'), 'jsNames.functions.Window should not be set');
+    assert.deepStrictEqual(data.globals, {}, 'Globals should be an empty object');
+    assert.deepStrictEqual(data.exposed, {}, 'Exposed should be an empty object');
   });
 
   it('detects a simple global definition and reference to it', async () => {
@@ -24,16 +21,9 @@ describe('For Global/Exposed attributes, the WebIDL parser', () => {
       [Exposed=primaryInterface]
       interface exposedOnPrimaryInterface {};
     `);
-    expect(data).to.have.property('globals');
-    expect(data.globals).to.have.property('primaryInterface');
-    expect(data.globals.primaryInterface).to.contain('primaryInterface');
-    expect(data).to.have.property('exposed');
-    expect(data.exposed).to.have.property('primaryInterface');
-    expect(data.exposed.primaryInterface).to.contain('exposedOnPrimaryInterface');
-    expect(data).to.have.property('jsNames');
-    expect(data.jsNames).to.have.property('functions');
-    expect(data.jsNames.functions).to.have.property('primaryInterface');
-    expect(data.jsNames.functions.primaryInterface).to.contain('exposedOnPrimaryInterface');
+    assert(data?.globals?.primaryInterface?.includes('primaryInterface'), 'globals.primaryInterface is not set or does not contain "primaryInterface"');
+    assert(data?.exposed?.primaryInterface?.includes('exposedOnPrimaryInterface'), 'exposed.primaryInterface is not set or does not contain "exposedOnPrimaryInterface"');
+    assert(data?.jsNames?.functions?.primaryInterface?.includes('exposedOnPrimaryInterface'), 'jsNames.functions.primaryInterface is not set or does not contain "exposedOnPrimaryInterface"');
   });
 
   it('uses the right name for a global interface definition', async () => {
@@ -41,18 +31,11 @@ describe('For Global/Exposed attributes, the WebIDL parser', () => {
       [Global=theInterface, Exposed=theInterface]
       interface anInterface {};
     `);
-    expect(data).to.have.property('globals');
-    expect(data.globals).to.have.property('theInterface');
-    expect(data.globals).not.to.have.property('anInterface');
-    expect(data.globals.theInterface).to.contain('anInterface');
-    expect(data).to.have.property('exposed');
-    expect(data.exposed).to.have.property('theInterface');
-    expect(data.exposed).not.to.have.property('anInterface');
-    expect(data.exposed.theInterface).to.contain('anInterface');
-    expect(data).to.have.property('jsNames');
-    expect(data.jsNames).to.have.property('functions');
-    expect(data.jsNames.functions).to.have.property('theInterface');
-    expect(data.jsNames.functions.theInterface).to.contain('anInterface');
+    assert(data?.globals?.theInterface?.includes('anInterface'), 'globals.theInterface is not set or does not contain "anInterface"');
+    assert(!data.globals.anInterface, 'globals.anInterface should not be set');
+    assert(data?.exposed?.theInterface?.includes('anInterface'), 'exposed.theInterface is not set or does not contain "anInterface"');
+    assert(!data?.exposed?.anInterface, 'exposed.anInterface should not be set');
+    assert(data?.jsNames?.functions?.theInterface?.includes('anInterface'), 'jsNames.functions.theInterfaces is not set or does not contain "anInterface"');
   });
 
   it('understands multiple names for a global interface definition', async () => {
@@ -60,22 +43,14 @@ describe('For Global/Exposed attributes, the WebIDL parser', () => {
       [Global=(theInterface,sameInterface), Exposed=theInterface]
       interface anInterface {};
     `);
-    expect(data).to.have.property('globals');
-    expect(data.globals).to.have.property('theInterface');
-    expect(data.globals).to.have.property('sameInterface');
-    expect(data.globals).not.to.have.property('anInterface');
-    expect(data.globals.theInterface).to.contain('anInterface');
-    expect(data.globals.sameInterface).to.contain('anInterface');
-    expect(data).to.have.property('exposed');
-    expect(data.exposed).to.have.property('theInterface');
-    expect(data.exposed).not.to.have.property('sameInterface');
-    expect(data.exposed).not.to.have.property('anInterface');
-    expect(data.exposed.theInterface).to.contain('anInterface');
-    expect(data).to.have.property('jsNames');
-    expect(data.jsNames).to.have.property('functions');
-    expect(data.jsNames.functions).to.have.property('theInterface');
-    expect(data.jsNames.functions).not.to.have.property('sameInterface');
-    expect(data.jsNames.functions.theInterface).to.contain('anInterface');
+    assert(data?.globals?.theInterface?.includes('anInterface'), 'globals.theInterface is not set or does not contain "anInterface"');
+    assert(data?.globals?.sameInterface?.includes('anInterface'), 'globals.sameInterface is not set or does not contain "anInterface"');
+    assert(!data?.globals?.anInterface, 'globals.anInterface should not be set');
+    assert(data?.exposed?.theInterface?.includes('anInterface'), 'exposed.theInterface is not set or does not contain "anInterface"');
+    assert(!data?.exposed?.sameInterface, 'exposed.sameInterface should not be set');
+    assert(!data?.exposed?.anInterface, 'exposed.anInterface should not be set');
+    assert(data?.jsNames?.functions?.theInterface?.includes('anInterface'), 'jsNames.functions.theInterface is not set or does not contain "anInterface"');
+    assert(!data?.jsNames?.functions?.sameInterface, 'jsNames.functions.sameInterface should not be set');
   });
 
   it('parses the Exposed=* extended attribute correctly', async () => {
@@ -83,7 +58,6 @@ describe('For Global/Exposed attributes, the WebIDL parser', () => {
       [Exposed=*]
       interface anInterface {};
     `);
-    expect(data).to.have.property('exposed');
-    expect(data.exposed).to.have.property('*');
+    assert(data?.exposed?.['*'], 'exposed is not set or does not have a "*" property');
   });
 });

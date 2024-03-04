@@ -30,7 +30,7 @@ async function runWithAnnotatedCrawlData(path, fn) {
 }
 
 if (global.describe && describe instanceof Function) {
-  const { assert } = require('chai');
+  const assert = require('assert');
 
   describe("The crawler", function () {
     this.slow(20000);
@@ -109,7 +109,7 @@ if (global.describe && describe instanceof Function) {
           fallback
         }));
       assert.equal(results[0].title, "Change is the only constant");
-      assert.isUndefined(results[0].error);
+      assert.ifError(results[0].error);
       assert.equal(results[0].refs, "A useful list of refs");
     })
 
@@ -119,7 +119,7 @@ if (global.describe && describe instanceof Function) {
         [{ url, nightly: { url } }],
         { forceLocalFetch: true });
       assert.equal(results[0].title, "[Could not be determined, see error]");
-      assert.include(results[0].error, "Loading https://www.w3.org/TR/idontexist/ triggered HTTP status 404");
+      assert(results[0].error.includes("Loading https://www.w3.org/TR/idontexist/ triggered HTTP status 404"));
     });
 
     it("reports errors and returns fallback data when possible", async () => {
@@ -132,7 +132,7 @@ if (global.describe && describe instanceof Function) {
           fallback
         });
       assert.equal(results[0].title, "On the Internet, nobody knows you don't exist");
-      assert.include(results[0].error, "Loading https://www.w3.org/TR/idontexist/ triggered HTTP status 404");
+      assert(results[0].error.includes("Loading https://www.w3.org/TR/idontexist/ triggered HTTP status 404"));
       assert.equal(results[0].refs, "A useful list of refs");
     });
 
@@ -147,7 +147,7 @@ if (global.describe && describe instanceof Function) {
       });
       const results = require(path.resolve(output, "index.json"));
       assert.equal(results.results[0].url, "https://www.w3.org/TR/idontexist/");
-      assert.include(results.results[0].error, "Loading https://www.w3.org/TR/idontexist/ triggered HTTP status 404");
+      assert(results.results[0].error.includes("Loading https://www.w3.org/TR/idontexist/ triggered HTTP status 404"));
       assert.equal(results.results[0].refs, "refs/idontexist.json");
       const refs = require(path.resolve(output, "refs", "idontexist.json"));
       assert.equal(refs.refs, "A useful list of refs");
@@ -159,7 +159,7 @@ if (global.describe && describe instanceof Function) {
         [{ url, nightly: { url } }],
         { forceLocalFetch: true });
       assert.equal(results[0].title, "[Could not be determined, see error]");
-      assert.include(results[0].error, "CSS server issue detected");
+      assert(results[0].error.includes("CSS server issue detected"));
     });
 
     it("crawls the published spec when `--release` is set", async () => {

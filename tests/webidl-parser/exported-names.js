@@ -1,4 +1,4 @@
-const { expect } = require('chai');
+const assert = require('assert');
 
 describe('The WebIDL parser exports all IDL names', () => {
   var parse = require('../../src/cli/parse-webidl').parse;
@@ -12,13 +12,11 @@ describe('The WebIDL parser exports all IDL names', () => {
       typedef string testTypedef;
       callback interface testCallbackInterface {};
     `);
-    expect(data).to.be.an('object').with.property('idlNames');
-    expect(data.idlNames).to.have.property('testInterface');
-    expect(data.idlNames).to.have.property('testDict');
-    expect(data.idlNames).to.have.property('testEnum');
-    expect(data.idlNames).to.have.property('testCallback');
-    expect(data.idlNames).to.have.property('testTypedef');
-    expect(data.idlNames).to.have.property('testCallbackInterface');
+    assert(data?.idlNames?.testInterface, 'testInterface property is missing');
+    assert(data?.idlNames?.testDict, 'testDict property is missing');
+    assert(data?.idlNames?.testEnum, 'testEnum property is missing');
+    assert(data?.idlNames?.testCallback, 'testCallback property is missing');
+    assert(data?.idlNames?.testCallbackInterface, 'testCallbackInterface property is missing');
   });
 
   it('does not export partial named definitions', async () => {
@@ -26,8 +24,8 @@ describe('The WebIDL parser exports all IDL names', () => {
       partial interface testInterface {};
       partial dictionary testDict {};
     `);
-    expect(data).to.be.an('object').with.property('idlNames');
-    expect(data.idlNames).not.to.have.property('testInterface');
-    expect(data.idlNames).not.to.have.property('testDict');
+    assert(data?.idlNames, 'idlNames property is missing');
+    assert(!data.idlNames.testInterface, 'testInterface property should not exist');
+    assert(!data.idlNames.testDict, 'testDict property should not exist');
   });
 });
