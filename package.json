@@ -45,7 +45,7 @@
     "mocha": "10.3.0",
     "respec": "34.4.0",
     "respec-hljs": "2.1.1",
-    "rollup": "4.12.0",
+    "rollup": "4.13.0",
     "undici": "^6.1.0"
   },
   "overrides": {
