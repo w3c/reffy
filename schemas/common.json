@@ -127,6 +127,23 @@
           "url": { "$ref": "#/$defs/url" }
         }
       }
+    },
+
+    "links": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/url" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "anchors": {
+            "type": "array",
+            "items": { "$ref": "../common.json#/$defs/id" },
+            "minItems": 1
+          },
+          "specShortname": { "$ref": "../common.json#/$defs/shortname" }
+        }
+      }
     }
   }
 }
