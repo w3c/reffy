@@ -138,10 +138,10 @@
         "properties": {
           "anchors": {
             "type": "array",
-            "items": { "$ref": "../common.json#/$defs/id" },
+            "items": { "$ref": "#/$defs/id" },
             "minItems": 1
           },
-          "specShortname": { "$ref": "../common.json#/$defs/shortname" }
+          "specShortname": { "$ref": "#/$defs/shortname" }
         }
       }
     }
