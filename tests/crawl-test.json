@@ -13,10 +13,13 @@
     ],
     "crawled": "https://w3c.github.io/woff/woff2/",
     "links": {
-      "https://www.w3.org/TR/bar/": {
-	"anchors": [
-          "baz"
-	]
+      "autolinks": {},
+      "rawlinks": {
+	"https://www.w3.org/TR/bar/": {
+	  "anchors": [
+            "baz"
+	  ]
+	}
       }
     },
     "title": "WOFF2",
@@ -70,11 +73,19 @@
     ],
     "crawled": "https://w3c.github.io/mediacapture-output/",
     "links": {
-      "https://webidl.spec.whatwg.org/": {
-	"anchors": [
-          "Exposed",
-          "idl-DOMString"
-	]
+      "autolinks": {
+        "https://webidl.spec.whatwg.org/": {
+  	  "anchors": [
+            "idl-DOMString"
+	  ]
+	}
+      },
+      "rawlinks": {
+        "https://webidl.spec.whatwg.org/": {
+  	  "anchors": [
+            "Exposed"
+	  ]
+	}
       }
     },
     "refs": {
@@ -197,7 +208,10 @@
     "crawled": "https://w3c.github.io/accelerometer/",
     "revision": "c0917d216986f88bdd43c72c0b13352c71f283aa",
     "links": {
-      "https://www.w3.org/TR/Foo": {}
+      "autolinks": {},
+      "rawlinks": {
+        "https://www.w3.org/TR/Foo": {}
+      }
     },
     "refs": {
       "normative": [
