@@ -8,6 +8,7 @@ const defaultResults = (format, {successIface} = {successIface: "SuccessEvent"})
   {
     type: "success",
     interface: successIface,
+    cancelable: true,
     targets: [ "Example" ],
     bubbles: true,
     href: "about:blank#success",
@@ -19,6 +20,7 @@ const defaultResults = (format, {successIface} = {successIface: "SuccessEvent"})
   {
     type: "error",
     interface: "ErrorEvent",
+    cancelable: false,
     targets: [ "Example" ],
     bubbles: false,
     href: "about:blank#error",
@@ -39,11 +41,11 @@ const tests = [
     title: "extracts events from a summary table with data spread across columns, completed by an IDL fragment",
     html: `<table>
 <thead>
-  <tr><th>Event type</th><th>Interface</th><th>Bubbles</th></tr>
+  <tr><th>Event type</th><th>Interface</th><th>Bubbles</th><th>Cancelable</th></tr>
 </thead>
 <tbody>
-  <tr><th><dfn id=success>success</dfn></th><td><a href=''>SuccessEvent</a></td><td>Yes</td></tr>
-  <tr><th><dfn id=error>error</dfn></th><td><a href=''>ErrorEvent</a></td><td>No</td></tr>
+  <tr><th><dfn id=success>success</dfn></th><td><a href=''>SuccessEvent</a></td><td>Yes</td><td>✓</td></tr>
+  <tr><th><dfn id=error>error</dfn></th><td><a href=''>ErrorEvent</a></td><td>No</td><td>No</td></tr>
 </tbody></table>${defaultIdl}`,
     res: defaultResults("summary table")
   },
@@ -54,6 +56,7 @@ const tests = [
 <tbody>
 <tr><th>Type<td>success
 <tr><th>Bubbles<td>Yes
+<tr><th>Cancelable<td>Yes
 <tr><th>Interface<td>SuccessEvent
 </table>
 <h3><code>error</code> Event</h3>
@@ -61,6 +64,7 @@ const tests = [
 <tbody>
 <tr><th>Type<td>error
 <tr><th>Bubbles<td>no
+<tr><th>Cancelable<td>no
 <tr><th>Interface<td>ErrorEvent
 </table>
 ${defaultIdl}`,
@@ -73,24 +77,26 @@ ${defaultIdl}`,
 <dt><dfn data-dfn-for=Example data-dfn-type=event id=success>success</dfn></dt>
 <dd><ul>
 <li>Bubbles: Yes</li>
+<li>Cancelable: Yes</li>
 </ul></dd>
 <dt><dfn data-dfn-for=Example data-dfn-type=event id=error>error</dfn></dt>
 <dd><ul>
 <li>Bubbles: No</li>
+<li>Cancelable: No</li>
 </ul></dd>
 `,
     res: defaultResults("dfn", {successIface: "ErrorEvent"})
   },
   {
     title: "extracts events from an event mentioned in a 'Fire an event' context, completed by an IDL fragment",
-    html: `<p id=success><a href='https://dom.spec.whatwg.org/#concept-event-fire'>Fire an event</a> named <code>success</code> using <a href=''>SuccessEvent</a> with the <code>bubbles</code> attribute initialized to <code>true</code></p>
-<p id=error><a href='https://dom.spec.whatwg.org/#concept-event-fire'>Fire an event</a> named <code>error</code> using <a href=''>ErrorEvent</a> with the <code>bubbles</code> attribute initialized to <code>false</code></p>${defaultIdl}`,
+    html: `<p id=success><a href='https://dom.spec.whatwg.org/#concept-event-fire'>Fire an event</a> named <code>success</code> using <a href=''>SuccessEvent</a> with the <code>bubbles</code> and <code>cancelable</code> attributes initialized to <code>true</code></p>
+<p id=error><a href='https://dom.spec.whatwg.org/#concept-event-fire'>Fire an event</a> named <code>error</code> using <a href=''>ErrorEvent</a> with the <code>bubbles</code> attribute initialized to <code>false</code> and the <code>cancelable</code> attribute set to <code>false</code></p>${defaultIdl}`,
     res: defaultResults("fire an event phrasing")
   },
   {
     title: "extracts events from an event mentioned in a 'Fire Functional Event' context, completed by an IDL fragment",
-    html: `<p id=success><a href='https://w3c.github.io/ServiceWorker/#fire-functional-event'>Fire Functional Event</a> <code>success</code> with the <code>bubbles</code> attribute initialized to <code>true</code></p>
-<p id=error><a href='https://dom.spec.whatwg.org/#concept-event-fire'>Fire an event</a> named <code>error</code> using <a href=''>ErrorEvent</a> with the <code>bubbles</code> attribute initialized to <code>false</code></p>${defaultIdl}`,
+    html: `<p id=success><a href='https://w3c.github.io/ServiceWorker/#fire-functional-event'>Fire Functional Event</a> <code>success</code> with the <code>bubbles</code> attribute initialized to <code>true</code> and the <code>cancelable</code> attribute initialized to <code>true</code></p>
+<p id=error><a href='https://dom.spec.whatwg.org/#concept-event-fire'>Fire an event</a> named <code>error</code> using <a href=''>ErrorEvent</a> with the <code>bubbles</code> and <code>cancelable</code> attributes initialized to <code>false</code></p>${defaultIdl}`,
     res: defaultResults("fire an event phrasing", {successIface: "ExtendableEvent"})
   },
   {
@@ -161,8 +167,8 @@ ${defaultIdl}`,
   {
     title: "does not get confused by asides",
     html: `<p id=success><a href='https://dom.spec.whatwg.org/#concept-event-fire'>Fire an event</a>
-      named <code>success</code><span><span class="mdn-anno">Info</span></span> using <a href=''>SuccessEvent</a> with the <code>bubbles</code> attribute initialized to <code>true</code>.</p>
-      <p id=error><a href='https://dom.spec.whatwg.org/#concept-event-fire'>Fire an event</a> named <code>error</code> using <a href=''>ErrorEvent</a> with the <code>bubbles</code> attribute initialized to <code>false</code></p>
+      named <code>success</code><span><span class="mdn-anno">Info</span></span> using <a href=''>SuccessEvent</a> with the <code>bubbles</code> and <code>cancelable</code> attributes initialized to <code>true</code>.</p>
+      <p id=error><a href='https://dom.spec.whatwg.org/#concept-event-fire'>Fire an event</a> named <code>error</code> using <a href=''>ErrorEvent</a> with the <code>bubbles</code> attribute initialized to <code>false</code> and must not be cancelable</p>
       ${defaultIdl}`,
     res: defaultResults("fire an event phrasing")
   }

@@ -216,6 +216,7 @@ export default function (spec) {
           phrasing = "fire functional event";
         }
       }
+
       if (phrasing) {
         const name = m.groups.eventName;
         let newEvent = true;
@@ -271,6 +272,17 @@ export default function (spec) {
             }
           }
         }
+	if (event.bubbles === undefined && event.cancelable === undefined) {
+          if (parsedText.match(/bubbles and cancelable attributes/)) {
+            if (parsedText.match(/true/)) {
+              event.bubbles = true;
+              event.cancelable = true;
+            } else if (parsedText.match(/false/)) {
+              event.bubbles = false;
+              event.cancelable = false;
+            }
+	  }
+	}
         if (event.bubbles === undefined) {
           if (parsedText.match(/bubbles attribute/)) {
             if (parsedText.match(/true/)) {
@@ -292,7 +304,7 @@ export default function (spec) {
               event.cancelable = false;
             }
           } else if (parsedText.match(/not cancelable/) || parsedText.match(/not be cancelable/)) {
-            event.bubbles = false;
+            event.cancelable = false;
           } else if (parsedText.match(/cancelable/)) {
             event.cancelable = true;
           }

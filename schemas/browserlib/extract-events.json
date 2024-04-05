@@ -15,6 +15,7 @@
         "items": { "$ref": "../common.json#/$defs/interface" }
       },
       "bubbles": { "type": "boolean" },
+      "cancelable": { "type": "boolean" },
       "isExtension": { "type": "boolean" },
       "href": { "$ref": "../common.json#/$defs/url" },
       "src": {
