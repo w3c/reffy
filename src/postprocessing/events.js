@@ -65,8 +65,14 @@ module.exports = {
       })
       .filter(event => !!event);
 
+    // Before we clean and sort the result, we'll consolidate events that
+    // don't always bubble. We'll call them... "babbling" events. Such events
+    // should remain exceptions to the rule, and will likely be artificially
+    // created through some patching mechanism (in Webref typically) because
+    // the events extraction logic does not (yet?) support this scenario.
     return events
       .filter(event => !eventsToDrop.includes(event))
+      .filter(event => consolidateBabblingEvent(event, events))
       .map(event => {
         cleanTargetInterfaces(event, parsedInterfaces);
         delete event.spec;
@@ -222,4 +228,32 @@ function extendEvent(event, events) {
   extendedEvent.extendedIn.push(Object.assign(
     { spec: event.spec.series.shortname },
     event.src?.href ? { href: event.src?.href } : {}));
+}
+
+
+/**
+ * Consolidate events that got duplicated in the extract because they bubble
+ * or don't bubble depending on the target interface.
+ *
+ * We'll say that these events "babble" because they don't seem to know whether
+ * they bubble or not.
+ */
+function consolidateBabblingEvent(event, events) {
+  if (event.mergedIntoAnotherEvent) {
+    return null;
+  }
+  const newTargets = events
+    .filter(e =>
+      e !== event && !e.isExtension && !e.mergedIntoAnotherEvent &&
+      e.href && e.href === event.href && e.cancelable === event.cancelable)
+    .map(e => {
+      // Flag the event as merged so that we can filter it out afterwards
+      e.mergedIntoAnotherEvent = true;
+      return e.targets;
+    })
+    .flat();
+  if (newTargets.length > 0) {
+    event.targets = (event.targets || []).concat(newTargets);
+  }
+  return event;
 }
