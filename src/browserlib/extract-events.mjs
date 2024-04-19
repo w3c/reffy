@@ -3,10 +3,6 @@ import extractWebIdl from './extract-webidl.mjs';
 import {parse} from "../../node_modules/webidl2/index.js";
 import getAbsoluteUrl from './get-absolute-url.mjs';
 
-const isSameEvent = (e1, e2) => e1.type === e2.type &&
-      ((e1.href && e1.href === e2.href ) ||
-       (e1.targets?.sort()?.join("|") === e2.targets?.sort()?.join("|")));
-
 const singlePage = !document.querySelector('[data-reffy-page]');
 const href = el => el?.getAttribute("id") ? getAbsoluteUrl(el, {singlePage}) : null;
 
@@ -37,6 +33,15 @@ export default function (spec) {
       return acc;
     }, {});
 
+  function isSameEvent(e1, e2) {
+    const res = e1.type === e2.type &&
+      ((e1.href && e1.href === e2.href ) ||
+        (e1.targets?.sort()?.join("|") === e2.targets?.sort()?.join("|")));
+    if (res && e1.cancelable !== undefined && e2.cancelable !== undefined && e1.cancelable !== e2.cancelable) {
+      console.error(`[reffy] Found two occurrences of same event with different "cancelable" properties in ${spec.title}: type=${e1.type} targets=${e1.targets.join(', ')} href=${e1.href}`);
+    }
+    return res;
+  }
 
   function fromEventElementToTargetInterfaces(eventEl) {
     if (!eventEl) return;
