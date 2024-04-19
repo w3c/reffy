@@ -3,10 +3,6 @@ import extractWebIdl from './extract-webidl.mjs';
 import {parse} from "../../node_modules/webidl2/index.js";
 import getAbsoluteUrl from './get-absolute-url.mjs';
 
-const isSameEvent = (e1, e2) => e1.type === e2.type &&
-      ((e1.href && e1.href === e2.href ) ||
-       (e1.targets?.sort()?.join("|") === e2.targets?.sort()?.join("|")));
-
 const singlePage = !document.querySelector('[data-reffy-page]');
 const href = el => el?.getAttribute("id") ? getAbsoluteUrl(el, {singlePage}) : null;
 
@@ -37,6 +33,15 @@ export default function (spec) {
       return acc;
     }, {});
 
+  function isSameEvent(e1, e2) {
+    const res = e1.type === e2.type &&
+      ((e1.href && e1.href === e2.href ) ||
+        (e1.targets?.sort()?.join("|") === e2.targets?.sort()?.join("|")));
+    if (res && e1.cancelable !== undefined && e2.cancelable !== undefined && e1.cancelable !== e2.cancelable) {
+      console.error(`[reffy] Found two occurrences of same event with different "cancelable" properties in ${spec.title}: type=${e1.type} targets=${e1.targets.join(', ')} href=${e1.href}`);
+    }
+    return res;
+  }
 
   function fromEventElementToTargetInterfaces(eventEl) {
     if (!eventEl) return;
@@ -74,6 +79,8 @@ export default function (spec) {
         // Useful e.g. for pointerevents
         const bubblingInfoColumn = [...table.querySelectorAll("thead th")]
           .findIndex(n => n.textContent.trim().match(/^bubbl/i));
+        const cancelableInfoColumn = [...table.querySelectorAll("thead th")]
+          .findIndex(n => n.textContent.trim().match(/^cancel/i));
         const interfaceColumn = [...table.querySelectorAll("thead th")]
           .findIndex(n => n.textContent.trim().match(/^(dom )?interface/i));
         const targetsColumn = [...table.querySelectorAll("thead th")]
@@ -115,6 +122,9 @@ export default function (spec) {
           if (bubblingInfoColumn >= 0) {
             event.bubbles = tr.querySelector(`td:nth-child(${bubblingInfoColumn + 1})`)?.textContent?.trim() === "Yes";
           }
+          if (cancelableInfoColumn >= 0) {
+            event.cancelable = !!tr.querySelector(`td:nth-child(${cancelableInfoColumn + 1})`)?.textContent?.trim().match(/(yes)|✓|(varies)/i);
+          }
           if (interfaceColumn >= 0) {
             event.interface =
               tr.querySelector(`td:nth-child(${interfaceColumn + 1}) a`)?.textContent ??
@@ -134,14 +144,17 @@ export default function (spec) {
         }
         const eventTypeRow = [...table.querySelectorAll("tbody th")].findIndex(n => n.textContent.trim().match(/^type/i));
         const bubblingInfoRow = [...table.querySelectorAll("tbody th")].findIndex(n => n.textContent.trim() === "Bubbles");
+        const cancelableInfoRow = [...table.querySelectorAll("tbody th")].findIndex(n => n.textContent.trim() === "Cancelable");
         const interfaceRow = [...table.querySelectorAll("tbody th")].findIndex(n => n.textContent.trim().match(/^interface/i));
         const eventName = table.querySelector(`tr:nth-child(${eventTypeRow + 1}) td:nth-child(2)`)?.textContent?.trim();
         const bubblesCell = table.querySelector(`tr:nth-child(${bubblingInfoRow + 1}) td:nth-child(2)`);
         const bubbles = bubblesCell ? bubblesCell.textContent.trim() === "Yes" : null;
+        const cancelableCell = table.querySelector(`tr:nth-child(${cancelableInfoRow + 1}) td:nth-child(2)`);
+	const cancelable = cancelableCell ? cancelableCell.textContent.trim() === "Yes" : null;
         const iface = table.querySelector(`tr:nth-child(${interfaceRow + 1}) td:nth-child(2)`)?.textContent?.trim();
         if (eventName) {
           events.push({
-            type: eventName, interface: iface, bubbles,
+            type: eventName, interface: iface, bubbles, cancelable,
             src: { format: "css definition table", href: href(table.closest('*[id]')) },
             href: href(table.closest('*[id]')) });
         }
@@ -208,6 +221,7 @@ export default function (spec) {
           phrasing = "fire functional event";
         }
       }
+
       if (phrasing) {
         const name = m.groups.eventName;
         let newEvent = true;
@@ -263,6 +277,17 @@ export default function (spec) {
             }
           }
         }
+	if (event.bubbles === undefined && event.cancelable === undefined) {
+          if (parsedText.match(/bubbles and cancelable attributes/)) {
+            if (parsedText.match(/true/)) {
+              event.bubbles = true;
+              event.cancelable = true;
+            } else if (parsedText.match(/false/)) {
+              event.bubbles = false;
+              event.cancelable = false;
+            }
+	  }
+	}
         if (event.bubbles === undefined) {
           if (parsedText.match(/bubbles attribute/)) {
             if (parsedText.match(/true/)) {
@@ -274,6 +299,19 @@ export default function (spec) {
             event.bubbles = true;
           } else if (parsedText.match(/not bubble/)) {
             event.bubbles = false;
+          }
+        }
+        if (event.cancelable === undefined) {
+          if (parsedText.match(/cancelable attribute/)) {
+            if (parsedText.match(/true/)) {
+              event.cancelable = true;
+            } else if (parsedText.match(/false/)) {
+              event.cancelable = false;
+            }
+          } else if (parsedText.match(/not cancelable/) || parsedText.match(/not be cancelable/)) {
+            event.cancelable = false;
+          } else if (parsedText.match(/cancelable/)) {
+            event.cancelable = true;
           }
         }
         if (newEvent) {
@@ -329,12 +367,17 @@ export default function (spec) {
     };
     // CSS Animations & Transitions uses dt/dd to describe events
     // and uses a ul in the dd to describe bubbling behavior
-    let bubbles, iface;
+    let bubbles, iface, cancelable;
     if (container.tagName === "DT") {
       const bubbleItem = [...container.nextElementSibling.querySelectorAll("li")]
         .find(li => li.textContent.startsWith("Bubbles:"));
       if (bubbleItem) {
         bubbles = !!bubbleItem.textContent.match(/yes/i);
+      }
+      const cancelableItem = [...container.nextElementSibling.querySelectorAll("li")]
+        .find(li => li.textContent.startsWith("Cancelable:"));
+      if (cancelableItem) {
+        cancelable = !!cancelableItem.textContent.match(/yes/i);
       }
       // CSS Animation & Transitions document the event in the heading
       // of the section where the definitions are located
@@ -356,6 +399,7 @@ export default function (spec) {
         event.interface = iface;
       }
       event.bubbles = bubbles;
+      event.cancelable = cancelable;
       events.push(event);
       if (!iface) {
         console.error(`[reffy] No interface hint found for event definition ${event.type} in ${spec.title}`);
@@ -369,6 +413,9 @@ export default function (spec) {
       }
       if (bubbles !== undefined) {
         ev.bubbles = bubbles;
+      }
+      if (cancelable !== undefined) {
+        ev.cancelable = cancelable;
       }
     }
   });
