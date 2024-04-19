@@ -32,6 +32,7 @@
           "href": { "$ref": "../common.json#/$defs/url" }
         }
       },
+      "cancelable": { "type": "boolean" },
       "extendedIn": {
         "type": "array",
         "items": {
