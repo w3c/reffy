@@ -369,7 +369,8 @@ async function processSpecification(spec, processFunction, args, options) {
                 if (request.url.startsWith('https://drafts.csswg.org/api/drafts/') ||
                     request.url.startsWith('https://drafts.css-houdini.org/api/drafts/') ||
                     request.url.startsWith('https://drafts.fxtf.org/api/drafts/') ||
-                    request.url.startsWith('https://api.csswg.org/shepherd/')) {
+                    request.url.startsWith('https://api.csswg.org/shepherd/') ||
+                    request.url.startsWith('https://test.csswg.org/harness/')) {
                     await cdp.send('Fetch.failRequest', { requestId, errorReason: 'Failed' });
                     return;
                 }
