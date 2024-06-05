@@ -125,6 +125,12 @@ mockAgent
 
 mockAgent
   .get("https://www.w3.org")
+  .intercept({ method: "GET", path: "/StyleSheets/TR/2021/dark.css" })
+  .reply(200, '')
+  .persist();
+
+mockAgent
+  .get("https://www.w3.org")
   .intercept({ method: "GET", path: "/Tools/respec/respec-highlight" })
   .reply(200, respecHiglight, {
     headers: { "Content-Type": "application/js" }
