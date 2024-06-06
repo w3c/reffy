@@ -504,7 +504,7 @@ async function crawlList(speclist, crawlOptions) {
 
     // Close Puppeteer instance
     if (!crawlOptions.useCrawl) {
-        teardownBrowser();
+        await teardownBrowser();
     }
 
     return results;
