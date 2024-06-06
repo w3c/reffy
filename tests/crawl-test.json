@@ -76,15 +76,13 @@
       "autolinks": {
         "https://webidl.spec.whatwg.org/": {
   	  "anchors": [
+            "Exposed",
             "idl-DOMString"
 	  ]
 	}
       },
       "rawlinks": {
         "https://webidl.spec.whatwg.org/": {
-  	  "anchors": [
-            "Exposed"
-	  ]
 	}
       }
     },
