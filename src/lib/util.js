@@ -292,14 +292,6 @@ async function teardownBrowser() {
  * done loading), and that does not work with a file cache approach either.
  * These requests get intercepted.
  *
- * A couple of additional notes:
- * - Requests to CSS stylesheets are not intercepted because Respec dynamically
- * loads a few CSS resources, and intercepting them could perhaps impact the
- * rest of the generation.
- * - SVG images are not intercepted because a couple of specs have a PNG
- * fallback mechanism that, when interception is on, make the browser spin
- * forever, see discussion in: https://github.com/w3c/accelerometer/pull/55
- *
  * Strictly speaking, intercepting request is only needed to be able to use the
  * "networkidle0" option. The whole interception logic could be dropped (and
  * "networkidle2" could be used instead) if it proves too unstable.
@@ -345,7 +337,7 @@ async function processSpecification(spec, processFunction, args, options) {
         return async function ({ requestId, request }) {
             try {
                 // Abort network requests to common image formats
-                if (/\.(gif|ico|jpg|jpeg|png|ttf|woff)$/i.test(request.url)) {
+                if (/\.(gif|ico|jpg|jpeg|png|ttf|woff|svg|css)$/i.test(request.url)) {
                     await cdp.send('Fetch.failRequest', { requestId, errorReason: 'Failed' });
                     return;
                 }
