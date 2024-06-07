@@ -6,6 +6,30 @@ Minor and patch release notes are currently only documented in
 
 Reffy adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v16.0.0 - 2024-06-07
+
+### Breaking change
+
+- Bump minimal supported version of Node.js from v18 to v20.12.1 ([#1590](https://github.com/w3c/reffy/pull/1590))
+
+Required by dependency on ReSpec, although note this dependency is only for tests (`devDependencies` in `package.json`).
+
+### New features
+
+- Reduce crawler load on servers (#1587, #1581)
+- Include data-xref-type as another hint for autolinks (#1585)
+
+### Feature patches
+
+- Skip requests on SVG and CSS resources (#1588)
+- Fix Puppeteer instance teardown (#1586)
+
+### Dependency bumps
+
+- Bump respec from 35.0.2 to 35.1.0 (#1583)
+- Bump ajv from 8.15.0 to 8.16.0 (#1580)
+
+
 ## v15.0.0 - 2024-03-21
 
 ### Breaking changes
