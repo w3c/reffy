@@ -16,6 +16,7 @@ const specs = require('web-specs');
 const inspect = require('util').inspect;
 const cssDfnParser = require('./css-grammar-parser');
 const postProcessor = require('./post-processor');
+const ThrottledQueue = require('./throttled-queue');
 const {
     completeWithAlternativeUrls,
     expandBrowserModules,
@@ -30,87 +31,6 @@ const {
 } = require('./util');
 
 const {version: reffyVersion} = require('../../package.json');
-
-/**
- * To be friendly with servers, requests get serialized by origin server,
- * and the code sleeps a bit in between requests to a given origin server.
- * To achieve, the code needs to take a lock on the origin it wants to send a
- * request to.
- */
-const originLocks = {};
-
-
-/**
- * Helper function to sleep for a specified number of milliseconds
- */
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms, 'slept'));
-}
-
-
-/**
- * Helper function to interleave values of a list of arrays.
- *
- * For example:
- * interleave([0, 2, 4, 6, 8], [1, 3, 5]) returns [0, 1, 2, 3, 4, 5, 6, 8]
- * interleave([0, 3], [1, 4], [2, 5]) returns [0, 1, 2, 3, 4, 5]
- *
- * The function is used to sort the list of specs to crawl so as to distribute
- * origins throughout the list.
- *
- * Note the function happily modifies (and empties in practice) the arrays
- * it receives as arguments.
- */
-function interleave(firstArray, ...furtherArrays) {
-    if (firstArray?.length > 0) {
-        // Return the concactenation of the first item in the first array,
-        // and of the result of interleaving remaining arrays, putting the
-        // first array last in the list.
-        const firstItem = firstArray.shift();
-        return [firstItem, ...interleave(...furtherArrays, firstArray)];
-    }
-    else {
-        // First array is empty, let's proceed with remaining arrays
-        // until there's nothing else to proceed.
-        if (furtherArrays.length > 0) {
-            return interleave(...furtherArrays);
-        }
-        else {
-            return [];
-        }
-    }
-}
-
-
-/**
- * Helper function that returns the "origin" of a URL, defined in a loose way
- * as the part of the true origin that identifies the server that's going to
- * serve the resource.
- *
- * For example "github.io" for all specs under github.io, "whatwg.org" for
- * all WHATWG specs, "csswg.org" for CSS specs at large (including Houdini
- * and FXTF specs since they are served by the same server).
- */
-function getOrigin(url) {
-    if (!url) {
-        return '';
-    }
-    const origin = (new URL(url)).origin;
-    if (origin.endsWith('.whatwg.org')) {
-        return 'whatwg.org';
-    }
-    else if (origin.endsWith('.github.io')) {
-        return 'github.io';
-    }
-    else if (origin.endsWith('.csswg.org') ||
-             origin.endsWith('.css-houdini.org') ||
-             origin.endsWith('.fxtf.org')) {
-        return 'csswg.org';
-    }
-    else {
-        return origin;
-    }
-}
 
 
 /**
@@ -177,51 +97,24 @@ async function crawlSpec(spec, crawlOptions) {
             result = {};
         }
         else {
-            // To be friendly with servers, requests are serialized per origin
-            // and only sent after a couple of seconds.
-            const origin = getOrigin(urlToCrawl.url);
-            let originLock = originLocks[origin];
-            if (!originLock) {
-                originLock = {
-                    locked: false,
-                    last: 0
-                };
-                originLocks[origin] = originLock;
-            }
-            // Wait for the "lock" on the origin. Once we can take it, sleep as
-            // needed to only send a request after enough time has elapsed.
-            while (originLock.locked) {
-                await sleep(100);
-            }
-            originLock.locked = true;
-            const now = Date.now();
-            if (now - originLock.last < 2000) {
-                await sleep(2000 - (now - originLock.last));
-            }
-            try {
-                result = await processSpecification(
-                    urlToCrawl,
-                    (spec, modules) => {
-                        const idToHeading = modules.find(m => m.needsIdToHeadingMap) ?
-                            window.reffy.mapIdsToHeadings() : null;
-                        const res = {
-                            crawled: window.location.toString()
-                        };
-                        modules.forEach(mod => {
-                            res[mod.property] = window.reffy[mod.name](spec, idToHeading);
-                        });
-                        return res;
-                    },
-                  [spec, crawlOptions.modules],
-                    { quiet: crawlOptions.quiet,
-                      forceLocalFetch: crawlOptions.forceLocalFetch,
-                      ...cacheInfo}
-                );
-            }
-            finally {
-                originLock.last = Date.now();
-                originLock.locked = false;
-            }
+            result = await processSpecification(
+                urlToCrawl,
+                (spec, modules) => {
+                    const idToHeading = modules.find(m => m.needsIdToHeadingMap) ?
+                        window.reffy.mapIdsToHeadings() : null;
+                    const res = {
+                        crawled: window.location.toString()
+                    };
+                    modules.forEach(mod => {
+                        res[mod.property] = window.reffy[mod.name](spec, idToHeading);
+                    });
+                    return res;
+                },
+              [spec, crawlOptions.modules],
+                { quiet: crawlOptions.quiet,
+                  forceLocalFetch: crawlOptions.forceLocalFetch,
+                  ...cacheInfo}
+            );
             if (result.status === "notmodified" && fallback) {
               crawlOptions.quiet ?? console.warn(`skipping ${spec.url}, no change`);
               const copy = Object.assign({}, fallback);
@@ -442,65 +335,33 @@ async function crawlList(speclist, crawlOptions) {
         list = list.filter(spec => !!spec.release);
     }
 
-    const listAndPromise = list.map(spec => {
-        let resolve = null;
-        let reject = null;
-        let readyToCrawl = new Promise((resolveFunction, rejectFunction) => {
-            resolve = resolveFunction;
-            reject = rejectFunction;
-        });
-        return { spec, readyToCrawl, resolve, reject };
-    });
-
-    // While we want results to be returned following the initial order of the
-    // specs, to avoid sending too many requests at once to the same origin,
-    // we'll sort specs so that origins get interleaved.
-    // Note: there may be specs without URL (ISO specs)
-    const specsByOrigin = {};
-    for (const spec of list) {
-        const toCrawl = crawlOptions.publishedVersion ?
-            (spec.release ?? spec.nightly) :
-            spec.nightly;
-        const origin = getOrigin(toCrawl?.url);
-        if (!specsByOrigin[origin]) {
-            specsByOrigin[origin] = [];
-        }
-        specsByOrigin[origin].push(spec);
-    }
-    const spreadList = interleave(...Object.values(specsByOrigin));
-
-    // In debug mode, specs are processed one by one. In normal mode,
-    // specs are processing in chunks
-    const chunkSize = Math.min((crawlOptions.debug ? 1 : 4), list.length);
-
-    let pos = 0;
-    function flagNextSpecAsReadyToCrawl() {
-        if (pos < spreadList.length) {
-            const spec = spreadList[pos];
-            const specAndPromise = listAndPromise.find(sp => sp.spec === spec);
-            specAndPromise.resolve();
-            pos += 1;
-        }
-    }
-    for (let i = 0; i < chunkSize; i++) {
-        flagNextSpecAsReadyToCrawl();
-    }
-
-    const nbStr = '' + listAndPromise.length;
-    async function crawlSpecAndPromise(specAndPromise, idx) {
-        await specAndPromise.readyToCrawl;
-        const spec = specAndPromise.spec;
+    const nbStr = '' + list.length;
+    async function processSpec(spec, idx) {
         const logCounter = ('' + (idx + 1)).padStart(nbStr.length, ' ') + '/' + nbStr;
         crawlOptions.quiet ?? console.warn(`${logCounter} - ${spec.url} - crawling`);
         let result = await crawlSpec(spec, crawlOptions);
         result = await saveSpecResults(result, crawlOptions);
         crawlOptions.quiet ?? console.warn(`${logCounter} - ${spec.url} - done`);
-        flagNextSpecAsReadyToCrawl();
-
         return result;
     }
 
-    const results = await Promise.all(listAndPromise.map(crawlSpecAndPromise));
+    const crawlQueue = new ThrottledQueue({
+        maxParallel: 4,
+        sleepInterval: origin => {
+            switch (origin) {
+            case 'https://csswg.org': return 2000;
+            case 'https://www.w3.org': return 1000;
+            default: return 100;
+            }
+        }
+    });
+    const results = await Promise.all(list.map((spec, idx) => {
+        const versionToCrawl = crawlOptions.publishedVersion ?
+            (spec.release ? spec.release : spec.nightly) :
+            spec.nightly;
+        const urlToCrawl = versionToCrawl?.url;
+        return crawlQueue.runThrottledPerOrigin(urlToCrawl, processSpec, spec, idx);
+    }));
 
     // Close Puppeteer instance
     if (!crawlOptions.useCrawl) {
