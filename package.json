@@ -27,7 +27,7 @@
   ],
   "license": "MIT",
   "engines": {
-    "node": ">=18"
+    "node": ">=20.12.1"
   },
   "main": "index.js",
   "bin": "./reffy.js",
