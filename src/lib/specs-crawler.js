@@ -345,7 +345,16 @@ async function crawlList(speclist, crawlOptions) {
         return result;
     }
 
-    const crawlQueue = new ThrottledQueue(4);
+    const crawlQueue = new ThrottledQueue({
+        maxParallel: 4,
+        sleepInterval: origin => {
+            switch (origin) {
+            case 'https://csswg.org': return 2000;
+            case 'https://www.w3.org': return 1000;
+            default: return 100;
+            }
+        }
+    });
     const results = await Promise.all(list.map((spec, idx) => {
         const versionToCrawl = crawlOptions.publishedVersion ?
             (spec.release ? spec.release : spec.nightly) :
