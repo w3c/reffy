@@ -42,12 +42,13 @@ const testLinks = [
     title: "extracts links with fragments",
     html: `<h1 id=title>Title</h1>
 <p><a href="https://dom.spec.whatwg.org/#ranges">DOM Standard</a></p>
-<p><a href="https://dom.spec.whatwg.org/#nodes" data-xref-type="dfn">DOM Standard</a></p>`,
+<p><a href="https://dom.spec.whatwg.org/#nodes" data-xref-type="dfn">DOM Standard</a></p><ul class="index"><li><aside><a href="https://dom.spec.whatwg.org/#element">Element</a></aside></li></ul>`,
     res: {
       autolinks: {
         "https://dom.spec.whatwg.org/": {
           "anchors": [
-            "nodes"
+            "nodes",
+	    "element"
           ]
         }
       },
