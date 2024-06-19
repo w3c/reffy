@@ -36,7 +36,7 @@
     "ajv-formats": "3.0.1",
     "commander": "12.1.0",
     "fetch-filecache-for-crawling": "5.1.1",
-    "puppeteer": "22.10.0",
+    "puppeteer": "22.11.2",
     "semver": "^7.3.5",
     "web-specs": "3.9.1",
     "webidl2": "24.4.1"
