@@ -348,6 +348,11 @@ async function crawlList(speclist, crawlOptions) {
     const crawlQueue = new ThrottledQueue({
         maxParallel: 4,
         sleepInterval: origin => {
+            if (crawlOptions.useCrawl) {
+                // Not an actual crawl, we're going to reuse previous crawl
+                // results instead. No need to sleep!
+                return 0;
+            }
             switch (origin) {
             case 'https://csswg.org': return 2000;
             case 'https://www.w3.org': return 1000;
