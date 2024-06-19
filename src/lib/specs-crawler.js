@@ -84,8 +84,15 @@ async function crawlSpec(spec, crawlOptions) {
     try {
         const fallback = crawlOptions.fallbackData?.results?.find(s => s.url === spec.url);
         let cacheInfo = {};
-        if (crawlOptions.fallbackData?.crawler === `reffy-${reffyVersion}`) {
-          cacheInfo = Object.assign({}, fallback?.crawlCacheInfo);
+        if (fallback && !fallback.error &&
+                crawlOptions.fallbackData?.crawler === `reffy-${reffyVersion}`) {
+            // Note: we don't want to reuse the previous crawl results if
+            // there was an error because we don't really know whether these
+            // results come from that previous crawl (in which case we should
+            // crawl the spec again), or from a an earlier crawl where
+            // everything went fine (in which case we could reuse the results
+            // if the spec wasn't updated in the meantime).
+            cacheInfo = Object.assign({}, fallback.crawlCacheInfo);
         }
         let result = null;
         if (crawlOptions.useCrawl) {
