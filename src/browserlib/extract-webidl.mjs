@@ -1,5 +1,6 @@
 import getGenerator from './get-generator.mjs';
 import informativeSelector from './informative-selector.mjs';
+import cloneAndClean from './clone-and-clean.mjs';
 
 /**
  * Extract the list of WebIDL definitions in the current spec
@@ -116,15 +117,7 @@ function extractRespecIdl() {
         .filter(el => el !== idlEl)
         .filter((el, idx, self) => self.indexOf(el) === idx)
         .filter(el => !el.closest(informativeSelector))
-        .map(el => el.cloneNode(true))
-        .map(el => {
-            for (const ignore of el.querySelectorAll([
-                'aside', '.idlHeader', 'details.respec-tests-details',
-            ].join(','))) {
-                ignore.remove();
-            }
-            return el;
-        })
+        .map(cloneAndClean)
         .map(el => trimIdlSpaces(el.textContent))
         .join('\n\n');
 

@@ -86,6 +86,7 @@
 
 import informativeSelector from './informative-selector.mjs';
 import getAbsoluteUrl from './get-absolute-url.mjs';
+import cloneAndClean from './clone-and-clean.mjs';
 
 
 /**
@@ -301,20 +302,6 @@ const stepAnchors = [
 
 
 /**
- * Clone HTML element, removing all annotations
- */
-function cloneAndClean(el) {
-  const clone = el.cloneNode(true);
-  for (const ignore of clone.querySelectorAll([
-    '.note', 'aside', '.idlHeader', 'details.respec-tests-details',
-  ].join(','))) {
-    ignore.remove();
-  }
-  return clone;
-}
-
-
-/**
  * Return the normalized text content for the given DOM element, removing all
  * annotations
  */
@@ -335,17 +322,17 @@ function getHTMLContent(el) {
   const relativeUrlSelector = '[href]:not([href^="http"]),[src]:not([src^="http"])';
   const relativeToAbsolute = {};
   const page = el.closest('[data-reffy-page]')?.getAttribute('data-reffy-page');
-  for (const href of el.querySelectorAll(relativeUrlSelector)) {
-    const attr = href.getAttribute('href') ? 'href' : 'src';
+  for (const linkEl of el.querySelectorAll(relativeUrlSelector)) {
+    const attr = linkEl.getAttribute('href') ? 'href' : 'src';
     const url = new URL(page ?? window.location.href);
-    url.hash = href.getAttribute(attr);
-    relativeToAbsolute[href.getAttribute(attr)] = url.toString();
+    url.hash = linkEl.getAttribute(attr);
+    relativeToAbsolute[linkEl.getAttribute(attr)] = url.toString();
   }
 
   const clone = cloneAndClean(el);
-  for (const href of clone.querySelectorAll(relativeUrlSelector)) {
-    const attr = href.getAttribute('href') ? 'href' : 'src';
-    href.setAttribute(attr, relativeToAbsolute[href.getAttribute(attr)]);
+  for (const linkEl of clone.querySelectorAll(relativeUrlSelector)) {
+    const attr = linkEl.getAttribute('href') ? 'href' : 'src';
+    linkEl.setAttribute(attr, relativeToAbsolute[linkEl.getAttribute(attr)]);
   }
   return clone.innerHTML.trim();
 }
@@ -581,18 +568,6 @@ function findRationale(ol) {
 
 
 /**
- * Return true if element has the given parent as ancestor
- */
-function hasParent(el, parent) {
-  let curr = el.parentElement;
-  while (curr && curr !== parent) {
-    curr = curr.parentElement;
-  }
-  return !!curr;
-}
-
-
-/**
  * Find the list of normative algorithms defined in the document's section
  */
 function findAlgorithms(section, { includeIgnored } = { includeIgnored: false }) {
@@ -617,8 +592,7 @@ function findAlgorithms(section, { includeIgnored } = { includeIgnored: false })
   const probable = [...section.querySelectorAll('ol')]
     .filter(ol => !ol.closest(informativeSelector))
     .filter(ol => !ol.closest('nav,.toc,#toc'))
-    .filter(ol => !actual.find(algo => algo.root === ol))
-    .filter(ol => !actual.find(algo => hasParent(ol, algo.root)))
+    .filter(ol => !actual.find(algo => algo.root.contains(ol)))
     // Find an interesting anchor in there to filter out
     // lists that don't look like steps
     .map(ol => {
@@ -627,14 +601,16 @@ function findAlgorithms(section, { includeIgnored } = { includeIgnored: false })
     })
     .filter(algo => includeIgnored || !!algo.rationale);
 
-  const all = actual.concat(probable);
-  let filtered = all.filter(algo1 => !all.find(algo2 => hasParent(algo1.root, algo2.root)));
-  filtered = filtered.filter((algo, idx) => filtered.findIndex(al => al.root === algo.root) === idx);
+  // Merge actual and probable algorithms, dropping duplicates and algorithms
+  // that are nested under other algorithms.
+  let all = actual.concat(probable);
+  all = all.filter((algo, idx) => all.findIndex(al => al.root === algo.root) === idx);
+  all = all.filter(algo1 => !all.find(algo2 => algo1 !== algo2 && algo2.root.contains(algo1.root)));
 
   // Consider algorithms in document order
   // (if we find more than one at the same level, first one will be reported as
   // the actual algorithm, the other ones as "additional" algorithms)
-  filtered.sort((algo1, algo2) => {
+  all.sort((algo1, algo2) => {
     if (algo1.rationale && !algo2.rationale) {
       return -1;
     }
@@ -649,7 +625,7 @@ function findAlgorithms(section, { includeIgnored } = { includeIgnored: false })
       return -1;
     }
   });
-  return filtered;
+  return all;
 }
 
 

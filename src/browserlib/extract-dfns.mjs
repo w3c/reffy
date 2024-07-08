@@ -36,6 +36,8 @@ import {parse} from "../../node_modules/webidl2/index.js";
  * @return {Array(Object)} An Array of definitions
 */
 
+import cloneAndClean from './clone-and-clean.mjs';
+
 function normalize(str) {
   return str.trim().replace(/\s+/g, ' ');
 }
@@ -125,25 +127,8 @@ function isNotAlreadyExported(dfn, idx, list) {
 // Extract the element's inner HTML content, removing any complex structure,
 // so that the result can be injected elsewhere without creating problems.
 function getHtmlProseDefinition(proseEl) {
-  // Apply modifications to a copy of the element
-  proseEl = proseEl.cloneNode(true);
-
-  // Drop asides that authoring tools add here and there
-  let el;
-  const asideSelector = [
-    'aside', '.mdn-anno', '.wpt-tests-block', '.annotation',
-    '[id^=dfn-panel-]'
-  ].join(',');
-  while (el = proseEl.querySelector(asideSelector)) {
-    el.remove();
-  }
-
-  // Remove comments
-  const commentsIterator = document.createNodeIterator(proseEl, NodeFilter.SHOW_COMMENT);
-  let comment;
-  while ((comment = commentsIterator.nextNode())) {
-    comment.remove();
-  }
+  // Strip element of all annotations
+  proseEl = cloneAndClean(proseEl);
 
   // Keep simple grouping content and text-level semantics elements
   const keepSelector = [
@@ -153,6 +138,7 @@ function getHtmlProseDefinition(proseEl) {
     'i', 'kbd', 'mark', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'small', 'span',
     'strong', 'sub', 'sup', 'time', 'u', 'var', 'wbr'
   ].join(',');
+  let el;
   while (el = proseEl.querySelector(`:not(${keepSelector})`)) {
     // The content is more complex than anticipated. It may be worth checking
     // the definition to assess whether the extraction logic needs to become
