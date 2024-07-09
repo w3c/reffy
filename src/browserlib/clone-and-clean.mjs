@@ -10,7 +10,8 @@ export default function (element) {
   let el;
   const asideSelector = [
     'aside', '.note', '.annotation', '.idlHeader', '[id^=dfn-panel-]',
-    '.mdn-anno', '.wpt-tests-block', 'details.respec-tests-details'
+    '.mdn-anno', '.wpt-tests-block', 'details.respec-tests-details',
+    '.example', '.informative', '.informative-bg'
   ].join(',');
   while (el = copy.querySelector(asideSelector)) {
     el.remove();
