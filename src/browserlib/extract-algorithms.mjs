@@ -7,12 +7,17 @@
  * - `html`: Some introductory prose for the algorithm. That prose may well
  * contain actual algorithmic operations, e.g.: "When invoked, run the following
  * steps in parallel". href/src attributes in the HTML have absolute URLs.
+ * - `rationale`: A short string indicating the rationale for selecting the
+ * algorithm. This property is mainly intended for helping with debugging.
+ * Example values include ".algorithm" when the algorithm comes with an
+ * "algorithm" class, "let" when a step was found with a related operation,
+ * etc. Any verb in `stepOperations` may appear, as well as a few other regular
+ * expressions (serialized as a string).
  * - `steps`: Atomic algorithm steps.
- * - `parallel`: A flag set to true when the steps are to run "in parallel".
  *
  * Each step is essentially an object that follows the same structure as an
- * algorithm, except that it does not have a `name` and `href` keys, and may
- * also have the following keys:
+ * algorithm, except that it does not have `name`, `href` and `rationale` keys,
+ * and may also have the following keys:
  * - `operation`: Gives the name of the main operation performed by the step,
  * for example "switch", "let", "set", "if", "return", "resolve", "reject",
  * "queue a task", "fire an event", etc.
@@ -196,6 +201,7 @@ const stepOperations = [
   'issue',
   'jump',
   'let',
+  'load',
   'make',
   'mark',
   'match',
@@ -536,32 +542,36 @@ function findRationale(ol) {
   if (ol.matches('.algorithm')) {
     return '.algorithm';
   }
-  const text = getTextContent(ol).toLowerCase();
-  rationale = stepOperations.find(op => {
-    return text.match(new RegExp(`^${op}(\\.|:| )`, 'i'));
+  [...ol.querySelectorAll('li')].find(li => {
+    const text = getTextContent(li).toLowerCase();
+    rationale = stepOperations.find(op => {
+      return text.match(new RegExp(`^${op}(\\.|:| )`, 'i'));
+    });
+
+    if (!rationale) {
+      rationale = stepInlineOperations.find(op => {
+        if (typeof op === 'string') {
+          return text.includes(op);
+        }
+        else {
+          return text.match(op);
+        }
+      });
+    }
+
+    if (!rationale) {
+      rationale = stepAnchors.find(anchor => {
+        if (typeof anchor === 'string') {
+          return text.includes(anchor);
+        }
+        else {
+          return text.match(anchor);
+        }
+      });
+    }
+
+    return !!rationale;
   });
-
-  if (!rationale) {
-    rationale = stepInlineOperations.find(op => {
-      if (typeof op === 'string') {
-        return text.includes(op);
-      }
-      else {
-        return text.match(op);
-      }
-    });
-  }
-
-  if (!rationale) {
-    rationale = stepAnchors.find(anchor => {
-      if (typeof anchor === 'string') {
-        return text.includes(anchor);
-      }
-      else {
-        return text.match(anchor);
-      }
-    });
-  }
 
   return rationale?.toString();
 }

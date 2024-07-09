@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "https://github.com/w3c/reffy/blob/main/schemas/browserlib/extract-algorithms.json",
+
+  "$defs": {
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "html": { "type": "string" },
+        "rationale": { "type": "string" },
+        "operation": { "type": "string" },
+        "case": { "type": "string" },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/step" },
+          "minItems": 1
+        },
+        "ignored": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "additional": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/step" },
+          "minItems": 1
+        }
+      }
+    }
+  },
+
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["rationale"],
+    "properties": {
+      "name": { "type": "string" },
+      "href": { "$ref": "../common.json#/$defs/url" },
+      "html": { "type": "string" },
+      "rationale": { "type": "string" },
+      "operation": { "type": "string" },
+      "case": { "type": "string" },
+      "steps": {
+        "type": "array",
+        "items": { "$ref": "#/$defs/step" }
+      }
+    }
+  }
+}
