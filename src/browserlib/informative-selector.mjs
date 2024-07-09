@@ -7,11 +7,19 @@
  */
 export default [
   '.informative',
+  '.informative-bg',
   '.note',
   '.issue',
   '.example',
   '.ednote',
+  '.annotation',
   '.practice',
   '.introductory',
-  '.non-normative'
+  '.non-normative',
+  'aside',
+  '.idlHeader',
+  '[id^=dfn-panel-]',
+  '.mdn-anno',
+  '.wpt-tests-block',
+  'details.respec-tests-details'
 ].join(',');

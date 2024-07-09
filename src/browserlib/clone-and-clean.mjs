@@ -1,3 +1,5 @@
+import informativeSelector from './informative-selector.mjs';
+
 /**
  * Return a copy of the given HTML element, stripped of annotations, side
  * panels, and of HTML comments.
@@ -8,12 +10,7 @@ export default function (element) {
 
   // Drop asides that authoring tools add here and there
   let el;
-  const asideSelector = [
-    'aside', '.note', '.annotation', '.idlHeader', '[id^=dfn-panel-]',
-    '.mdn-anno', '.wpt-tests-block', 'details.respec-tests-details',
-    '.example', '.informative', '.informative-bg'
-  ].join(',');
-  while (el = copy.querySelector(asideSelector)) {
+  while (el = copy.querySelector(informativeSelector)) {
     el.remove();
   }
 
