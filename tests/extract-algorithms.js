@@ -42,7 +42,7 @@ const tests = [
   {
     title: 'extracts a switch marked as such',
     html: `
-      <p>To be or not to be, given <var>will</var>:</p>
+      <p>To <dfn id="be">be or not to be</dfn>, given <var>will</var>:</p>
       <dl class="switch">
         <dt>to be</dt>
         <dd>Do something.</dd>
@@ -51,7 +51,9 @@ const tests = [
       </dl>`,
     algorithms: [
       {
-        html: 'To be or not to be, given <var>will</var>:',
+        name: 'be or not to be',
+        href: 'about:blank#be',
+        html: 'To <dfn id=\"be\">be or not to be</dfn>, given <var>will</var>:',
         rationale: '.switch',
         steps: [
           {
@@ -73,7 +75,7 @@ const tests = [
   },
 
   {
-    title: 'extracts a set of steps when an operation is found (return)',
+    title: 'extracts an algorithm when an operation is found (return)',
     html: `
       <ol><li>Return foo.</li></ol>`,
     algorithms: [
@@ -85,7 +87,7 @@ const tests = [
   },
 
   {
-    title: 'extracts a set of steps when an operation is found (throw)',
+    title: 'extracts an algorithm when an operation is found (throw)',
     html: `
       <ol>
         <li>To start with, just relax.</li>
@@ -98,6 +100,33 @@ const tests = [
           { html: 'To start with, just relax.' },
           { html: 'Throw a TooMuchWork exception.' }
         ]
+      }
+    ]
+  },
+
+  {
+    title: 'extracts multiple algorithms',
+    html: `
+      <div>
+        <p>To do nothing, run these steps:</p>
+        <ol class="algorithm" data-algorithm="my algo" id="algo-id"><li><p>Nothing.</p></li></ol>
+      </div>
+      <p>To <dfn id="another-algo">do something</dfn>, run these steps:</p>
+      <ol><li>Do something.</li></ol>`,
+    algorithms: [
+      {
+        name: 'my algo',
+        href: 'about:blank#algo-id',
+        html: 'To do nothing, run these steps:',
+        rationale: '.algorithm',
+        steps: [ { html: '<p>Nothing.</p>' } ]
+      },
+      {
+        name: 'do something',
+        href: 'about:blank#another-algo',
+        html: 'To <dfn id="another-algo">do something</dfn>, run these steps:',
+        rationale: 'do',
+        steps: [ { html: 'Do something.' } ]
       }
     ]
   },
@@ -118,6 +147,91 @@ const tests = [
         <ol><li>Return foo</li></ol>
       </div>`,
     algorithms: []
+  },
+
+  {
+    title: 'reports nested algorithms only once',
+    html: `
+      <ol class="algorithm">
+        <li>
+          Run the following steps in parallel:
+          <ol class="algorithm"><li>Do good.</li></ol>
+        </li>
+      </ol>`,
+    algorithms: [
+      {
+        rationale: '.algorithm',
+        steps: [
+          {
+            rationale: '.algorithm',
+            html: 'Run the following steps in parallel:',
+            steps: [ { html: 'Do good.' } ]
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    title: 'reports additional steps at the same level',
+    html: `
+      <ol class="algorithm">
+        <li>
+          <p>Run the following steps in parallel:</p>
+          <ol><li>Do good.</li></ol>
+          <p>If that does not do any good, run:</p>
+          <ol><li>Do evil.</li></ol>
+        </li>
+      </ol>`,
+    algorithms: [
+      {
+        rationale: '.algorithm',
+        steps: [
+          {
+            rationale: 'do',
+            html: 'Run the following steps in parallel:',
+            steps: [ { html: 'Do good.' } ],
+            additional: [
+              {
+                rationale: 'do',
+                html: 'If that does not do any good, run:',
+                steps: [ { html: 'Do evil.' }]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    title: 'reports sets of steps that were ignored',
+    html: `
+      <ol class="algorithm">
+        <li>
+          Run the following steps in parallel:
+          <ol><li>Blah</li></ol>
+        </li>
+        <li>
+          Then, run:
+          <ol><li>Foo bar</li></ol>
+        </li>
+      </ol>`,
+    algorithms: [
+      {
+        rationale: '.algorithm',
+        steps: [
+          {
+            html: 'Run the following steps in parallel:',
+            ignored: ['Blah']
+          },
+          {
+            html: 'Then, run:',
+            ignored: ['Foo bar']
+          }
+        ]
+      }
+    ]
   },
 ];
 
