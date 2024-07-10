@@ -330,8 +330,7 @@ function getHTMLContent(el) {
   const page = el.closest('[data-reffy-page]')?.getAttribute('data-reffy-page');
   for (const linkEl of el.querySelectorAll(relativeUrlSelector)) {
     const attr = linkEl.getAttribute('href') ? 'href' : 'src';
-    const url = new URL(page ?? window.location.href);
-    url.hash = linkEl.getAttribute(attr);
+    const url = new URL(linkEl.getAttribute(attr), page ?? window.location.href);
     relativeToAbsolute[linkEl.getAttribute(attr)] = url.toString();
   }
 

@@ -40,6 +40,24 @@ const tests = [
   },
 
   {
+    title: 'extracts correct URL for an algorithm in a multi-page spec',
+    html: `
+      <section data-reffy-page="https://example.com/page1">
+        <p>To <dfn id="algo-id">do nothing</dfn>, run these steps:</p>
+        <ol class=algorithm><li><p>Nothing.</p></li></ol>
+      </div>`,
+    algorithms: [
+      {
+        name: 'do nothing',
+        href: 'https://example.com/page1#algo-id',
+        html: 'To <dfn id="algo-id">do nothing</dfn>, run these steps:',
+        rationale: '.algorithm',
+        steps: [ { html: '<p>Nothing.</p>' } ]
+      }
+    ]
+  },
+
+  {
     title: 'extracts a switch marked as such',
     html: `
       <p>To <dfn id="be">be or not to be</dfn>, given <var>will</var>:</p>
