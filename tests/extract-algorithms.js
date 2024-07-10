@@ -67,10 +67,8 @@ const tests = [
         name: 'do nothing',
         href: 'about:blank#algo-id',
         html: 'To <dfn data-export="" data-dfn-type="dfn" id="algo-id">do nothing</dfn>, keep calm and carry on.',
-        rationale: '"To <dfn>"',
-        steps: [ {
-	  html: 'To <dfn data-export="" data-dfn-type="dfn" id="algo-id">do nothing</dfn>, keep calm and carry on.'
-	}]
+        rationale: 'To <dfn>',
+        steps: [ ]
       }
     ]
   },

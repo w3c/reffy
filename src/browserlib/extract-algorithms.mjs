@@ -479,7 +479,7 @@ function serializeAlgorithm(algo, context) {
 /**
  * Serialize the given steps contained in the given root element.
  */
-function serializeSteps(root) {
+function serializeSteps(root, level = 0) {
   if (root.nodeName === 'DL') {
     return [
       {
@@ -494,24 +494,28 @@ function serializeSteps(root) {
           }
           return {
             'case': getTextContent(option),
-            steps: serializeSteps(dd)
+            steps: serializeSteps(dd, level + 1)
           };
         })
       }
     ]
   }
   else if (root.nodeName === 'OL') {
-    return [...root.querySelectorAll('& > li')].map(serializeStep);
+    return [...root.querySelectorAll('& > li')].map(li => serializeStep(li, level +1));
   }
   else {
-    return [serializeStep(root)];
+    if (level === 0) {
+      return [];
+    } else {
+      return [serializeStep(root, level + 1)];
+    }
   }
 }
 
 /**
  * Serialize an algorithm step
  */
-function serializeStep(li) {
+function serializeStep(li, level) {
   let res = {};
   const candidateAlgorithms = findAlgorithms(li, { includeIgnored: true });
   const algorithms = candidateAlgorithms.filter(algo => !!algo.rationale);
