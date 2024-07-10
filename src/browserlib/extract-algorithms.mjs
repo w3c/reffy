@@ -626,9 +626,10 @@ function findAlgorithms(section, { includeIgnored } = { includeIgnored: false })
   const probableOneLine = [...section.querySelectorAll(candidateDfnSelectors.map(s => `p:has(${s})`).join(','))]
     .filter(p => p.textContent.startsWith("To " + p.querySelector(candidateDfnSelectors.join(',')).textContent))
     .map(p => {
-      return { rationale: '"To <dfn>"', root: p };
+      return { rationale: 'To <dfn>', root: p };
     });
-  // Merge actual and probable algorithms, dropping duplicates and algorithms
+  // Merge actual, probable and probable one-step algorithms,
+  // dropping duplicates and algorithms
   // that are nested under other algorithms.
   let all = actual.concat(probable).concat(probableOneLine);
   all = all.filter((algo, idx) => all.findIndex(al => al.root === algo.root) === idx);
@@ -637,11 +638,14 @@ function findAlgorithms(section, { includeIgnored } = { includeIgnored: false })
   // Consider algorithms in document order
   // (if we find more than one at the same level, first one will be reported as
   // the actual algorithm, the other ones as "additional" algorithms)
+  // Keep potential short-form algorithms (rationale: "To <dfn>") to the end
+  // to simplify filtering out duplicates later on
+
   all.sort((algo1, algo2) => {
-    if (algo1.rationale && !algo2.rationale) {
+    if (algo1.rationale && (!algo2.rationale || algo2.rationale === "To <dfn>")) {
       return -1;
     }
-    if (algo2.rationale && !algo1.rationale) {
+    if (algo2.rationale && (!algo1.rationale || algo1.rationale === "To <dfn>")) {
       return 1;
     }
     const cmp = algo1.root.compareDocumentPosition(algo2.root);
@@ -662,5 +666,9 @@ export default function (spec, idToHeading = {}) {
     return [];
   }
   const algorithms = findAlgorithms(document);
-  return algorithms.map(algo => serializeAlgorithm(algo));
+  return algorithms.map(algo => serializeAlgorithm(algo))
+    // remove duplicate from multi-steps algorithms also detected by the
+    // short form algorithms finder (relying on them being later in the
+    // list)
+    .filter((algo, idx, arr) => arr.findIndex(al => !algo.html || al.html === algo.html) === idx);
 }

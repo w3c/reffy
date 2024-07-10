@@ -145,8 +145,9 @@ const tests = [
         <p>To do nothing, run these steps:</p>
         <ol class="algorithm" data-algorithm="my algo" id="algo-id"><li><p>Nothing.</p></li></ol>
       </div>
-      <p>To <dfn id="another-algo">do something</dfn>, run these steps:</p>
-      <ol><li>Do something.</li></ol>`,
+      <p>To <dfn data-export data-dfn-type=dfn id="another-algo">do something</dfn>, run these steps:</p>
+      <ol><li>Do something.</li></ol>
+      <p>To <dfn id=everything data-export data-dfn-type=abstract-op>do everything</dfn>, repeat <a href="#another-algo">do something</a> on everything.</p>`,
     algorithms: [
       {
         name: 'my algo',
@@ -158,9 +159,16 @@ const tests = [
       {
         name: 'do something',
         href: 'about:blank#another-algo',
-        html: 'To <dfn id="another-algo">do something</dfn>, run these steps:',
+        html: 'To <dfn data-export="" data-dfn-type="dfn" id="another-algo">do something</dfn>, run these steps:',
         rationale: 'do',
         steps: [ { html: 'Do something.' } ]
+      },
+      {
+        name: 'do everything',
+        href: 'about:blank#everything',
+        html: 'To <dfn id="everything" data-export="" data-dfn-type="abstract-op">do everything</dfn>, repeat <a href="about:blank#another-algo">do something</a> on everything.',
+        rationale: 'To <dfn>',
+        steps: []
       }
     ]
   },
