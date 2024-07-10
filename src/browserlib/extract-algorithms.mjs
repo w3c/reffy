@@ -421,7 +421,7 @@ function getAlgorithmInfo(algo, context) {
   }
 
   // Get the introductory prose from the previous paragraph
-  let paragraph = algo.root.previousElementSibling;
+  let paragraph = algo.root;
   while (paragraph && paragraph.nodeName !== 'P') {
     paragraph = paragraph.previousElementSibling;
   }
@@ -613,9 +613,20 @@ function findAlgorithms(section, { includeIgnored } = { includeIgnored: false })
     })
     .filter(algo => includeIgnored || !!algo.rationale);
 
+  // Probable one-step algorithms starts with "To "
+  // followed by an exported definition
+  // of dfn-type either "dfn" or "abstract-op"
+  const candidateDfnSelectors = ['dfn[data-export][data-dfn-type="dfn"]',
+				 'dfn[data-export][data-dfn-type="abstract-op"]'
+				];
+  const probableOneLine = [...section.querySelectorAll(candidateDfnSelectors.map(s => `p:has(${s})`).join(','))]
+    .filter(p => p.textContent.startsWith("To " + p.querySelector(candidateDfnSelectors.join(',')).textContent))
+    .map(p => {
+      return { rationale: '"To <dfn>"', root: p };
+    });
   // Merge actual and probable algorithms, dropping duplicates and algorithms
   // that are nested under other algorithms.
-  let all = actual.concat(probable);
+  let all = actual.concat(probable).concat(probableOneLine);
   all = all.filter((algo, idx) => all.findIndex(al => al.root === algo.root) === idx);
   all = all.filter(algo1 => !all.find(algo2 => algo1 !== algo2 && algo2.root.contains(algo1.root)));
 

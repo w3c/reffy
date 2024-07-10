@@ -56,6 +56,24 @@ const tests = [
       }
     ]
   },
+  {
+    title: 'extracts one-paragraph algorithms',
+    html: `
+      <section>
+        <p>To <dfn data-export data-dfn-type=dfn id="algo-id">do nothing</dfn>, keep calm and carry on.</p>
+      </section>`,
+    algorithms: [
+      {
+        name: 'do nothing',
+        href: 'about:blank#algo-id',
+        html: 'To <dfn data-export="" data-dfn-type="dfn" id="algo-id">do nothing</dfn>, keep calm and carry on.',
+        rationale: '"To <dfn>"',
+        steps: [ {
+	  html: 'To <dfn data-export="" data-dfn-type="dfn" id="algo-id">do nothing</dfn>, keep calm and carry on.'
+	}]
+      }
+    ]
+  },
 
   {
     title: 'extracts a switch marked as such',
