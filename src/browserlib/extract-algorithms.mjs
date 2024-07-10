@@ -670,5 +670,5 @@ export default function (spec, idToHeading = {}) {
     // remove duplicate from multi-steps algorithms also detected by the
     // short form algorithms finder (relying on them being later in the
     // list)
-    .filter((algo, idx, arr) => arr.findIndex(al => !algo.html || al.html === algo.html) === idx);
+    .filter((algo, idx, arr) => !algo.html || algo.steps.length > 0 || arr.findIndex(al => al.html === algo.html) === idx);
 }
