@@ -336,6 +336,10 @@ function getHTMLContent(el) {
   }
 
   const clone = cloneAndClean(el);
+  let ol;
+  while (ol = clone.querySelector('ol')) {
+    ol.remove();
+  }
   for (const linkEl of clone.querySelectorAll(relativeUrlSelector)) {
     const attr = linkEl.getAttribute('href') ? 'href' : 'src';
     linkEl.setAttribute(attr, relativeToAbsolute[linkEl.getAttribute(attr)]);
@@ -522,11 +526,10 @@ function serializeStep(li) {
     res.additional = algorithms.slice(1)
       .map(algo => serializeAlgorithm(algo, { nested: true }));
   }
-  const ignoredAlgorithms = candidateAlgorithms
-    .filter(algo => !algo.rationale)
-    .map(algo => getTextContent(algo.root));
+  const ignoredAlgorithms = candidateAlgorithms.filter(algo => !algo.rationale);
   if (ignoredAlgorithms.length > 0) {
-    res.ignored = ignoredAlgorithms;
+    res.ignored = ignoredAlgorithms.map(algo => getTextContent(algo.root));
+
   }
   return res;
 }
