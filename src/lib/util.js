@@ -141,7 +141,7 @@ function expandBrowserModules(modules) {
             if (mod.endsWith('.mjs')) {
                 const name = getCamelCaseName(mod);
                 return {
-                    href: path.relative(browserlibPath, path.join(process.cwd(), mod)).replace(/\\/g, '/'),
+                    href: './' + path.relative(browserlibPath, path.join(process.cwd(), mod)).replace(/\\/g, '/'),
                     name,
                     property: name,
                     expanded: true
@@ -172,7 +172,7 @@ function expandBrowserModules(modules) {
             if (!mod.href) {
                 throw new Error('Browserlib module does not have an "href" property');
             }
-            mod.href = path.relative(browserlibPath, path.join(process.cwd(), mod.href)).replace(/\\/g, '/');
+            mod.href = './' + path.relative(browserlibPath, path.join(process.cwd(), mod.href)).replace(/\\/g, '/');
             if (!mod.name) {
                 mod.name = getCamelCaseName(mod.href);
             }

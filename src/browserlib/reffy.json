@@ -20,6 +20,10 @@
     "metadata": true
   },
   {
+    "href": "./extract-algorithms.mjs",
+    "property": "algorithms"
+  },
+  {
     "href": "./extract-links.mjs",
     "property": "links"
   },

@@ -15,14 +15,15 @@
     "links": {
       "autolinks": {},
       "rawlinks": {
-	"https://www.w3.org/TR/bar/": {
-	  "anchors": [
+        "https://www.w3.org/TR/bar/": {
+          "anchors": [
             "baz"
-	  ]
-	}
+          ]
+        }
       }
     },
     "title": "WOFF2",
+    "algorithms": [],
     "css": {
       "atrules": [],
       "properties": [],
@@ -75,15 +76,15 @@
     "links": {
       "autolinks": {
         "https://webidl.spec.whatwg.org/": {
-  	  "anchors": [
+            "anchors": [
             "Exposed",
             "idl-DOMString"
-	  ]
-	}
+          ]
+        }
       },
       "rawlinks": {
         "https://webidl.spec.whatwg.org/": {
-	}
+        }
       }
     },
     "refs": {
@@ -97,6 +98,7 @@
     },
     "title": "No Title",
     "generator": "respec",
+    "algorithms": [],
     "css": {
       "atrules": [],
       "properties": [],
@@ -221,6 +223,7 @@
       "informative": []
     },
     "title": "[No title found for https://w3c.github.io/accelerometer/]",
+    "algorithms": [],
     "css": {
       "atrules": [],
       "properties": [],
