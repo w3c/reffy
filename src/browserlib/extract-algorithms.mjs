@@ -407,7 +407,7 @@ function findIntroParagraph(algo) {
     // https://w3c.github.io/webappsec-csp/#abstract-opdef-parse-a-serialized-csp
     // TODO: improve!
     paragraph = algo.root;
-    while (paragraph && paragraph.nodeName !== 'P') {
+    while (paragraph && (paragraph.nodeName !== 'P' || paragraph.matches(informativeSelector))) {
       paragraph = paragraph.previousElementSibling;
     }
   }

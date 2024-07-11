@@ -348,6 +348,25 @@ const tests = [
       }
     ]
   },
+
+  {
+    title: 'ignores informative prose when it looks for introductory paragraph',
+    html: `
+      <p>To <dfn data-export="" data-dfn-type="dfn" id="do-something">do something</dfn>, run these steps:</p>
+      <p class="note">Hello there, it's Clippy. How can I be of any help?</p>
+      <ol class="algorithm"><li>Do something.</li></ol>
+      </div>`,
+    algorithms: [
+      {
+        name: 'do something',
+        href: 'about:blank#do-something',
+        rationale: '.algorithm',
+        html: 'To <dfn data-export="" data-dfn-type="dfn" id="do-something">do something</dfn>, run these steps:',
+        steps: [ { html: 'Do something.' } ]
+      }
+    ]
+  },
+
 ];
 
 describe('The algorithms extraction module', function () {
