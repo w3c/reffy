@@ -67,8 +67,7 @@ const tests = [
         name: 'do nothing',
         href: 'about:blank#algo-id',
         html: 'To <dfn data-export="" data-dfn-type="dfn" id="algo-id">do nothing</dfn>, keep calm and carry on.',
-        rationale: 'To <dfn>',
-        steps: [ ]
+        rationale: 'To <dfn>'
       }
     ]
   },
@@ -95,11 +94,11 @@ const tests = [
             steps: [
               {
                 'case': 'to be',
-                steps: [ { html: 'Do something.' } ]
+                html: 'Do something.'
               },
               {
                 'case': 'not to be',
-                steps: [ { html: 'Do nothing.' } ]
+                html: 'Do nothing.'
               }
             ]
           }
@@ -139,19 +138,19 @@ const tests = [
   },
 
   {
-    title: 'extracts multiple algorithms',
+    title: 'extracts multiple algorithms, in document order',
     html: `
       <div>
         <p>To do nothing, run these steps:</p>
         <ol class="algorithm" data-algorithm="my algo" id="algo-id"><li><p>Nothing.</p></li></ol>
       </div>
+      <p>To <dfn id=everything data-export data-dfn-type=abstract-op>do everything</dfn>, repeat <a href="#another-algo">do something</a> on everything.</p>
       <p>To <dfn data-export data-dfn-type=dfn id="another-algo">do something</dfn>, run these steps:</p>
       <ol><li>Do something.</li></ol>
       <p>When this method is invoked, run the following steps:</p>
       <ol><li>Do it.</li><li>Stop doing it.</li></ol>
       <p>When this method is invoked, run the following steps:</p>
-      <ol><li>Do it carefully.</li><li>Stop doing it at once.</li></ol>
-      <p>To <dfn id=everything data-export data-dfn-type=abstract-op>do everything</dfn>, repeat <a href="#another-algo">do something</a> on everything.</p>`,
+      <ol><li>Do it carefully.</li><li>Stop doing it at once.</li></ol>`,
     algorithms: [
       {
         name: 'my algo',
@@ -159,6 +158,12 @@ const tests = [
         html: 'To do nothing, run these steps:',
         rationale: '.algorithm',
         steps: [ { html: '<p>Nothing.</p>' } ]
+      },
+      {
+        name: 'do everything',
+        href: 'about:blank#everything',
+        html: 'To <dfn id="everything" data-export="" data-dfn-type="abstract-op">do everything</dfn>, repeat <a href="about:blank#another-algo">do something</a> on everything.',
+        rationale: 'To <dfn>'
       },
       {
         name: 'do something',
@@ -176,13 +181,6 @@ const tests = [
         html: 'When this method is invoked, run the following steps:',
         rationale: 'do',
         steps: [ { html: 'Do it carefully.' }, { html: 'Stop doing it at once.' } ]
-      },
-      {
-        name: 'do everything',
-        href: 'about:blank#everything',
-        html: 'To <dfn id="everything" data-export="" data-dfn-type="abstract-op">do everything</dfn>, repeat <a href="about:blank#another-algo">do something</a> on everything.',
-        rationale: 'To <dfn>',
-        steps: []
       }
     ]
   },

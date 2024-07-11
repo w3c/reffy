@@ -383,6 +383,20 @@ function getDefinedNameIn(el) {
   return {};
 }
 
+
+/**
+ * Retrieve a pointer to the introductory paragraph for the algorithm, if
+ * there's one.
+ */
+function findIntroParagraph(algo) {
+  let paragraph = algo.root;
+  while (paragraph && paragraph.nodeName !== 'P') {
+    paragraph = paragraph.previousElementSibling;
+  }
+  return paragraph;
+}
+
+
 /**
  * Find information about an algorithm (name and href).
  *
@@ -421,10 +435,7 @@ function getAlgorithmInfo(algo, context) {
   }
 
   // Get the introductory prose from the previous paragraph
-  let paragraph = algo.root;
-  while (paragraph && paragraph.nodeName !== 'P') {
-    paragraph = paragraph.previousElementSibling;
-  }
+  let paragraph = algo.intro;
   if (paragraph) {
     // Also look for a definition in the paragraph if we don't have a name and
     // href already.
@@ -472,14 +483,17 @@ function getAlgorithmInfo(algo, context) {
 function serializeAlgorithm(algo, context) {
   let res = getAlgorithmInfo(algo, context);
   res.rationale = algo.rationale;
-  res.steps = serializeSteps(algo.root);
+  const steps = serializeSteps(algo.root);
+  if (steps.length > 0) {
+    res.steps = steps;
+  }
   return res;
 }
 
 /**
  * Serialize the given steps contained in the given root element.
  */
-function serializeSteps(root, level = 0) {
+function serializeSteps(root) {
   if (root.nodeName === 'DL') {
     return [
       {
@@ -492,30 +506,25 @@ function serializeSteps(root, level = 0) {
           if (!dd) {
             throw new Error('Switch option without <dd> found: ' + option.textContent);
           }
-          return {
-            'case': getTextContent(option),
-            steps: serializeSteps(dd, level + 1)
-          };
+          return Object.assign(
+            { 'case': getTextContent(option) },
+            serializeStep(dd));
         })
       }
     ]
   }
   else if (root.nodeName === 'OL') {
-    return [...root.querySelectorAll('& > li')].map(li => serializeStep(li, level +1));
+    return [...root.querySelectorAll('& > li')].map(li => serializeStep(li));
   }
   else {
-    if (level === 0) {
-      return [];
-    } else {
-      return [serializeStep(root, level + 1)];
-    }
+    return [];
   }
 }
 
 /**
  * Serialize an algorithm step
  */
-function serializeStep(li, level) {
+function serializeStep(li) {
   let res = {};
   const candidateAlgorithms = findAlgorithms(li, { includeIgnored: true });
   const algorithms = candidateAlgorithms.filter(algo => !!algo.rationale);
@@ -617,37 +626,38 @@ function findAlgorithms(section, { includeIgnored } = { includeIgnored: false })
     })
     .filter(algo => includeIgnored || !!algo.rationale);
 
-  // Probable one-step algorithms starts with "To "
-  // followed by an exported definition
-  // of dfn-type either "dfn" or "abstract-op"
-  const candidateDfnSelectors = ['dfn[data-export][data-dfn-type="dfn"]',
-				 'dfn[data-export][data-dfn-type="abstract-op"]'
-				];
-  const probableOneLine = [...section.querySelectorAll(candidateDfnSelectors.map(s => `p:has(${s})`).join(','))]
-    .filter(p => p.textContent.startsWith("To " + p.querySelector(candidateDfnSelectors.join(',')).textContent))
-    .map(p => {
-      return { rationale: 'To <dfn>', root: p };
-    });
-  // Merge actual, probable and probable one-step algorithms,
-  // dropping duplicates and algorithms
+  // Merge actual and probable algorithms, dropping duplicates and algorithms
   // that are nested under other algorithms.
-  let all = actual.concat(probable).concat(probableOneLine);
+  let all = actual.concat(probable);
   all = all.filter((algo, idx) => all.findIndex(al => al.root === algo.root) === idx);
   all = all.filter(algo1 => !all.find(algo2 => algo1 !== algo2 && algo2.root.contains(algo1.root)));
+
+  // Look for the "intro" paragraph for the algorithms, if there's one.
+  // This will be used right after to extract "one-step" algorithms.
+  for (const algo of all) {
+    algo.intro = findIntroParagraph(algo);
+  }
+
+  // Complete the list with probable "one-step" algorithms: those defined in a
+  // paragraph, that start with "To " followed by an exported definition of
+  // type "dfn" or "abstract-op", and that don't have any steps (in other
+  // words, that haven't been captured yet).
+  const candidateDfnSelectors = [
+    'dfn[data-export][data-dfn-type="dfn"]',
+    'dfn[data-export][data-dfn-type="abstract-op"]'
+  ];
+  const probableOneLine = [...section.querySelectorAll(candidateDfnSelectors.map(s => `p:has(${s})`).join(','))]
+    .filter(p => p.textContent.startsWith('To ' + p.querySelector(candidateDfnSelectors.join(',')).textContent))
+    .filter(p => !all.find(algo => algo.intro === p))
+    .map(p => {
+      return { rationale: 'To <dfn>', root: p, intro: p };
+    })
+  all = all.concat(probableOneLine);
 
   // Consider algorithms in document order
   // (if we find more than one at the same level, first one will be reported as
   // the actual algorithm, the other ones as "additional" algorithms)
-  // Keep potential short-form algorithms (rationale: "To <dfn>") to the end
-  // to simplify filtering out duplicates later on
-
   all.sort((algo1, algo2) => {
-    if (algo1.rationale && (!algo2.rationale || algo2.rationale === "To <dfn>")) {
-      return -1;
-    }
-    if (algo2.rationale && (!algo1.rationale || algo1.rationale === "To <dfn>")) {
-      return 1;
-    }
     const cmp = algo1.root.compareDocumentPosition(algo2.root);
     if (cmp & Node.DOCUMENT_POSITION_PRECEDING) {
       return 1;
@@ -666,9 +676,5 @@ export default function (spec, idToHeading = {}) {
     return [];
   }
   const algorithms = findAlgorithms(document);
-  return algorithms.map(algo => serializeAlgorithm(algo))
-    // remove duplicate from multi-steps algorithms also detected by the
-    // short form algorithms finder (relying on them being later in the
-    // list)
-    .filter((algo, idx, arr) => !algo.html || algo.steps.length > 0 || arr.findIndex(al => al.html === algo.html) === idx);
+  return algorithms.map(algo => serializeAlgorithm(algo));
 }
