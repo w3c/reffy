@@ -42,7 +42,7 @@
     "webidl2": "24.4.1"
   },
   "devDependencies": {
-    "mocha": "10.5.1",
+    "mocha": "10.6.0",
     "respec": "35.1.1",
     "respec-hljs": "2.1.1",
     "rollup": "4.18.1",
