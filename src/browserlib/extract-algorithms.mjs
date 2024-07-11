@@ -389,10 +389,29 @@ function getDefinedNameIn(el) {
  * there's one.
  */
 function findIntroParagraph(algo) {
-  let paragraph = algo.root;
-  while (paragraph && paragraph.nodeName !== 'P') {
-    paragraph = paragraph.previousElementSibling;
+  let paragraph;
+  let container = algo.root.closest('.algorithm');
+  while (container) {
+    const dfn = container.querySelector('dfn');
+    if (dfn) {
+      paragraph = dfn.closest('p,div');
+      break;
+    }
+    container = container.parentElement.closest('.algorithm');
   }
+
+  if (!paragraph) {
+    // Consider that the introductory paragraph is the previous paragraph.
+    // That's not going to be 100% correct. For example, we will incorrectly
+    // capture an intermediary paragraph as in:
+    // https://w3c.github.io/webappsec-csp/#abstract-opdef-parse-a-serialized-csp
+    // TODO: improve!
+    paragraph = algo.root;
+    while (paragraph && paragraph.nodeName !== 'P') {
+      paragraph = paragraph.previousElementSibling;
+    }
+  }
+
   return paragraph;
 }
 
@@ -413,6 +432,10 @@ function getAlgorithmInfo(algo, context) {
     if (container && !context?.nested) {
       if (container.getAttribute('data-algorithm')) {
         info.name = normalize(container.getAttribute('data-algorithm'));
+        if (container.getAttribute('data-algorithm-for')) {
+          info.name = normalize(container.getAttribute('data-algorithm-for')) +
+            '/' + info.name;
+        }
         if (container.id) {
           // Use the container ID as anchor
           info.href = getAbsoluteUrl(container);

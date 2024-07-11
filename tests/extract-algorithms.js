@@ -287,6 +287,67 @@ const tests = [
       }
     ]
   },
+
+  {
+    title: 'takes data-algorithm-for into account to namespace an algorithm',
+    html: `
+      <ol class="algorithm" data-algorithm="hello" data-algorithm-for="world">
+        <li>Hello world!</li>
+      </ol>
+      <ol class="algorithm" data-algorithm="hello" data-algorithm-for="you">
+        <li>Hello you!</li>
+      </ol>`,
+    algorithms: [
+      {
+        name: 'world/hello',
+        rationale: '.algorithm',
+        steps: [ { html: 'Hello world!' } ]
+      },
+      {
+        name: 'you/hello',
+        rationale: '.algorithm',
+        steps: [ { html: 'Hello you!' } ]
+      }
+    ]
+  },
+
+  {
+    title: 'captures the first dfn in an algorithm as algorithm name',
+    html: `
+      <div class="algorithm">
+        <p>This is the <dfn data-export="" data-dfn-type="dfn" id="do-something">do something</dfn> algorithm. Please run these steps:</p>
+        <p>An annoying paragraph between the actual intro and the steps.</p>
+        <ol><li>Do something.</li></ol>
+      </div>`,
+    algorithms: [
+      {
+        name: 'do something',
+        href: 'about:blank#do-something',
+        rationale: '.algorithm',
+        html: 'This is the <dfn data-export="" data-dfn-type="dfn" id="do-something">do something</dfn> algorithm. Please run these steps:',
+        steps: [ { html: 'Do something.' } ]
+      }
+    ]
+  },
+
+  {
+    title: 'ignores a "To <dfn>" algorithm with same name as another algorithm',
+    html: `
+      <div class="algorithm">
+        <p>To <dfn data-export="" data-dfn-type="dfn" id="do-something">do something</dfn>, run these steps:</p>
+        <p>An annoying paragraph between the actual intro and the steps.</p>
+        <ol><li>Do something.</li></ol>
+      </div>`,
+    algorithms: [
+      {
+        name: 'do something',
+        href: 'about:blank#do-something',
+        rationale: '.algorithm',
+        html: 'To <dfn data-export="" data-dfn-type="dfn" id="do-something">do something</dfn>, run these steps:',
+        steps: [ { html: 'Do something.' } ]
+      }
+    ]
+  },
 ];
 
 describe('The algorithms extraction module', function () {
