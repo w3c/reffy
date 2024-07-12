@@ -367,6 +367,19 @@ const tests = [
     ]
   },
 
+  {
+    title: 'does not return a null href when dfn has no ID',
+    html: `
+      <p>To <dfn data-export="" data-dfn-type="dfn">do something</dfn>, just do something.</p>`,
+    algorithms: [
+      {
+        name: 'do something',
+        rationale: 'To <dfn>',
+        html: 'To <dfn data-export="" data-dfn-type="dfn">do something</dfn>, just do something.'
+      }
+    ]
+  },
+
 ];
 
 describe('The algorithms extraction module', function () {

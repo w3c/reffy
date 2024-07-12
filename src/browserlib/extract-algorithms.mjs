@@ -371,8 +371,22 @@ function getDefinedNameIn(el) {
     else {
       name += getTextContent(dfn);
     }
-    const href = dfn.id ? getAbsoluteUrl(dfn) : null;
-    return { name, href };
+    if (dfn.id) {
+      return { name, href: getAbsoluteUrl(dfn) };
+    }
+    else {
+      // Two known exceptions to the rule:
+      // - one due to CSS 2.1 not following the definitions data model:
+      // https://www.w3.org/TR/CSS21/visudet.html#containing-block-details
+      // - the other due to HTML still containing dfns without IDs as well,
+      // including one for an algorithm:
+      // https://html.spec.whatwg.org/multipage/server-sent-events.html#processField
+      // It's possible to find an ID in both cases. But it's not clear that
+      // CSS 2.1 algorithms are real algorithms; and it seems doable to fix the
+      // HTML spec. Let's just return the name without href, not to end up
+      // with a null `href` that the JSON schema forbids.
+      return { name };
+    }
   }
   else {
     const heading = el.querySelector('h2[id],h3[id],h4[id],h5[id],h6[id]');
