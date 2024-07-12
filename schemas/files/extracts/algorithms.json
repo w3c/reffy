@@ -4,9 +4,9 @@
 
   "type": "object",
   "additionalProperties": false,
-  "required": ["spec", "dfns"],
+  "required": ["spec", "algorithms"],
   "properties": {
     "spec": { "$ref": "../../common.json#/$defs/specInExtract" },
-    "dfns": { "$ref": "../../browserlib/extract-algorithms.json" }
+    "algorithms": { "$ref": "../../browserlib/extract-algorithms.json" }
   }
 }
