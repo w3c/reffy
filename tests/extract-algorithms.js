@@ -380,6 +380,126 @@ const tests = [
     ]
   },
 
+  {
+    title: 'does not get confused by weirdly nested algorithms',
+    html: `
+      <div class="algorithm">
+        <p>To <dfn data-export="" data-dfn-type="dfn" id="do-something">do something</dfn>, run these steps:</p>
+        <ol>
+          <li>Do something.</li>
+          <li>Then run the following steps to <dfn data-export="" data-dfn-type="dfn" id="do-something-else">do something else</dfn>:
+            <ol class="algorithm">
+              <li>Do something else.</li>
+            </ol>
+          </li>
+        </ol>
+      </div>`,
+    algorithms: [
+      {
+        name: 'do something',
+        href: 'about:blank#do-something',
+        rationale: '.algorithm',
+        html: 'To <dfn data-export="" data-dfn-type="dfn" id="do-something">do something</dfn>, run these steps:',
+        steps: [
+          { html: 'Do something.' },
+          {
+            html: 'Then run the following steps to <dfn data-export="" data-dfn-type="dfn" id="do-something-else">do something else</dfn>:',
+            rationale: '.algorithm',
+            steps: [ { html: 'Do something else.' } ]
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    title: 'uses the list item prose as introductory prose for an algorithm step',
+    html: `
+      <div class="algorithm">
+        <p>To <dfn data-export="" data-dfn-type="dfn" id="do-something">do something</dfn>, run these steps:</p>
+        <ol>
+          <li>Do something.</li>
+          <li>Then run the following steps:
+            <ol>
+              <li>Do something else.</li>
+            </ol>
+          </li>
+        </ol>
+      </div>`,
+    algorithms: [
+      {
+        name: 'do something',
+        href: 'about:blank#do-something',
+        rationale: '.algorithm',
+        html: 'To <dfn data-export="" data-dfn-type="dfn" id="do-something">do something</dfn>, run these steps:',
+        steps: [
+          { html: 'Do something.' },
+          {
+            html: 'Then run the following steps:',
+            rationale: 'do',
+            steps: [ { html: 'Do something else.' } ]
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    title: 'stops at the first container that has the algorithm name',
+    html: `
+      <div class="algorithm">
+        <p>To <dfn data-export="" data-dfn-type="dfn">do something</dfn>, just do something.</p>
+        <div class="algorithm">
+          <p>To <dfn data-export="" data-dfn-type="dfn">do something else</dfn>, just do something else.</p>
+        </div>
+      </div>`,
+    algorithms: [
+      {
+        name: 'do something',
+        rationale: 'To <dfn>',
+        html: 'To <dfn data-export="" data-dfn-type="dfn">do something</dfn>, just do something.',
+      },
+      {
+        name: 'do something else',
+        rationale: 'To <dfn>',
+        html: 'To <dfn data-export="" data-dfn-type="dfn">do something else</dfn>, just do something else.',
+      }
+    ]
+  },
+
+  {
+    title: 'avoids anchoring on dfns treacherously hidden in algorithm sub-steps',
+    html: `
+      <div class="algorithm">
+        <p>To <dfn data-dfn-type="dfn">do something</dfn>:</p>
+        <ol>
+          <li>Run the following substeps:
+            <ol>
+              <li>Do <dfn data-dfn-type="dfn">something</dfn>.</li>
+              <li>And something else.</li>
+            </ol>
+          </li>
+        </ol>
+      </div>`,
+    algorithms: [
+      {
+        name: 'do something',
+        rationale: '.algorithm',
+        html: 'To <dfn data-dfn-type="dfn">do something</dfn>:',
+        steps: [
+          {
+            html: 'Run the following substeps:',
+            rationale: 'do',
+            steps: [
+              { html: 'Do <dfn data-dfn-type="dfn">something</dfn>.' },
+              { html: 'And something else.' }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
 ];
 
 describe('The algorithms extraction module', function () {

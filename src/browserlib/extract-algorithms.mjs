@@ -404,14 +404,17 @@ function getDefinedNameIn(el) {
  */
 function findIntroParagraph(algo) {
   let paragraph;
-  let container = algo.root.closest('.algorithm');
+  let container = algo.root.closest('li,.algorithm');
   while (container) {
     const dfn = container.querySelector('dfn');
-    if (dfn) {
-      paragraph = dfn.closest('p,div');
+    if (dfn && !algo.root.contains(dfn)) {
+      paragraph = dfn.closest('p,div,li');
       break;
     }
-    container = container.parentElement.closest('.algorithm');
+    if (container.nodeName === 'LI') {
+      break;
+    }
+    container = container.parentElement.closest('li,.algorithm');
   }
 
   if (!paragraph) {
@@ -441,9 +444,10 @@ function getAlgorithmInfo(algo, context) {
   // Note some specs add the "algorithm" class to the `<ol>` and to the
   // wrapping container, and define the name in the wrapping container.
   let info = {};
+
   let container = algo.root.closest('.algorithm');
-  while (container) {
-    if (container && !context?.nested) {
+  if (!context?.nested) {
+    while (container) {
       if (container.getAttribute('data-algorithm')) {
         info.name = normalize(container.getAttribute('data-algorithm'));
         if (container.getAttribute('data-algorithm-for')) {
@@ -462,13 +466,15 @@ function getAlgorithmInfo(algo, context) {
             info.href = dfn.href;
           }
         }
-        break;
       }
       else {
         info = getDefinedNameIn(container);
+        if (info.name || info.href) {
+          break;
+        }
       }
+      container = container.parentElement.closest('.algorithm');
     }
-    container = container.parentElement.closest('.algorithm');
   }
 
   // Get the introductory prose from the previous paragraph
