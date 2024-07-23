@@ -1,8 +1,7 @@
-const assert = require('assert');
+import assert from 'node:assert';
+import { parse } from '../../src/cli/parse-webidl.js';
 
 describe('The WebIDL parser exports all IDL names', () => {
-  var parse = require('../../src/cli/parse-webidl').parse;
-
   it('exports named definitions', async () => {
     const data = await parse(`
       interface testInterface {};

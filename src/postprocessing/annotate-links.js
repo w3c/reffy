@@ -18,7 +18,7 @@ function canonicalizeUrl(url) {
 
 const needsSaving = {};
 
-module.exports = {
+export default {
   dependsOn: ['links'],
   input: 'spec',
 
@@ -38,3 +38,4 @@ module.exports = {
     return spec;
   }
 };
+

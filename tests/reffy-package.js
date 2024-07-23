@@ -1,10 +1,13 @@
-const assert = require("assert");
-const os = require("os");
-const fs = require("fs");
-const path = require("path");
-const util = require('util');
-const exec = util.promisify(require('child_process').exec);
-const mock = require('../src/lib/mock-server');
+import assert from "node:assert";
+import os from "node:os";
+import fs from "node:fs";
+import path from "node:path";
+import util from 'node:util';
+import { exec as execCb } from 'node:child_process';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import mock from '../src/lib/mock-server.js';
+const scriptPath = path.dirname(fileURLToPath(import.meta.url));
+const exec = util.promisify(execCb);
 
 const specs = [
   {url: "https://www.w3.org/TR/WOFF2/", nightly: {url: "https://w3c.github.io/woff/woff2/", pages:["https://w3c.github.io/woff/woff2/page.html"]}},
@@ -26,15 +29,17 @@ describe("The npm package of Reffy", function () {
 
   before(async () => {
     tmpdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'reffy-'));
-    const reffydir = path.resolve(__dirname, "..");
+    const reffydir = path.resolve(scriptPath, "..");
     const { stdout: reffyPackage } = await exec(`npm pack "${reffydir}"`, { cwd: tmpdir});
     await exec(`npm install ${reffyPackage.trim()}`, { cwd: tmpdir });
   });
 
   it("can crawl specs", async () => {
     const clidir = path.join(tmpdir, 'node_modules', 'reffy', 'src', 'lib');
-    const { crawlSpecs } = require(path.join(clidir, 'specs-crawler'));
-    const refResults = JSON.parse(fs.readFileSync(__dirname + "/crawl-test.json", "utf-8"));
+    const crawlerModuleUrl = pathToFileURL(path.join(clidir, 'specs-crawler.js')).toString();
+    const crawlerModule = await import(crawlerModuleUrl);
+    const crawlSpecs = crawlerModule.crawlSpecs;
+    const refResults = JSON.parse(fs.readFileSync(scriptPath + "/crawl-test.json", "utf-8"));
     const results = await crawlSpecs(specs, { forceLocalFetch: true });
     for (const result of results) {
       if (result?.ids?.length) {

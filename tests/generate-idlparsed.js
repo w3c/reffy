@@ -1,17 +1,17 @@
-const assert = require('assert');
-const { run } = require('../src/postprocessing/idlparsed');
+import assert from 'node:assert';
+import idlparsed from '../src/postprocessing/idlparsed.js';
 
 describe('The parsed IDL generator', function () {
   it('leaves a spec without IDL intact', async () => {
     const spec = {};
-    const result = await run(spec);
+    const result = await idlparsed.run(spec);
     assert.deepEqual(result, {});
   });
 
   it('parses raw IDL defined in the `idl` property', async () => {
     const idl = 'interface foo {};';
     const spec = { idl };
-    const result = await run(spec);
+    const result = await idlparsed.run(spec);
     assert.deepEqual(result?.idlparsed?.idlNames, {
       foo: {
         extAttrs: [],
@@ -28,7 +28,7 @@ describe('The parsed IDL generator', function () {
   it('reports IDL parsing errors', async () => {
     const idl = 'intraface foo {};';
     const spec = { idl };
-    const result = await run(spec);
+    const result = await idlparsed.run(spec);
     assert.equal(result.idlparsed, `WebIDLParseError: Syntax error at line 1:
 intraface foo {};
 ^ Unrecognised tokens`);
@@ -58,7 +58,7 @@ intraface foo {};
   ]) {
     it(`links back to the definition in the spec when available (${type})`, async () => {
       const spec = getIdlSpecWithDfn(type);
-      const result = await run(spec);
+      const result = await idlparsed.run(spec);
       assert.deepEqual(result?.idlparsed?.idlNames, {
         foo: {
           extAttrs: [],

@@ -2,26 +2,27 @@
  * A bunch of utility functions common to multiple scripts
  */
 
-const fs = require('fs').promises;
-const { existsSync, readdirSync } = require('fs');
-const path = require('path');
-const puppeteer = require('puppeteer');
-const crypto = require('crypto');
-const { Buffer } = require('buffer');
-const Ajv = require('ajv');
-const addFormats = require('ajv-formats');
-const commonSchema = require('../../schemas/common.json');
-const fetch = require('./fetch');
-const specEquivalents = require('../specs/spec-equivalents.json');
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { Buffer } from 'node:buffer';
+import { fileURLToPath } from 'node:url';
+import puppeteer from 'puppeteer';
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
+import fetch from './fetch.js';
 
+import commonSchema from '../../schemas/common.json' with { type: 'json' };
+import specEquivalents from '../specs/spec-equivalents.json' with { type: 'json' };
+import reffyModules from '../browserlib/reffy.json' with { type: 'json' };
 
-const reffyModules = require('../browserlib/reffy.json');
+const scriptPath = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Maximum depth difference supported between Reffy's install path and custom
  * modules that may be provided on the command-line
  *
- * TODO: Find a way to get right of that, there should be no limit
+ * TODO: Find a way to get rid of that, there should be no limit
  */
 const maxPathDepth = 20;
 
@@ -38,39 +39,30 @@ const prop = p => x => x[p];
 
 
 /**
- * Wrapper around the "require" function to require files relative to the
- * current working directory (CWD), instead of relative to the current JS
- * file.
- *
- * This is typically needed to be able to use "require" to load JSON config
- * files provided as command-line arguments.
+ * Load a JSON file as JS object.
  *
  * @function
  * @param {String} filename The path to the file to require
- * @return {Object} The result of requiring the file relative to the current
- *   working directory.
+ * @return {Object} The result of loading and parsing the file relative to the
+ *   current working directory.
  */
-function requireFromWorkingDirectory(filename) {
-    try {
-        return require(path.resolve(filename));
-    }
-    catch (err) {
-        return null;
-    }
-}
+async function loadJSON(filename) {
+  try {
+    const json = await fs.readFile(filename, 'utf8');
+    return JSON.parse(json);
+  }
+  catch (err) {
+    return null;
+  }
+};
 
 
 /**
  * Path to the "webidl2" folder to resolve relative links in the ES6 browser
  * lib modules. The path depends on whether Reffy is run directly, or installed
  * as a library.
- *
- * Code relies on the "require.resolve" function, but note that, when given a
- * simple module name, that function returns the path to the file targeted by
- * the "main" property in "package.json" which, in the case of the webidl2
- * module, is "dist/webidl2.js".
  */
-const webidl2Folder = path.resolve(path.dirname(require.resolve('webidl2')), '..');
+const webidl2Folder = path.dirname(fileURLToPath(import.meta.resolve('webidl2')));
 
 
 /**
@@ -128,7 +120,7 @@ function expandBrowserModules(modules) {
         return name;
     }
 
-    const browserlibPath = path.resolve(__dirname, '..', 'browserlib');
+    const browserlibPath = path.resolve(scriptPath, '..', 'browserlib');
     if (!modules) {
         return reffyModules.map(mod => Object.assign({
             name: getCamelCaseName(mod.href),
@@ -391,7 +383,7 @@ async function processSpecification(spec, processFunction, args, options) {
                         const requestPath = request.url.substring(request.url.indexOf(reffyPath) + reffyPath.length);
                         let depth = requestPath.lastIndexOf('__/') / 3;
                         const filename = requestPath.substring(requestPath.lastIndexOf('__/') + 3);
-                        let filePath = path.resolve(__dirname, '..', 'browserlib');
+                        let filePath = path.resolve(scriptPath, '..', 'browserlib');
                         while (depth < maxPathDepth - 1) {
                             filePath = path.resolve(filePath, '..');
                             depth += 1;
@@ -1041,7 +1033,7 @@ function getInterfaceTreeInfo(iface, interfaces) {
  * @return {function} The "validate" function for Ajv. The function returns null
  *   if the requested schema does not exist.
  */
-function getSchemaValidationFunction(schemaName) {
+async function getSchemaValidationFunction(schemaName) {
     // Helper function that selects the right schema file from the given
     // schema name.
     function getSchemaFileFromSchemaName(name) {
@@ -1065,11 +1057,11 @@ function getSchemaValidationFunction(schemaName) {
         }
     }
 
-    const schemasFolder = path.join(__dirname, '..', '..', 'schemas');
+    const schemasFolder = path.resolve(scriptPath, '..', '..', 'schemas');
     const schemaFile = getSchemaFileFromSchemaName(schemaName);
     let schema;
     try {
-        schema = require(path.join(schemasFolder, schemaFile));
+        schema = await loadJSON(path.join(schemasFolder, schemaFile));
     }
     catch (err) {
         return null;
@@ -1082,10 +1074,11 @@ function getSchemaValidationFunction(schemaName) {
         // The files schemas reference the browserlib ones, which need to
         // be explicitly added for Ajv to resolve references
         const folder = path.join(schemasFolder, 'browserlib');
-        const files = readdirSync(folder);
+        const files = await fs.readdir(folder);
         for (const file of files) {
             if (file.endsWith('.json')) {
-                ajvWithSchemas = ajvWithSchemas.addSchema(require(path.join(schemasFolder, 'browserlib', file)));
+                const json = await loadJSON(path.join(schemasFolder, 'browserlib', file));
+                ajvWithSchemas = ajvWithSchemas.addSchema(json);
             }
         }
     }
@@ -1118,10 +1111,8 @@ function getSchemaValidationFunction(schemaName) {
     };
 }
 
-
-module.exports = {
+export {
     fetch,
-    requireFromWorkingDirectory,
     expandBrowserModules,
     setupBrowser,
     teardownBrowser,
@@ -1133,5 +1124,6 @@ module.exports = {
     getGeneratedIDLNamesByCSSProperty,
     createFolderIfNeeded,
     getInterfaceTreeInfo,
-    getSchemaValidationFunction
+    getSchemaValidationFunction,
+    loadJSON
 };

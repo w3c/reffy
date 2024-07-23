@@ -1,8 +1,7 @@
-const assert = require('assert');
+import assert from 'node:assert';
+import { parse } from '../../src/cli/parse-webidl.js';
 
 describe('When it parses well-known types, the WebIDL parser', () => {
-  const parse = require('../../src/cli/parse-webidl').parse;
-
   const someWellKnownTypes = ['undefined', 'boolean', 'DOMString', 'long long'];
 
   someWellKnownTypes.forEach(type => {

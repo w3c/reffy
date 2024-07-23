@@ -1,8 +1,10 @@
-const assert = require('assert');
-const puppeteer = require('puppeteer');
-const path = require('path');
-const rollup = require('rollup');
-const { getSchemaValidationFunction } = require('../src/lib/util');
+import assert from 'node:assert';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import puppeteer from 'puppeteer';
+import { rollup } from 'rollup';
+import { getSchemaValidationFunction } from '../src/lib/util.js';
+const scriptPath = path.dirname(fileURLToPath(import.meta.url));
 
 const tests = [
   {
@@ -508,7 +510,7 @@ describe('The algorithms extraction module', function () {
   let browser;
   let mapIdsToHeadingsCode;
   let extractAlgorithmsCode;
-  const validateSchema = getSchemaValidationFunction('extract-algorithms');
+  let validateSchema;
 
   async function assertExtractedAlgorithms(html, algorithms, spec) {
     const page = await browser.newPage();
@@ -532,8 +534,10 @@ describe('The algorithms extraction module', function () {
   }
 
   before(async () => {
-    const extractAlgorithmsBundle = await rollup.rollup({
-      input: path.resolve(__dirname, '../src/browserlib/extract-algorithms.mjs'),
+    validateSchema = await getSchemaValidationFunction('extract-algorithms');
+
+    const extractAlgorithmsBundle = await rollup({
+      input: path.resolve(scriptPath, '../src/browserlib/extract-algorithms.mjs'),
       onwarn: _ => {}
     });
     const extractAlgorithmsOutput = (await extractAlgorithmsBundle.generate({
@@ -542,8 +546,8 @@ describe('The algorithms extraction module', function () {
     })).output;
     extractAlgorithmsCode = extractAlgorithmsOutput[0].code;
 
-    const mapIdsToHeadingsBundle = await rollup.rollup({
-      input: path.resolve(__dirname, '../src/browserlib/map-ids-to-headings.mjs')
+    const mapIdsToHeadingsBundle = await rollup({
+      input: path.resolve(scriptPath, '../src/browserlib/map-ids-to-headings.mjs')
     });
     const mapIdsToHeadingsOutput = (await mapIdsToHeadingsBundle.generate({
       name: 'mapIdsToHeadings',

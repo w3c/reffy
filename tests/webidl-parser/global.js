@@ -1,8 +1,7 @@
-const assert = require('assert');
+import assert from 'node:assert';
+import { parse } from '../../src/cli/parse-webidl.js';
 
 describe('For Global/Exposed attributes, the WebIDL parser', () => {
-  var parse = require('../../src/cli/parse-webidl').parse;
-
   it('does not expose an interface on Window by default', async () => {
     const data = await parse(`
       interface notExposedOnWindow {};

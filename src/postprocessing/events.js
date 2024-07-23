@@ -3,9 +3,9 @@
  * per event.
  */
 
-const { isLatestLevelThatPasses, getInterfaceTreeInfo } = require('../lib/util');
+import { isLatestLevelThatPasses, getInterfaceTreeInfo } from '../lib/util.js';
 
-module.exports = {
+export default {
   dependsOn: ['events'],
   input: 'crawl',
   property: 'events',

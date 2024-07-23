@@ -1,8 +1,10 @@
-const assert = require('assert');
-const puppeteer = require('puppeteer');
-const path = require('path');
-const rollup = require('rollup');
-const { getSchemaValidationFunction } = require('../src/lib/util');
+import assert from 'node:assert';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import puppeteer from 'puppeteer';
+import { rollup } from 'rollup';
+import { getSchemaValidationFunction } from '../src/lib/util.js';
+const scriptPath = path.dirname(fileURLToPath(import.meta.url));
 
 const testLinks = [
   {
@@ -68,11 +70,12 @@ describe("Links extraction", function () {
 
   let browser;
   let extractLinksCode;
-  const validateSchema = getSchemaValidationFunction('extract-links');
+  let validateSchema;
 
   before(async () => {
-    const extractLinksBundle = await rollup.rollup({
-      input: path.resolve(__dirname, '../src/browserlib/extract-links.mjs')
+    validateSchema = await getSchemaValidationFunction('extract-links');
+    const extractLinksBundle = await rollup({
+      input: path.resolve(scriptPath, '../src/browserlib/extract-links.mjs')
     });
     const extractLinksOutput = (await extractLinksBundle.generate({
       name: 'extractLinks',

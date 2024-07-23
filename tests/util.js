@@ -1,10 +1,10 @@
-const assert = require('assert');
-
-const specs = require('web-specs');
-const {
+import assert from 'node:assert';
+import {
   getGeneratedIDLNamesByCSSProperty,
   isLatestLevelThatPasses
-} = require('../src/lib/util');
+} from '../src/lib/util.js';
+import specs from 'web-specs' with { type: 'json' };
+
 
 describe('isLatestLevelThatPasses', () => {
   function getSpecAtLevel(level, flags) {

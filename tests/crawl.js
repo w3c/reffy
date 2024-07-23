@@ -1,10 +1,17 @@
-const { crawlSpecs } = require("../src/lib/specs-crawler");
-const mockServer = require('../src/lib/mock-server');
-const fs = require("fs");
-const path = require("path");
-const os = require("os");
+import { crawlSpecs } from "../src/lib/specs-crawler.js";
+import mockServer from '../src/lib/mock-server.js';
+import fs from "node:fs";
+import path from "node:path";
+import os from "node:os";
+import assert from "node:assert";
+import process from 'node:process';
+import { fileURLToPath } from 'node:url';
+import { loadJSON } from "../src/lib/util.js";
 
-const {version: reffyVersion} = require('../package.json');
+import packageConfig from '../package.json' with { type: 'json' };
+const reffyVersion = packageConfig.version;
+
+const scriptPath = path.dirname(fileURLToPath(import.meta.url));
 
 const specs = [
   {url: "https://www.w3.org/TR/WOFF2/", nightly: {url: "https://w3c.github.io/woff/woff2/", pages:["https://w3c.github.io/woff/woff2/page.html"]}},
@@ -30,14 +37,12 @@ async function runWithAnnotatedCrawlData(path, fn) {
 }
 
 if (global.describe && describe instanceof Function) {
-  const assert = require('assert');
-
   describe("The crawler", function () {
     this.slow(20000);
     this.timeout(60000);
 
     it("runs without errors on a small sample of specs", async () => {
-      const refResults = JSON.parse(fs.readFileSync(__dirname + "/crawl-test.json", "utf-8"));
+      const refResults = JSON.parse(fs.readFileSync(scriptPath + "/crawl-test.json", "utf-8"));
       const results = await crawl();
       for (const result of results) {
         if (result?.ids?.length) {
@@ -55,7 +60,7 @@ if (global.describe && describe instanceof Function) {
     });
 
     it("supports 'file' URLs", async () => {
-      const fileurl = (new URL('crawl-spec.html', `file://${__dirname}/`)).href;
+      const fileurl = (new URL('crawl-spec.html', `file://${scriptPath}/`)).href;
       const results = await crawlSpecs([{
         url: fileurl,
         nightly: { url: fileurl }
@@ -65,14 +70,14 @@ if (global.describe && describe instanceof Function) {
 
     it("matches spec shortnames", async () => {
       const output = fs.mkdtempSync(path.join(os.tmpdir(), 'reffy-'));
-      const refResults = JSON.parse(fs.readFileSync(__dirname + "/crawl-test.json", "utf-8"))
+      const refResults = JSON.parse(fs.readFileSync(scriptPath + "/crawl-test.json", "utf-8"))
         .find(res => res.url === 'https://www.w3.org/TR/accelerometer/');
       await crawlSpecs({
         specs: ['accelerometer'],
         output: output,
         forceLocalFetch: true
       });
-      const results = require(path.resolve(output, 'index.json'));
+      const results = await loadJSON(path.resolve(output, 'index.json'));
       assert.equal(results.results[0].title, 'Accelerometer');
     });
 
@@ -83,25 +88,25 @@ if (global.describe && describe instanceof Function) {
         output: output,
         forceLocalFetch: true
       });
-      const results = require(path.resolve(output, 'index.json'));
+      const results = await loadJSON(path.resolve(output, 'index.json'));
       assert.equal(results.results[0].url, 'https://www.w3.org/TR/pointerlock-2/');
     });
 
     it("interprets filenames relative to the current folder", async () => {
       const output = fs.mkdtempSync(path.join(os.tmpdir(), 'reffy-'));
       await crawlSpecs({
-        specs: [path.join(path.relative(process.cwd(), __dirname), 'crawl-spec.html')],
+        specs: [path.join(path.relative(process.cwd(), scriptPath), 'crawl-spec.html')],
         output: output,
         forceLocalFetch: true
       });
-      const results = require(path.resolve(output, 'index.json'));
+      const results = await loadJSON(path.resolve(output, 'index.json'));
       assert.equal(results.results[0].title, 'A test spec');
     });
 
 
     it("skips processing and reuse fallback data when spec cache info indicates it has not changed", async () => {
       const url = "https://www.w3.org/TR/ididnotchange/";
-      const fallback = path.resolve(__dirname, 'crawl-cache.json');
+      const fallback = path.resolve(scriptPath, 'crawl-cache.json');
       const results = await runWithAnnotatedCrawlData(fallback, async () => crawlSpecs(
         [{ url, nightly: { url } }],
         {
@@ -124,7 +129,7 @@ if (global.describe && describe instanceof Function) {
 
     it("reports errors and returns fallback data when possible", async () => {
       const url = "https://www.w3.org/TR/idontexist/";
-      const fallback = path.resolve(__dirname, 'crawl-fallback.json');
+      const fallback = path.resolve(scriptPath, 'crawl-fallback.json');
       const results = await crawlSpecs(
         [{ url, nightly: { url } }],
         {
@@ -143,13 +148,13 @@ if (global.describe && describe instanceof Function) {
         specs: [{ url, nightly: { url } }],
         output: output,
         forceLocalFetch: true,
-        fallback: path.resolve(__dirname, "crawl-fallback.json")
+        fallback: path.resolve(scriptPath, "crawl-fallback.json")
       });
-      const results = require(path.resolve(output, "index.json"));
+      const results = await loadJSON(path.resolve(output, "index.json"));
       assert.equal(results.results[0].url, "https://www.w3.org/TR/idontexist/");
       assert(results.results[0].error.includes("Loading https://www.w3.org/TR/idontexist/ triggered HTTP status 404"));
       assert.equal(results.results[0].refs, "refs/idontexist.json");
-      const refs = require(path.resolve(output, "refs", "idontexist.json"));
+      const refs = await loadJSON(path.resolve(output, "refs", "idontexist.json"));
       assert.equal(refs.refs, "A useful list of refs");
     });
 
@@ -192,11 +197,11 @@ if (global.describe && describe instanceof Function) {
       }
     });
   });
-} else if (require.main === module) {
+} else if (process.argv[1] === fileURLToPath(import.meta.url)) {
   // when called directly, we update the fixture file used for comparison
   (async function () {
     const results = await crawl();
-    fs.writeFileSync(__dirname + "/crawl-test.json", JSON.stringify(results, null, 2), "utf-8");
+    fs.writeFileSync(scriptPath + "/crawl-test.json", JSON.stringify(results, null, 2), "utf-8");
   })().catch(err => {
     console.error(err);
     process.exit(2);

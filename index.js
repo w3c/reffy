@@ -1,10 +1,19 @@
-module.exports = {
-  parseIdl: require("./src/cli/parse-webidl").parse,
-  crawlSpecs: require("./src/lib/specs-crawler").crawlSpecs,
-  expandCrawlResult: require("./src/lib/util").expandCrawlResult,
-  mergeCrawlResults: require("./src/lib/util").mergeCrawlResults,
-  isLatestLevelThatPasses: require("./src/lib/util").isLatestLevelThatPasses,
-  getInterfaceTreeInfo: require("./src/lib/util").getInterfaceTreeInfo,
-  getSchemaValidationFunction: require("./src/lib/util").getSchemaValidationFunction,
-  postProcessor: require("./src/lib/post-processor")
+import { parseIdl } from "./src/cli/parse-webidl.js";
+import { crawlSpecs } from "./src/lib/specs-crawler.js";
+import { expandCrawlResult } from "./src/lib/util.js";
+import { mergeCrawlResults } from "./src/lib/util.js";
+import { isLatestLevelThatPasses } from "./src/lib/util.js";
+import { getInterfaceTreeInfo } from "./src/lib/util.js";
+import { getSchemaValidationFunction } from "./src/lib/util.js";
+import postProcessor from "./src/lib/post-processor.js";
+
+export {
+  parseIdl,
+  crawlSpecs,
+  expandCrawlResult,
+  mergeCrawlResults,
+  isLatestLevelThatPasses,
+  getInterfaceTreeInfo,
+  getSchemaValidationFunction,
+  postProcessor
 };

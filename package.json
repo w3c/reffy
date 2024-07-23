@@ -29,6 +29,7 @@
   "engines": {
     "node": ">=20.12.1"
   },
+  "type": "module",
   "main": "index.js",
   "bin": "./reffy.js",
   "dependencies": {

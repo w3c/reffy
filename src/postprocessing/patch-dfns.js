@@ -10,7 +10,7 @@
  * The module runs at the spec level.
  */
 
-module.exports = {
+export default {
   dependsOn: ['dfns'],
   input: 'spec',
 

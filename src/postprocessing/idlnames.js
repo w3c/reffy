@@ -7,20 +7,20 @@
  * to worry about ordering, "idlparsed" will always run before this one).
  */
 
-const fs = require('fs');
-const path = require('path');
-const {
+import fs from 'node:fs';
+import path from 'node:path';
+import {
   matchIdlDfn,
-  getExpectedDfnFromIdlDesc } = require('../cli/check-missing-dfns');
-const {
+  getExpectedDfnFromIdlDesc } from '../cli/check-missing-dfns.js';
+import {
   isLatestLevelThatPasses,
-  createFolderIfNeeded } = require('../lib/util');
+  createFolderIfNeeded } from '../lib/util.js';
 
 
 /**
  * Definition of the post-processing module
  */
-module.exports = {
+export default {
   dependsOn: ['idlparsed', 'dfns'],
   input: 'crawl',
   run: generateIdlNames,

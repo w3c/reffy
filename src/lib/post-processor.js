@@ -47,22 +47,67 @@
  * @module
  */
 
-const fs = require('fs');
-const path = require('path');
-const { createFolderIfNeeded, requireFromWorkingDirectory } = require('./util');
+import fs from 'node:fs';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { createFolderIfNeeded } from './util.js';
+import csscomplete from '../postprocessing/csscomplete.js';
+import events from '../postprocessing/events.js';
+import idlnames from '../postprocessing/idlnames.js';
+import idlparsed from '../postprocessing/idlparsed.js';
+import annotatelinks from '../postprocessing/annotate-links.js';
+import patchdfns from '../postprocessing/patch-dfns.js';
 
 
 /**
  * Core post-processing modules
  */
 const modules = {
-  csscomplete: require('../postprocessing/csscomplete'),
-  events: require('../postprocessing/events'),
-  idlnames: require('../postprocessing/idlnames'),
-  idlparsed: require('../postprocessing/idlparsed'),
-  annotatelinks: require('../postprocessing/annotate-links'),
-  patchdfns: require('../postprocessing/patch-dfns')
+  csscomplete,
+  events,
+  idlnames,
+  idlparsed,
+  annotatelinks,
+  patchdfns
 };
+
+
+/**
+ * Custom post-processing modules
+ */
+const customModules = {};
+
+
+/**
+ * Loads post-processing modules once and for all
+ */
+async function loadModules(mods) {
+  for (const mod of mods) {
+    if (typeof mod === 'string') {
+      if (modules[mod]) {
+        // Core post-processing module, already loaded
+        continue;
+      }
+      else {
+        try {
+          customModules[mod] = await import(pathToFileURL(mod));
+        }
+        catch (err) {
+          throw new Error(`Unknown post-processing module "${mod}"`);
+        }
+        if (!isModuleValid(customModules[mod])) {
+          throw new Error(`"${mod}" is not a valid post-processing module`);
+        }
+      }
+    }
+    else {
+      // Given post-processing moduel should already be a good one
+      if (!isModuleValid(customModules[mod])) {
+        throw new Error(`Post-processing module given as parameter does not have a "run" function`);
+      }
+    }
+  }
+}
 
 
 /**
@@ -79,19 +124,12 @@ function getModule(mod) {
     if (modules[mod]) {
       return Object.assign({ name: mod }, modules[mod]);
     }
-    else {
-      const fmod = requireFromWorkingDirectory(mod);
-      if (!fmod) {
-        throw new Error(`Unknown post-processing module "${mod}"`);
-      }
-      if (!isModuleValid(fmod)) {
-        throw new Error(`"${mod}" is not a valid post-processing module`);
-      }
-      return Object.assign({ name: mod }, fmod);
+    else if (customModules[mod]) {
+      return Object.assign({ name: mod }, customModules[mod]);
     }
-  }
-  else if (!isModuleValid(mod)) {
-    throw new Error(`Post-processing module given as parameter does not have a "run" function`);
+    else {
+      throw new Error(`Unknown post-processing module "${mod}"`);
+    }
   }
   return mod;
 }
@@ -270,8 +308,10 @@ function appliesAtLevel(mod, level) {
 /**************************************************
 Export post-processing functions
 **************************************************/
-module.exports = {
-  modules: Object.keys(modules),
+const moduleNames = Object.keys(modules);
+export {
+  moduleNames as modules,
+  loadModules,
   run, save,
   extractsPerSeries,
   dependsOn,

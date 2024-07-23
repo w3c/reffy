@@ -1,11 +1,11 @@
-const css = require("../../src/lib/css-grammar-parser");
-const fs = require("fs");
-const assert = require("assert");
+import assert from "node:assert";
+import fs from "node:fs";
+import { parsePropDefValue } from "../../src/lib/css-grammar-parser.js";
 
 const propDefs = fs.readFileSync("tests/css-grammar-parser/in", "utf-8").split("\n").map(def => def.trim());
 const propDefsOut = JSON.parse(fs.readFileSync("tests/css-grammar-parser/out.json", "utf-8"));
 
-const results = propDefs.map(css.parsePropDefValue);
+const results = propDefs.map(parsePropDefValue);
 describe('Parser correctly parses grammar instances', () => {
   for(let i in results) {
     it(`parses property definition ${propDefs[i]} as expected`, () => {
