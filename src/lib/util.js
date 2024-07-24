@@ -1059,11 +1059,8 @@ async function getSchemaValidationFunction(schemaName) {
 
     const schemasFolder = path.resolve(scriptPath, '..', '..', 'schemas');
     const schemaFile = getSchemaFileFromSchemaName(schemaName);
-    let schema;
-    try {
-        schema = await loadJSON(path.join(schemasFolder, schemaFile));
-    }
-    catch (err) {
+    const schema = await loadJSON(path.join(schemasFolder, schemaFile));
+    if (!schema) {
         return null;
     }
 
