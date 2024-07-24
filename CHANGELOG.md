@@ -6,6 +6,20 @@ Minor and patch release notes are currently only documented in
 
 Reffy adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v17.0.0 - 2024-07-24
+
+### Breaking change
+
+- Switch to ECMAScript modules ([#1628](https://github.com/w3c/reffy/pull/1628))
+
+Reffy now exports values using ECMAScript modules. This creates two breaking changes:
+
+1. If your code needs to import values from Reffy, you will need to switch to ECMAScript modules too, or use a dynamic import.
+2. The exported `getSchemaValidationFunction` is now asynchronous.
+
+The change does not affect the command-line interface.
+
+
 ## v16.0.0 - 2024-06-07
 
 ### Breaking change
