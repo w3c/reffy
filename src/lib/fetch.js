@@ -6,7 +6,6 @@
  */
 
 import os from 'node:os';
-import { cwd } from 'node:process';
 import path from 'node:path';
 import baseFetch from 'fetch-filecache-for-crawling';
 import { loadJSON } from './util.js';
