@@ -22,7 +22,10 @@
  * @module checker
  */
 
-const path = require('path');
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import process from 'node:process';
+import { loadJSON } from '../lib/util.js';
 
 /**
  * List of spec shortnames that, so far, don't follow the dfns data model
@@ -358,19 +361,19 @@ function matchIdlDfn(expected, actual,
  *   an array of missing CSS or IDL definitions. The function returns null when
  *   there are no missing definitions.
  */
-function checkSpecDefinitions(spec, options = {}) {
+async function checkSpecDefinitions(spec, options = {}) {
   if (!options.includeObsolete && specsWithObsoleteDfnsModel.includes(spec.shortname)) {
     return { obsoleteDfnsModel: true };
   }
 
   const dfns = (typeof spec.dfns === "string") ?
-    require(path.resolve(options.rootFolder, spec.dfns)).dfns :
+    (await loadJSON(path.resolve(options.rootFolder, spec.dfns))).dfns :
     (spec.dfns || []);
   const css = (typeof spec.css === "string") ?
-    require(path.resolve(options.rootFolder, spec.css)) :
+    (await loadJSON(path.resolve(options.rootFolder, spec.css))) :
     (spec.css || {});
   const idl = (typeof spec.idlparsed === "string") ?
-    require(path.resolve(options.rootFolder, spec.idlparsed)).idlparsed :
+    (await loadJSON(path.resolve(options.rootFolder, spec.idlparsed))).idlparsed :
     spec.idlparsed;
 
   // Make sure that all expected CSS definitions exist in the dfns extract
@@ -466,9 +469,9 @@ function checkSpecDefinitions(spec, options = {}) {
  *  identify the specification, and a `missing` property that is an object that
  *  may have `css` and `idl` properties which list missing CSS/IDL definitions.
  */
-function checkDefinitions(pathToReport, options = {}) {
+async function checkDefinitions(pathToReport, options = {}) {
   const rootFolder = path.resolve(process.cwd(), pathToReport);
-  const index = require(path.resolve(rootFolder, 'index.json')).results;
+  const index = (await loadJSON(path.resolve(rootFolder, 'index.json'))).results;
 
   // Check all dfns against CSS and IDL extracts
   const checkOptions = {
@@ -477,7 +480,7 @@ function checkDefinitions(pathToReport, options = {}) {
   };
   const missing = index
     .filter(spec => !options.shortname || spec.shortname === options.shortname)
-    .map(spec => {
+    .map(async spec => {
       const res = {
         url: spec.url,
         crawled: spec.crawled,
@@ -486,11 +489,10 @@ function checkDefinitions(pathToReport, options = {}) {
       if (!spec.dfns) {
         return res;
       }
-      res.missing = checkSpecDefinitions(spec, checkOptions);
+      res.missing = await checkSpecDefinitions(spec, checkOptions);
       return res;
     });
-
-  return missing;
+  return Promise.all(missing);
 }
 
 
@@ -516,26 +518,28 @@ function reportMissing(missing) {
 /**************************************************
 Export methods for use as module
 **************************************************/
-module.exports.checkSpecDefinitions = checkSpecDefinitions;
-module.exports.checkDefinitions = checkDefinitions;
+export {
+  checkSpecDefinitions,
+  checkDefinitions,
 
-// "Inner" functions that the IDL names generator uses to link IDL terms with
-// their definition (see generate-idlnames.js)
-module.exports.getExpectedDfnFromIdlDesc = getExpectedDfnFromIdlDesc;
-module.exports.matchIdlDfn = matchIdlDfn;
+  // "Inner" functions that the IDL names generator uses to link IDL terms with
+  // their definition (see generate-idlnames.js)
+  getExpectedDfnFromIdlDesc,
+  matchIdlDfn
+};
 
 
 
 /**************************************************
 Code run if the code is run as a stand-alone module
 **************************************************/
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const pathToReport = process.argv[2];
     const shortname = process.argv[3] || 'all';
     const format = process.argv[4] || 'markdown';
 
     const options = (shortname === 'all') ? undefined : { shortname };
-    let res = checkDefinitions(pathToReport, options);
+    let res = await checkDefinitions(pathToReport, options);
     if (shortname === 'all') {
       res = res
         .filter(result => result.missing &&

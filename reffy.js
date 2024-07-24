@@ -21,16 +21,17 @@
  * @module crawler
  */
 
-const commander = require('commander');
-const satisfies = require('semver/functions/satisfies');
-const specs = require('web-specs');
-const { version, engines } = require('./package.json');
-const { requireFromWorkingDirectory } = require('./src/lib/util');
-const { crawlSpecs } = require('./src/lib/specs-crawler');
-const { modules } = require('./src/lib/post-processor');
+import { Command } from 'commander';
+import satisfies from 'semver/functions/satisfies.js';
+import specs from 'web-specs' with { type: 'json' };
+import packageConfig from './package.json' with { type: 'json' };
+import { crawlSpecs } from './src/lib/specs-crawler.js';
+import { modules } from './src/lib/post-processor.js';
+import { loadJSON } from './src/lib/util.js';
 
 // Warn if version of Node.js does not satisfy requirements
-if (engines && engines.node && !satisfies(process.version, engines.node)) {
+if (packageConfig.engines && packageConfig.engines.node &&
+    !satisfies(process.version, packageConfig.engines.node)) {
   console.warn(`
 [WARNING] Node.js ${process.version} detected but Reffy needs Node.js ${engines.node}.
           Please consider upgrading Node.js if the program crashes!`);
@@ -54,14 +55,14 @@ function parseModuleOption(input) {
     }
 }
 
-function parseSpecOption(input) {
+async function parseSpecOption(input) {
     if (input === 'all') {
         return specs
             .filter(s => s.standing !== 'discontinued')
             .map(s => s.shortname)
     }
     else {
-        const list = requireFromWorkingDirectory(input);
+        const list = await loadJSON(input);
         return list ?? input;
     }
 }
@@ -76,9 +77,9 @@ function parsePostOption(input) {
 }
 
 
-const program = new commander.Command();
+const program = new Command();
 program
-    .version(version)
+    .version(packageConfig.version)
     .usage('[options]')
     .description('Crawls and processes a list of Web specifications')
     .option('-d, --debug', 'debug mode, crawl one spec at a time')
@@ -91,7 +92,7 @@ program
     .option('-s, --spec <specs...>', 'specs to crawl')
     .option('-t, --terse', 'output crawl results without metadata')
     .option('-u, --use-crawl <folder>', 'use given crawl result folder as input for post-processing')
-    .action(options => {
+    .action(async options => {
         if (!(options.output || options.module || options.spec || options.useCrawl)) {
           console.error(`
 At least one of the --output, --module, --spec or --use-crawl options needs to be
@@ -118,10 +119,10 @@ will dump ~100MB of data to the console:
             crawlOptions.modules = options.module.map(parseModuleOption);
         }
         if (options.spec) {
-            crawlOptions.specs = options.spec.map(parseSpecOption).flat();
+            crawlOptions.specs = (await Promise.all(options.spec.map(parseSpecOption))).flat();
         }
         else {
-            crawlOptions.specs = parseSpecOption('all');
+            crawlOptions.specs = await parseSpecOption('all');
         }
         if (options.post) {
             crawlOptions.post = options.post.map(parsePostOption).flat();

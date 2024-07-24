@@ -8,9 +8,9 @@
  * rather completes the `css` property with additional info.
  */
 
-const { getGeneratedIDLNamesByCSSProperty } = require('../lib/util');
+import { getGeneratedIDLNamesByCSSProperty } from '../lib/util.js';
 
-module.exports = {
+export default {
   dependsOn: ['css', 'dfns'],
   input: 'spec',
 

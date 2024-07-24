@@ -1,8 +1,7 @@
-const assert = require('assert');
+import assert from 'node:assert';
+import { parse } from '../../src/cli/parse-webidl.js';
 
 describe('The WebIDL parser understands includes statements', () => {
-  var parse = require('../../src/cli/parse-webidl').parse;
-
   it('does not choke on includes statements', async () => {
     const data = await parse(`
 interface Base {};

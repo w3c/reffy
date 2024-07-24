@@ -1,8 +1,10 @@
-const assert = require('assert');
-const puppeteer = require('puppeteer');
-const path = require('path');
-const rollup = require('rollup');
-const { getSchemaValidationFunction } = require('../src/lib/util');
+import assert from 'node:assert';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import puppeteer from 'puppeteer';
+import { rollup } from 'rollup';
+import { getSchemaValidationFunction } from '../src/lib/util.js';
+const scriptPath = path.dirname(fileURLToPath(import.meta.url));
 
 const testHeadings = [
   {
@@ -61,13 +63,14 @@ describe("Test headings extraction", function () {
   this.slow(5000);
 
   let browser;
-  let extractDefinitionsCode;
+  let extractHeadingsCode;
   let mapIdsToHeadingsCode;
-  const validateSchema = getSchemaValidationFunction('extract-headings');
+  let validateSchema;
 
   before(async () => {
-    const extractHeadingsBundle = await rollup.rollup({
-      input: path.resolve(__dirname, '../src/browserlib/extract-headings.mjs')
+    validateSchema = await getSchemaValidationFunction('extract-headings');
+    const extractHeadingsBundle = await rollup({
+      input: path.resolve(scriptPath, '../src/browserlib/extract-headings.mjs')
     });
     const extractHeadingsOutput = (await extractHeadingsBundle.generate({
       name: 'extractHeadings',
@@ -75,8 +78,8 @@ describe("Test headings extraction", function () {
     })).output;
     extractHeadingsCode = extractHeadingsOutput[0].code;
 
-    const mapIdsToHeadingsBundle = await rollup.rollup({
-      input: path.resolve(__dirname, '../src/browserlib/map-ids-to-headings.mjs')
+    const mapIdsToHeadingsBundle = await rollup({
+      input: path.resolve(scriptPath, '../src/browserlib/map-ids-to-headings.mjs')
     });
     const mapIdsToHeadingsOutput = (await mapIdsToHeadingsBundle.generate({
       name: 'mapIdsToHeadings',

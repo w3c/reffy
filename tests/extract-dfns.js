@@ -1,8 +1,10 @@
-const assert = require('assert');
-const puppeteer = require('puppeteer');
-const path = require('path');
-const rollup = require('rollup');
-const { getSchemaValidationFunction } = require('../src/lib/util');
+import assert from 'node:assert';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import puppeteer from 'puppeteer';
+import { rollup } from 'rollup';
+import { getSchemaValidationFunction } from '../src/lib/util.js';
+const scriptPath = path.dirname(fileURLToPath(import.meta.url));
 
 // Associating HTML definitions with the right data relies on IDL defined in that spec
 const baseHtml = `<pre><code class=idl>
@@ -728,7 +730,7 @@ describe("Test definition extraction", function () {
   let browser;
   let mapIdsToHeadingsCode;
   let extractDefinitionsCode;
-  const validateSchema = getSchemaValidationFunction('extract-dfns');
+  let validateSchema;
 
   async function assertExtractedDefinition(html, dfns, spec) {
     const page = await browser.newPage();
@@ -762,8 +764,10 @@ describe("Test definition extraction", function () {
   }
 
   before(async () => {
-    const extractDefinitionsBundle = await rollup.rollup({
-      input: path.resolve(__dirname, '../src/browserlib/extract-dfns.mjs'),
+    validateSchema = await getSchemaValidationFunction('extract-dfns');
+
+    const extractDefinitionsBundle = await rollup({
+      input: path.resolve(scriptPath, '../src/browserlib/extract-dfns.mjs'),
       onwarn: _ => {}
     });
     const extractDefinitionsOutput = (await extractDefinitionsBundle.generate({
@@ -772,8 +776,8 @@ describe("Test definition extraction", function () {
     })).output;
     extractDefinitionsCode = extractDefinitionsOutput[0].code;
 
-    const mapIdsToHeadingsBundle = await rollup.rollup({
-      input: path.resolve(__dirname, '../src/browserlib/map-ids-to-headings.mjs')
+    const mapIdsToHeadingsBundle = await rollup({
+      input: path.resolve(scriptPath, '../src/browserlib/map-ids-to-headings.mjs')
     });
     const mapIdsToHeadingsOutput = (await mapIdsToHeadingsBundle.generate({
       name: 'mapIdsToHeadings',

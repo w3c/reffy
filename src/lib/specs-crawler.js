@@ -10,27 +10,27 @@
  * @module crawler
  */
 
-const fs = require('fs');
-const path = require('path');
-const specs = require('web-specs');
-const inspect = require('util').inspect;
-const cssDfnParser = require('./css-grammar-parser');
-const postProcessor = require('./post-processor');
-const ThrottledQueue = require('./throttled-queue');
-const {
+import fs from 'node:fs';
+import path from 'node:path';
+import { inspect } from 'node:util';
+import specs from 'web-specs' with { type: 'json' };
+import * as postProcessor from './post-processor.js';
+import ThrottledQueue from './throttled-queue.js';
+import {
     completeWithAlternativeUrls,
     expandBrowserModules,
     expandCrawlResult,
     expandSpecResult,
     isLatestLevelThatPasses,
     processSpecification,
-    requireFromWorkingDirectory,
     setupBrowser,
     teardownBrowser,
-    createFolderIfNeeded
-} = require('./util');
+    createFolderIfNeeded,
+    loadJSON
+} from './util.js';
 
-const {version: reffyVersion} = require('../../package.json');
+import packageConfig from '../../package.json' with { type: 'json' };
+const reffyVersion = packageConfig.version;
 
 
 /**
@@ -342,6 +342,9 @@ async function crawlList(speclist, crawlOptions) {
         list = list.filter(spec => !!spec.release);
     }
 
+    // Load post-processing modules as needed
+    await postProcessor.loadModules(crawlOptions.post ?? []);
+
     const nbStr = '' + list.length;
     async function processSpec(spec, idx) {
         const logCounter = ('' + (idx + 1)).padStart(nbStr.length, ' ') + '/' + nbStr;
@@ -465,7 +468,7 @@ async function saveResults(contents, settings) {
  *   See CLI help (node reffy.js --help) for details.
  * @return {Promise<void>} The promise that the crawl will have been made
  */
-function crawlSpecs(options) {
+async function crawlSpecs(options) {
     function prepareListOfSpecs(list) {
         return list.map(spec => {
             if (typeof spec !== 'string') {
@@ -506,7 +509,7 @@ function crawlSpecs(options) {
     }
 
     const crawlIndex = options?.useCrawl ?
-        requireFromWorkingDirectory(options.useCrawl) :
+        await loadJSON(path.join(options.useCrawl, 'index.json')) :
         null;
 
     const requestedList = crawlIndex ? crawlIndex.results :
@@ -606,6 +609,10 @@ Export methods for use as module
 // - "crawlSpecs" takes options as input, runs all steps and saves results
 // to files (or outputs the results to the console). It does not return
 // anything.
-module.exports.crawlSpecs = (...args) => Array.isArray(args[0]) ?
-    crawlList.apply(this, args) :
-    crawlSpecs.apply(this, args);
+function crawl(...args) {
+    return Array.isArray(args[0]) ?
+        crawlList.apply(this, args) :
+        crawlSpecs.apply(this, args);
+}
+
+export { crawl as crawlSpecs };

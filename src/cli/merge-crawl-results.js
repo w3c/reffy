@@ -15,8 +15,10 @@
  * @module merger
  */
 
-const fs = require('fs');
-const requireFromWorkingDirectory = require('../lib/util').requireFromWorkingDirectory;
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import process from 'node:process';
+import { loadJSON } from '../lib/util.js';
 
 
 /**
@@ -81,11 +83,11 @@ function mergeCrawlResults(newCrawl, refCrawl, options) {
  * @param {Object} options Merge options. Only "matchTitle" is supported for now
  * @return {Promise} The promise to have merged the two JSON files into one
  */
-function mergeCrawlFiles(newCrawlPath, refCrawlPath, resPath, options) {
+async function mergeCrawlFiles(newCrawlPath, refCrawlPath, resPath, options) {
     options = options || {};
 
-    let newCrawl = requireFromWorkingDirectory(newCrawlPath);
-    let refCrawl = requireFromWorkingDirectory(refCrawlPath);
+    let newCrawl = await loadJSON(newCrawlPath);
+    let refCrawl = await loadJSON(refCrawlPath);
     return mergeCrawlResults(newCrawl, refCrawl, options)
         .then(filedata => new Promise((resolve, reject) =>
             fs.writeFile(resPath, JSON.stringify(filedata, null, 2),
@@ -96,14 +98,16 @@ function mergeCrawlFiles(newCrawlPath, refCrawlPath, resPath, options) {
 /**************************************************
 Export the methods for use as module
 **************************************************/
-module.exports.mergeCrawlResults = mergeCrawlResults;
-module.exports.mergeCrawlFiles = mergeCrawlFiles;
+export {
+    mergeCrawlResults,
+    mergeCrawlFiles
+};
 
 
 /**************************************************
 Code run if the code is run as a stand-alone module
 **************************************************/
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
     let newCrawlPath = process.argv[2];
     let refCrawlPath = process.argv[3];
     let resPath = process.argv[4];

@@ -1,8 +1,10 @@
-const assert = require('assert');
-const puppeteer = require('puppeteer');
-const path = require('path');
-const rollup = require('rollup');
-const { getSchemaValidationFunction } = require('../src/lib/util');
+import assert from 'node:assert';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import puppeteer from 'puppeteer';
+import { rollup } from 'rollup';
+import { getSchemaValidationFunction } from '../src/lib/util.js';
+const scriptPath = path.dirname(fileURLToPath(import.meta.url));
 
 const testIds = [
   {
@@ -63,11 +65,12 @@ describe("IDs extraction", function () {
 
   let browser;
   let extractIdsCode;
-  const validateSchema = getSchemaValidationFunction('extract-ids');
+  let validateSchema;
 
   before(async () => {
-    const extractIdsBundle = await rollup.rollup({
-      input: path.resolve(__dirname, '../src/browserlib/extract-ids.mjs')
+    validateSchema = await getSchemaValidationFunction('extract-ids');
+    const extractIdsBundle = await rollup({
+      input: path.resolve(scriptPath, '../src/browserlib/extract-ids.mjs')
     });
     const extractIdsOutput = (await extractIdsBundle.generate({
       name: 'extractIds',

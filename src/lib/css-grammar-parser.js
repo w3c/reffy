@@ -437,4 +437,4 @@ const parsePropDefValue = (value) => {
   return res.length === 1 ? res[0] : res;
 };
 
-module.exports.parsePropDefValue =  parsePropDefValue;
+export { parsePropDefValue };

@@ -1,7 +1,9 @@
-const assert = require('assert');
-const puppeteer = require('puppeteer');
-const path = require('path');
-const rollup = require('rollup');
+import assert from 'node:assert';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import puppeteer from 'puppeteer';
+import { rollup } from 'rollup';
+const scriptPath = path.dirname(fileURLToPath(import.meta.url));
 
 const testIds = [
   {
@@ -152,8 +154,8 @@ describe("Web IDL extraction", function () {
   let extractCode;
 
   before(async () => {
-    const extractBundle = await rollup.rollup({
-      input: path.resolve(__dirname, '../src/browserlib/extract-webidl.mjs')
+    const extractBundle = await rollup({
+      input: path.resolve(scriptPath, '../src/browserlib/extract-webidl.mjs')
     });
     const extractOutput = (await extractBundle.generate({
       name: 'extractIdl',

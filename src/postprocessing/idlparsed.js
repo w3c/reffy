@@ -5,9 +5,9 @@
  * The module runs at the spec level and generates an `idlparsed` property.
  */
 
-const webidlParser = require('../cli/parse-webidl');
+import * as webidlParser from '../cli/parse-webidl.js';
 
-module.exports = {
+export default {
   dependsOn: ['dfns', 'idl'],
   input: 'spec',
   property: 'idlparsed',

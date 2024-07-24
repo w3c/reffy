@@ -5,16 +5,14 @@
  * @module finder
  */
 
-const os = require('os');
-const path = require('path');
-const baseFetch = require('fetch-filecache-for-crawling');
+import os from 'node:os';
+import path from 'node:path';
+import baseFetch from 'fetch-filecache-for-crawling';
+import { loadJSON } from './util.js';
 
 // Read configuration parameters from `config.json` file
-let config = null;
-try {
-    config = require(path.resolve('config.json'));
-}
-catch (err) {
+let config = await loadJSON('config.json');
+if (!config) {
     config = {};
 }
 
@@ -32,7 +30,7 @@ catch (err) {
  *   options for fetch-filecache-for-crawling)
  * @return {Promise(Response)} Promise to get an HTTP response
  */
-async function fetch(url, options) {
+export default async function fetch(url, options) {
     options = Object.assign({headers: {}}, options);
     ['cacheFolder', 'resetCache', 'cacheRefresh', 'logToConsole'].forEach(param => {
         let fetchParam = (param === 'cacheRefresh') ? 'refresh' : param;
@@ -51,6 +49,3 @@ async function fetch(url, options) {
 
     return baseFetch(url, options);
 }
-
-
-module.exports = fetch;

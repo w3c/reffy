@@ -18,7 +18,9 @@
  * @module webidlParser
  */
 
-const WebIDL2 = require("webidl2");
+import * as WebIDL2 from 'webidl2';
+import { fileURLToPath } from 'node:url';
+import process from 'node:process';
 
 
 /**
@@ -410,15 +412,17 @@ function addDependency(name, idlNames, externalDependencies) {
 /**************************************************
 Export the parse method for use as module
 **************************************************/
-module.exports.parse = parse;
-module.exports.hasObsoleteIdl = hasObsoleteIdl;
+export {
+    parse,
+    hasObsoleteIdl
+};
 
 
 /**************************************************
 Code run if the code is run as a stand-alone module
 **************************************************/
-if (require.main === module) {
-    const fs = require("fs");
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    const fs = await import('node:fs');
     const idlFile = process.argv[2];
     if (!idlFile) {
         console.error("No IDL file to parse");

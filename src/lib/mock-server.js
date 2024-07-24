@@ -5,9 +5,12 @@
  * @module mock-server
  */
 
-const { MockAgent, setGlobalDispatcher } = require('undici');
-const path = require("path");
-const { existsSync, readFileSync } = require('fs');
+import { MockAgent, setGlobalDispatcher } from 'undici';
+import path from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+const scriptPath = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Determine the path to the "node_modules" folder. The path depends on whether
@@ -17,7 +20,7 @@ const { existsSync, readFileSync } = require('fs');
  * @return {String} Path to the node_modules folder.
  */
 function getModulesFolder() {
-    const rootFolder = path.resolve(__dirname, '../..');
+    const rootFolder = path.resolve(scriptPath, '../..');
     let folder = path.resolve(rootFolder, 'node_modules');
     if (existsSync(folder)) {
         return folder;
@@ -185,4 +188,4 @@ nock.emitter.on('no match', function(req, options, requestBody) {
   }
 });*/
 
-module.exports = mockAgent;
+export default mockAgent;

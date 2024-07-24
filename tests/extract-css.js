@@ -1,8 +1,10 @@
-const assert = require('assert');
-const puppeteer = require('puppeteer');
-const path = require('path');
-const rollup = require('rollup');
-const { getSchemaValidationFunction } = require('../src/lib/util');
+import assert from 'node:assert';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import puppeteer from 'puppeteer';
+import { rollup } from 'rollup';
+import { getSchemaValidationFunction } from '../src/lib/util.js';
+const scriptPath = path.dirname(fileURLToPath(import.meta.url));
 
 const tests = [
   {title: "parses a regular propdef table",
@@ -1586,13 +1588,15 @@ describe("Test CSS properties extraction", function() {
   this.timeout(10000);
   let browser;
   let extractCSSCode;
-  const validateSchema = getSchemaValidationFunction('extract-cssdfn');
+  let validateSchema;
 
   before(async () => {
+    validateSchema = await getSchemaValidationFunction('extract-cssdfn');
+
     // Convert the JS module to a JS script that can be loaded in Puppeteer
     // without having to provide a URL for it (tests run in "about:blank" pages)
-    const bundle = await rollup.rollup({
-      input: path.resolve(__dirname, '../src/browserlib/extract-cssdfn.mjs')
+    const bundle = await rollup({
+      input: path.resolve(scriptPath, '../src/browserlib/extract-cssdfn.mjs')
     });
     const { output } = await bundle.generate({
       name: 'extractCSS',
