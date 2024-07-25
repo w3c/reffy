@@ -410,9 +410,14 @@ function addDependency(name, idlNames, externalDependencies) {
 
 
 /**************************************************
-Export the parse method for use as module
+Export the Web IDL parser
 **************************************************/
+const webidlParser = {
+    parse,
+    hasObsoleteIdl
+};
 export {
+    webidlParser as default,
     parse,
     hasObsoleteIdl
 };

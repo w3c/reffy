@@ -308,13 +308,14 @@ function appliesAtLevel(mod, level) {
 /**************************************************
 Export post-processing functions
 **************************************************/
-const moduleNames = Object.keys(modules);
-export {
-  moduleNames as modules,
+const postProcessor = {
+  modules: Object.keys(modules),
   loadModules,
   run, save,
   extractsPerSeries,
   dependsOn,
   getProperty,
   appliesAtLevel
-};
+}
+
+export default postProcessor;
