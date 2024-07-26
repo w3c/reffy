@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { inspect } from 'node:util';
 import specs from 'web-specs' with { type: 'json' };
-import * as postProcessor from './post-processor.js';
+import postProcessor from './post-processor.js';
 import ThrottledQueue from './throttled-queue.js';
 import {
     completeWithAlternativeUrls,
