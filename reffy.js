@@ -26,7 +26,7 @@ import satisfies from 'semver/functions/satisfies.js';
 import specs from 'web-specs' with { type: 'json' };
 import packageConfig from './package.json' with { type: 'json' };
 import { crawlSpecs } from './src/lib/specs-crawler.js';
-import { modules } from './src/lib/post-processor.js';
+import postProcessor from './src/lib/post-processor.js';
 import { loadJSON } from './src/lib/util.js';
 
 // Warn if version of Node.js does not satisfy requirements
@@ -69,7 +69,7 @@ async function parseSpecOption(input) {
 
 function parsePostOption(input) {
     if (input === 'core') {
-      return modules;
+      return postProcessor.modules;
     }
     else {
       return input;
