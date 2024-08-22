@@ -44,13 +44,12 @@ const testLinks = [
     title: "extracts links with fragments",
     html: `<h1 id=title>Title</h1>
 <p><a href="https://dom.spec.whatwg.org/#ranges">DOM Standard</a></p>
-<p><a href="https://dom.spec.whatwg.org/#nodes" data-xref-type="dfn">DOM Standard</a></p><ul class="index"><li><aside><a href="https://dom.spec.whatwg.org/#element">Element</a></aside></li></ul>`,
+<p><a href="https://dom.spec.whatwg.org/#nodes" data-xref-type="dfn">DOM Standard</a></p>`,
     res: {
       autolinks: {
         "https://dom.spec.whatwg.org/": {
           "anchors": [
-            "nodes",
-	    "element"
+            "nodes"
           ]
         }
       },
@@ -61,6 +60,20 @@ const testLinks = [
           ]
         }
       }
+    }
+  },
+
+  {
+    title: "does not extract links in aside dfns panels",
+    html: `<h1 id=title>Title</h1>
+<ul class="index"><li><aside class="dfn-panel"> <a href="https://dom.spec.whatwg.org/#element">Element</a></aside></li></ul>
+<aside class="dfn-panel"><a href="https://dom.spec.whatwg.org/#nodes">Nodes</a></aside>
+<div class="dfn-panel" role="dialog" hidden=""><div>
+  <a href="https://dom.spec.whatwg.org/#ranges">Permalink</a>
+</div></div>`,
+    res: {
+      autolinks: {},
+      rawlinks: {}
     }
   },
 ];
