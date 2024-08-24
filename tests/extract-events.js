@@ -173,6 +173,31 @@ ${defaultIdl}`,
       <p id=error><a href='https://dom.spec.whatwg.org/#concept-event-fire'>Fire an event</a> named <code>error</code> using <a href=''>ErrorEvent</a> with the <code>bubbles</code> attribute initialized to <code>false</code> and must not be cancelable</p>
       ${defaultIdl}`,
     res: defaultResults("fire an event phrasing")
+  },
+  {
+    title: "supports 'given' on top of 'named' to specify the event type and interface",
+    html: `<p id=success><a href="https://w3c.github.io/ServiceWorker/#fire-functional-event">Fire Functional Event</a>
+      given <code>success</code>, <code>NotificationEvent</code>.
+    </p>`,
+    res: [
+      {
+        "href": "about:blank#success",
+        "interface": "NotificationEvent",
+        "src": {
+          "format": "fire an event phrasing",
+          "href": "about:blank#success"
+        },
+        "type": "success"
+      }
+    ]
+  },
+  {
+    title: "does not extract variable names as event types",
+    html: `<p>To fire a service worker notification event named <var>name</var>:
+      run <a href="https://w3c.github.io/ServiceWorker/#fire-functional-event">Fire Functional Event</a>
+      given <var>name</var>.
+    </p>`,
+    res: []
   }
 ];
 
