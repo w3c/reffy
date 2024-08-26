@@ -150,7 +150,7 @@ export default function (spec) {
         const bubblesCell = table.querySelector(`tr:nth-child(${bubblingInfoRow + 1}) td:nth-child(2)`);
         const bubbles = bubblesCell ? bubblesCell.textContent.trim() === "Yes" : null;
         const cancelableCell = table.querySelector(`tr:nth-child(${cancelableInfoRow + 1}) td:nth-child(2)`);
-	const cancelable = cancelableCell ? cancelableCell.textContent.trim() === "Yes" : null;
+        const cancelable = cancelableCell ? cancelableCell.textContent.trim() === "Yes" : null;
         const iface = table.querySelector(`tr:nth-child(${interfaceRow + 1}) td:nth-child(2)`)?.textContent?.trim();
         if (eventName) {
           events.push({
@@ -216,7 +216,7 @@ export default function (spec) {
           phrasing = "fire a pointer event";
         }
       } else {
-        m = parsedText.match(/fir(e|ing)\sa?\s*functional\s+event\s+(named\s+)?"?(?<eventName>[a-z]+)/i);
+        m = parsedText.match(/fir(e|ing)\sa?\s*functional\s+event\s+((named|given)\s+)?"?(?<eventName>[a-z]+)/i);
         if (m) {
           phrasing = "fire functional event";
         }
@@ -277,7 +277,7 @@ export default function (spec) {
             }
           }
         }
-	if (event.bubbles === undefined && event.cancelable === undefined) {
+        if (event.bubbles === undefined && event.cancelable === undefined) {
           if (parsedText.match(/bubbles and cancelable attributes/)) {
             if (parsedText.match(/true/)) {
               event.bubbles = true;
@@ -286,8 +286,8 @@ export default function (spec) {
               event.bubbles = false;
               event.cancelable = false;
             }
-	  }
-	}
+          }
+        }
         if (event.bubbles === undefined) {
           if (parsedText.match(/bubbles attribute/)) {
             if (parsedText.match(/true/)) {
