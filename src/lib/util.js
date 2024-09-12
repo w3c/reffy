@@ -828,19 +828,11 @@ async function expandSpecResult(spec, baseFolder, properties) {
             // Also drop header that may have been added when extract was
             // serialized.
             if (contents.startsWith('// GENERATED CONTENT - DO NOT EDIT')) {
-                const hasWindowsEndings = contents.includes('\r\n\r\n');
-                if (hasWindowsEndings) {
-                    const endOfHeader = contents.indexOf('\r\n\r\n');
-                    contents = contents.substring(endOfHeader + 4)
-                    // remove trailing newline added in saveIdl
-                      .slice(0, -2);
-                }
-                else {
-                    const endOfHeader = contents.indexOf('\n\n');
-                    contents = contents.substring(endOfHeader + 2)
-                    // remove trailing newline added in saveIdl
-                      .slice(0, -1);
-                }
+                // Normalize newlines to avoid off-by-one slices when we remove
+                // the trailing newline that was added by saveIdl
+                contents = contents.replace(/\r/g, '');
+                const endOfHeader = contents.indexOf('\n\n');
+                contents = contents.substring(endOfHeader + 2).slice(0, -1);
             }
             spec.idl = contents;
         }
