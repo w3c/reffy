@@ -319,7 +319,8 @@ export default function (spec, idToHeading = {}) {
     })
     .filter(hasValidType)
     // Exclude IDL terms defined in a block that is flagged as to be excluded
-    .filter(node => !node.closest('.exclude'))
+    // or inside a <del>
+    .filter(node => !node.closest('.exclude,del'))
     // When the whole term links to an external spec, the definition is an
     // imported definition. Such definitions are not "real" definitions, let's
     // skip them.
