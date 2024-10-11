@@ -159,6 +159,10 @@ const tests = [
    html: "<dfn id=foo data-dfn-type=invalidtype>Foo</dfn>",
    changesToBaseDfn: []
   },
+  {title: "ignores dfns in a <del>",
+   html: "<del><dfn id=foo>Foo</dfn></del>",
+   changesToBaseDfn: []
+  },
   {title: "ignores dfns already exported",
    html: "<dfn id='foo' data-dfn-type='dfn' data-export>Foo</dfn>. <dfn id='foo2' data-export>Foo</dfn> is already exported.",
    changesToBaseDfn: [{ access: "public" }]
