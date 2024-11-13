@@ -281,7 +281,7 @@ export default function (spec, idToHeading = {}) {
 
   const shortname = (typeof spec === 'string') ? spec : spec.shortname;
   switch (shortname) {
-  case "CSS2":
+  case "CSS21":
     preProcessCSS21();
     break;
   case "html":
