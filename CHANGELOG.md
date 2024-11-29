@@ -6,6 +6,23 @@ Minor and patch release notes are currently only documented in
 
 Reffy adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v18.0.0 - 2024-11-29
+
+### Breaking change
+
+- Bump minimal supported version of Node.js from v20.12.1 to v20.18.1 ([#1717](https://github.com/w3c/reffy/pull/1717))
+
+Required by dependency on Undici, although note this dependency is only for tests (`devDependencies` in `package.json`).
+
+### Dependency bumps
+
+- Bump undici from 6.21.0 to 7.0.0 (#1716)
+- Bump puppeteer from 23.8.0 to 23.9.0 (#1711)
+- Bump rollup from 4.26.0 to 4.27.4 (#1713)
+- Bump respec from 35.1.2 to 35.2.0 (#1714)
+- Bump web-specs from 3.26.0 to 3.28.0 (#1715)
+- Bump cross-spawn from 7.0.3 to 7.0.6 (#1710)
+
 ## v17.0.0 - 2024-07-24
 
 ### Breaking change
