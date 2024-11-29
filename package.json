@@ -47,7 +47,7 @@
     "respec": "35.2.0",
     "respec-hljs": "2.1.1",
     "rollup": "4.27.4",
-    "undici": "^6.1.0"
+    "undici": "^7.0.0"
   },
   "overrides": {
     "puppeteer": "$puppeteer"
