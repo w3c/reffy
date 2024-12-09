@@ -796,6 +796,36 @@ async function expandSpecResult(spec, baseFolder, properties) {
             return;
         }
 
+        // Treat CDDL extracts separately, one spec may have multiple CDDL
+        // extracts (actual treatment is similar to IDL extracts otherwise)
+        if (property === 'cddl') {
+            if (!spec[property]) {
+                return;
+            }
+            for (const cddlModule of spec[property]) {
+                if (!cddlModule.file) {
+                    continue;
+                }
+                if (baseFolder.startsWith('https:')) {
+                    const url = (new URL(cddlModule.file, baseFolder)).toString();
+                    const response = await fetch(url, { nolog: true });
+                    contents = await response.text();
+                }
+                else {
+                    const filename = path.join(baseFolder, cddlModule.file);
+                    contents = await fs.readFile(filename, 'utf8');
+                }
+                if (contents.startsWith('; GENERATED CONTENT - DO NOT EDIT')) {
+                    // Normalize newlines to avoid off-by-one slices when we remove
+                    // the trailing newline that was added by saveCddl
+                    contents = contents.replace(/\r/g, '');
+                    const endOfHeader = contents.indexOf('\n\n');
+                    contents = contents.substring(endOfHeader + 2).slice(0, -1);
+                }
+                cddlModule.cddl = contents;
+            }
+        }
+
         // Only consider properties that link to an extract, i.e. an IDL
         // or JSON file in subfolder.
         if (!spec[property] ||
