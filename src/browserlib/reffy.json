@@ -62,5 +62,9 @@
     "href": "./extract-ids.mjs",
     "property": "ids",
     "needsIdToHeadingMap": true
+  },
+  {
+    "href": "./extract-cddl.mjs",
+    "property": "cddl"
   }
 ]
