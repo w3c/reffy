@@ -56,7 +56,7 @@ typedef = tstr
     title: 'extracts CDDL module names from data-cddl-module',
     html: `<pre class="cddl" data-cddl-module="mod">cddl = tstr</pre>`,
     res: [
-      { name: '',    cddl: 'cddl = tstr' },
+      { name: 'all',    cddl: 'cddl = tstr' },
       { name: 'mod', cddl: 'cddl = tstr' }
     ]
   },
@@ -65,7 +65,7 @@ typedef = tstr
     title: 'extracts CDDL module name defined as class',
     html: `<pre class="cddl mod1-cddl cddl-mod2">cddl = tstr</pre>`,
     res: [
-      { name: '',     cddl: 'cddl = tstr' },
+      { name: 'all',  cddl: 'cddl = tstr' },
       { name: 'mod1', cddl: 'cddl = tstr' },
       { name: 'mod2', cddl: 'cddl = tstr' }
     ]
@@ -74,11 +74,8 @@ typedef = tstr
   {
     title: 'assembles CDDL in modules',
     html: `
-      <pre class="cddl">
-        cddl = * rule
-      </pre>
-      <pre class="cddl" data-cddl-module="mod1, mod2">
-        rule = (typedef / groupdef)
+      <pre class="cddl" data-cddl-module="all">
+        rule = (cddl1 / cddl2)
       </pre>
       <pre class="cddl" data-cddl-module="mod1">
         cddl1 = tstr
@@ -93,11 +90,9 @@ typedef = tstr
     `,
     res: [
       {
-        name: '',
+        name: 'all',
         cddl:
-`cddl = * rule
-
-rule = (typedef / groupdef)
+`rule = (cddl1 / cddl2)
 
 cddl1 = tstr
 
@@ -109,11 +104,7 @@ groupdef = tstr`
       {
         name: 'mod1',
         cddl:
-`cddl = * rule
-
-rule = (typedef / groupdef)
-
-cddl1 = tstr
+`cddl1 = tstr
 
 typedef = tstr
 groupdef = tstr`
@@ -121,11 +112,7 @@ groupdef = tstr`
       {
         name: 'mod2',
         cddl:
-`cddl = * rule
-
-rule = (typedef / groupdef)
-
-cddl2 = tstr
+`cddl2 = tstr
 
 typedef = tstr
 groupdef = tstr`

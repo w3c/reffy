@@ -10,8 +10,9 @@ import trimSpaces from './trim-spaces.mjs';
  * 
  * Each CDDL module is represented as an object with the following keys whose
  * values are strings:
- * - shortname: the CDDL module shortname. Shortname is "" if there are no
- * - label: A full name for the CDDL module.
+ * - shortname: the CDDL module shortname. Shortname is "" if the spec does not
+ * define any module, and "all" for the dump of all CDDL definitions.
+ * - label: A full name for the CDDL module, when defined.
  * - cddl: A dump of the CDDL definitions.
  *
  * If the spec defines more than one module, the first item in the array is the
@@ -36,15 +37,16 @@ export default function () {
     // Retrieve all elements that contains CDDL content
     const cddlEls = getCodeElements([cddlSelector], [indexSelector]);
 
-    // By convention, CDDL defined without specifying a module is defined
-    // for all modules (that CDDL would essentially be lost otherwise, there's
-    // no reason for a spec to define CDDL for no module if it uses modules).
-    // Start by assembled the list of modules
+    // Start by assembling the list of modules
     const modules = {};
     for (const el of cddlEls) {
         const elModules = getModules(el);
         for (const name of elModules) {
-            modules[name] = [];
+            // "all" does not create a module on its own, that's the name of
+            // the CDDL module that contains all CDDL definitions.
+            if (name !== 'all') {
+                modules[name] = [];
+            }
         }
     }
 
@@ -55,6 +57,7 @@ export default function () {
         if (!cddl) {
             continue;
         }
+        // All CDDL appears in the "all" module.
         mergedCddl.push(cddl);
         let elModules = getModules(el);
         if (elModules.length === 0) {
@@ -62,17 +65,24 @@ export default function () {
             elModules = Object.keys(modules);
         }
         for (const name of elModules) {
-            if (!modules[name]) {
-                modules[name] = [];
+            // CDDL defined for the "all" module is only defined for it
+            if (name !== 'all') {
+                if (!modules[name]) {
+                    modules[name] = [];
+                }
+                modules[name].push(cddl);
             }
-            modules[name].push(cddl);
         }
     }
 
     if (mergedCddl.length === 0) {
         return [];
     }
-    const res = [ { name: "", cddl: mergedCddl.join('\n\n') } ];
+
+    const res = [{
+        name: Object.keys(modules).length > 0 ? 'all' : '',
+        cddl: mergedCddl.join('\n\n')
+    }];
     for (const [name, cddl] of Object.entries(modules)) {
         res.push({ name, cddl: cddl.join('\n\n') });
     }
