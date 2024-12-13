@@ -24,18 +24,18 @@ import trimSpaces from './trim-spaces.mjs';
  *
  * @function
  * @public 
- * @return {Promise} The promise to get a dump of the CDDL definitions per
- *   CDDL module, or an empty array if the spec does not contain any CDDL.
+ * @return {Array} A dump of the CDDL definitions per CDDL module, or an empty
+ * array if the spec does not contain any CDDL.
  */
 export default function () {
     // Specs with CDDL are either recent enough that they all use the same
     // `<pre class="cddl">` convention, or they don't flag CDDL blocks in any
     // way, making it impossible to extract them.
-    const cddlSelector = 'pre.cddl:not(.exclude):not(.extract)';
-    const indexSelector = '#cddl-index';
+    const cddlSelectors = ['pre.cddl:not(.exclude):not(.extract)'];
+    const excludeSelectors = ['#cddl-index'];
 
     // Retrieve all elements that contains CDDL content
-    const cddlEls = getCodeElements([cddlSelector], [indexSelector]);
+    const cddlEls = getCodeElements(cddlSelectors, { excludeSelectors });
 
     // Start by assembling the list of modules
     const modules = {};

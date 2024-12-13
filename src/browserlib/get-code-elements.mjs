@@ -10,11 +10,10 @@ import cloneAndClean from './clone-and-clean.mjs';
  * The code elements are cloned and cleaned before they are returned to strip
  * annotations and other asides.
  */
-export default function getCodeElements(codeSelectors, excludeSelectors) {
+export default function getCodeElements(codeSelectors, { excludeSelectors = [] }) {
     return [...document.querySelectorAll(codeSelectors.join(', '))]
-        // Only keep the elements that are not within the index at the end of
-        // the specification and that are defined in a normative section.
-        .filter(el => !el.closest((excludeSelectors ?? []).join(', ')))
+        // Skip excluded and elements and those in informative content
+        .filter(el => !el.closest(excludeSelectors.join(', ')))
         .filter(el => !el.closest(informativeSelector))
 
         // Clone and clean the elements

@@ -21,11 +21,11 @@ export default function trimSpaces(code) {
             Number.MAX_VALUE);
     return lines
         .map(line => {
-            let firstRealChat = line.search(/\S/);
-            if (firstRealChat === -1) {
+            let firstRealChar = line.search(/\S/);
+            if (firstRealChar === -1) {
                 return '';
             }
-            else if (firstRealChat === 0) {
+            else if (firstRealChar === 0) {
                 return line.replace(/\s+$/, '');
             }
             else {

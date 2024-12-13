@@ -7,8 +7,8 @@ import trimSpaces from './trim-spaces.mjs';
  *
  * @function
  * @public 
- * @return {Promise} The promise to get a dump of the IDL definitions, or
- *   an empty string if the spec does not contain any IDL.
+ * @return {String} A dump of the IDL definitions, or an empty string if the
+ * spec does not contain any IDL.
  */
 export default function () {
     const generator = getGenerator();
@@ -78,12 +78,12 @@ function extractRespecIdl() {
         'pre.widl:not(.exclude):not(.extract)'
     ];
 
-    const indexSelectors = [
+    const excludeSelectors = [
         '#idl-index',
         '.chapter-idl'
     ];
 
-    const idlElements = getCodeElements(idlSelectors, indexSelectors);
+    const idlElements = getCodeElements(idlSelectors, { excludeSelectors });
     return idlElements
         .map(el => trimSpaces(el.textContent))
         .join('\n\n');
