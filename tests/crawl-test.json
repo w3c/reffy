@@ -24,6 +24,7 @@
     },
     "title": "WOFF2",
     "algorithms": [],
+    "cddl": [],
     "css": {
       "atrules": [],
       "properties": [],
@@ -99,6 +100,7 @@
     "title": "No Title",
     "generator": "respec",
     "algorithms": [],
+    "cddl": [],
     "css": {
       "atrules": [],
       "properties": [],
@@ -224,6 +226,7 @@
     },
     "title": "[No title found for https://w3c.github.io/accelerometer/]",
     "algorithms": [],
+    "cddl": [],
     "css": {
       "atrules": [],
       "properties": [],

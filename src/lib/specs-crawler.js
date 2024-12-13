@@ -251,6 +251,29 @@ async function saveSpecResults(spec, settings) {
         return `css/${spec.shortname}.json`;
     };
 
+    async function saveCddl(spec) {
+        let cddlHeader = `
+            ; GENERATED CONTENT - DO NOT EDIT
+            ; Content was automatically extracted by Reffy into webref
+            ; (https://github.com/w3c/webref)
+            ; Source: ${spec.title} (${spec.crawled})`;
+        cddlHeader = cddlHeader.replace(/^\s+/gm, '').trim() + '\n\n';
+        const res = [];
+        for (const cddlModule of spec.cddl) {
+            const cddl = cddlHeader + cddlModule.cddl + '\n';
+            const filename = spec.shortname +
+                (cddlModule.name ? `-${cddlModule.name}` : '') +
+                '.cddl';
+            await fs.promises.writeFile(
+                path.join(folders.cddl, filename), cddl);
+            res.push({
+                name: cddlModule.name,
+                file: `cddl/${filename}`
+            });
+        }
+        return res;
+    };
+
     // Save IDL dumps
     if (spec.idl) {
         spec.idl = await saveIdl(spec);
@@ -283,9 +306,14 @@ async function saveSpecResults(spec, settings) {
             (typeof thing == 'object') && (Object.keys(thing).length === 0);
     }
 
+    // Save CDDL extracts (text files, multiple modules possible)
+    if (!isEmpty(spec.cddl)) {
+        spec.cddl = await saveCddl(spec);
+    }
+
     // Save all other extracts from crawling modules
     const remainingModules = modules.filter(mod =>
-        !mod.metadata && mod.property !== 'css' && mod.property !== 'idl');
+        !mod.metadata && !['cddl', 'css', 'idl'].includes(mod.property));
     for (const mod of remainingModules) {
         await saveExtract(spec, mod.property, spec => !isEmpty(spec[mod.property]));
     }
