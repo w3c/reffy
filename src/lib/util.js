@@ -798,6 +798,7 @@ async function expandSpecResult(spec, baseFolder, properties) {
 
         // Treat CDDL extracts separately, one spec may have multiple CDDL
         // extracts (actual treatment is similar to IDL extracts otherwise)
+        let contents = null;
         if (property === 'cddl') {
             if (!spec[property]) {
                 return;
@@ -833,7 +834,6 @@ async function expandSpecResult(spec, baseFolder, properties) {
                 !spec[property].match(/^[^\/]+\/[^\/]+\.(json|idl)$/)) {
             return;
         }
-        let contents = null;
         if (baseFolder.startsWith('https:')) {
             const url = (new URL(spec[property], baseFolder)).toString();
             const response = await fetch(url, { nolog: true });
