@@ -85,6 +85,12 @@ function hasValidType(el) {
     'element-attr',
     'attr-value',
 
+    // CDDL types
+    'cddl-module',
+    'cddl-type',
+    'cddl-parameter',
+    'cddl-key',
+    'cddl-value',
 
     // URL scheme
     'scheme',
@@ -231,13 +237,15 @@ function definitionMapper(el, idToHeading, usesDfnDataModel) {
       [],
 
     // Definition is public if explicitly marked as exportable or if export has
-    // not been explicitly disallowed and its type is not "dfn", or if the spec
-    // is an old spec that does not use the "data-dfn-type" convention.
+    // not been explicitly disallowed and its type is not "dfn" or a CDDL type,
+    // or if the spec is an old spec that does not use the "data-dfn-type"
+    // convention.
     access: (!usesDfnDataModel ||
              el.hasAttribute('data-export') ||
              (!el.hasAttribute('data-noexport') &&
               el.hasAttribute('data-dfn-type') &&
-              el.getAttribute('data-dfn-type') !== 'dfn')) ?
+              el.getAttribute('data-dfn-type') !== 'dfn' &&
+              !el.getAttribute('data-dfn-type').startsWith('cddl-'))) ?
       'public' : 'private',
 
     // Whether the term is defined in a normative/informative section
@@ -292,6 +300,10 @@ export default function (spec, idToHeading = {}) {
     break;
   case "SVG2":
     preProcessSVG2();
+    break;
+  case "rfc8610":
+    // RFC8610 defines CDDL
+    preProcessRFC8610();
     break;
   }
 
@@ -860,4 +872,54 @@ function preProcessSVG2() {
     }
   });
 
+}
+
+/**
+ * The CDDL RFC defines a standard prelude with a number of CDDL types that
+ * other specs that define CDDL make extensive use of. To be able to link back
+ * to these type definitions from other specs, we need these types to appear
+ * in the dfns extract of the RFC somehow.
+ *
+ * Now, the RFC only defines one ID for the appendix that contains the
+ * standard prelude. We need to "share" that ID across all types. To avoid
+ * introducing definitions that have the same ID and href, which could perhaps
+ * confuse tools that ingest the definitions, the approach taken here is to
+ * create a single definition that contains all the types as linking text.
+ */
+function preProcessRFC8610() {
+  // The RFC is defined as a set of pages (yuck!)
+  // The standard prelude is an appendix, let's look for it
+  const prePages = [...document.querySelectorAll('pre.newpage')];
+  const preludeStart = /<a [^>]*id=[^>]*>Appendix .<\/a>\.\s+Standard Prelude/;
+  const preludeEnd = /Figure \d+: CDDL Prelude/;
+  const preStart = prePages
+    .findIndex(pre => pre.innerHTML.match(preludeStart));
+  if (preStart === -1) {
+    // Can't find the expected prelude start text, not a good start!
+    return;
+  }
+  const preEnd = prePages
+    .findIndex((pre, idx) => idx >= preStart && pre.innerHTML.match(preludeEnd));
+  if (preEnd === -1) {
+    // Can't find the expected prelude ending text, not a good start!
+    return;
+  }
+
+  // Extract the list of types defined in the appendix
+  const preludeTypes = prePages.slice(preStart, preEnd + 1)
+    .map(pre => [...pre.innerHTML.matchAll(/^\s+([a-z0-9\-]+) = .*$/mg)]
+      .map(m => m[1])
+    )
+    .flat();
+
+  // Convert the appendix heading into a cddl-type definition that lists
+  // all CDDL types.
+  const el = prePages[preStart].querySelector(`a[id]`);
+  const dfn = document.createElement("dfn");
+  dfn.id = el.id;
+  dfn.dataset.dfnType = 'cddl-type';
+  dfn.dataset.lt = preludeTypes.join('|');
+  dfn.dataset.export = '';
+  dfn.textContent = el.textContent;
+  el.replaceWith(dfn);
 }
