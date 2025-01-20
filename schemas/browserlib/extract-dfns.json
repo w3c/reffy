@@ -33,6 +33,8 @@
 
           "element", "element-state", "element-attr", "attr-value",
 
+          "cddl-module", "cddl-type", "cddl-parameter", "cddl-key", "cddl-value",
+
           "scheme", "http-header",
 
           "grammar", "abstract-op", "dfn"
