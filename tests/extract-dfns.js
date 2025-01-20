@@ -726,6 +726,14 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       htmlProse: "<dfn>Foo</dfn> enters a bar."
     }]
   },
+
+  {
+    title: "extracts CDDL definitions",
+    html: `<p>
+      <dfn id='foo' data-dfn-type='cddl-type'>Foo</dfn> is a CDDL type.
+    </p>`,
+    changesToBaseDfn: [{type: 'cddl-type'}]
+  },
 ];
 
 describe("Test definition extraction", function () {
