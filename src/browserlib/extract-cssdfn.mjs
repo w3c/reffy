@@ -18,13 +18,17 @@ export default function () {
   const warnings = [];
 
   const res = {
-    // Properties are always defined in dedicated tables in modern CSS specs
-    properties: extractDfns({
-      selector: 'table.propdef:not(.attrdef)',
-      extractor: extractTableDfns,
-      duplicates: 'merge',
-      warnings
-    }),
+    // Properties are always defined in dedicated tables in modern CSS specs,
+    // Legacy properties are always defined in prose in a dfn with a nearby
+    // reference to "legacy name alias"
+    properties: []
+      .concat(extractDfns({
+        selector: 'table.propdef:not(.attrdef)',
+        extractor: extractTableDfns,
+        duplicates: 'merge',
+        warnings
+      }))
+      .concat(extractLegacyProperties(document)),
 
     // At-rules, selectors, functions and types are defined through dfns with
     // the right "data-dfn-type" attribute
@@ -826,3 +830,56 @@ const extractProductionRules = root => {
 
   return rules;
 }
+
+
+/**
+ * Extract legacy alias relationships, looking for occurrences of the term
+ * "legacy name alias".
+ *
+ * Next to it, there should be:
+ * 1. a dfn for a property followed by a reference to the aliased property; or
+ * 2. a table with two columns: dfns in the first column, references to the
+ * aliased properties in the second column.
+ */
+const extractLegacyProperties = doc =>
+  [...doc.querySelectorAll('a[href*="#legacy-name-alias"]')]
+    .map(el => el.parentElement)
+    .map(el => {
+      const dfn = el.querySelector('dfn[data-dfn-type="property"]');
+      const alias = el.querySelector('a[data-link-type="property"]');
+      if (dfn && alias) {
+        // Aliasing is defined in prose
+        return {
+          name: normalize(dfn.textContent),
+          href: getAbsoluteUrl(dfn),
+          legacyAliasOf: normalize(alias.textContent)
+        };
+      }
+      else {
+        // Look for a compat table right after the paragraph
+        const table = el.nextElementSibling;
+        if (!table || table.nodeName !== 'TABLE') {
+          return null;
+        }
+        if ([...table.querySelectorAll('thead > tr > th')].length !== 2) {
+          return null;
+        }
+        return [...table.querySelectorAll('tbody > tr')]
+          .map(row => {
+            const dfn = row.querySelector('dfn[data-dfn-type="property"]');
+            const alias = row.querySelector('a[data-link-type="property"]');
+            if (dfn && alias) {
+              return {
+                name: normalize(dfn.textContent),
+                href: getAbsoluteUrl(dfn),
+                legacyAliasOf: normalize(alias.textContent)
+              };
+            }
+            else {
+              return null;
+            }
+          });
+      }
+    })
+    .flat()
+    .filter(prop => !!prop);

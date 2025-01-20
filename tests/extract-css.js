@@ -1580,6 +1580,69 @@ that spans multiple lines */
       "value": "currentColor | <color> [<icccolor>] | inherit",
       "initial": "white"
    }]
+  },
+
+  {
+    title: 'extracts a legacy name alias',
+    html: `<p>
+      The <dfn data-dfn-type="property" id="old">good-old</dfn>
+      property is a <a href="blah#legacy-name-alias">legacy name alias</a> of
+      the <a data-link-type="property">brand-new</a> property.
+    </p>
+    `,
+    css: [{
+      name: 'good-old',
+      href: 'about:blank#old',
+      legacyAliasOf: 'brand-new'
+    }]
+  },
+
+  {
+    title: 'extracts legacy name aliases from a suitable table',
+    html: `<p>
+      The following properties must be supported as
+      <a href="foo#legacy-name-alias">legacy name aliases</a> of the
+      corresponding unprefixed property:
+    </p>
+    <table>
+      <thead>
+        <tr><th>First column</th><th>Second column</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><dfn data-dfn-type="property" id="old">good-old</dfn></td>
+          <td><a data-link-type="property">brand-new</a></td>
+        </tr>
+        <tr>
+          <td><dfn data-dfn-type="property" id="webkit">-webkit-old</dfn></td>
+          <td><a data-link-type="property">brand-new</a></td>
+        </tr>
+      </tbody>
+    </table>
+    `,
+    css: [
+      {
+        name: 'good-old',
+        href: 'about:blank#old',
+        legacyAliasOf: 'brand-new'
+      },
+      {
+        name: '-webkit-old',
+        href: 'about:blank#webkit',
+        legacyAliasOf: 'brand-new'
+      }
+    ]
+  },
+
+  {
+    title: 'avoids legacy name alias references in prose without a dfn',
+    html: `<p>
+      The <a data-link-type="property" id="old">good-old</a>
+      property is a <a href="blah#legacy-name-alias">legacy name alias</a> of
+      the <a data-link-type="property">brand-new</a> property.
+    </p>
+    `,
+    css: []
   }
 ];
 

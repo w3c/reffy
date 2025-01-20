@@ -18,6 +18,7 @@
           "value": { "$ref": "../common.json#/$defs/cssValue" },
           "newValues": { "$ref": "../common.json#/$defs/cssValue" },
           "values": { "$ref": "../common.json#/$defs/cssValues" },
+          "legacyAliasOf": { "$ref": "../common.json#/$defs/cssPropertyName" },
           "styleDeclaration": {
             "type": "array",
             "items": { "type": "string" },
