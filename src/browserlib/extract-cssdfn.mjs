@@ -858,7 +858,7 @@ const extractLegacyProperties = doc =>
       else {
         // Look for a compat table right after the paragraph
         const table = el.nextElementSibling;
-        if (!table || table.nodeName !== 'TABLE') {
+        if (table?.nodeName !== 'TABLE') {
           return null;
         }
         if ([...table.querySelectorAll('thead > tr > th')].length !== 2) {
