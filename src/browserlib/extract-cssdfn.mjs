@@ -842,7 +842,7 @@ const extractProductionRules = root => {
  * aliased properties in the second column.
  */
 const extractLegacyProperties = doc =>
-  [...doc.querySelectorAll('a[href*="#legacy-name-alias"]')]
+  [...doc.querySelectorAll('a[href$="#legacy-name-alias"]')]
     .map(el => el.parentElement)
     .map(el => {
       const dfn = el.querySelector('dfn[data-dfn-type="property"]');
