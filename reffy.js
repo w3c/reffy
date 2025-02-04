@@ -33,7 +33,7 @@ import { loadJSON } from './src/lib/util.js';
 if (packageConfig.engines && packageConfig.engines.node &&
     !satisfies(process.version, packageConfig.engines.node)) {
   console.warn(`
-[WARNING] Node.js ${process.version} detected but Reffy needs Node.js ${engines.node}.
+[WARNING] Node.js ${process.version} detected but Reffy needs Node.js ${packageConfig.engines.node}.
           Please consider upgrading Node.js if the program crashes!`);
 }
 
