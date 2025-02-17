@@ -170,12 +170,39 @@ mockAgent
   });
 
 mockAgent
+  .get("https://www.w3.org")
+  .intercept({ method: "GET", path: "/TR/iredirect/" })
+  .reply(200,
+    `<!DOCTYPE html><script>window.location = '/TR/recentlyupdated/';</script>`,
+    {
+      headers: {
+        "Content-Type": "text/html",
+        "Last-Modified": "Fri, 11 Feb 2022 00:00:42 GMT"
+      }
+    }
+  );
+
+mockAgent
+  .get("https://www.w3.org")
+  .intercept({ method: "GET", path: "/TR/recentlyupdated/" })
+  .reply(200,
+    `<html><title>Recently updated</title>
+    <h1>Recently updated</h1>`,
+    {
+      headers: {
+        "Content-Type": "text/html",
+        "Last-Modified": (new Date()).toString()
+      }
+    }
+  );
+
+mockAgent
   .get("https://drafts.csswg.org")
   .intercept({ method: "GET", path: "/server-hiccup/" })
   .reply(200,
     `<html><title>Server hiccup</title>
     <h1> Index of Server Hiccup Module Level 42 </h1>`,
-    { header: { "Content-Type": "text/html" } })
+    { headers: { "Content-Type": "text/html" } })
   .persist();
 
 /*nock.emitter.on('error', function (err) {
