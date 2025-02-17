@@ -103,7 +103,6 @@ if (global.describe && describe instanceof Function) {
       assert.equal(results.results[0].title, 'A test spec');
     });
 
-
     it("skips processing and reuse fallback data when spec cache info indicates it has not changed", async () => {
       const url = "https://www.w3.org/TR/ididnotchange/";
       const fallback = path.resolve(scriptPath, 'crawl-cache.json');
@@ -116,6 +115,15 @@ if (global.describe && describe instanceof Function) {
       assert.equal(results[0].title, "Change is the only constant");
       assert.ifError(results[0].error);
       assert.equal(results[0].refs, "A useful list of refs");
+    });
+
+    it("does not return cache info when a redirection took place", async () => {
+      const url = "https://www.w3.org/TR/iredirect/";
+      const results = await crawlSpecs(
+        [{ url, nightly: { url } }],
+        { forceLocalFetch: true });
+      assert.equal(results[0].title, "Recently updated");
+      assert.equal(results[0].crawlCacheInfo, undefined);
     })
 
     it("reports HTTP error statuses", async () => {
