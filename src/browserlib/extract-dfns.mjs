@@ -289,8 +289,8 @@ export default function (spec, idToHeading = {}) {
 
   const shortname = (typeof spec === 'string') ? spec : spec.shortname;
   switch (shortname) {
-  case "CSS21":
-    preProcessCSS21();
+  case "CSS2":
+    preProcessCSS2();
     break;
   case "html":
     preProcessHTML();
@@ -738,7 +738,15 @@ function preProcessHTML() {
     });
 }
 
-function preProcessCSS21() {
+/**
+ * CSS 2.1 does not use the definitions data model and needs to be processed
+ * to create the right definitions.
+ *
+ * Note: CSS 2.2 does follow the definitions data model, but does not contain
+ * any element that matches the `span.index-def` selector, so the function is
+ * a no-op for CSS 2.2 and that's a good thing.
+ */
+function preProcessCSS2() {
   document.querySelectorAll('span.index-def')
     .forEach(span => {
       // Definition ID is to be found in a nearby anchor
