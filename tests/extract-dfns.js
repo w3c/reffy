@@ -495,7 +495,7 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       linkingText: ["selector"],
       access: "public"
     }],
-    spec: "CSS21"
+    spec: "CSS2"
   },
 
   {
@@ -509,7 +509,7 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       linkingText: ["selector"],
       access: "public"
     }],
-    spec: "CSS21"
+    spec: "CSS2"
   },
 
   {
@@ -523,7 +523,7 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       linkingText: ["sel"],
       access: "public"
     }],
-    spec: "CSS21"
+    spec: "CSS2"
   },
 
   {
@@ -541,7 +541,7 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       type: "property",
       definedIn: "dt"
     }],
-    spec: "CSS21"
+    spec: "CSS2"
   },
 
   {
@@ -555,7 +555,7 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       access: "public",
       type: "value"
     }],
-    spec: "CSS21"
+    spec: "CSS2"
   },
 
   {
@@ -571,7 +571,7 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       access: "public",
       type: "type"
     }],
-    spec: "CSS21"
+    spec: "CSS2"
   },
 
   {
@@ -589,7 +589,7 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       type: "property",
       definedIn: "dt"
     }],
-    spec: "CSS21"
+    spec: "CSS2"
   },
 
   {
@@ -607,7 +607,7 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       type: "type",
       definedIn: "dt"
     }],
-    spec: "CSS21"
+    spec: "CSS2"
   },
 
   {
