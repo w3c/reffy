@@ -138,8 +138,15 @@ async function crawlSpec(spec, crawlOptions) {
         if (result.crawled) {
             spec.crawled = result.crawled;
         }
-        if (result.crawlCacheInfo) {
-          spec.crawlCacheInfo = result.crawlCacheInfo;
+        if (result.crawlCacheInfo &&
+            (result.crawled === spec.url ||
+                result.crawled === spec.nightly?.url)) {
+            // Note: Some redirection took place. That happens when, e.g., a
+            // WICG spec gets moved to another group, until we update the URL
+            // in browser-specs. Redirection is done through scripting. Reffy
+            // follows the redirect but the cache info it receives from
+            // Puppeteer is for the initial URL. We cannot rely on it!
+            spec.crawlCacheInfo = result.crawlCacheInfo;
         }
         crawlOptions.modules.forEach(mod => {
             if (result[mod.property]) {
