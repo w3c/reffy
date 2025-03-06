@@ -341,7 +341,9 @@ export default function (spec, idToHeading = {}) {
     // (pending a proper dfns curation process, see:
     // https://github.com/w3c/webref/issues/789)
     .filter(node => {
-      const link = node.querySelector('a[href^="http"]');
+      const link =
+        node.querySelector('a[href^="http"]') ??
+        node.closest('a[href^="http"]');
       return !link ||
         (node.textContent.trim() !== link.textContent.trim()) ||
         (link.href === 'https://www.w3.org/TR/CSS2/syndata.html#vendor-keywords');

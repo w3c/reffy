@@ -326,6 +326,12 @@ const tests = [
     spec: "html"
   },
   {
+    title: "ignores definitions imported in the Source map format spec",
+    html: '<li>The <a href="https://infra.spec.whatwg.org/#byte-sequence"><dfn id="external-whatwg-infra-byte-sequence">byte sequence</dfn></a>',
+    changesToBaseDfn: [],
+    spec: "sourcemap"
+  },
+  {
     "title": "extracts attribute definition from the SVG2 spec",
     html: `<table class="attrdef def"><tr>
         <td><dfn id="RequiredExtensionsAttribute">requiredExtensions</dfn></td>
