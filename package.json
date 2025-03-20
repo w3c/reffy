@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "mocha": "11.1.0",
-    "respec": "35.2.2",
+    "respec": "35.2.3",
     "respec-hljs": "2.1.1",
     "rollup": "4.35.0",
     "undici": "^7.0.0"
