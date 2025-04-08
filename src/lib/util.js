@@ -318,6 +318,7 @@ async function processSpecification(spec, processFunction, args, options) {
     if (!browser) {
         throw new Error('Browser instance not initialized, setupBrowser() must be called before processSpecification().');
     }
+    options.userAgent = options.userAgent ?? await browser.userAgent();
 
     // Create an abort controller for network requests directly handled by the
     // Node.js code (and not by Puppeteer)
@@ -462,7 +463,11 @@ async function processSpecification(spec, processFunction, args, options) {
           // We set a conditional request header
           // Use If-Modified-Since in preference as it is in practice
           // more reliable for conditional requests
-          let headers = {'Accept-Encoding': 'gzip, deflate, br', 'Upgrade-Insecure-Requests': 1, 'User-Agent': browser.userAgent()};
+          let headers = {
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Upgrade-Insecure-Requests': 1,
+            'User-Agent': options.userAgent
+          };
           if (options.lastModified) {
             headers["If-Modified-Since"] = options.lastModified;
           } else if (options.etag) {
@@ -482,6 +487,7 @@ async function processSpecification(spec, processFunction, args, options) {
           }
         }
         const page = await browser.newPage();
+        await page.setUserAgent(options.userAgent);
 
         // Disable cache if caller wants to handle all network requests
         await page.setCacheEnabled(!options.forceLocalFetch);
@@ -553,6 +559,7 @@ async function processSpecification(spec, processFunction, args, options) {
             for (const url of pageUrls) {
                 const subAbort = new AbortController();
                 const subPage = await browser.newPage();
+                await subPage.setUserAgent(options.userAgent);
                 await subPage.setCacheEnabled(!options.forceLocalFetch);
                 const subCdp = await subPage.target().createCDPSession();
                 await subCdp.send('Fetch.enable');
