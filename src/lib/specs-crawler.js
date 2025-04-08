@@ -120,6 +120,7 @@ async function crawlSpec(spec, crawlOptions) {
               [spec, crawlOptions.modules],
                 { quiet: crawlOptions.quiet,
                   forceLocalFetch: crawlOptions.forceLocalFetch,
+                  userAgent: `Reffy/${reffyVersion}`,
                   ...cacheInfo}
             );
             if (result.status === "notmodified" && fallback) {
