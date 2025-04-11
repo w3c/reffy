@@ -16,6 +16,7 @@ import { inspect } from 'node:util';
 import specs from 'web-specs' with { type: 'json' };
 import postProcessor from './post-processor.js';
 import ThrottledQueue from './throttled-queue.js';
+import { generateSpecReport } from './markdown-report.js';
 import {
     completeWithAlternativeUrls,
     expandBrowserModules,
@@ -591,6 +592,13 @@ async function crawlSpecs(options) {
                 errors: results.filter(spec => !!spec.error).length
             };
 
+            // Attach a crawl summary in Markdown if so requested
+            if (options.markdown || options.summary) {
+                for (const res of results) {
+                    res.crawlSummary = await generateSpecReport(res);
+                }
+            }
+
             // Return results to the console or save crawl results to an
             // index.json file
             if (options.terse) {
@@ -604,6 +612,15 @@ async function crawlSpecs(options) {
                 }
                 console.log(typeof results === 'string' ?
                     results : JSON.stringify(results, null, 2));
+            }
+            else if (options.markdown) {
+                console.log('# Crawl results');
+                console.log();
+                for (const res of results) {
+                    console.log(`## ${res.title}`);
+                    console.log(res.crawlSummary);
+                    console.log();
+                }
             }
             else if (!options.output) {
                 console.log(JSON.stringify(results, null, 2));
