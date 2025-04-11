@@ -84,12 +84,14 @@ program
     .description('Crawls and processes a list of Web specifications')
     .option('-d, --debug', 'debug mode, crawl one spec at a time')
     .option('-f, --fallback <json>', 'fallback data to use when a spec crawl fails')
+    .option('--md, --markdown', 'output a Markdown report')
     .option('-m, --module <modules...>', 'spec processing modules')
     .option('-o, --output <folder>', 'existing folder/file where crawl results are to be saved')
     .option('-p, --post <modules...>', 'post-processing modules')
     .option('-q, --quiet', 'do not report progress and other warnings to the console')
     .option('-r, --release', 'crawl release (TR) version of specs')
     .option('-s, --spec <specs...>', 'specs to crawl')
+    .option('--summary', 'include a crawl summary in Markdown for each spec')
     .option('-t, --terse', 'output crawl results without metadata')
     .option('-u, --use-crawl <folder>', 'use given crawl result folder as input for post-processing')
     .action(async options => {
@@ -109,9 +111,11 @@ will dump ~100MB of data to the console:
         const crawlOptions = {
             debug: options.debug,
             fallback: options.fallback,
+            markdown: options.markdown,
             output: options.output,
             publishedVersion: options.release,
             quiet: options.quiet,
+            summary: options.summary,
             terse: options.terse,
             useCrawl: options.useCrawl
         };
@@ -176,6 +180,10 @@ Usage notes for some of the options:
   that the crawl would produce in the absence of errors (e.g. same modules).
 
   The "error" property is set on specs for which fallback data was used.
+
+--md, --markdown
+  Output a crawl summary in Markdown instead of a JSON report. The option takes
+  precedence over the \`--output\` option.
 
 -m, --module <modules...>
   If processing modules are not specified, the crawler runs all core processing
@@ -285,6 +293,13 @@ Usage notes for some of the options:
   shortnames). For instance, to also crawl the discontinued DOM Level 2 Style
   spec, run:
     $ reffy -o reports/test -s all DOM-Level-2-Style
+
+--summary
+  Tells Reffy to attach a Markdown summary of the crawl per spec to the JSON
+  report, in a \`crawlSummary\` property. The Markdown report is suitable for
+  inclusion in a GitHub issue or similar. It starts with a summary, and then
+  details a few noteworthy extracts (CSS, dfns, Web IDL) in expandable
+  sections, with links to the online xref database search where appropriate.
 
 -t, --terse
   This flag cannot be combined with the --output option and cannot be set if
