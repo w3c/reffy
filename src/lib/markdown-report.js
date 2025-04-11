@@ -18,7 +18,7 @@ import idlparsed from '../postprocessing/idlparsed.js';
  * extracted something from the spec, how to summarize the results when it
  * did, and whether/how to highlight specific details.
  *
- * TODO: reffy.json and the browserlib structure could be refactored to bind
+ * TODO: reffy.json, browserlib code, and schemas could be refactored to bind
  * all the logic linked to a module together: how to extract, whether something
  * was extracted, how to summarize, etc. (but note the extraction logic actually
  * runs in a browser page, while the rest runs in a Node.js context and that,
