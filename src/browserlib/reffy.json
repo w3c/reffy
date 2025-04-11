@@ -1,69 +1,84 @@
 [
   {
+    "label": "Title",
     "href": "./get-title.mjs",
     "property": "title",
     "metadata": true
   },
   {
+    "label": "Authoring tool",
     "href": "./get-generator.mjs",
     "property": "generator",
     "metadata": true
   },
   {
+    "label": "Date",
     "href": "./get-lastmodified-date.mjs",
     "property": "date",
     "metadata": true
   },
   {
+    "label": "Revision ID",
     "href": "./get-revision.mjs",
     "property": "revision",
     "metadata": true
   },
   {
+    "label": "Algorithms",
     "href": "./extract-algorithms.mjs",
     "property": "algorithms"
   },
   {
+    "label": "Links",
     "href": "./extract-links.mjs",
     "property": "links"
   },
   {
+    "label": "References",
     "href": "./extract-references.mjs",
     "property": "refs"
   },
   {
+    "label": "Events",
     "href": "./extract-events.mjs",
     "property": "events"
   },
   {
+    "label": "Web IDL",
     "href": "./extract-webidl.mjs",
     "property": "idl",
     "extractsPerSeries": true
   },
   {
+    "label": "CSS",
     "href": "./extract-cssdfn.mjs",
     "property": "css",
     "extractsPerSeries": true
   },
   {
+    "label": "Terms",
     "href": "./extract-dfns.mjs",
     "property": "dfns",
     "needsIdToHeadingMap": true
   },
   {
+    "label": "Elements",
     "href": "./extract-elements.mjs",
     "property": "elements"
   },
   {
+    "label": "Headings",
     "href": "./extract-headings.mjs",
     "property": "headings"
   },
   {
+    "label": "IDs",
     "href": "./extract-ids.mjs",
     "property": "ids",
     "needsIdToHeadingMap": true
   },
   {
+    "label": "CDDL",
     "href": "./extract-cddl.mjs",
     "property": "cddl"
   }
