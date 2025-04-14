@@ -75,27 +75,39 @@ const moduleFunctions = {
       .join('\n')
   },
   dfns: {
+    // For dfns, note we make a distinction between terms that are exported by
+    // default (such as CSS and Web IDL terms) and terms that editors choose to
+    // export explicitly. The former get reported in other details, the latter
+    // are the ones most likely to cause duplication issues.
     isPresent: isArrayPresent,
-    summary: value => {
-      const access = {};
-      for (const dfn of value) {
-        if (!access[dfn.access]) {
-          access[dfn.access] = [];
-        }
-        access[dfn.access].push(dfn);
+    summary: value => [
+      {
+        access: 'explicitly exported',
+        dfns: value
+          .filter(dfn => dfn.access === 'public')
+          .filter(dfn => dfn.type === 'dfn' || dfn.type === 'cddl')
+      },
+      {
+        access: 'exported by default',
+        dfns: value
+          .filter(dfn => dfn.access === 'public')
+          .filter(dfn => dfn.type !== 'dfn' && dfn.type !== 'cddl')
+      },
+      {
+        access: 'private',
+        dfns: value
+          .filter(dfn => dfn.access !== 'public')
       }
-      return Object.entries(access)
-        .map(([access, dfns]) => dfns.length > 0 ?
-          dfns.length + ' ' + access :
-          null)
-        .filter(found => found)
-        .join(', ');
-    },
+    ]
+      .map(t => t.dfns.length > 0 ? t.dfns.length + ' ' + t.access : null)
+      .filter(found => found)
+      .join(', '),
     details: value => {
       const details = value
         .filter(dfn => dfn.access === 'public')
+        .filter(dfn => dfn.type === 'dfn' || dfn.type === 'cddl')
         .map(dfn => '- ' + wrapTerm(dfn.linkingText[0], dfn.type, dfn.href) +
-          (dfn.for?.length > 0 ? ' for ' + wrapTerm(dfn.for[0], dfn.type) : '') +
+          (dfn.for?.length > 0 ? ' for ' + wrapTerm(dfn.for[0], dfn.type): '') +
           `, type ${dfn.type}` +
           ` ([xref search](https://respec.org/xref/?term=${encodeURIComponent(dfn.linkingText[0])}))`
         );
@@ -104,7 +116,7 @@ const moduleFunctions = {
       }
       const s = details.length > 1 ? 's' : '';
       const report = ['<details>'];
-      report.push(`<summary>${details.length} exported term${s}</summary>`);
+      report.push(`<summary>${details.length} explicitly exported term${s}</summary>`);
       report.push('');
       report.push(...details);
       report.push('</details>');
@@ -205,7 +217,9 @@ const moduleFunctions = {
     summary: arrayInfo
   },
   links: {
-    isPresent: isArrayPresent,
+    isPresent: value =>
+      isArrayPresent(Object.keys(value?.rawlinks ?? {})) ||
+      isArrayPresent(Object.keys(value?.autolinks ?? {})),
     summary: value => ['rawlinks', 'autolinks']
       .map(prop => Object.keys(value[prop]).length > 0 ?
         Object.keys(value[prop]).length + ' ' + prop :
@@ -243,13 +257,15 @@ function arrayInfo(value) {
 }
 
 function wrapTerm(term, type, href) {
-  let res = '';
   if (type === 'abstract-op' || type === 'dfn') {
-    res = term;
+    if (href) {
+      return `[${term}](${href})`;
+    }
+    else {
+      return `"${term}"`;
+    }
   }
-  else {
-    res = '`' + term + '`';
-  }
+  const res = '`' + term + '`';
   if (href) {
     return `[${res}](${href})`;
   }
@@ -312,6 +328,7 @@ export async function generateSpecReport(specResult) {
     }
   }
   if (extractsSummary.length > 0) {
+    extractsSummary.sort();
     summary.push(`- Spec defines:`);
     summary.push(...extractsSummary);
   }

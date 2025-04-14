@@ -10,10 +10,11 @@ describe('The markdown report', () => {
 - Canonical URL: [https://www.w3.org/TR/WOFF2/](https://www.w3.org/TR/WOFF2/)
 - Crawled URL: [https://w3c.github.io/woff/woff2/](https://w3c.github.io/woff/woff2/)
 - Spec defines:
-  - Terms: 1 private
   - Headings: 1 found
   - IDs: 2 found
-- No Algorithms, CDDL, CSS, Events, Links, References, Web IDL definitions found`);
+  - Links: 1 rawlinks
+  - Terms: 1 private
+- No Algorithms, CDDL, CSS, Events, References, Web IDL definitions found`);
   });
 
 
@@ -48,10 +49,11 @@ describe('The markdown report', () => {
 - Crawled URL: [https://w3c.github.io/woff/woff2/](https://w3c.github.io/woff/woff2/)
 - Spec defines:
   - CSS: 1 property, 1 at-rule, 1 selector
-  - Terms: 1 private
   - Headings: 1 found
   - IDs: 2 found
-- No Algorithms, CDDL, Events, Links, References, Web IDL definitions found
+  - Links: 1 rawlinks
+  - Terms: 1 private
+- No Algorithms, CDDL, Events, References, Web IDL definitions found
 
 <details>
 <summary>1 CSS property</summary>
@@ -80,16 +82,16 @@ describe('The markdown report', () => {
 - Canonical URL: [https://www.w3.org/TR/WOFF2/](https://www.w3.org/TR/WOFF2/)
 - Crawled URL: [https://w3c.github.io/woff/woff2/](https://w3c.github.io/woff/woff2/)
 - Spec defines:
-  - Terms: 2 public
   - Headings: 1 found
   - IDs: 2 found
-- No Algorithms, CDDL, CSS, Events, Links, References, Web IDL definitions found
+  - Links: 1 rawlinks
+  - Terms: 1 explicitly exported, 1 exported by default
+- No Algorithms, CDDL, CSS, Events, References, Web IDL definitions found
 
 <details>
-<summary>2 exported terms</summary>
+<summary>1 explicitly exported term</summary>
 
 - [Foo](https://w3c.github.io/woff/woff2/#foo), type dfn ([xref search](https://respec.org/xref/?term=Foo))
-- [\`Foo\`](https://w3c.github.io/woff/woff2/#foo) for \`Bar\`, type attribute ([xref search](https://respec.org/xref/?term=Foo))
 </details>`);
   });
 
@@ -120,11 +122,12 @@ enum PresentationConnectionState { "connecting", "connected", "closed", "termina
 - Canonical URL: [https://www.w3.org/TR/WOFF2/](https://www.w3.org/TR/WOFF2/)
 - Crawled URL: [https://w3c.github.io/woff/woff2/](https://w3c.github.io/woff/woff2/)
 - Spec defines:
-  - Web IDL: 3 names (or partials)
-  - Terms: 1 private
   - Headings: 1 found
   - IDs: 2 found
-- No Algorithms, CDDL, CSS, Events, Links, References definitions found
+  - Links: 1 rawlinks
+  - Terms: 1 private
+  - Web IDL: 3 names (or partials)
+- No Algorithms, CDDL, CSS, Events, References definitions found
 
 <details>
 <summary>3 Web IDL names</summary>
