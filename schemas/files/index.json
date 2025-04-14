@@ -35,6 +35,25 @@
       "items": {
         "type": "object"
       }
+    },
+
+    "post": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "mod": {
+            "type": "string"
+          },
+          "result": {
+            "oneOf": [
+              { "type": "object" },
+              { "type": "array" }
+            ]
+          },
+          "additionalProperties": false
+        }
+      }
     }
   }
 }

@@ -27,7 +27,8 @@ import {
     setupBrowser,
     teardownBrowser,
     createFolderIfNeeded,
-    loadJSON
+    loadJSON,
+    shouldSaveToFile
 } from './util.js';
 
 import packageConfig from '../../package.json' with { type: 'json' };
@@ -188,7 +189,7 @@ async function crawlSpec(spec, crawlOptions) {
  */
 async function saveSpecResults(spec, settings) {
     settings = settings || {};
-    if (!settings.output) {
+    if (!shouldSaveToFile(settings)) {
         return spec;
     }
 
@@ -337,16 +338,78 @@ async function saveSpecResults(spec, settings) {
 
 
 /**
- * Main method that crawls the list of specification URLs and return a structure
- * that full describes its title, URLs, references, and IDL definitions.
+ * Helper function that takes a list of specs as inputs and expands them to an
+ * object suitable for crawling, with as much information as possible.
  *
  * @function
- * @param {Array(String)} speclist List of URLs to parse
+ * @param {Array(String|Object)} list A list of "specs", where each spec can be
+ * a string that represents a spec's shortname, series shortname or URL, or an
+ * object that already contains appropriate information.
+ * @return {Array(Object)} An array of spec objects. Note: When a spec was
+ * already described through an object, the function returns the object as-is
+ * and makes no attempt at validating it.
+ */
+function prepareListOfSpecs(list) {
+    return list.map(spec => {
+        if (typeof spec !== 'string') {
+            return spec;
+        }
+        let match = specs.find(s => s.url === spec || s.shortname === spec);
+        if (!match) {
+            match = specs.find(s => s.series &&
+                s.series.shortname === spec &&
+                s.series.currentSpecification === s.shortname);
+        }
+        if (match) {
+            return match;
+        }
+
+        let url = null;
+        try {
+            url = (new URL(spec)).href;
+        }
+        catch {
+            if (spec.endsWith('.html')) {
+                url = (new URL(spec, `file://${process.cwd()}/`)).href;
+            }
+            else {
+                const msg = `Spec ID "${spec}" can neither be interpreted as a URL, a valid shortname or a relative path to an HTML file`;
+                throw new Error(msg);
+            }
+        }
+        return {
+            url,
+            nightly: { url },
+            shortname: spec.replace(/[:\/\\\.]/g, ''),
+            series: {
+                shortname: spec.replace(/[:\/\\\.]/g, ''),
+            }
+        };
+    });
+}
+
+
+/**
+ * Crawl the provided list of specifications and return an array with the crawl
+ * results.
+ *
+ * Crawl options may be specified as a second parameter. The function ignores
+ * options that affect the output such as `output`, `markdown` or `terse`. The
+ * function also does not run post-processing modules that apply at the "crawl"
+ * level.
+ *
+ * @function
+ * @param {Array(String|Object)} speclist List of specs to crawl, where each
+ * spec can be a string that represents a spec's shortname, series shortname or
+ * URL, or an object that already contains appropriate information.
  * @param {Object} crawlOptions Crawl options
- * @return {Promise<Array(Object)} The promise to get an array of complete
- *   specification descriptions
+ * @return {Promise<Array(Object)} The promise to get an array with crawl
+ *   results.
  */
 async function crawlList(speclist, crawlOptions) {
+    // Expand the list of specs to spec objects suitable for crawling
+    speclist = prepareListOfSpecs(speclist);
+
     // Make a shallow copy of crawl options object since we're going
     // to modify properties in place
     crawlOptions = Object.assign({speclist}, crawlOptions);
@@ -420,6 +483,25 @@ async function crawlList(speclist, crawlOptions) {
         await teardownBrowser();
     }
 
+    // Merge extracts per series when necessary (CSS/IDL extracts)
+    for (const mod of crawlOptions.modules) {
+        if (mod.extractsPerSeries) {
+            await adjustExtractsPerSeries(results, mod.property, crawlOptions);
+        }
+    }
+    for (const mod of crawlOptions.post ?? []) {
+        if (postProcessor.extractsPerSeries(mod)) {
+            await adjustExtractsPerSeries(results, mod.property, crawlOptions);
+        }
+    }
+
+    // Attach a crawl summary in Markdown if so requested
+    if (crawlOptions.markdown || crawlOptions.summary) {
+        for (const res of results) {
+            res.crawlSummary = await generateSpecReport(res);
+        }
+    }
+
     return results;
 }
 
@@ -435,7 +517,7 @@ async function crawlList(speclist, crawlOptions) {
  * @return {Promise(Array)} The promise to get an updated crawl results array
  */
 async function adjustExtractsPerSeries(data, property, settings) {
-    if (!settings.output) {
+    if (!shouldSaveToFile(settings)) {
         return data;
     }
 
@@ -487,7 +569,7 @@ async function adjustExtractsPerSeries(data, property, settings) {
  * @return {Promise<void>} The promise to have saved the data
  */
 async function saveResults(contents, settings) {
-    if (!settings.output) {
+    if (!shouldSaveToFile(settings)) {
         return;
     }
     const indexFilename = path.join(settings.output, 'index.json');
@@ -496,62 +578,38 @@ async function saveResults(contents, settings) {
 
 
 /**
- * Crawls the specifications listed in the given JSON file and generates a
- * crawl report in the given folder.
+ * Run a crawl given a set of options.
+ *
+ * The set of options matches those defined in the CLI. The function crawls all
+ * specs by default in particular.
+ *
+ * If the `output` option is not set, the function outputs a JSON dump of the
+ * crawl results to the console (or a report in Markdown if the `markdown`
+ * option is set) and does not return anything to the caller.
+ *
+ * If the `output` option is set to the magic value `{return}`, the function
+ * outputs nothing but returns an object that represents the crawl results,
+ * with the actual results per spec stored in a `results` property.
+ *
+ * If the `output` option is set to any other value, the function interprets it
+ * as a folder, creates subfolders and files with crawl results in that folder,
+ * with a root `index.json` entry point, and does not return anything.
  *
  * @function
- * @param {Object} options Crawl options. Possible options are:
+ * @param {Object} options Crawl options. Possible options include:
  *   publishedVersion, debug, output, terse, modules and specs.
  *   See CLI help (node reffy.js --help) for details.
- * @return {Promise<void>} The promise that the crawl will have been made
+ * @return {Promise<void|Object>} The promise that the crawl will have been
+ *   made along with the index of crawl results if the `output` option was set
+ *   to the specific value `{return}`.
  */
 async function crawlSpecs(options) {
-    function prepareListOfSpecs(list) {
-        return list.map(spec => {
-            if (typeof spec !== 'string') {
-                return spec;
-            }
-            let match = specs.find(s => s.url === spec || s.shortname === spec);
-            if (!match) {
-                match = specs.find(s => s.series &&
-                    s.series.shortname === spec &&
-                    s.series.currentSpecification === s.shortname);
-            }
-            if (match) {
-                return match;
-            }
-
-            let url = null;
-            try {
-                url = (new URL(spec)).href;
-            }
-            catch {
-                if (spec.endsWith('.html')) {
-                    url = (new URL(spec, `file://${process.cwd()}/`)).href;
-                }
-                else {
-                    const msg = `Spec ID "${spec}" can neither be interpreted as a URL, a valid shortname or a relative path to an HTML file`;
-                    throw new Error(msg);
-                }
-            }
-            return {
-                url,
-                nightly: { url },
-                shortname: spec.replace(/[:\/\\\.]/g, ''),
-                series: {
-                    shortname: spec.replace(/[:\/\\\.]/g, ''),
-                }
-            };
-        });
-    }
-
     const crawlIndex = options?.useCrawl ?
         await loadJSON(path.join(options.useCrawl, 'index.json')) :
         null;
-
-    const requestedList = crawlIndex ? crawlIndex.results :
-        options?.specs ? prepareListOfSpecs(options.specs) :
-        specs;
+    const requestedList = crawlIndex ?
+        crawlIndex.results :
+        (options?.specs ?? specs);
 
     // Make a shallow copy of passed options parameter and expand modules
     // in place.
@@ -559,20 +617,6 @@ async function crawlSpecs(options) {
     options.modules = expandBrowserModules(options.modules);
 
     return crawlList(requestedList, options)
-        .then(async results => {
-            // Merge extracts per series when necessary (CSS/IDL extracts)
-            for (const mod of options.modules) {
-                if (mod.extractsPerSeries) {
-                    await adjustExtractsPerSeries(results, mod.property, options);
-                }
-            }
-            for (const mod of options.post ?? []) {
-                if (postProcessor.extractsPerSeries(mod)) {
-                    await adjustExtractsPerSeries(results, mod.property, options);
-                }
-            }
-            return results;
-        })
         .then(async results => {
             // Create and return a crawl index out of the results, to allow
             // post-processing modules to run.
@@ -591,13 +635,6 @@ async function crawlSpecs(options) {
                 crawled: results.length,
                 errors: results.filter(spec => !!spec.error).length
             };
-
-            // Attach a crawl summary in Markdown if so requested
-            if (options.markdown || options.summary) {
-                for (const res of results) {
-                    res.crawlSummary = await generateSpecReport(res);
-                }
-            }
 
             // Return results to the console or save crawl results to an
             // index.json file
@@ -625,7 +662,7 @@ async function crawlSpecs(options) {
             else if (!options.output) {
                 console.log(JSON.stringify(results, null, 2));
             }
-            else {
+            else if (shouldSaveToFile(options)) {
                 await saveResults(index, options);
             }
             return index;
@@ -636,7 +673,7 @@ async function crawlSpecs(options) {
                 if (!postProcessor.appliesAtLevel(mod, 'crawl')) {
                     continue;
                 }
-                const crawlResults = options.output ?
+                const crawlResults = shouldSaveToFile(options) ?
                     await expandCrawlResult(
                         crawlIndex, options.output, postProcessor.dependsOn(mod)) :
                     crawlIndex;
@@ -647,25 +684,66 @@ async function crawlSpecs(options) {
                     console.log();
                     console.log(JSON.stringify(result, null, 2));
                 }
+                else if (!shouldSaveToFile(options)) {
+                    // Attach the post-processing result to the index of the
+                    // crawl results.
+                    crawlIndex.post = crawlIndex.post ?? [];
+                    crawlIndex.post.push({
+                        mod: postProcessor.getProperty(mod),
+                        result
+                    });
+                }
             }
+
+            // Function does not return anything if it already reported the
+            // results to the console or files. It returns the index of the
+            // crawl results otherwise.
+            if (!options.output || shouldSaveToFile(options)) {
+                return;
+            }
+            return crawlIndex;
         });
 }
 
 
-/**************************************************
-Export methods for use as module
-**************************************************/
-// TODO: consider more alignment between the two crawl functions or
-// find more explicit names to distinguish between them:
-// - "crawlList" takes an explicit list of specs as input, does not run the
-// post-processor, and returns the results without saving them to files.
-// - "crawlSpecs" takes options as input, runs all steps and saves results
-// to files (or outputs the results to the console). It does not return
-// anything.
+/**
+ * Crawl a set of specs according to the given set of crawl options.
+ *
+ * The function behaves differently depending on the parameters it receives.
+ *
+ * If it receives no parameter, the function behaves as it were called with a
+ * single empty object as parameter.
+ *
+ * If it receives a single object as parameter, this object sets crawl options
+ * (essentially matching CLI options). What the function outputs or returns
+ * depends on the `output` option. If `output` is not set, the function outputs
+ * a JSON dump of the index of the crawl results to the console and returns
+ * nothing to the caller. If `output` is set to the "magic" value `{return}`,
+ * the function does not output anything but returns the index of the crawl
+ * results which a caller may then process in any way they wish. If `output` is
+ * set to any other value, it defines a folder, the function saves crawl
+ * results as folders and files in that folder and returns nothing.
+ *
+ * If it receives an array as first parameter, the array defines the set of
+ * specs that are to be crawled (each spec may be a string representing the
+ * spec's shortname, series shortname, or URL; or a spec object). The second
+ * parameter, if present, defines additional crawl options (same as above,
+ * except the `specs` option should not be set). The function returns an
+ * array of crawl results to the caller.
+ *
+ * Note the function does not apply post-processing modules that run at the
+ * "crawl" level when it receives an array as first parameter. It will also
+ * ignore crawl options that control the output such as `output`, `markdown`
+ * and `terse`.
+ */
 function crawl(...args) {
     return Array.isArray(args[0]) ?
         crawlList.apply(this, args) :
         crawlSpecs.apply(this, args);
 }
 
+
+/**************************************************
+Export crawl method for use as module
+**************************************************/
 export { crawl as crawlSpecs };

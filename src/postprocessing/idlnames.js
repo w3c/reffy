@@ -14,7 +14,8 @@ import {
   getExpectedDfnFromIdlDesc } from '../cli/check-missing-dfns.js';
 import {
   isLatestLevelThatPasses,
-  createFolderIfNeeded } from '../lib/util.js';
+  createFolderIfNeeded,
+  shouldSaveToFile } from '../lib/util.js';
 
 
 /**
@@ -379,7 +380,7 @@ async function generateIdlNames(crawl, options) {
  * @param {Object} options Crawl options ("output" will be used)
  */
 async function saveIdlNames(names, options) {
-  if (!options?.output) {
+  if (!shouldSaveToFile(options)) {
     return;
   }
 

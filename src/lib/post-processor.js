@@ -50,7 +50,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { createFolderIfNeeded } from './util.js';
+import { createFolderIfNeeded, shouldSaveToFile } from './util.js';
 import csscomplete from '../postprocessing/csscomplete.js';
 import events from '../postprocessing/events.js';
 import idlnames from '../postprocessing/idlnames.js';
@@ -220,7 +220,7 @@ async function save(mod, processResult, options) {
     }
   }
 
-  if (!options.output) {
+  if (!shouldSaveToFile(options)) {
     // Nothing to do if no output folder was given
     return;
   }

@@ -1137,6 +1137,21 @@ async function getSchemaValidationFunction(schemaName) {
     };
 }
 
+
+/**
+ * Return true if the crawler should save results to files given the crawl
+ * options.
+ *
+ * @function
+ * @param {Object} crawlOptions Crawl options (optional)
+ * @return {Boolean} true when the crawler should save the results to files,
+ *   false otherwise.
+ */
+function shouldSaveToFile(crawlOptions) {
+    return crawlOptions?.output && crawlOptions.output !== '{return}';
+}
+
+
 export {
     fetch,
     expandBrowserModules,
@@ -1151,5 +1166,6 @@ export {
     createFolderIfNeeded,
     getInterfaceTreeInfo,
     getSchemaValidationFunction,
-    loadJSON
+    loadJSON,
+    shouldSaveToFile
 };
