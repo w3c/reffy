@@ -1,3 +1,4 @@
+import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -126,7 +127,6 @@ function isString(x) {
 }
 
 describe("CDDL extraction", function () {
-  this.slow(5000);
 
   let browser;
   let extractCode;

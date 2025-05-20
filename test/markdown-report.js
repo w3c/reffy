@@ -1,3 +1,4 @@
+import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { generateSpecReport } from '../src/lib/markdown-report.js';
 import crawlTest from './crawl-test.json' with { type: 'json' };
