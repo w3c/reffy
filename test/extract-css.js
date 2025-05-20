@@ -1,3 +1,4 @@
+import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -1646,9 +1647,7 @@ that spans multiple lines */
   }
 ];
 
-describe("Test CSS properties extraction", function() {
-  this.slow(5000);
-  this.timeout(10000);
+describe("Test CSS properties extraction", {timeout: 10000}, function() {
   let browser;
   let extractCSSCode;
   let validateSchema;

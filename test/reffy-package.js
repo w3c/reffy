@@ -1,3 +1,4 @@
+import { describe, it, before, after } from 'node:test';
 import assert from "node:assert";
 import os from "node:os";
 import fs from "node:fs";
@@ -21,9 +22,7 @@ function sleep(ms) {
   });
 }
 
-describe("The npm package of Reffy", function () {
-  this.slow(30000);
-  this.timeout(60000);
+describe("The npm package of Reffy", {timeout: 60000}, function () {
 
   let tmpdir;
 

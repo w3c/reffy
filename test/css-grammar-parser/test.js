@@ -1,9 +1,10 @@
+import { describe, it } from 'node:test';
 import assert from "node:assert";
 import fs from "node:fs";
 import { parsePropDefValue } from "../../src/lib/css-grammar-parser.js";
 
-const propDefs = fs.readFileSync("tests/css-grammar-parser/in", "utf-8").split("\n").map(def => def.trim());
-const propDefsOut = JSON.parse(fs.readFileSync("tests/css-grammar-parser/out.json", "utf-8"));
+const propDefs = fs.readFileSync("test/css-grammar-parser/in", "utf-8").split("\n").map(def => def.trim());
+const propDefsOut = JSON.parse(fs.readFileSync("test/css-grammar-parser/out.json", "utf-8"));
 
 const results = propDefs.map(parsePropDefValue);
 describe('Parser correctly parses grammar instances', () => {

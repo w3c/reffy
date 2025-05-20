@@ -1,3 +1,4 @@
+import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -287,7 +288,6 @@ Ok it's almost certainly not true
 
 
 describe("Test outline generation", function () {
-  this.slow(5000);
 
   let createOutlineCode;
   let browser;
