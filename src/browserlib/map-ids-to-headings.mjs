@@ -86,21 +86,21 @@ export default function () {
     let href = nodeid;
 
     if (parentSection) {
-      let alternateIds = [];
+      const ids = [];
       let id;
 
       const heading = parentSection.heading;
       if (heading.id) {
         id = heading.id;
         href = getAbsoluteUrl(heading, { singlePage });
-	alternateIds.push(id);
+	ids.push(id);
       }
       else {
         const anchor = heading.querySelector('a[name]');
         if (anchor) {
           id = anchor.getAttribute('name');
           href = getAbsoluteUrl(anchor, { singlePage, attribute: 'name' });
-	  alternateIds.push(id);
+	  ids.push(id);
         }
       }
 
@@ -115,13 +115,16 @@ export default function () {
 
       const mapping = {};
       if (id) {
-        mapping.id = id;
+	ids.push(id);
+
       }
-      alternateIds = alternateIds.filter(id => id !== mapping.id);
+      if (ids.length) {
+	mapping.id = ids.pop();
+      }
       mapping.href = href;
       mapping.title = trimmedText.replace(reNumber, '');
-      if (alternateIds.length) {
-	mapping.alternateIds = alternateIds;
+      if (ids.length) {
+	mapping.alternateIds = ids;
       }
       mappingTable[nodeid] = mapping;
 
