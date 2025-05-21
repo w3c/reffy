@@ -86,7 +86,7 @@ export default function () {
     let href = nodeid;
 
     if (parentSection) {
-      const alternateIds = [];
+      let alternateIds = [];
       let id;
 
       const heading = parentSection.heading;
@@ -117,9 +117,12 @@ export default function () {
       if (id) {
         mapping.id = id;
       }
+      alternateIds = alternateIds.filter(id => id !== mapping.id);
       mapping.href = href;
       mapping.title = trimmedText.replace(reNumber, '');
-      mapping.alternateIds = alternateIds.filter(id => id !== mapping.id);
+      if (alternateIds.length) {
+	mapping.alternateIds = alternateIds;
+      }
       mappingTable[nodeid] = mapping;
 
       if (number) {
