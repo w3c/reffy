@@ -87,25 +87,22 @@ export default function () {
 
     if (parentSection) {
       const ids = [];
-      let id;
 
       const heading = parentSection.heading;
       if (heading.id) {
-        id = heading.id;
+	ids.push(heading.id);
         href = getAbsoluteUrl(heading, { singlePage });
-	ids.push(id);
       }
       else {
         const anchor = heading.querySelector('a[name]');
         if (anchor) {
-          id = anchor.getAttribute('name');
+	  ids.push(anchor.getAttribute('name'));
           href = getAbsoluteUrl(anchor, { singlePage, attribute: 'name' });
-	  ids.push(id);
         }
       }
 
       if (parentSection.root && parentSection.root.id) {
-        id = parentSection.root.id;
+        ids.push(parentSection.root.id);
         href = getAbsoluteUrl(parentSection.root, { singlePage });
       }
 
@@ -114,10 +111,6 @@ export default function () {
       const number = match ? match[1] : null;
 
       const mapping = {};
-      if (id) {
-	ids.push(id);
-
-      }
       if (ids.length) {
 	mapping.id = ids.pop();
       }
