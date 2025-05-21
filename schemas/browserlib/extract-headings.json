@@ -12,7 +12,8 @@
       "href": { "$ref": "../common.json#/$defs/url" },
       "title": { "type": "string" },
       "level": { "type": "integer" },
-      "number": { "$ref": "../common.json#/$defs/headingNumber" }
+      "number": { "$ref": "../common.json#/$defs/headingNumber" },
+      "alternateIds": { "type": "array", "items": { "$ref": "../common.json#/$defs/id"} }
     }
   }
 }

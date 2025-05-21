@@ -41,13 +41,15 @@ export default function (spec, idToHeading) {
       href,
       title: n.textContent.trim()
     };
-
     const res = {
       id: heading.id,
       href: heading.href,
       level: parseInt(headingEl.tagName.slice(1), 10),
       title: heading.title
     };
+    if (heading.alternateIds?.length) {
+      res.alternateIds = heading.alternateIds;
+    }
     if (heading.number) {
       res.number = heading.number;
     }
