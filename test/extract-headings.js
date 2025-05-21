@@ -58,6 +58,11 @@ const testHeadings = [
     html: "<section id><h1 id=title>Heading in a section with empty id</h1>",
     res: [{id: "title", "href": "about:blank#title", title: "Heading in a section with empty id", level: 1}]
   },
+  {
+    title: "documents alternate ids when they exist",
+    html: "<section id=title-0><h1 id=title>Heading in a section with its own id</h1>",
+    res: [{id: "title-0", "href": "about:blank#title-0", title: "Heading in a section with its own id", level: 1, alternateIds: ["title"]}]
+  },
 ];
 
 describe("Test headings extraction", function () {

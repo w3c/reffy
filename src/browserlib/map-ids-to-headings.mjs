@@ -86,18 +86,21 @@ export default function () {
     let href = nodeid;
 
     if (parentSection) {
+      const alternateIds = [];
       let id;
 
       const heading = parentSection.heading;
       if (heading.id) {
         id = heading.id;
         href = getAbsoluteUrl(heading, { singlePage });
+	alternateIds.push(id);
       }
       else {
         const anchor = heading.querySelector('a[name]');
         if (anchor) {
           id = anchor.getAttribute('name');
           href = getAbsoluteUrl(anchor, { singlePage, attribute: 'name' });
+	  alternateIds.push(id);
         }
       }
 
@@ -116,6 +119,7 @@ export default function () {
       }
       mapping.href = href;
       mapping.title = trimmedText.replace(reNumber, '');
+      mapping.alternateIds = alternateIds.filter(id => id !== mapping.id);
       mappingTable[nodeid] = mapping;
 
       if (number) {
