@@ -741,6 +741,26 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
     </p>`,
     changesToBaseDfn: [{type: 'cddl-type'}]
   },
+
+  {
+    title: "extracts alternate heading IDs when they exist",
+    html: `<section id=title>
+      <h1 id=title-h>Heading in a section with its own id</h1>
+      <p>
+        <dfn id='foo' data-dfn-type='dfn'>Foo</dfn>
+      </p>
+    </section>`,
+    changesToBaseDfn: [{
+      heading: {
+        alternateIds: [
+          'title-h'
+        ],
+        href: 'about:blank#title',
+        id: 'title',
+        title: 'Heading in a section with its own id'
+      }
+    }]
+  },
 ];
 
 describe("Test definition extraction", function () {
