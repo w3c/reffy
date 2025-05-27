@@ -207,13 +207,14 @@ function definitionMapper(el, idToHeading, usesDfnDataModel) {
   if (el.hasAttribute('data-lt')) {
     linkingText = el.getAttribute('data-lt').split('|').map(normalize);
   }
-  else {
+  else if (el.querySelector('.secno')) {
     const copy = el.cloneNode(true);
-    let secno = null;
-    while (secno = copy.querySelector('.secno')) {
-      secno.remove();
-    }
+    const secno = copy.querySelector('.secno');
+    secno.remove();
     linkingText = [normalize(copy.textContent)];
+  }
+  else {
+    linkingText = [normalize(el.textContent)];
   }
 
   // Compute the absolute URL with fragment
