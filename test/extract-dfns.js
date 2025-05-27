@@ -761,6 +761,33 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
       }
     }]
   },
+
+  {
+    title: "skips section numbers in headings that are also definitions",
+    html: `<section>
+  <div class="header-wrapper">
+    <h3 id="oneweb" data-dfn-type="dfn">
+      <bdi class="secno">2.1 </bdi>
+      There is one web
+    </h3>
+  </div>
+  <p>... with too many conventions to define terms.</p>
+</section>`,
+    changesToBaseDfn: [{
+      definedIn: 'heading',
+      heading: {
+        href: 'about:blank#oneweb',
+        id: 'oneweb',
+        number: '2.1',
+        title: 'There is one web'
+      },
+      href: 'about:blank#oneweb',
+      id: 'oneweb',
+      linkingText: [
+        'There is one web'
+      ],
+    }]
+  }
 ];
 
 describe("Test definition extraction", function () {
