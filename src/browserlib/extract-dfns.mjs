@@ -199,6 +199,23 @@ function definitionMapper(el, idToHeading, usesDfnDataModel) {
       break;
   }
 
+  // Linking text is given by the data-lt attribute if present, or it is the
+  // textual content... but we'll skip section numbers that might have been
+  // captured when definition is defined in a heading, as in:
+  // https://www.w3.org/TR/ethical-web-principles/#oneweb
+  let linkingText = '';
+  if (el.hasAttribute('data-lt')) {
+    linkingText = el.getAttribute('data-lt').split('|').map(normalize);
+  }
+  else {
+    const copy = el.cloneNode(true);
+    let secno = null;
+    while (secno = copy.querySelector('.secno')) {
+      secno.remove();
+    }
+    linkingText = [normalize(copy.textContent)];
+  }
+
   // Compute the absolute URL with fragment
   // (Note the crawler merges pages of a multi-page spec in the first page
   // to ease parsing logic, and we want to get back to the URL of the page)
@@ -215,11 +232,8 @@ function definitionMapper(el, idToHeading, usesDfnDataModel) {
     // Absolute URL with fragment
     href,
 
-    // Linking text is given by the data-lt attribute if present, or it is the
-    // textual content
-    linkingText: el.hasAttribute('data-lt') ?
-      el.getAttribute('data-lt').split('|').map(normalize) :
-      [normalize(el.textContent)],
+    // Linking text
+    linkingText,
 
     // Additional linking text can be defined for local references
     localLinkingText: el.getAttribute('data-local-lt') ?
