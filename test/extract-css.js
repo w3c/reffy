@@ -1647,7 +1647,7 @@ that spans multiple lines */
   }
 ];
 
-describe("Test CSS properties extraction", {timeout: 10000}, function() {
+describe("Test CSS properties extraction", function() {
   let browser;
   let extractCSSCode;
   let validateSchema;
@@ -1669,7 +1669,7 @@ describe("Test CSS properties extraction", {timeout: 10000}, function() {
   });
 
   tests.forEach(t => {
-    it(t.title, async () => {
+    it(t.title, {timeout: 10000}, async () => {
       const page = await browser.newPage();
       const pageContent = t.html;
       page.setContent(pageContent);
