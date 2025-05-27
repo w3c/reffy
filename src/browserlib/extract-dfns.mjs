@@ -203,7 +203,7 @@ function definitionMapper(el, idToHeading, usesDfnDataModel) {
   // textual content... but we'll skip section numbers that might have been
   // captured when definition is defined in a heading, as in:
   // https://www.w3.org/TR/ethical-web-principles/#oneweb
-  let linkingText = '';
+  let linkingText = [];
   if (el.hasAttribute('data-lt')) {
     linkingText = el.getAttribute('data-lt').split('|').map(normalize);
   }
