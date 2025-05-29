@@ -306,6 +306,21 @@ export default function () {
     delete value.pureSyntax;
   }
 
+  // Specs typically do not make the syntax of selectors such as `:visited`
+  // explicit because it essentially goes without saying: the syntax is the
+  // selector's name itself. Note that the syntax of selectors that are
+  // function-like such as `:nth-child()` cannot be inferred in the same way.
+  for (const selector of res.selectors) {
+    if (!selector.value && !selector.name.match(/\(/)) {
+      selector.value = selector.name;
+    }
+    for (const subSelector of selector.values ?? []) {
+      if (!subSelector.value && !subSelector.name.match(/\(/)) {
+        subSelector.value = subSelector.name;
+      }
+    }
+  }
+
   // Report warnings
   if (warnings.length > 0) {
     res.warnings = warnings;
