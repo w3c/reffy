@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "https://github.com/w3c/reffy/blob/main/schemas/postprocessing/css.json",
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["atrules", "functions", "properties", "selectors", "types"],
+  "properties": {
+    "atrules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "descriptors"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "pattern": "^@" },
+          "href": { "$ref": "../common.json#/$defs/url" },
+          "value": { "$ref": "../common.json#/$defs/cssValue" },
+          "prose": { "type": "string" },
+          "descriptors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "for"],
+              "additionalProperties": true,
+              "properties": {
+                "name": { "type": "string" },
+                "for": { "type": "string" },
+                "href": { "$ref": "../common.json#/$defs/url" },
+                "value": { "$ref": "../common.json#/$defs/cssValue" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "functions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "pattern": "^<[^>]+>$|^.*()$" },
+          "for": { "type": "string" },
+          "href": { "$ref": "../common.json#/$defs/url" },
+          "type": { "type": "string", "enum": ["function"] },
+          "prose": { "type": "string" },
+          "value": { "$ref": "../common.json#/$defs/cssValue" }
+        }
+      }
+    },
+    "properties": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["name"],
+        "properties": {
+          "name": { "$ref": "../common.json#/$defs/cssPropertyName" },
+          "href": { "$ref": "../common.json#/$defs/url" },
+          "value": { "$ref": "../common.json#/$defs/cssValue" },
+          "legacyAliasOf": { "$ref": "../common.json#/$defs/cssPropertyName" },
+          "styleDeclaration": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 1
+          }
+        }
+      }
+    },
+    "selectors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "$ref": "../common.json#/$defs/cssPropertyName" },
+          "href": { "$ref": "../common.json#/$defs/url" },
+          "prose": { "type": "string" },
+          "value": { "$ref": "../common.json#/$defs/cssValue" }
+        }
+      }
+    },
+    "types": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "pattern": "^<[^>]+>$|^.*()$" },
+          "for": { "type": "string" },
+          "href": { "$ref": "../common.json#/$defs/url" },
+          "type": { "type": "string", "enum": ["type"] },
+          "prose": { "type": "string" },
+          "value": { "$ref": "../common.json#/$defs/cssValue" }
+        }
+      }
+    }
+  }
+}
