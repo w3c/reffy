@@ -167,14 +167,11 @@ export default {
           }
         }
 
-        let featureName = feature.name;
-        if (feature.for) {
-          featureName += ' for ' + feature.for;
+        const featureId = getFeatureId(feature);
+        if (!featureDfns[featureId]) {
+          featureDfns[featureId] = [];
         }
-        if (!featureDfns[featureName]) {
-          featureDfns[featureName] = [];
-        }
-        featureDfns[featureName].push(feature);
+        featureDfns[featureId].push(feature);
       }
 
       // Identify the base definition for each feature, using the definition
@@ -220,7 +217,7 @@ export default {
           if (baseDfn.value && dfn.newValues) {
             const newerDfn = dfns.find(d =>
               d !== dfn &&
-              d.newValues == dfn.newValues &&
+              d.newValues === dfn.newValues &&
               d.spec.seriesVersion > dfn.spec.seriesVersion);
             if (newerDfn) {
               // The extension is redefined in a newer level, let's ignore
@@ -298,6 +295,16 @@ export default {
           feature.value = target.value;
         }
       }
+
+      // Let's sort lists before we return to ease human-readability and
+      // avoid non-substantive diff
+      for (const feature of categorized[category]) {
+        if (feature.descriptors) {
+          feature.descriptors.sort((d1, d2) => d1.name.localeCompare(d2.name));
+        }
+      }
+      categorized[category].sort((f1, f2) =>
+        getFeatureId(f1).localeCompare(getFeatureId(f2)));
     }
 
     return categorized;
@@ -306,8 +313,20 @@ export default {
 
 
 /**
- * Decorate all CSS features in the extract with the spec's shortname and
- * a flag that signals whether the spec is the current one in the series
+ * Return the identifier of a feature, taking scoping construct into account
+ * when needed.
+ */
+function getFeatureId(feature) {
+  let featureId = feature.name;
+  if (feature.for) {
+    featureId += ' for ' + feature.for;
+  }
+  return featureId;
+}
+
+
+/**
+ * Decorate all CSS features in the extract with the spec
  */
 function decorateFeaturesWithSpec(data, spec) {
   for (const category of extractCategories) {
