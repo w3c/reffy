@@ -668,11 +668,13 @@ that spans multiple lines */
     css: [
       {
         name: ":open",
-        prose: "The :open pseudo-class represents an element that has both “open” and “closed” states, and which is currently in the “open” state."
+        prose: "The :open pseudo-class represents an element that has both “open” and “closed” states, and which is currently in the “open” state.",
+        value: ":open"
       },
       {
         name: ":closed",
-        prose: "The :closed pseudo-class represents an element that has both “open” and “closed” states, and which is currently in the “closed” state."
+        prose: "The :closed pseudo-class represents an element that has both “open” and “closed” states, and which is currently in the “closed” state.",
+        value: ":closed"
       }
     ]
   },
@@ -1234,10 +1236,12 @@ that spans multiple lines */
     css: [{
       name: '::first-letter',
       prose: 'The ::first-letter pseudo-element represents the first letter.',
+      value: '::first-letter',
       values: [{
         name: '::prefix',
         type: 'selector',
-        prose: 'The ::prefix represents the preceding punctuation of the ::first-letter element.'
+        prose: 'The ::prefix represents the preceding punctuation of the ::first-letter element.',
+        value: '::prefix'
       }]
     }]
   },
