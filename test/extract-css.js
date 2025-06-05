@@ -680,6 +680,31 @@ that spans multiple lines */
   },
 
   {
+    title: "parses combinators definitions without setting a value",
+    html: `
+    <p>
+      The <dfn data-dfn-type="selector" data-export>+</dfn> combinator is great.
+    </p>
+    <p>
+      The <dfn data-dfn-type="selector" data-export>||</dfn> combinator is cool too.
+    </p>
+    `,
+    propertyName: "selectors",
+    css: [
+      {
+        name: "+",
+        prose: "The + combinator is great.",
+        value: "'+'"
+      },
+      {
+        name: "||",
+        prose: "The || combinator is cool too.",
+        value: "'|' '|'"
+      }
+    ]
+  },
+
+  {
     title: 'parses a "value" definition for a "property"',
     html: `
     <table class="def propdef" data-link-for-hint="animation-name">

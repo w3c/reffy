@@ -308,16 +308,33 @@ export default function () {
 
   // Specs typically do not make the syntax of selectors such as `:visited`
   // explicit because it essentially goes without saying: the syntax is the
-  // selector's name itself. Note that the syntax of selectors that are
-  // function-like such as `:nth-child()` cannot be inferred in the same way.
-  for (const selector of res.selectors) {
-    if (!selector.value && !selector.name.match(/\(/)) {
+  // selector's name itself. One nuance is that, for combinators such as `||`,
+  // tokens needs to be enclosed in single-quotes for the syntax to be valid.
+  // Note the syntax of selectors that are function-like such as `:nth-child()`
+  // cannot be inferred in the same way.
+  function setValueFromName(selector) {
+    if (selector.value) {
+      return;
+    }
+    if (selector.name.match(/^[:a-z][^\(]+/i)) {
+      // Keyword-like selector that is not a combinator
       selector.value = selector.name;
     }
-    for (const subSelector of selector.values ?? []) {
-      if (!subSelector.value && !subSelector.name.match(/\(/)) {
-        subSelector.value = subSelector.name;
+    else if (!selector.name.match(/^[:a-z]/i)) {
+      // Combinator, let's enclose tokens in single-quotes
+      const tokens = selector.name.split('');
+      if (tokens.length === 1) {
+        selector.value = `'${tokens[0]}'`;
       }
+      else {
+        selector.value = tokens.map(token => `'${token}'`).join(' ');
+      }
+    }
+  }
+  for (const selector of res.selectors) {
+    setValueFromName(selector);
+    for (const subSelector of selector.values ?? []) {
+      setValueFromName(subSelector);
     }
   }
 
