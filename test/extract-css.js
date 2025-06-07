@@ -680,7 +680,7 @@ that spans multiple lines */
   },
 
   {
-    title: "parses combinators definitions without setting a value",
+    title: "parses combinators definitions and sets an appropriate value",
     html: `
     <p>
       The <dfn data-dfn-type="selector" data-export>+</dfn> combinator is great.
@@ -700,6 +700,22 @@ that spans multiple lines */
         name: "||",
         prose: "The || combinator is cool too.",
         value: "'|' '|'"
+      }
+    ]
+  },
+
+  {
+    title: "parses function-like selectors and does not set a value",
+    html: `
+    <p>
+      The <dfn data-dfn-type="selector" data-export>:func()</dfn> selector is a function.
+    </p>
+    `,
+    propertyName: "selectors",
+    css: [
+      {
+        name: ":func()",
+        prose: "The :func() selector is a function."
       }
     ]
   },
