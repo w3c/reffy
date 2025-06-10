@@ -316,11 +316,15 @@ export default function () {
     if (selector.value) {
       return;
     }
-    if (selector.name.match(/^[:a-z][^\(]+/i)) {
+    if (selector.name.match(/\(/)) {
+      // Function-like selector
+      return;
+    }
+    if (selector.name.match(/^[:a-z]/i)) {
       // Keyword-like selector that is not a combinator
       selector.value = selector.name;
     }
-    else if (!selector.name.match(/^[:a-z]/i)) {
+    else {
       // Combinator, let's enclose tokens in single-quotes
       const tokens = selector.name.split('');
       if (tokens.length === 1) {
