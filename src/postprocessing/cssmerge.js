@@ -13,7 +13,7 @@
  * In CSS extracts, functions and types that are defined for another construct
  * appear under the `values` key of that construct entry. In the resulting
  * construct, they get copied to the root lists under `functions` or `types`,
- * and get a `for` key that contains the name of the construct that they are
+ * and get a `for` key that contains the list of constructs that they are
  * defined for.
  *
  * CSS properties that are defined in one spec and extended in other specs get
@@ -178,8 +178,8 @@ export default {
       // (that has some known syntax) in the most recent level. Move that base
       // definition to the beginning of the array and get rid of other base
       // definitions.
-      // (Note: the code throws an error if duplicates of base definitions in
-      // unrelated specs still exist)
+      // (Note: the code chooses one definition if duplicates of base
+      // definitions in unrelated specs still exist)
       for (const [name, dfns] of Object.entries(featureDfns)) {
         let actualDfns = dfns.filter(dfn => dfn.value);
         if (actualDfns.length === 0) {
@@ -296,6 +296,32 @@ export default {
         }
       }
 
+      // The same feature may be defined for multiple scopes.
+      // To ease indexing and lookup by feature name, let's merge the scopes
+      // when possible, turning the `for` key into an array. This will not get
+      // rid of all scoping duplicates, but should still make the feature name
+      // unique for all but a handful of them.
+      categorized[category] = categorized[category]
+        .map((feature, idx, list) => {
+          const first = list.find(f => f.href === feature.href);
+          if (first === feature) {
+            if (feature.for) {
+              feature.for = [feature.for];
+            }
+            return feature;
+          }
+          // Not the first time we see this feature, let's merge scopes.
+          // Both scopes should be defined as there is no way to author a
+          // single dfn that defines a feature both as scoped and unscoped.
+          if (!first.for || !feature.for) {
+            throw new Error(`Feature ${feature.name} defined both as unscoped and scoped within the same dfn, see ${feature.href}`);
+          }
+          first.for.push(feature.for);
+          first.for.sort();
+          return null;
+        })
+        .filter(feature => !!feature);
+
       // Let's sort lists before we return to ease human-readability and
       // avoid non-substantive diff
       for (const feature of categorized[category]) {
@@ -313,13 +339,14 @@ export default {
 
 
 /**
- * Return the identifier of a feature, taking scoping construct into account
+ * Return the identifier of a feature, taking scoping construct(s) into account
  * when needed.
  */
 function getFeatureId(feature) {
   let featureId = feature.name;
   if (feature.for) {
-    featureId += ' for ' + feature.for;
+    featureId += ' for ' +
+      (Array.isArray(feature.for) ? feature.for.join(',') : feature.for);
   }
   return featureId;
 }

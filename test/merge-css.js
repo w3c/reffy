@@ -193,12 +193,12 @@ describe('CSS extracts consolidation', function () {
     assert.deepEqual(result, Object.assign({}, emptyMerged, {
       functions: [
         Object.assign({}, functionEnv, {
-          for: '<track-repeat>'
+          for: ['<track-repeat>']
         })
       ],
       types: [
         Object.assign({}, type1, {
-          for: '<track-repeat>'
+          for: ['<track-repeat>']
         }),
         {
           name: '<track-repeat>',
@@ -503,5 +503,85 @@ describe('CSS extracts consolidation', function () {
       }),
       property1
     ]);
+  });
+
+  it('merges scopes when possible', async () => {
+    // We'll have 3 definitions of the `env()` functions: one unscoped,
+    // another one scoped to two types, and a third one scoped to yet another
+    // type. Note syntaxes must differ otherwise merge will drop duplicates.
+    const scopedFunctionEnv = Object.assign({}, functionEnv,  {
+      href: 'https://drafts.csswg.org/css-first-1/#funcdef-env',
+      value: 'env(first)'
+    });
+    const otherScopedFunctionEnv = Object.assign({}, functionEnv,  {
+      href: 'https://drafts.csswg.org/css-second-1/#funcdef-env',
+      value: 'env(second)'
+    });
+    const results = structuredClone([
+      {
+        shortname: 'css-stuff-1',
+        series: { shortname: 'css-stuff' },
+        seriesVersion: '1',
+        css: Object.assign({}, emptyExtract, {
+          values: [
+            functionEnv,
+            {
+              name: '<track-repeat>',
+              href: 'https://drafts.csswg.org/css-grid-2/#typedef-track-repeat',
+              type: 'type',
+              values: [
+                scopedFunctionEnv
+              ]
+            },
+            {
+              name: '<repeat-ad-libitum>',
+              href: 'https://drafts.csswg.org/css-grid-2/#typedef-repeat-ad-libitum',
+              type: 'type',
+              values: [
+                scopedFunctionEnv
+              ]
+            },
+            {
+              name: '<another-repeat>',
+              href: 'https://drafts.csswg.org/css-grid-2/#typedef-another-repeat',
+              type: 'type',
+              values: [
+                otherScopedFunctionEnv
+              ]
+            }
+          ]
+        })
+      }
+    ]);
+    const result = await cssmerge.run({ results });
+    console.log(JSON.stringify(result, null, 2));
+    assert.deepEqual(result, Object.assign({}, emptyMerged, {
+      functions: [
+        functionEnv,
+        Object.assign({}, otherScopedFunctionEnv, {
+          for: ['<another-repeat>']
+        }),
+        Object.assign({}, scopedFunctionEnv, {
+          for: ['<repeat-ad-libitum>', '<track-repeat>']
+        }),
+      ],
+      types: [
+        {
+          name: '<another-repeat>',
+          href: 'https://drafts.csswg.org/css-grid-2/#typedef-another-repeat',
+          type: 'type'
+        },
+        {
+          name: '<repeat-ad-libitum>',
+          href: 'https://drafts.csswg.org/css-grid-2/#typedef-repeat-ad-libitum',
+          type: 'type'
+        },
+        {
+          name: '<track-repeat>',
+          href: 'https://drafts.csswg.org/css-grid-2/#typedef-track-repeat',
+          type: 'type'
+        }
+      ]
+    }));
   });
 });
