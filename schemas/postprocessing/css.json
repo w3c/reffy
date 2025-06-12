@@ -25,7 +25,7 @@
         "properties": {
           "name": { "type": "string", "pattern": "^@" },
           "href": { "$ref": "../common.json#/$defs/url" },
-          "value": { "$ref": "../common.json#/$defs/cssValue" },
+          "syntax": { "$ref": "../common.json#/$defs/cssValue" },
           "prose": { "type": "string" },
           "descriptors": {
             "type": "array",
@@ -37,7 +37,7 @@
                 "name": { "type": "string" },
                 "for": { "type": "string" },
                 "href": { "$ref": "../common.json#/$defs/url" },
-                "value": { "$ref": "../common.json#/$defs/cssValue" }
+                "syntax": { "$ref": "../common.json#/$defs/cssValue" }
               }
             }
           }
@@ -56,7 +56,7 @@
           "href": { "$ref": "../common.json#/$defs/url" },
           "type": { "type": "string", "enum": ["function"] },
           "prose": { "type": "string" },
-          "value": { "$ref": "../common.json#/$defs/cssValue" }
+          "syntax": { "$ref": "../common.json#/$defs/cssValue" }
         }
       }
     },
@@ -69,7 +69,7 @@
         "properties": {
           "name": { "$ref": "../common.json#/$defs/cssPropertyName" },
           "href": { "$ref": "../common.json#/$defs/url" },
-          "value": { "$ref": "../common.json#/$defs/cssValue" },
+          "syntax": { "$ref": "../common.json#/$defs/cssValue" },
           "legacyAliasOf": { "$ref": "../common.json#/$defs/cssPropertyName" },
           "styleDeclaration": {
             "type": "array",
@@ -89,7 +89,7 @@
           "name": { "$ref": "../common.json#/$defs/cssPropertyName" },
           "href": { "$ref": "../common.json#/$defs/url" },
           "prose": { "type": "string" },
-          "value": { "$ref": "../common.json#/$defs/cssValue" }
+          "syntax": { "$ref": "../common.json#/$defs/cssValue" }
         }
       }
     },
@@ -105,7 +105,7 @@
           "href": { "$ref": "../common.json#/$defs/url" },
           "type": { "type": "string", "enum": ["type"] },
           "prose": { "type": "string" },
-          "value": { "$ref": "../common.json#/$defs/cssValue" }
+          "syntax": { "$ref": "../common.json#/$defs/cssValue" }
         }
       }
     }
