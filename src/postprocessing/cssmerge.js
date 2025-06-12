@@ -51,7 +51,6 @@
  * - This code uses arrays for lists, MDN data uses indexed objects.
  * - This code lists scoped definitions with a `for` key. MDN data only has
  * unscoped definitions.
- * - This code stores syntaxes in a `value` key, MDN data uses a `syntax` key.
  * - This code stores syntaxes of functions and types directly in the
  * `functions` and `types` lists. MDN data stores them in a separate `syntaxes`
  * category. The `syntaxes` view can be built by merging the `functions` and
