@@ -158,12 +158,22 @@ export default {
         // ... and since we're looping through features, let's get rid
         // of inner value definitions, which we no longer need
         // (interesting ones were already copied to the root level)
+        // Let's also turn `value` keys into `syntax` keys because that's
+        // a better name and that matches what MDN data uses.
         if (feature.values) {
           delete feature.values;
+        }
+        if (feature.value) {
+          feature.syntax = feature.value;
+          delete feature.value;
         }
         for (const descriptor of feature.descriptors ?? []) {
           if (descriptor.values) {
             delete descriptor.values;
+          }
+          if (descriptor.value) {
+            descriptor.syntax = descriptor.value;
+            delete descriptor.value;
           }
         }
 
@@ -181,7 +191,7 @@ export default {
       // (Note: the code chooses one definition if duplicates of base
       // definitions in unrelated specs still exist)
       for (const [name, dfns] of Object.entries(featureDfns)) {
-        let actualDfns = dfns.filter(dfn => dfn.value);
+        let actualDfns = dfns.filter(dfn => dfn.syntax);
         if (actualDfns.length === 0) {
           actualDfns = dfns.filter(dfn => !dfn.newValues);
         }
@@ -214,7 +224,7 @@ export default {
           if (dfn === baseDfn) {
             continue;
           }
-          if (baseDfn.value && dfn.newValues) {
+          if (baseDfn.syntax && dfn.newValues) {
             const newerDfn = dfns.find(d =>
               d !== dfn &&
               d.newValues === dfn.newValues &&
@@ -224,7 +234,7 @@ export default {
               // the older one
               continue;
             }
-            baseDfn.value += ' | ' + dfn.newValues;
+            baseDfn.syntax += ' | ' + dfn.newValues;
           }
           if (baseDfn.descriptors && dfn.descriptors?.length > 0) {
             baseDfn.descriptors.push(...dfn.descriptors.filter(desc => {
@@ -253,28 +263,28 @@ export default {
             if (unscoped) {
               // Only keep the scoped feature if it has a known syntax that
               // differs from the unscoped feature
-              return feature.value && feature.value !== unscoped.value;
+              return feature.syntax && feature.syntax !== unscoped.syntax;
             }
           }
           return true;
         })
         .map(feature => {
           if (feature.descriptors?.length > 0 &&
-              feature.value?.match(/{ <declaration-(rule-)?list> }/)) {
+              feature.syntax?.match(/{ <declaration-(rule-)?list> }/)) {
             // Note: More advanced logic would allow to get rid of enclosing
             // grouping constructs when there's no ambiguity. We'll stick to
             // simple logic for now.
             const syntax = feature.descriptors
               .map(desc => {
                 if (desc.name.startsWith('@')) {
-                  return `[ ${desc.value} ]`;
+                  return `[ ${desc.syntax} ]`;
                 }
                 else {
-                  return `[ ${desc.name}: [ ${desc.value} ]; ]`;
+                  return `[ ${desc.name}: [ ${desc.syntax} ]; ]`;
                 }
               })
               .join(' ||\n  ');
-            feature.value = feature.value.replace(
+            feature.syntax = feature.syntax.replace(
               /{ <declaration-(rule-)?list> }/,
               '{\n  ' + syntax + '\n}');
           }
@@ -286,13 +296,13 @@ export default {
       // Various CSS properties are "legacy aliases of" another property. Use the
       // syntax of the other property for these.
       for (const feature of categorized[category]) {
-        if (feature.legacyAliasOf && !feature.value) {
+        if (feature.legacyAliasOf && !feature.syntax) {
           const target = categorized[category].find(f =>
             f.name === feature.legacyAliasOf && !f.for);
           if (!target) {
             throw new Error(`${feature.name} is a legacy alias of unknown ${f.legacyAliasOf}`);
           }
-          feature.value = target.value;
+          feature.syntax = target.syntax;
         }
       }
 

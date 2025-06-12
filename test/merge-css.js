@@ -95,6 +95,31 @@ const functionEnv = {
 };
 
 
+/**
+ * Consolidation turns `value` keys into `syntax`. We cannot compare
+ * the outputs to the inputs directly. This conversion function takes
+ * some object or value and converts it to ease comparisons.
+ */
+function conv(entry) {
+  const res = {};
+  if (typeof entry !== 'object') {
+    return entry;
+  }
+  for (const key of Object.keys(entry)) {
+    if (Array.isArray(entry[key])) {
+      res[key] = entry[key].map(conv);
+    }
+    else if (key === 'value') {
+      res.syntax = entry[key];
+    }
+    else {
+      res[key] = entry[key];
+    }
+  }
+  return res;
+}
+
+
 // Note: Post-processing steps tend to update data in place. That's totally
 // fine when they are run as post-processing steps within an actual Reffy crawl
 // because Reffy sends a copy of the crawl data to the post-processing module.
@@ -145,7 +170,7 @@ describe('CSS extracts consolidation', function () {
       }
     ]);
     const result = await cssmerge.run({ results });
-    const expected = {
+    const expected = conv({
       atrules: [
         atrule1,
         Object.assign({}, atrule2, {
@@ -158,7 +183,7 @@ describe('CSS extracts consolidation', function () {
       properties: [property1],
       selectors: [selector1],
       types: [type1]
-    };
+    });
     // Note: comparing per category to ease identification of problems if
     // test fails for some reason!
 
@@ -190,7 +215,7 @@ describe('CSS extracts consolidation', function () {
       }
     ]);
     const result = await cssmerge.run({ results });
-    assert.deepEqual(result, Object.assign({}, emptyMerged, {
+    assert.deepEqual(result, conv(Object.assign({}, emptyMerged, {
       functions: [
         Object.assign({}, functionEnv, {
           for: ['<track-repeat>']
@@ -206,7 +231,7 @@ describe('CSS extracts consolidation', function () {
           type: 'type'
         }
       ]
-    }));
+    })));
   });
 
 
@@ -237,8 +262,8 @@ describe('CSS extracts consolidation', function () {
     ]);
     const result = await cssmerge.run({ results });
     assert.deepEqual(result.properties, [
-      Object.assign({}, property1, {
-        value: 'none | auto | train'
+      Object.assign({}, conv(property1), {
+        syntax: 'none | auto | train'
       })
     ]);
   });
@@ -272,8 +297,8 @@ describe('CSS extracts consolidation', function () {
     ]);
     const result = await cssmerge.run({ results });
     assert.deepEqual(result.properties, [
-      Object.assign({}, property1, {
-        value: 'none | auto | train'
+      Object.assign({}, conv(property1), {
+        syntax: 'none | auto | train'
       })
     ]);
   });
@@ -320,8 +345,8 @@ describe('CSS extracts consolidation', function () {
     ]);
     const result = await cssmerge.run({ results });
     assert.deepEqual(result.properties, [
-      Object.assign({}, property1, {
-        value: 'none | auto | train'
+      Object.assign({}, conv(property1), {
+        syntax: 'none | auto | train'
       })
     ]);
   });
@@ -357,10 +382,10 @@ describe('CSS extracts consolidation', function () {
     ]);
     const result = await cssmerge.run({ results });
     assert.deepEqual(result.atrules, [
-      Object.assign({}, atrule2, {
-        value: '@media foo',
+      conv(Object.assign({}, atrule2, {
+        syntax: '@media foo',
         descriptors: [descriptor1, descriptor2]
-      })
+      }))
     ]);
   });
 
@@ -407,10 +432,10 @@ describe('CSS extracts consolidation', function () {
     ]);
     const result = await cssmerge.run({ results });
     assert.deepEqual(result.atrules, [
-      Object.assign({}, atrule2, {
-        value: '@media foo',
+      conv(Object.assign({}, atrule2, {
+        syntax: '@media foo',
         descriptors: [descriptor1, descriptor2]
-      })
+      }))
     ]);
   });
 
@@ -434,10 +459,10 @@ describe('CSS extracts consolidation', function () {
       }
     ]);
     const result = await cssmerge.run({ results });
-    assert.deepEqual(result, Object.assign({}, emptyMerged, {
+    assert.deepEqual(result, conv(Object.assign({}, emptyMerged, {
       functions: [functionEnv],
       types: [type1]
-    }));
+    })));
   });
 
 
@@ -470,7 +495,7 @@ describe('CSS extracts consolidation', function () {
       }
     ]);
     const result = await cssmerge.run({ results });
-    assert.deepEqual(result.atrules[0].value, `@media {
+    assert.deepEqual(result.atrules[0].syntax, `@media {
   [ descriptor1: [ <number> ]; ] ||
   [ descriptor2: [ <mq-boolean> ]; ]
 }`);
@@ -498,10 +523,10 @@ describe('CSS extracts consolidation', function () {
     ]);
     const result = await cssmerge.run({ results });
     assert.deepEqual(result.properties, [
-      Object.assign({}, propertyLegacy, {
-        value: property1.value
+      Object.assign({}, conv(propertyLegacy), {
+        syntax: property1.value
       }),
-      property1
+      conv(property1)
     ]);
   });
 
@@ -554,8 +579,7 @@ describe('CSS extracts consolidation', function () {
       }
     ]);
     const result = await cssmerge.run({ results });
-    console.log(JSON.stringify(result, null, 2));
-    assert.deepEqual(result, Object.assign({}, emptyMerged, {
+    assert.deepEqual(result, conv(Object.assign({}, emptyMerged, {
       functions: [
         functionEnv,
         Object.assign({}, otherScopedFunctionEnv, {
@@ -582,6 +606,6 @@ describe('CSS extracts consolidation', function () {
           type: 'type'
         }
       ]
-    }));
+    })));
   });
 });
