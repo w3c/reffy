@@ -2,6 +2,16 @@
   "$schema": "http://json-schema.org/schema#",
   "$id": "https://github.com/w3c/reffy/blob/main/schemas/postprocessing/css.json",
 
+  "$defs": {
+    "scopes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    }
+  },
+
   "type": "object",
   "additionalProperties": false,
   "required": ["atrules", "functions", "properties", "selectors", "types"],
@@ -42,7 +52,7 @@
         "additionalProperties": false,
         "properties": {
           "name": { "type": "string", "pattern": "^<[^>]+>$|^.*()$" },
-          "for": { "type": "string" },
+          "for": { "$ref": "#/$defs/scopes" },
           "href": { "$ref": "../common.json#/$defs/url" },
           "type": { "type": "string", "enum": ["function"] },
           "prose": { "type": "string" },
@@ -91,7 +101,7 @@
         "additionalProperties": false,
         "properties": {
           "name": { "type": "string", "pattern": "^<[^>]+>$|^.*()$" },
-          "for": { "type": "string" },
+          "for": { "$ref": "#/$defs/scopes" },
           "href": { "$ref": "../common.json#/$defs/url" },
           "type": { "type": "string", "enum": ["type"] },
           "prose": { "type": "string" },
