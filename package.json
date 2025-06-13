@@ -43,7 +43,7 @@
     "webidl2": "24.4.1"
   },
   "devDependencies": {
-    "respec": "35.4.0",
+    "respec": "35.4.1",
     "respec-hljs": "2.1.1",
     "rollup": "4.42.0",
     "undici": "^7.0.0"
