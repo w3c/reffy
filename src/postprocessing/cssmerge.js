@@ -55,7 +55,6 @@
  * `functions` and `types` lists. MDN data stores them in a separate `syntaxes`
  * category. The `syntaxes` view can be built by merging the `functions` and
  * `types` lists.
- * - This code keeps the surrounding `<>` for type names, MDN data does not.
  *
  * Module runs at the crawl level to create a `css.json` file.
  */
@@ -158,7 +157,9 @@ export default {
         // of inner value definitions, which we no longer need
         // (interesting ones were already copied to the root level)
         // Let's also turn `value` keys into `syntax` keys because that's
-        // a better name and that matches what MDN data uses.
+        // a better name and that matches what MDN data uses, and drop
+        // enclosing `<` and `>` for type names (type names that look like
+        // functions should be .
         if (feature.values) {
           delete feature.values;
         }
@@ -175,6 +176,7 @@ export default {
             delete descriptor.value;
           }
         }
+        feature.name = unwrapName(feature.name);
 
         const featureId = getFeatureId(feature);
         if (!featureDfns[featureId]) {
@@ -373,4 +375,19 @@ function decorateFeaturesWithSpec(data, spec) {
       }
     }
   }
+}
+
+
+/**
+ * Unwrap (type) name
+ *
+ * Note: names that appear in other categories are never enclosed in `<`
+ * and `>`
+ */
+function unwrapName(name) {
+  const typeMatch = name.match(/^<([^>]+)>$/);
+  if (typeMatch) {
+    return typeMatch[1];
+  }
+  return name;
 }
