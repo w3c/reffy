@@ -6,6 +6,26 @@ Minor and patch release notes are currently only documented in
 
 Reffy adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v19.0.0 - 2025-06-13
+
+### Breaking changes
+
+Version 18.8.0 introduced a new `cssmerge` post-processing step to consolidate CSS extracts into a single file. Version 19 changes the structure of the consolidated file a bit. Breaking changes are:
+
+- [CSS post-processing] Unwrap type names (breaking) (#1862)
+- [CSS post-processing] Use `syntax` for syntaxes (breaking) (#1861)
+- [CSS post-processing] Merge scopes when possible (breaking) (#1858)
+
+In other words, unless you had already adopted the `cssmerge` post-processing step, you may consider version 19 to be a minor version bump.
+
+### Dependency bumps
+
+- Bump rollup from 4.42.0 to 4.43.0 (#1856)
+- Bump respec from 35.4.0 to 35.4.1 (#1860)
+- Bump brace-expansion from 2.0.1 to 2.0.2 (#1857)
+- Bump puppeteer from 24.10.0 to 24.10.1 (#1863)
+
+
 ## v18.0.0 - 2024-11-29
 
 ### Breaking change
