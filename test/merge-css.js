@@ -105,15 +105,18 @@ function conv(entry) {
   if (typeof entry !== 'object') {
     return entry;
   }
-  for (const key of Object.keys(entry)) {
-    if (Array.isArray(entry[key])) {
-      res[key] = entry[key].map(conv);
+  for (const [key, value] of Object.entries(entry)) {
+    if (Array.isArray(value)) {
+      res[key] = value.map(conv);
     }
     else if (key === 'value') {
-      res.syntax = entry[key];
+      res.syntax = value;
+    }
+    else if (typeof value === 'string' && value.match(/^<([^>]+)>$/)) {
+      res[key] = value.slice(1, -1);
     }
     else {
-      res[key] = entry[key];
+      res[key] = value;
     }
   }
   return res;
@@ -591,17 +594,17 @@ describe('CSS extracts consolidation', function () {
       ],
       types: [
         {
-          name: '<another-repeat>',
+          name: 'another-repeat',
           href: 'https://drafts.csswg.org/css-grid-2/#typedef-another-repeat',
           type: 'type'
         },
         {
-          name: '<repeat-ad-libitum>',
+          name: 'repeat-ad-libitum',
           href: 'https://drafts.csswg.org/css-grid-2/#typedef-repeat-ad-libitum',
           type: 'type'
         },
         {
-          name: '<track-repeat>',
+          name: 'track-repeat',
           href: 'https://drafts.csswg.org/css-grid-2/#typedef-track-repeat',
           type: 'type'
         }
