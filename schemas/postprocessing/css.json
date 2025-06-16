@@ -100,7 +100,7 @@
         "required": ["name", "type"],
         "additionalProperties": false,
         "properties": {
-          "name": { "type": "string", "pattern": "^[a-zA-Z0-9-\\(\\)\\[\\]\\{\\}]+$" },
+          "name": { "type": "string", "pattern": "^[a-zA-Z0-9-\\+\\(\\)\\[\\]\\{\\}]+$" },
           "for": { "$ref": "#/$defs/scopes" },
           "href": { "$ref": "../common.json#/$defs/url" },
           "type": { "type": "string", "enum": ["type"] },
