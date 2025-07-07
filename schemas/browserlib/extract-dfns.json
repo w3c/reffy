@@ -24,20 +24,27 @@
         "enum": [
           "property", "descriptor", "value", "type",
           "at-rule", "function", "selector",
-
           "namespace", "interface", "constructor", "method", "argument",
           "attribute", "callback", "dictionary", "dict-member", "enum",
           "enum-value", "exception", "const", "typedef", "stringifier",
           "serializer", "iterator", "maplike", "setlike", "extended-attribute",
           "event", "permission",
-
           "element", "element-state", "element-attr", "attr-value",
-
           "cddl-module", "cddl-type", "cddl-parameter", "cddl-key", "cddl-value",
-
           "scheme", "http-header",
+          "grammar", "abstract-op", "dfn",
 
-          "grammar", "abstract-op", "dfn"
+          "dev-property", "dev-descriptor", "dev-value", "dev-type",
+          "dev-at-rule", "dev-function", "dev-selector",
+          "dev-namespace", "dev-interface", "dev-constructor", "dev-method", "dev-argument",
+          "dev-attribute", "dev-callback", "dev-dictionary", "dev-dict-member", "dev-enum",
+          "dev-enum-value", "dev-exception", "dev-const", "dev-typedef", "dev-stringifier",
+          "dev-serializer", "dev-iterator", "dev-maplike", "dev-setlike", "dev-extended-attribute",
+          "dev-event", "dev-permission",
+          "dev-element", "dev-element-state", "dev-element-attr", "dev-attr-value",
+          "dev-cddl-module", "dev-cddl-type", "dev-cddl-parameter", "dev-cddl-key", "dev-cddl-value",
+          "dev-scheme", "dev-http-header",
+          "dev-grammar", "dev-abstract-op", "dev-dfn"
         ],
         "$comment": "Types taken from src/browserlib/extract-dfns.mjs"
       },

@@ -1,5 +1,6 @@
 import extractWebIdl from './extract-webidl.mjs';
 import informativeSelector from './informative-selector.mjs';
+import getAbsoluteUrl from './get-absolute-url.mjs';
 import {parse} from "../../node_modules/webidl2/index.js";
 /**
  * Extract definitions in the spec that follow the "Definitions data model":
@@ -322,14 +323,14 @@ export default function (spec, idToHeading = {}) {
     break;
   }
 
-  const definitions = [...document.querySelectorAll(definitionsSelector)];
-  const usesDfnDataModel = definitions.some(dfn =>
+  const dfnEls = [...document.querySelectorAll(definitionsSelector)];
+  const usesDfnDataModel = dfnEls.some(dfn =>
     dfn.hasAttribute('data-dfn-type') ||
     dfn.hasAttribute('data-dfn-for') ||
     dfn.hasAttribute('data-export') ||
     dfn.hasAttribute('data-noexport'));
 
-  return definitions
+  const definitions = dfnEls
     .map(node => {
       // 2021-06-21: Temporary preprocessing of invalid "idl" dfn type (used for
       // internal slots) while fix for https://github.com/w3c/respec/issues/3644
@@ -365,6 +366,46 @@ export default function (spec, idToHeading = {}) {
     })
     .map(node => definitionMapper(node, idToHeading, usesDfnDataModel))
     .filter(isNotAlreadyExported);
+
+  // Some specs have informative "For web developers" sections that provide
+  // better anchors for web developers for a number of concepts. These anchors
+  // are not proper definitions (and are references to terms defined elsewhere)
+  // but they are useful for documentation purpose. To expose them to
+  // documentation tools without duplicating terms in the cross-references
+  // database, we'll use dedicated definition types to namespace them.
+  // Note: Ideally, `.domintro` would be added to the informative selector list
+  // but some specs use `.domintro` for lists that define IDL terms. We'll get
+  // rid of them by skipping lists that have `dfn`.
+  const devSelector = '.domintro dt:not(dt:has(dfn)) a[id]';
+  const devDefinitions = [...document.querySelectorAll(devSelector)]
+    .map(node => {
+      const dfn = definitionMapper(node, idToHeading, usesDfnDataModel);
+      const href = getAbsoluteUrl(node, { attribute: 'href' });
+      const baseDfn = definitions.find(d => d.href === href);
+      if (!baseDfn) {
+        // When an interface inherits from another, the reference may target
+        // a base dfn in another spec. For example:
+        // https://encoding.spec.whatwg.org/#ref-for-dom-generictransformstream-readable
+        // ... targets the Streams spec. There aren't many occurrences of this
+        // pattern and the occurrences do not look super interesting to link to
+        // from a documentation perspective. Let's skip them.
+        console.warn('[reffy]', `Dev dfn ${node.textContent} (${node.id}) targets unknown dfn at ${node.href}`);
+        return null;
+      }
+      if (!dfn.type.startsWith('dev-')) {
+        dfn.type = 'dev-' + baseDfn.type;
+      }
+      dfn.linkingText = baseDfn.linkingText;
+      dfn.localLinkingText = baseDfn.localLinkingText;
+      dfn.access = baseDfn.access;
+      dfn.for = baseDfn.for;
+      dfn.informative = true;
+      return dfn;
+    })
+    .filter(dfn => !!dfn);
+
+  definitions.push(...devDefinitions);
+  return definitions;
 }
 
 function preProcessEcmascript() {

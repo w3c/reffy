@@ -787,6 +787,74 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
         'There is one web'
       ],
     }]
+  },
+
+  {
+    title: "extracts definitions for web developers",
+    html: `<p><dfn id='foo' data-dfn-type='dfn'>Foo</dfn></p>
+      <div class="domintro">
+        <dl>
+          <dt><a id="foo-dev" href="#foo">Foo</a></dt>
+          <dd>Blah</dd>
+        </dl>
+      </div>`,
+    changesToBaseDfn: [
+      {},
+      {
+        id: 'foo-dev',
+        href: 'about:blank#foo-dev',
+        type: 'dev-dfn',
+        informative: true,
+        definedIn: 'dt'
+      }
+    ]
+  },
+
+  {
+    title: "extracts base info for definitions for web developers",
+    html: `<p><dfn id='foo' data-dfn-type='interface' data-dfn-for="Cest" data-lt="Fou">Foo</dfn></p>
+      <dl class="domintro">
+        <dt><a id="foo-dev" href="#foo">Foo</a></dt>
+        <dd>Blah</dd>
+      </dl>`,
+    changesToBaseDfn: [
+      {
+        type: 'interface',
+        access: 'public',
+        for: ['Cest'],
+        linkingText: ['Fou']
+      },
+      {
+        id: 'foo-dev',
+        href: 'about:blank#foo-dev',
+        type: 'dev-interface',
+        informative: true,
+        access: 'public',
+        definedIn: 'dt',
+        for: ['Cest'],
+        linkingText: ['Fou'],
+      }
+    ]
+  },
+
+  {
+    title: "ignores sections for web developers that contain dfns",
+    html: `<p><dfn id='foo' data-dfn-type='dfn'>Foo</dfn></p>
+      <dl class="domintro">
+        <dt>
+          <dfn id="bar" data-dfn-type='dfn'>Bar</dfn>
+          <a id="foo-dev" href="#foo">Foo</a></dt>
+        <dd>Blah</dd>
+      </dl>`,
+    changesToBaseDfn: [
+      {},
+      {
+        id: 'bar',
+        href: 'about:blank#bar',
+        linkingText: ['Bar'],
+        definedIn: 'dt'
+      }
+    ]
   }
 ];
 
