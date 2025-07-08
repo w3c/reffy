@@ -277,7 +277,11 @@ function definitionMapper(el, idToHeading, usesDfnDataModel) {
     // Enclosing element under which the definition appears. Value can be one of
     // "dt", "pre", "table", "heading", "note", "example", or "prose" (last one
     // indicates that definition appears in the main body of the specification)
-    definedIn
+    definedIn,
+
+    // Important anchors that reference the definition
+    // (typically: anchors in "for web developers" sections)
+    links: []
   };
 
   // Extract a prose definition in HTML for the term, if available
@@ -367,44 +371,43 @@ export default function (spec, idToHeading = {}) {
     .map(node => definitionMapper(node, idToHeading, usesDfnDataModel))
     .filter(isNotAlreadyExported);
 
-  // Some specs have informative "For web developers" sections that provide
-  // better anchors for web developers for a number of concepts. These anchors
-  // are not proper definitions (and are references to terms defined elsewhere)
-  // but they are useful for documentation purpose. To expose them to
-  // documentation tools without duplicating terms in the cross-references
-  // database, we'll use dedicated definition types to namespace them.
+  // Some specs have informative "For web developers" sections targeted at
+  // presenting concepts to web developers. These sections contain anchors
+  // that are useful for documentation purpose. The anchors themselves are
+  // references to terms defined elsewhere in the spec. We will capture them in
+  // a `links` property attached to the underlying definition.
   // Note: Ideally, `.domintro` would be added to the informative selector list
   // but some specs use `.domintro` for lists that define IDL terms. We'll get
   // rid of them by skipping lists that have `dfn`.
   const devSelector = '.domintro dt:not(dt:has(dfn)) a[id]';
-  const devDefinitions = [...document.querySelectorAll(devSelector)]
-    .map(node => {
-      const dfn = definitionMapper(node, idToHeading, usesDfnDataModel);
-      const href = getAbsoluteUrl(node, { attribute: 'href' });
-      const baseDfn = definitions.find(d => d.href === href);
-      if (!baseDfn) {
-        // When an interface inherits from another, the reference may target
-        // a base dfn in another spec. For example:
-        // https://encoding.spec.whatwg.org/#ref-for-dom-generictransformstream-readable
-        // ... targets the Streams spec. There aren't many occurrences of this
-        // pattern and the occurrences do not look super interesting to link to
-        // from a documentation perspective. Let's skip them.
-        console.warn('[reffy]', `Dev dfn ${node.textContent} (${node.id}) targets unknown dfn at ${node.href}`);
-        return null;
-      }
-      if (!dfn.type.startsWith('dev-')) {
-        dfn.type = 'dev-' + baseDfn.type;
-      }
-      dfn.linkingText = baseDfn.linkingText;
-      dfn.localLinkingText = baseDfn.localLinkingText;
-      dfn.access = baseDfn.access;
-      dfn.for = baseDfn.for;
-      dfn.informative = true;
-      return dfn;
-    })
-    .filter(dfn => !!dfn);
+  for (const node of [...document.querySelectorAll(devSelector)]) {
+    const dfnHref = getAbsoluteUrl(node, { attribute: 'href' });
+    const dfn = definitions.find(d => d.href === dfnHref);
+    if (dfn) {
+      const href = getAbsoluteUrl(node);
+      const page = node.closest('[data-reffy-page]')?.getAttribute('data-reffy-page');
+      dfn.links.push({
+        type: 'dev',
+        id: node.getAttribute('id'),
+        name: normalize(node.closest('dt').textContent),
+        href,
+        heading: idToHeading[href] ?? {
+          href: (new URL(page ?? window.location.href)).toString(),
+          title: document.title
+        }
+      });
+    }
+    else {
+      // When an interface inherits from another, the reference may target
+      // a base dfn in another spec. For example:
+      // https://encoding.spec.whatwg.org/#ref-for-dom-generictransformstream-readable
+      // ... targets the Streams spec. There aren't many occurrences of this
+      // pattern and the occurrences do not look super interesting to link to
+      // from a documentation perspective. Let's skip them.
+      console.warn('[reffy]', `Dev dfn ${node.textContent} (${node.id}) targets unknown/external dfn at ${node.href}`);
+    }
+  }
 
-  definitions.push(...devDefinitions);
   return definitions;
 }
 

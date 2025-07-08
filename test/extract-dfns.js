@@ -95,7 +95,8 @@ const baseDfn = {
     heading: {
       href: 'about:blank',
       title: ''
-    }
+    },
+    links: []
 };
 const tests = [
   {title: "parses a simple <dfn>",
@@ -790,7 +791,7 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
   },
 
   {
-    title: "extracts definitions for web developers",
+    title: "extracts links for web developers",
     html: `<p><dfn id='foo' data-dfn-type='dfn'>Foo</dfn></p>
       <div class="domintro">
         <dl>
@@ -799,40 +800,52 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
         </dl>
       </div>`,
     changesToBaseDfn: [
-      {},
       {
-        id: 'foo-dev',
-        href: 'about:blank#foo-dev',
-        type: 'dev-dfn',
-        informative: true,
-        definedIn: 'dt'
+        links: [
+          {
+            type: 'dev',
+            id: 'foo-dev',
+            name: 'Foo',
+            href: 'about:blank#foo-dev',
+            heading: {
+              href: 'about:blank',
+              title: ''
+            }
+          }
+        ]
       }
     ]
   },
 
   {
-    title: "extracts base info for definitions for web developers",
+    title: "extracts heading info for links for web developers",
     html: `<p><dfn id='foo' data-dfn-type='interface' data-dfn-for="Cest" data-lt="Fou">Foo</dfn></p>
-      <dl class="domintro">
-        <dt><a id="foo-dev" href="#foo">Foo</a></dt>
-        <dd>Blah</dd>
-      </dl>`,
+      <section id="foo-sec">
+        <h3>Foo section</h3>
+        <dl class="domintro">
+          <dt>Fou . C . <a id="foo-dev" href="#foo">Foo</a></dt>
+          <dd>Blah</dd>
+        </dl>
+      </section>`,
     changesToBaseDfn: [
       {
         type: 'interface',
         access: 'public',
         for: ['Cest'],
-        linkingText: ['Fou']
-      },
-      {
-        id: 'foo-dev',
-        href: 'about:blank#foo-dev',
-        type: 'dev-interface',
-        informative: true,
-        access: 'public',
-        definedIn: 'dt',
-        for: ['Cest'],
         linkingText: ['Fou'],
+        links: [
+          {
+            type: 'dev',
+            id: 'foo-dev',
+            name: 'Fou . C . Foo',
+            href: 'about:blank#foo-dev',
+            heading: {
+              href: 'about:blank#foo-sec',
+              id: 'foo-sec',
+              title: 'Foo section'
+            }
+          }
+        ]
       }
     ]
   },

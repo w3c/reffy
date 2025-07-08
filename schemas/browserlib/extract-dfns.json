@@ -2,6 +2,21 @@
   "$schema": "http://json-schema.org/schema#",
   "$id": "https://github.com/w3c/reffy/blob/main/schemas/browserlib/extract-dfns.json",
 
+  "$defs": {
+    "heading": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["href", "title"],
+      "properties": {
+        "id": { "$ref": "../common.json#/$defs/id" },
+        "href": { "$ref": "../common.json#/$defs/url" },
+        "title": { "type": "string" },
+        "number": { "$ref": "../common.json#/$defs/headingNumber" },
+        "alternateIds": { "type": "array", "items": { "$ref": "../common.json#/$defs/id"} }
+      }
+    }
+  },
+
   "type": "array",
   "items": {
     "type": "object",
@@ -32,19 +47,7 @@
           "element", "element-state", "element-attr", "attr-value",
           "cddl-module", "cddl-type", "cddl-parameter", "cddl-key", "cddl-value",
           "scheme", "http-header",
-          "grammar", "abstract-op", "dfn",
-
-          "dev-property", "dev-descriptor", "dev-value", "dev-type",
-          "dev-at-rule", "dev-function", "dev-selector",
-          "dev-namespace", "dev-interface", "dev-constructor", "dev-method", "dev-argument",
-          "dev-attribute", "dev-callback", "dev-dictionary", "dev-dict-member", "dev-enum",
-          "dev-enum-value", "dev-exception", "dev-const", "dev-typedef", "dev-stringifier",
-          "dev-serializer", "dev-iterator", "dev-maplike", "dev-setlike", "dev-extended-attribute",
-          "dev-event", "dev-permission",
-          "dev-element", "dev-element-state", "dev-element-attr", "dev-attr-value",
-          "dev-cddl-module", "dev-cddl-type", "dev-cddl-parameter", "dev-cddl-key", "dev-cddl-value",
-          "dev-scheme", "dev-http-header",
-          "dev-grammar", "dev-abstract-op", "dev-dfn"
+          "grammar", "abstract-op", "dfn"
         ],
         "$comment": "Types taken from src/browserlib/extract-dfns.mjs"
       },
@@ -59,20 +62,24 @@
       "informative": {
         "type": "boolean"
       },
-      "heading": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["href", "title"],
-        "properties": {
-          "id": { "$ref": "../common.json#/$defs/id" },
-          "href": { "$ref": "../common.json#/$defs/url" },
-          "title": { "type": "string" },
-          "number": { "$ref": "../common.json#/$defs/headingNumber" },
-          "alternateIds": { "type": "array", "items": { "$ref": "../common.json#/$defs/id"} }
-        }
-      },
+      "heading": { "$ref": "#/$defs/heading" },
       "definedIn": {
         "type": "string"
+      },
+      "links": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "id", "href", "name"],
+          "properties": {
+            "type": { "type": "string", "enum": ["dev"] },
+            "id": { "$ref": "../common.json#/$defs/id" },
+            "name": { "type": "string" },
+            "href": { "$ref": "../common.json#/$defs/url" },
+            "heading": { "$ref": "#/$defs/heading" }
+          }
+        }
       },
       "htmlProse": {
         "type": "string",
