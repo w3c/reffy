@@ -95,7 +95,8 @@ const baseDfn = {
     heading: {
       href: 'about:blank',
       title: ''
-    }
+    },
+    links: []
 };
 const tests = [
   {title: "parses a simple <dfn>",
@@ -787,6 +788,86 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
         'There is one web'
       ],
     }]
+  },
+
+  {
+    title: "extracts links for web developers",
+    html: `<p><dfn id='foo' data-dfn-type='dfn'>Foo</dfn></p>
+      <div class="domintro">
+        <dl>
+          <dt><a id="foo-dev" href="#foo">Foo</a></dt>
+          <dd>Blah</dd>
+        </dl>
+      </div>`,
+    changesToBaseDfn: [
+      {
+        links: [
+          {
+            type: 'dev',
+            id: 'foo-dev',
+            name: 'Foo',
+            href: 'about:blank#foo-dev',
+            heading: {
+              href: 'about:blank',
+              title: ''
+            }
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    title: "extracts heading info for links for web developers",
+    html: `<p><dfn id='foo' data-dfn-type='interface' data-dfn-for="Cest" data-lt="Fou">Foo</dfn></p>
+      <section id="foo-sec">
+        <h3>Foo section</h3>
+        <dl class="domintro">
+          <dt>Fou . C . <a id="foo-dev" href="#foo">Foo</a></dt>
+          <dd>Blah</dd>
+        </dl>
+      </section>`,
+    changesToBaseDfn: [
+      {
+        type: 'interface',
+        access: 'public',
+        for: ['Cest'],
+        linkingText: ['Fou'],
+        links: [
+          {
+            type: 'dev',
+            id: 'foo-dev',
+            name: 'Fou . C . Foo',
+            href: 'about:blank#foo-dev',
+            heading: {
+              href: 'about:blank#foo-sec',
+              id: 'foo-sec',
+              title: 'Foo section'
+            }
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    title: "ignores sections for web developers that contain dfns",
+    html: `<p><dfn id='foo' data-dfn-type='dfn'>Foo</dfn></p>
+      <dl class="domintro">
+        <dt>
+          <dfn id="bar" data-dfn-type='dfn'>Bar</dfn>
+          <a id="foo-dev" href="#foo">Foo</a></dt>
+        <dd>Blah</dd>
+      </dl>`,
+    changesToBaseDfn: [
+      {},
+      {
+        id: 'bar',
+        href: 'about:blank#bar',
+        linkingText: ['Bar'],
+        definedIn: 'dt'
+      }
+    ]
   }
 ];
 

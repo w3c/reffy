@@ -18,7 +18,12 @@ export default function (node, { singlePage, attribute } =
   const url = new URL(page ?? window.location.href);
   const hashid = node.getAttribute(attribute);
   if (hashid) {
-    url.hash = '#' + encodeURIComponent(hashid);
+    let fragment = hashid;
+    if (hashid.match(/^#/) && attribute === 'href') {
+      // Function is called to turn a fragment ref into an absolute URL
+      fragment = hashid.substring(1);
+    }
+    url.hash = '#' + encodeURIComponent(fragment);
   }
   return url.toString();
 }

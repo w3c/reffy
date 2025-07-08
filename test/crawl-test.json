@@ -47,7 +47,8 @@
           "href": "https://w3c.github.io/woff/woff2/",
           "title": "WOFF2"
         },
-        "definedIn": "prose"
+        "definedIn": "prose",
+        "links": []
       }
     ],
     "events": [],
@@ -124,7 +125,8 @@
           "href": "https://w3c.github.io/mediacapture-output/#title",
           "title": "No Title"
         },
-        "definedIn": "pre"
+        "definedIn": "pre",
+        "links": []
       },
       {
         "id": "dom-foo-bar",
@@ -146,7 +148,8 @@
           "href": "https://w3c.github.io/mediacapture-output/#title",
           "title": "No Title"
         },
-        "definedIn": "pre"
+        "definedIn": "pre",
+        "links": []
       }
     ],
     "events": [],
