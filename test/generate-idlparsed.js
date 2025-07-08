@@ -45,7 +45,8 @@ intraface foo {};
         type: type.split(' ')[0],
         for: [],
         access: 'public',
-        informative: false
+        informative: false,
+        links: []
       }],
       idl: `${type} foo {};`
     };
