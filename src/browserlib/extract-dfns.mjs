@@ -279,7 +279,7 @@ function definitionMapper(el, idToHeading, usesDfnDataModel) {
     // indicates that definition appears in the main body of the specification)
     definedIn,
 
-    // Important anchors that reference the definition
+    // Important links that complement the definition
     // (typically: anchors in "for web developers" sections)
     links: []
   };
