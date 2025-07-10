@@ -705,6 +705,21 @@ function preProcessEcmascript() {
       }
     });
 
+  // Extract production rules
+  [...document.querySelectorAll("emu-grammar[type=definition] emu-production")]
+    .forEach(el => {
+      const dfn = wrapWithDfn(el);
+      dfn.id = el.id;
+      dfn.dataset.lt = el.getAttribute("name");
+      dfn.dataset.dfnType = "grammar";
+      dfn.dataset.noexport = "";
+      if (el.closest('[data-reffy-page$="additional-ecmascript-features-for-web-browsers.html"]')) {
+        // Production rules in Annex B replace some of the production rules
+        // defined in other sections for web browser hosts.
+        dfn.dataset.dfnFor = "Web browsers";
+      }
+    });
+
   [...document.querySelectorAll("dfn")]
     .filter(legacySectionFilter)
     .forEach(el => {

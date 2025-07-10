@@ -214,7 +214,7 @@ const tests = [
     spec: "ecmascript"
   },
   {
-    title: "extracts  properties of the globalThis object in ecmascript spec",
+    title: "extracts properties of the globalThis object in ecmascript spec",
     html: '<emu-clause id="sec-value-properties-of-the-global-object"><h1><span class="secnum">25.1.5.1</span> Value Properties of the Global Object</h1><emu-clause id="foo"> <h1>Foo</h1></emu-clause></emu-clause>',
     changesToBaseDfn: [ {type: "attribute", "for": ["globalThis"], access: "public", definedIn: "heading", heading: { id: "foo", href: "about:blank#foo", title: "Foo"}}],
     spec: "ecmascript"
@@ -290,6 +290,40 @@ const tests = [
     title: 'extracts state components from ecmascript spec',
     html: '<emu-clause id="foo"><h1>Heading</h1><figure><figcaption>State Components for ECMAScript Execution Contexts</figcaption><table><tbody><tr><td>Function</td></tr></tbody></table></figure></emu-clause>',
     changesToBaseDfn: [{linkingText: [ "Function"], type: "dfn", "for": ["ECMAScript Execution Contexts"], access: "public", definedIn: "table", heading: { id: "foo", href: "about:blank#foo", title: "Heading"}}],
+    spec: "ecmascript"
+  },
+  {
+    title: 'extracts production rules from ecmascript spec',
+    html: `<emu-grammar type="definition">
+      <emu-production name="SpreadElement" id="foo">
+        ...
+      </emu-production>
+    </emu-grammar>`,
+    changesToBaseDfn: [{
+      linkingText: ["SpreadElement"],
+      type: "grammar"
+    }],
+    spec: "ecmascript"
+  },
+  {
+    title: 'scopes Annex B production rules from ecmascript spec',
+    html: `<section data-reffy-page="https://example.org/additional-ecmascript-features-for-web-browsers.html">
+      <emu-grammar type="definition">
+        <emu-production name="SpreadElement" id="foo">
+        ...
+        </emu-production>
+      </emu-grammar>
+    </section>`,
+    changesToBaseDfn: [{
+      href: "https://example.org/additional-ecmascript-features-for-web-browsers.html#foo",
+      linkingText: ["SpreadElement"],
+      type: "grammar",
+      for: ["Web browsers"],
+      heading: {
+        href: 'https://example.org/additional-ecmascript-features-for-web-browsers.html',
+        title: ''
+      }
+    }],
     spec: "ecmascript"
   },
   {
