@@ -24,6 +24,8 @@ import {parse} from "../../node_modules/webidl2/index.js";
  *     can be one of "dt", "pre", "table", "heading", "note", "example", or
  *     "prose" (last one indicates that definition appears in the main body of
  *     the spec)
+ * - links: A list of interesting links with IDs that complete the definitions,
+ *     notably non-normative descriptions that target web developers.
  *
  * The extraction ignores definitions with an unknown type. A warning is issued
  * to the console when that happens.

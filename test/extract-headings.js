@@ -63,6 +63,26 @@ const testHeadings = [
     html: "<section id=title-0><h1 id=title>Heading in a section with its own id</h1>",
     res: [{id: "title-0", "href": "about:blank#title-0", title: "Heading in a section with its own id", level: 1, alternateIds: ["title"]}]
   },
+  {
+    title: "deals with headings in www.rfc-editor.org RFCs",
+    html: `<pre>
+      <span class="h2">
+        <a class="selflink" id="title" href="#title">2</a>.
+        Title
+      </span>
+    </pre>`,
+    res: [{id: "title", href: "about:blank#title", title: "Title", number: "2", level: 1}]
+  },
+  {
+    title: "deals with sub-headings in www.rfc-editor.org RFCs",
+    html: `<pre>
+      <span class="h3">
+        <a class="selflink" id="title" href="#title">3.1</a>.
+        Title
+      </span>
+    </pre>`,
+    res: [{id: "title", href: "about:blank#title", title: "Title", number: "3.1", level: 2}]
+  },
 ];
 
 describe("Test headings extraction", function () {

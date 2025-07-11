@@ -20,12 +20,29 @@ export default function (spec, idToHeading) {
     };
   });
 
+  // Headings using spans in www.rfc-editor.org RFCs
+  const rfcSelector = 'pre > span:is(.h2,.h3,.h4,.h5,.h6) > a.selflink[id]';
+  const rfcHeadings = [...document.querySelectorAll(rfcSelector)].map(n => {
+    const headingNumber = n.textContent;
+    const headingLevel = headingNumber ? headingNumber.split(".").length : undefined;
+    return {
+      id: n.id,
+      href: getAbsoluteUrl(n, { singlePage }),
+      title: n.parentNode.textContent
+        .replace(headingNumber, '')
+        .replace(/^\s*\./, '')
+        .trim(),
+      level: headingLevel,
+      number: headingNumber
+    };
+  });
+
   const headingsSelector = [
     ':is(h1,h2,h3,h4,h5,h6)[id]',                 // Regular headings
     ':is(h1,h2,h3,h4,h5,h6):not([id]) > a[name]'  // CSS 2.1 headings
   ].join(',');
 
-  return esHeadings.concat([...document.querySelectorAll(headingsSelector)].map(n => {
+  return esHeadings.concat(rfcHeadings).concat([...document.querySelectorAll(headingsSelector)].map(n => {
     // Note: In theory, all <hX> heading elements that have an ID are associated
     // with a heading in idToHeading. One exception to the rule: when the
     // heading element appears in a <hgroup> element, the mapping is not
