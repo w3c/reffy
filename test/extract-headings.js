@@ -83,6 +83,16 @@ const testHeadings = [
     </pre>`,
     res: [{id: "title", href: "about:blank#title", title: "Title", number: "3.1", level: 2}]
   },
+  {
+    title: "deals with appendices in www.rfc-editor.org RFCs",
+    html: `<pre>
+      <span class="h3">
+        <a class="selflink" id="title" href="#title">Appendix A</a>.
+        Title
+      </span>
+    </pre>`,
+    res: [{id: "title", href: "about:blank#title", title: "Title", number: "A", level: 1}]
+  },
 ];
 
 describe("Test headings extraction", function () {

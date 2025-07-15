@@ -33,7 +33,7 @@ export default function (spec, idToHeading) {
         .replace(/^\s*\./, '')
         .trim(),
       level: headingLevel,
-      number: headingNumber
+      number: headingNumber.replace(/\s*appendix\s+/i, '')
     };
   });
 
