@@ -1302,7 +1302,21 @@ that spans multiple lines */
   },
 
   {
-    title: 'extracts right linking text for a "value" definition',
+    title: 'extracts right linking text for a "selector" definition',
+    html: `
+    <h4 id="lang">
+      <span class="secno">5.11.4. </span><span class="content">
+      The language pseudo-class:
+      <dfn data-dfn-type="selector" data-export="" data-lt=":lang|:lang()">:lang</dfn>
+      </span>
+    </h4>
+    `,
+    propertyName: 'selectors',
+    css: [{ name: ':lang()' }]
+  },
+
+  {
+    title: 'extracts right linking texts for a "value" definition',
     html: `
     <p><dfn data-dfn-type="type">&lt;my-type&gt;</dfn> is my type.</p>
     <p><dfn data-dfn-type="value" data-lt="value|val" data-dfn-for="<my-type>">val</dfn>
@@ -1313,22 +1327,21 @@ that spans multiple lines */
       name: '<my-type>',
       type: 'type',
       prose: '<my-type> is my type.',
-      values: [{
-        name: 'val',
-        type: 'value',
-        prose: 'val is an interesting value.',
-        value: 'val'
-      }]
+      values: [
+        {
+          name: 'value',
+          type: 'value',
+          prose: 'val is an interesting value.',
+          value: 'value'
+        },
+        {
+          name: 'val',
+          type: 'value',
+          prose: 'val is an interesting value.',
+          value: 'val'
+        }
+      ]
     }]
-  },
-
-  {
-    title: 'throws when definition defines multiple linking texts without any obvious one',
-    html: `
-    <p><dfn data-dfn-type="type" data-lt="a|b|c" data-export>ABC</dfn>, it's
-    easy.</p>
-    `,
-    error: 'Found multiple linking texts for dfn without any obvious one: a, b, c'
   },
 
   {
@@ -1689,7 +1702,69 @@ that spans multiple lines */
     </p>
     `,
     css: []
-  }
+  },
+
+  {
+    title: 'extracts the <boolean-expr> production rule',
+    html: `<p>
+      My <dfn data-dfn-type="type" data-export="">&lt;boolean-expr&gt;</dfn>
+      is rich.
+    </p>
+    <pre class="prod highlight">
+      &lt;boolean-expr[ &lt;test> ]> = not &lt;boolean-expr-group>
+        | &lt;boolean-expr-group>
+        [ [ and &lt;boolean-expr-group> ]*
+          | [ or &lt;boolean-expr-group> ]* ]
+      <dfn data-dfn-type="type" data-export="">&lt;boolean-expr-group></dfn> = &lt;test> |
+        ( &lt;boolean-expr[ &lt;test> ]> ) |
+        &lt;general-enclosed>
+    </pre>`,
+    propertyName: 'values',
+    css: [
+      {
+        name: '<boolean-expr>',
+        type: 'type',
+        prose: 'My <boolean-expr> is rich.',
+        value: 'not <boolean-expr-group> | <boolean-expr-group> [ [ and <boolean-expr-group> ]* | [ or <boolean-expr-group> ]* ]'
+      },
+      {
+        name: '<boolean-expr-group>',
+        type: 'type',
+        value: '<test> | ( <boolean-expr[ <test> ]> ) | <general-enclosed>'
+      }
+    ]
+  },
+
+  {
+    title: 'extracts the <boolean-expr> production rule in second position too',
+    html: `<p>
+      My <dfn data-dfn-type="type" data-export="">&lt;boolean-expr&gt;</dfn>
+      is rich.
+    </p>
+    <pre class="prod highlight">
+      <dfn data-dfn-type="type" data-export="">&lt;boolean-expr-group></dfn> = &lt;test> |
+        ( &lt;boolean-expr[ &lt;test> ]> ) |
+        &lt;general-enclosed>
+      &lt;boolean-expr[ &lt;test> ]> = not &lt;boolean-expr-group>
+        | &lt;boolean-expr-group>
+        [ [ and &lt;boolean-expr-group> ]*
+          | [ or &lt;boolean-expr-group> ]* ]
+    </pre>`,
+    propertyName: 'values',
+    css: [
+      {
+        name: '<boolean-expr>',
+        type: 'type',
+        prose: 'My <boolean-expr> is rich.',
+        value: 'not <boolean-expr-group> | <boolean-expr-group> [ [ and <boolean-expr-group> ]* | [ or <boolean-expr-group> ]* ]'
+      },
+      {
+        name: '<boolean-expr-group>',
+        type: 'type',
+        value: '<test> | ( <boolean-expr[ <test> ]> ) | <general-enclosed>'
+      }
+    ]
+  },
 ];
 
 describe("Test CSS properties extraction", function() {
