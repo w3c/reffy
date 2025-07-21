@@ -17,6 +17,8 @@ export default function () {
   // sense of the CSS definitions and production rules it contains
   const warnings = [];
 
+  const dfnElSelector = ':is(dfn,h2,h3,h4,h5,h6)';
+
   const res = {
     // Properties are always defined in dedicated tables in modern CSS specs,
     // Legacy properties are always defined in prose in a dfn with a nearby
@@ -35,24 +37,24 @@ export default function () {
     // Note some selectors are re-defined locally in HTML and Fullscreen. We
     // won't import them.
     atrules: extractDfns({
-      selector: ':is(dfn,h2,h3,h4,h5,h6)[data-dfn-type=at-rule]:not([data-dfn-for])',
+      selector: dfnElSelector + '[data-dfn-type=at-rule]:not([data-dfn-for])',
       extractor: extractTypedDfns,
       duplicates: 'reject',
       warnings
     }),
     selectors: extractDfns({
-      selector: [':is(dfn,h2,h3,h4,h5,h6)[data-dfn-type=selector][data-export]:not([data-dfn-for])',
-                 ':is(dfn,h2,h3,h4,h5,h6)[data-dfn-type=selector][data-export][data-dfn-for=""]'
+      selector: [dfnElSelector + '[data-dfn-type=selector][data-export]:not([data-dfn-for])',
+                 dfnElSelector + '[data-dfn-type=selector][data-export][data-dfn-for=""]'
                 ].join(','),
       extractor: extractTypedDfns,
       duplicates: 'reject',
       warnings
     }),
     values: extractDfns({
-      selector: [':is(dfn,h2,h3,h4,h5,h6)[data-dfn-type=function]:not([data-dfn-for])',
-                 ':is(dfn,h2,h3,h4,h5,h6)[data-dfn-type=function][data-dfn-for=""]',
-                 ':is(dfn,h2,h3,h4,h5,h6)[data-dfn-type=type]:not([data-dfn-for])',
-                 ':is(dfn,h2,h3,h4,h5,h6)[data-dfn-type=type][data-dfn-for=""]'
+      selector: [dfnElSelector + '[data-dfn-type=function]:not([data-dfn-for])',
+                 dfnElSelector + '[data-dfn-type=function][data-dfn-for=""]',
+                 dfnElSelector + '[data-dfn-type=type]:not([data-dfn-for])',
+                 dfnElSelector + '[data-dfn-type=type][data-dfn-for=""]'
                 ].join(','),
       extractor: extractTypedDfns,
       duplicates: 'reject',
@@ -95,7 +97,7 @@ export default function () {
   // Subsidiary at-rules are at-rules that can be used within a parent at-rule,
   // we'll consider that they are "descriptors".
   const subsidiary = extractDfns({
-    selector: ':is(dfn,h2,h3,h4,h5,h6)[data-dfn-type=at-rule][data-dfn-for]',
+    selector: dfnElSelector + '[data-dfn-type=at-rule][data-dfn-for]',
     extractor: extractTypedDfns,
     duplicates: 'reject',
     keepDfnType: true,
@@ -138,10 +140,10 @@ export default function () {
   // as "<content-replacement>" in css-content-3:
   // https://drafts.csswg.org/css-content-3/#typedef-content-content-replacement
   const values = extractDfns({
-    selector: [':is(dfn,h2,h3,h4,h5,h6)[data-dfn-type=value][data-dfn-for]:not([data-dfn-for=""])',
-               ':is(dfn,h2,h3,h4,h5,h6)[data-dfn-type=function][data-dfn-for]:not([data-dfn-for=""])',
-               ':is(dfn,h2,h3,h4,h5,h6)[data-dfn-type=type][data-dfn-for]:not([data-dfn-for=""])',
-               ':is(dfn,h2,h3,h4,h5,h6)[data-dfn-type=selector][data-dfn-for]:not([data-dfn-for=""])'
+    selector: [dfnElSelector + '[data-dfn-type=value][data-dfn-for]:not([data-dfn-for=""])',
+               dfnElSelector + '[data-dfn-type=function][data-dfn-for]:not([data-dfn-for=""])',
+               dfnElSelector + '[data-dfn-type=type][data-dfn-for]:not([data-dfn-for=""])',
+               dfnElSelector + '[data-dfn-type=selector][data-dfn-for]:not([data-dfn-for=""])'
               ].join(','),
     extractor: extractTypedDfns,
     duplicates: 'push',
