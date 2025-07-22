@@ -54,7 +54,7 @@ const descriptorBase = {
   type: 'discrete'
 };
 
-const descriptorExtended = Object.assign({}, descriptorBase, {
+const descriptorExtension = Object.assign({}, descriptorBase, {
   href: 'https://drafts.csswg.org/css-stuff-2/#descdef-descriptor',
   value: 'extended'
 });
@@ -77,6 +77,7 @@ const property1 = {
 
 const propertyLegacy = {
   name: 'good-old-overlay',
+  href: 'https://compat.spec.whatwg.org/#good-old-overlay',
   legacyAliasOf: 'overlay'
 };
 
@@ -91,6 +92,12 @@ const type1 = {
   href: 'https://drafts.csswg.org/css-backgrounds-4/#typedef-repetition',
   type: 'type',
   value: 'repeat | space | round | no-repeat'
+};
+
+const type1Extension = {
+  name: '<repetition>',
+  type: 'type',
+  value: 'bis repetita'
 };
 
 const functionVar = {
@@ -432,7 +439,7 @@ describe('CSS extracts consolidation', function () {
         css: Object.assign({}, emptyExtract, {
           atrules: [
             Object.assign({}, atrule2, {
-              descriptors: [descriptorExtended]
+              descriptors: [descriptorExtension]
             })
           ]
         })
@@ -442,7 +449,7 @@ describe('CSS extracts consolidation', function () {
     assert.deepEqual(result.atrules, [
       conv(Object.assign({}, atrule2, {
         syntax: '@media foo',
-        descriptors: [descriptorExtended]
+        descriptors: [descriptorExtension]
       }))
     ]);
   });
@@ -629,5 +636,55 @@ describe('CSS extracts consolidation', function () {
         }
       ]
     })));
+  });
+
+  it('merges extended types', async () => {
+    const results = structuredClone([
+      {
+        shortname: 'css-stuff-1',
+        series: { shortname: 'css-stuff' },
+        seriesVersion: '1',
+        css: Object.assign({}, emptyExtract, {
+          values: [
+            Object.assign({}, type1)
+          ]
+        })
+      },
+      {
+        shortname: 'css-otherstuff-1',
+        series: { shortname: 'css-otherstuff' },
+        seriesVersion: '1',
+        css: Object.assign({}, emptyExtract, {
+          values: [
+            Object.assign({}, type1Extension)
+          ]
+        })
+      },
+    ]);
+    const result = await cssmerge.run({ results });
+    assert.deepEqual(result, conv(Object.assign({}, emptyMerged, {
+      types: [
+        Object.assign({}, conv(type1), {
+          syntax: type1Extension.value
+        })
+      ]
+    })));
+  });
+
+  it('discards type extensions without a base definition', async () => {
+    const results = structuredClone([
+      {
+        shortname: 'css-stuff-1',
+        series: { shortname: 'css-stuff' },
+        seriesVersion: '1',
+        css: Object.assign({}, emptyExtract, {
+          values: [
+            Object.assign({}, type1Extension)
+          ]
+        })
+      }
+    ]);
+    const result = await cssmerge.run({ results });
+    assert.deepEqual(result, conv(emptyMerged));
   });
 });
