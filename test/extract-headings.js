@@ -93,6 +93,16 @@ const testHeadings = [
     </pre>`,
     res: [{id: "title", href: "about:blank#title", title: "Title", number: "A", level: 1}]
   },
+  {
+    title: "documents alternate IDs in WebGL1",
+    html: `
+      <h2 id="5.2">
+        <span class="secno">5.2</span>
+        <a name="WEBGLCONTEXTATTRIBUTES">WebGLContextAttributes</a>
+      </h2>
+    `,
+    res: [{id: "5.2", href: "about:blank#5.2", title: "WebGLContextAttributes", number: "5.2", level: 2, alternateIds: ["WEBGLCONTEXTATTRIBUTES"]}]
+  }
 ];
 
 describe("Test headings extraction", function () {

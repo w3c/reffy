@@ -89,16 +89,14 @@ export default function () {
       const ids = [];
 
       const heading = parentSection.heading;
-      if (heading.id) {
-	ids.push(heading.id);
-        href = getAbsoluteUrl(heading, { singlePage });
+      const anchor = heading.querySelector('a[name]');
+      if (anchor) {
+        ids.push(anchor.getAttribute('name'));
+        href = getAbsoluteUrl(anchor, { singlePage, attribute: 'name' });
       }
-      else {
-        const anchor = heading.querySelector('a[name]');
-        if (anchor) {
-	  ids.push(anchor.getAttribute('name'));
-          href = getAbsoluteUrl(anchor, { singlePage, attribute: 'name' });
-        }
+      if (heading.id) {
+        ids.push(heading.id);
+        href = getAbsoluteUrl(heading, { singlePage });
       }
 
       if (parentSection.root && parentSection.root.id) {
@@ -112,12 +110,12 @@ export default function () {
 
       const mapping = {};
       if (ids.length) {
-	mapping.id = ids.pop();
+        mapping.id = ids.pop();
       }
       mapping.href = href;
       mapping.title = trimmedText.replace(reNumber, '');
       if (ids.length) {
-	mapping.alternateIds = ids;
+        mapping.alternateIds = ids;
       }
       mappingTable[nodeid] = mapping;
 

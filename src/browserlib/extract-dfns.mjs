@@ -327,6 +327,9 @@ export default function (spec, idToHeading = {}) {
     // RFC8610 defines CDDL
     preProcessRFC8610();
     break;
+  case "webgl1":
+    preProcessWebGL1();
+    break;
   }
 
   const dfnEls = [...document.querySelectorAll(definitionsSelector)];
@@ -1008,4 +1011,84 @@ function preProcessRFC8610() {
   dfn.dataset.export = '';
   dfn.textContent = el.textContent;
   el.replaceWith(dfn);
+}
+
+
+/**
+ * WebGL 1.0 defines a few (~15) IDL attributes without following the
+ * definitions data model. These IDL constructs have IDs that look like
+ * `DOM-[interface]-[attr]`.
+ *
+ * The spec also defines a few IDL methods with anchors so that they can be
+ * referenced. BCD and MDN typically link to these.
+ *
+ * Not much choice to understand what the anchors map to and create the
+ * appropriate dfns, we need to extract and parse the whole IDL
+ */
+function preProcessWebGL1() {
+  const idl = extractWebIdl();
+  const idlTree = parse(idl);
+
+  const attributes = [...document.querySelectorAll('.attribute-name a[id^=DOM-]')];
+  for (const attribute of attributes) {
+    const dfn = document.createElement('dfn');
+    // Notes:
+    // - The interface name appears in the ID but... name cannot be trusted
+    // because it targets the concrete interface and not the underlying mixin
+    // when one exists, whereas we want to create a dfn scoped to the mixin.
+    // - Fortunately, no two interfaces define the same attribute in WebGL1, so
+    // we can just match on the attribute name
+    const attrName = attribute.textContent.trim();
+    const idlItems = idlTree.filter(i => i.members?.find(m =>
+      m.type === 'attribute' && m.name === attrName));
+    if (idlItems.length === 0) {
+      console.warn('[reffy]', `could not find attribute ${attrName}`);
+      continue;
+    }
+    if (idlItems.length > 1) {
+      console.warn('[reffy]', `more than one matching attribute found for ${attrName}`);
+      continue;
+    }
+    dfn.id = attribute.id;
+    dfn.dataset.dfnType = 'attribute';
+    dfn.dataset.dfnFor = idlItems[0].name;
+    dfn.textContent = attrName;
+    attribute.replaceWith(dfn);
+  }
+
+  const methods = [...document.querySelectorAll('.idl-code a[name]')];
+  for (const method of methods) {
+    const dfn = document.createElement('dfn');
+    // Notes:
+    // - The anchor also wraps possible flags and the return type
+    // - The return type is best ignored: The IDL block was fixed to use
+    // `undefined` but the prose still uses `void` (sigh!).
+    // - The parameter names and types are after the anchor. We need to look at
+    // them because some of the anchors target overloaded methods... We'll also
+    // use them to create appropriate linking texts for the methods.
+    // - We cannot match on parameter names for overloaded methods because the
+    // spec uses *different* parameter names in the IDL block and in the prose
+    // that defines the method (re-sigh!). Matching on the number of parameters is
+    // enough to disambiguate between overloaded methods.
+    const methodName = method.textContent.split(' ').pop();
+    const methodArgs = method.parentNode.textContent
+      // Note the "s" flag as parameters may be split over multiple lines
+      .match(/\((.*?)\)/s)[1]
+      .split(',')
+      .map(arg => arg.split(' ').pop());
+    const idlItem = idlTree.find(i => i.members?.find(m =>
+      m.type === 'operation' &&
+      m.name === methodName &&
+      m.arguments.length === methodArgs.length));
+    if (!idlItem) {
+      console.warn('[reffy]', `could not find method ${methodName}`);
+      continue;
+    }
+    dfn.id = method.getAttribute('name');
+    dfn.dataset.dfnType = 'method';
+    dfn.dataset.dfnFor = idlItem.name;
+    dfn.dataset.lt = `${methodName}(${methodArgs.join(', ')})`;
+    dfn.textContent = method.textContent;
+    method.replaceWith(dfn);
+  }
 }
