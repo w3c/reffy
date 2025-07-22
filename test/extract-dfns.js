@@ -83,6 +83,31 @@ interface SVGAnimatedLengthList {
 </table></div>
 `;
 
+
+const baseWebGL1 = `
+<!-- we use the IDL declarations to find the interface of methods -->
+<pre class=idl>
+  [Exposed=(Window,Worker)]
+  interface WebGLActiveInfo {
+      readonly attribute GLint size;
+      readonly attribute GLenum type;
+      readonly attribute DOMString name;
+  };
+
+  interface mixin WebGLRenderingContextBase {
+    attribute PredefinedColorSpace unpackColorSpace;
+  };
+  interface mixin WebGLRenderingContextOverloads {
+    undefined texImage2D(GLenum target, GLint level, GLint internalformat,
+                         GLsizei width, GLsizei height, GLint border, GLenum format,
+                         GLenum type, [AllowShared] ArrayBufferView? pixels);
+    undefined texImage2D(GLenum target, GLint level, GLint internalformat,
+                         GLenum format, GLenum type, TexImageSource source); // May throw DOMException
+  };
+</pre>
+`;
+
+
 const baseDfn = {
     id: 'foo',
     linkingText: [ 'Foo' ],
@@ -902,7 +927,82 @@ When initialize(<var>newItem</var>) is called, the following steps are run:</p>`
         definedIn: 'dt'
       }
     ]
-  }
+  },
+
+  {
+    title: "extracts attribute definitions from WebGL1",
+    html: `<p>
+      <code class="attribute-name">
+        <a id="DOM-WebGLRenderingContext-unpackColorSpace">
+          unpackColorSpace
+        </a>
+      </code>
+      of type <code><a href="https://html.spec.whatwg.org/multipage/canvas.html#predefinedcolorspace">PredefinedColorSpace</a></code>
+      <a href="#refsPREDEFINEDCOLORSPACE">(specification)</a>
+    </p>`,
+    changesToBaseDfn: [
+      {
+        id: "DOM-WebGLRenderingContext-unpackColorSpace",
+        href: "about:blank#DOM-WebGLRenderingContext-unpackColorSpace",
+        type: "attribute",
+        linkingText: [
+          "unpackColorSpace"
+        ],
+        for: [
+          "WebGLRenderingContextBase"
+        ],
+        access: "public"
+      }
+    ],
+    spec: "webgl1"
+  },
+
+  {
+    title: "extracts method definitions from WebGL1",
+    html: `<dl class="methods">
+      <dt class="idl-code"><a name="TEXIMAGE2D">void texImage2D</a>(GLenum target, GLint level, GLint internalformat,
+        GLsizei width, GLsizei height, GLint border, GLenum format,
+        GLenum type, [AllowShared] ArrayBufferView? pixels)
+        <span class="gl-spec">(<a href="http://registry.khronos.org/OpenGL/specs/es/2.0/es_full_spec_2.0.pdf#nameddest=section-3.7.1">OpenGL ES 2.0 §3.7.1</a>, <a class="nonnormative" href="http://www.khronos.org/opengles/sdk/2.0/docs/man/xhtml/glTexImage2D.xml">man page</a>)</span>
+      </dt>
+      <dt>
+        <p class="idl-code"><a name="TEXIMAGE2D_HTML">void texImage2D</a>(GLenum target, GLint level, GLint internalformat,
+          GLenum format, GLenum type, TexImageSource source) /* May throw DOMException */
+          <span class="gl-spec">(<a href="http://registry.khronos.org/OpenGL/specs/es/2.0/es_full_spec_2.0.pdf#nameddest=section-3.7.1">OpenGL ES 2.0 §3.7.1</a>, <a class="nonnormative" href="http://www.khronos.org/opengles/sdk/2.0/docs/man/xhtml/glTexImage2D.xml">man page</a>)</span>
+        </p>
+      </dt>
+      <dd></dd>
+    </dl>`,
+    changesToBaseDfn: [
+      {
+        id: "TEXIMAGE2D",
+        href: "about:blank#TEXIMAGE2D",
+        type: "method",
+        linkingText: [
+          "texImage2D(target, level, internalformat, width, height, border, format, type, pixels)"
+        ],
+        for: [
+          "WebGLRenderingContextOverloads"
+        ],
+        access: "public",
+        definedIn: "dt",
+      },
+      {
+        id: "TEXIMAGE2D_HTML",
+        href: "about:blank#TEXIMAGE2D_HTML",
+        type: "method",
+        linkingText: [
+          "texImage2D(target, level, internalformat, format, type, source)"
+        ],
+        for: [
+          "WebGLRenderingContextOverloads"
+        ],
+        access: "public",
+        definedIn: "dt"
+      }
+    ],
+    spec: "webgl1"
+  },
 ];
 
 describe("Test definition extraction", function () {
@@ -921,6 +1021,9 @@ describe("Test definition extraction", function () {
       break;
     case "SVG2":
       pageContent = baseSVG2;
+      break;
+    case "webgl1":
+      pageContent = baseWebGL1;
       break;
     };
     pageContent += html + "<script>let spec = '" + spec + "';</script>"
