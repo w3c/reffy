@@ -184,16 +184,25 @@ export default function () {
       }
       if (matchingValues.length === 0) {
         // Dangling production rule. That should never happen for properties,
-        // at-rules, descriptors and functions, since they should always be
-        // defined somewhere. That happens from time to time for types that are
-        // described in prose and that don't have a dfn. One could perhaps argue
-        // that these constructs ought to have a dfn too.
-        if (!res.warnings) {
-          res.warnings = []
+        // at-rules, descriptors: they should always be defined somewhere. That
+        // happens from time to time for functions and types that are defined
+        // in a spec and (temporarily) extended in another spec.
+        if (rule.name.match(/^<.*>$/)) {
+          const isFunction = !!rule.name.match(/\(\)/);
+          res.values.push({
+            name: isFunction ? rule.name.replace(/^<(.*)>$/, '$1') : rule.name,
+            type: isFunction ? 'function' : 'type',
+            value: rule.value
+          });
         }
-        const warning = Object.assign({ msg: 'Missing definition' }, rule);
-        warnings.push(warning);
-        rootDfns.push(warning);
+        else {
+          if (!res.warnings) {
+            res.warnings = [];
+          }
+          const warning = Object.assign({ msg: 'Missing definition' }, rule);
+          warnings.push(warning);
+          rootDfns.push(warning);
+        }
       }
     }
   }
