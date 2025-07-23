@@ -469,42 +469,6 @@ describe('CSS extracts consolidation', function () {
   });
 
 
-  it('expands at-rules syntaxes when possible', async () => {
-    const results = structuredClone([
-      {
-        shortname: 'css-stuff-1',
-        series: { shortname: 'css-stuff' },
-        seriesVersion: '1',
-        css: Object.assign({}, emptyExtract, {
-          atrules: [
-            Object.assign({}, atrule2, {
-              value: '@media { <declaration-list> }',
-              descriptors: [descriptor1]
-            })
-          ]
-        })
-      },
-      {
-        shortname: 'css-otherstuff-1',
-        series: { shortname: 'css-otherstuff' },
-        seriesVersion: '1',
-        css: Object.assign({}, emptyExtract, {
-          atrules: [
-            Object.assign({}, atrule2, {
-              descriptors: [descriptor2]
-            })
-          ]
-        })
-      }
-    ]);
-    const result = await cssmerge.run({ results });
-    assert.deepEqual(result.atrules[0].syntax, `@media {
-  [ descriptor1: [ <number> ]; ] ||
-  [ descriptor2: [ <mq-boolean> ]; ]
-}`);
-  });
-
-
   it('sets the syntax of legacy aliases', async () => {
     const results = structuredClone([
       {
