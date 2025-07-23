@@ -26,20 +26,6 @@
  * in the resulting structure. The list of descriptors gets merged accordingly
  * (the order of descriptors is essentially arbitrary but then it is already
  * somewhat arbitrary in the initial CSS extracts).
- * 
- * When the syntax of an at-rule is defined in terms of `<declaration-list>` or
- * `<declaration-rule-list>`, the resulting syntax is "expanded" using the
- * syntax of the individual descriptors. For example, the syntax:
- * 
- *   `@property <custom-property-name> { <declaration-list> }`
- * 
- * becomes:
- * 
- *   `@property <custom-property-name> {
- *      [ syntax: [ <string> ]; ] ||
- *      [ inherits: [ true | false ]; ] ||
- *      [ initial-value: [ <declaration-value>? ]; ]
- *   }`
  *
  * When a CSS property is defined as a legacy alias of another one, its syntax
  * gets set to that of the other CSS property in the resulting structure.
@@ -252,9 +238,8 @@ export default {
 
       // All duplicates should have been treated somehow and merged into the
       // base definition. Use the base definition and get rid of the rest!
-      // We will also generate an expanded syntax when possible for at-rules,
-      // and drop scoped definitions when a suitable unscoped definition
-      // already exists.
+      // We will also drop scoped definitions when a suitable unscoped
+      // definition already exists.
       categorized[category] = Object.entries(featureDfns)
         .map(([name, features]) => features[0])
         .filter(feature => {
@@ -270,26 +255,6 @@ export default {
           return true;
         })
         .map(feature => {
-          if (feature.descriptors?.length > 0 &&
-              feature.syntax?.match(/{ <declaration-(rule-)?list> }/)) {
-            // Note: More advanced logic would allow to get rid of enclosing
-            // grouping constructs when there's no ambiguity. We'll stick to
-            // simple logic for now.
-            const syntax = feature.descriptors
-              .map(desc => {
-                if (desc.name.startsWith('@')) {
-                  return `[ ${desc.syntax} ]`;
-                }
-                else {
-                  return `[ ${desc.name}: [ ${desc.syntax} ]; ]`;
-                }
-              })
-              .join(' ||\n  ');
-            feature.syntax = feature.syntax.replace(
-              /{ <declaration-(rule-)?list> }/,
-              '{\n  ' + syntax + '\n}');
-          }
-
           delete feature.spec;
           return feature;
         });
