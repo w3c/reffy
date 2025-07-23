@@ -213,6 +213,7 @@ function getExpectedDfnFromIdlDesc(idl, parentIdl) {
       break;
 
     case 'iterable':
+    case 'async_iterable':
     case 'maplike':
     case 'setlike':
       // No definition expected for iterable, maplike and setlike members

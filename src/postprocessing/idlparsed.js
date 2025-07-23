@@ -19,7 +19,7 @@ export default {
       let dfnOverload = 0;
       let dfnName;
       if (member) {
-        if (['iterable', 'maplike', 'setlike'].includes(member.type) ||
+        if (['async_iterable', 'iterable', 'maplike', 'setlike'].includes(member.type) ||
             ['getter', 'setter', 'stringifier', 'deleter'].includes(member.special)) {
           // No dfns of these types in any spec as of Feb 2024, or at least no
           // no dfns that we can easily map to (for example, the HTML spec

@@ -197,6 +197,7 @@ function parseIdlAstTree(idlReport, contextName) {
             def.arguments.forEach(a => parseType(a.idlType, idlReport));
             break;
         case "iterable":
+        case "async_iterable":
         case "setlike":
         case "maplike":
             var type = def.idlType;
