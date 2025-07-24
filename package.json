@@ -40,7 +40,7 @@
     "puppeteer": "24.14.0",
     "semver": "^7.3.5",
     "web-specs": "3.58.0",
-    "webidl2": "24.4.1"
+    "webidl2": "24.5.0"
   },
   "devDependencies": {
     "respec": "35.4.3",
