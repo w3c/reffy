@@ -46,6 +46,19 @@ const descriptor2 = {
   type: 'discrete'
 };
 
+const descriptorBase = {
+  name: 'descriptor',
+  href: 'https://drafts.csswg.org/css-stuff-1/#descdef-descriptor',
+  for: '@media',
+  value: 'base',
+  type: 'discrete'
+};
+
+const descriptorExtended = Object.assign({}, descriptorBase, {
+  href: 'https://drafts.csswg.org/css-stuff-2/#descdef-descriptor',
+  value: 'extended'
+});
+
 const property1 = {
   name: 'overlay',
   href: 'https://drafts.csswg.org/css-position-4/#propdef-overlay',
@@ -111,6 +124,10 @@ function conv(entry) {
     }
     else if (key === 'value') {
       res.syntax = value;
+    }
+    else if (key === 'type' && ['function', 'type'].includes(value)) {
+      // Functions and types appear in distinct categories after conversion,
+      // the `type` key is not preserved.
     }
     else if (typeof value === 'string' && value.match(/^<([^>]+)>$/)) {
       res[key] = value.slice(1, -1);
@@ -388,6 +405,44 @@ describe('CSS extracts consolidation', function () {
       conv(Object.assign({}, atrule2, {
         syntax: '@media foo',
         descriptors: [descriptor1, descriptor2]
+      }))
+    ]);
+  });
+
+
+  it('merges extended at-rules descriptors definitions', async () => {
+    const results = structuredClone([
+      {
+        shortname: 'css-stuff-1',
+        series: { shortname: 'css-stuff' },
+        seriesVersion: '1',
+        css: Object.assign({}, emptyExtract, {
+          atrules: [
+            Object.assign({}, atrule2, {
+              value: '@media foo',
+              descriptors: [descriptorBase]
+            })
+          ]
+        })
+      },
+      {
+        shortname: 'css-stuff-2',
+        series: { shortname: 'css-stuff' },
+        seriesVersion: '2',
+        css: Object.assign({}, emptyExtract, {
+          atrules: [
+            Object.assign({}, atrule2, {
+              descriptors: [descriptorExtended]
+            })
+          ]
+        })
+      }
+    ]);
+    const result = await cssmerge.run({ results });
+    assert.deepEqual(result.atrules, [
+      conv(Object.assign({}, atrule2, {
+        syntax: '@media foo',
+        descriptors: [descriptorExtended]
       }))
     ]);
   });

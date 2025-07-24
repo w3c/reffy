@@ -115,6 +115,8 @@ export default {
     // consolidate the entries (and syntaxes) to get back to a single entry.
     // - An at-rule is defined in one spec. Additional descriptors are defined
     // in other specs. We'll consolidate the entries similarly.
+    // - A descriptor is defined in one level of a spec series, and re-defined
+    // in a subsequent level.
     // - A feature is defined in one level of a spec series, and re-defined in
     // a subsequent level.
     //
@@ -145,7 +147,10 @@ export default {
         // Let's also turn `value` keys into `syntax` keys because that's
         // a better name and that matches what MDN data uses, and drop
         // enclosing `<` and `>` for type names (type names that look like
-        // functions should be .
+        // functions should not occur).
+        if (feature.type) {
+          delete feature.type;
+        }
         if (feature.values) {
           delete feature.values;
         }
@@ -205,18 +210,30 @@ export default {
       // `css-color`) and delta is not always a pure delta. In other words,
       // extension definitions may themselves be duplicated, we'll again
       // prefer the latest level in such cases.
+      function hasNewerDfn(dfn, dfns) {
+        return dfns.find(d =>
+          d !== dfn &&
+          d.newValues === dfn.newValues &&
+          d.spec.seriesVersion > dfn.spec.seriesVersion);
+      }
+      function hasNewerDescriptorDfn(desc, dfn, dfns) {
+        return dfns.find(d =>
+          d !== dfn &&
+          d.descriptors?.find(ddesc => ddesc.name === desc.name) &&
+          d.spec.seriesVersion > dfn.spec.seriesVersion);
+      }
       for (const [name, dfns] of Object.entries(featureDfns)) {
         const baseDfn = dfns[0];
+        if (baseDfn.descriptors) {
+          baseDfn.descriptors = baseDfn.descriptors
+            .filter(desc => !hasNewerDescriptorDfn(desc, baseDfn, dfns));
+        }
         for (const dfn of dfns) {
           if (dfn === baseDfn) {
             continue;
           }
           if (baseDfn.syntax && dfn.newValues) {
-            const newerDfn = dfns.find(d =>
-              d !== dfn &&
-              d.newValues === dfn.newValues &&
-              d.spec.seriesVersion > dfn.spec.seriesVersion);
-            if (newerDfn) {
+            if (hasNewerDfn(dfn, dfns)) {
               // The extension is redefined in a newer level, let's ignore
               // the older one
               continue;
@@ -224,14 +241,8 @@ export default {
             baseDfn.syntax += ' | ' + dfn.newValues;
           }
           if (baseDfn.descriptors && dfn.descriptors?.length > 0) {
-            baseDfn.descriptors.push(...dfn.descriptors.filter(desc => {
-              // Look for a possible newer definition of the descriptor
-              const newerDfn = dfns.find(d =>
-                d !== dfn &&
-                d.descriptors?.find(ddesc => ddesc.name === desc.name) &&
-                d.spec.seriesVersion > dfn.spec.seriesVersion);
-              return !newerDfn;
-            }));
+            baseDfn.descriptors.push(...dfn.descriptors.filter(desc =>
+              !hasNewerDescriptorDfn(desc, dfn, dfns)));
           }
         }
       }
