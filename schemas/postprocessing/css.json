@@ -48,13 +48,12 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["name", "type"],
+        "required": ["name"],
         "additionalProperties": false,
         "properties": {
           "name": { "type": "string", "pattern": "^.*()$" },
           "for": { "$ref": "#/$defs/scopes" },
           "href": { "$ref": "../common.json#/$defs/url" },
-          "type": { "type": "string", "enum": ["function"] },
           "prose": { "type": "string" },
           "syntax": { "$ref": "../common.json#/$defs/cssValue" }
         }
@@ -97,13 +96,12 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["name", "type"],
+        "required": ["name"],
         "additionalProperties": false,
         "properties": {
           "name": { "type": "string", "pattern": "^[a-zA-Z0-9-\\+\\(\\)\\[\\]\\{\\}]+$" },
           "for": { "$ref": "#/$defs/scopes" },
           "href": { "$ref": "../common.json#/$defs/url" },
-          "type": { "type": "string", "enum": ["type"] },
           "prose": { "type": "string" },
           "syntax": { "$ref": "../common.json#/$defs/cssValue" }
         }
