@@ -9,6 +9,13 @@
         "type": "string"
       },
       "minItems": 1
+    },
+
+    "extended": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.json#/$defs/url"
+      }
     }
   },
 
@@ -25,6 +32,7 @@
         "properties": {
           "name": { "type": "string", "pattern": "^@" },
           "href": { "$ref": "../common.json#/$defs/url" },
+          "extended": { "$ref": "#/$defs/extended" },
           "syntax": { "$ref": "../common.json#/$defs/cssValue" },
           "prose": { "type": "string" },
           "descriptors": {
@@ -54,6 +62,7 @@
           "name": { "type": "string", "pattern": "^.*()$" },
           "for": { "$ref": "#/$defs/scopes" },
           "href": { "$ref": "../common.json#/$defs/url" },
+          "extended": { "$ref": "#/$defs/extended" },
           "prose": { "type": "string" },
           "syntax": { "$ref": "../common.json#/$defs/cssValue" }
         }
@@ -68,6 +77,7 @@
         "properties": {
           "name": { "$ref": "../common.json#/$defs/cssPropertyName" },
           "href": { "$ref": "../common.json#/$defs/url" },
+          "extended": { "$ref": "#/$defs/extended" },
           "syntax": { "$ref": "../common.json#/$defs/cssValue" },
           "legacyAliasOf": { "$ref": "../common.json#/$defs/cssPropertyName" },
           "styleDeclaration": {
@@ -87,6 +97,7 @@
         "properties": {
           "name": { "$ref": "../common.json#/$defs/cssPropertyName" },
           "href": { "$ref": "../common.json#/$defs/url" },
+          "extended": { "$ref": "#/$defs/extended" },
           "prose": { "type": "string" },
           "syntax": { "$ref": "../common.json#/$defs/cssValue" }
         }
@@ -102,6 +113,7 @@
           "name": { "type": "string", "pattern": "^[a-zA-Z0-9-\\+\\(\\)\\[\\]\\{\\}]+$" },
           "for": { "$ref": "#/$defs/scopes" },
           "href": { "$ref": "../common.json#/$defs/url" },
+          "extended": { "$ref": "#/$defs/extended" },
           "prose": { "type": "string" },
           "syntax": { "$ref": "../common.json#/$defs/cssValue" }
         }

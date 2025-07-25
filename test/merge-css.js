@@ -54,7 +54,7 @@ const descriptorBase = {
   type: 'discrete'
 };
 
-const descriptorExtended = Object.assign({}, descriptorBase, {
+const descriptorExtension = Object.assign({}, descriptorBase, {
   href: 'https://drafts.csswg.org/css-stuff-2/#descdef-descriptor',
   value: 'extended'
 });
@@ -77,6 +77,7 @@ const property1 = {
 
 const propertyLegacy = {
   name: 'good-old-overlay',
+  href: 'https://compat.spec.whatwg.org/#good-old-overlay',
   legacyAliasOf: 'overlay'
 };
 
@@ -91,6 +92,12 @@ const type1 = {
   href: 'https://drafts.csswg.org/css-backgrounds-4/#typedef-repetition',
   type: 'type',
   value: 'repeat | space | round | no-repeat'
+};
+
+const type1Extension = {
+  name: '<repetition>',
+  type: 'type',
+  value: 'bis repetita'
 };
 
 const functionVar = {
@@ -113,14 +120,17 @@ const functionEnv = {
  * the outputs to the inputs directly. This conversion function takes
  * some object or value and converts it to ease comparisons.
  */
-function conv(entry) {
+function conv(entry, parentKey) {
   const res = {};
   if (typeof entry !== 'object') {
     return entry;
   }
+  if (entry.href && !entry.extended && parentKey !== 'descriptors') {
+    entry.extended = [];
+  }
   for (const [key, value] of Object.entries(entry)) {
     if (Array.isArray(value)) {
-      res[key] = value.map(conv);
+      res[key] = value.map(v => conv(v, key));
     }
     else if (key === 'value') {
       res.syntax = value;
@@ -309,7 +319,8 @@ describe('CSS extracts consolidation', function () {
           properties: [
             Object.assign({}, property1, {
               value: null,
-              newValues: 'train'
+              newValues: 'train',
+              href: 'https://drafts.csswg.org/css-otherstuff-2/#tchou-tchou'
             })
           ]
         })
@@ -318,7 +329,8 @@ describe('CSS extracts consolidation', function () {
     const result = await cssmerge.run({ results });
     assert.deepEqual(result.properties, [
       Object.assign({}, conv(property1), {
-        syntax: 'none | auto | train'
+        syntax: 'none | auto | train',
+        extended: ['https://drafts.csswg.org/css-otherstuff-2/#tchou-tchou']
       })
     ]);
   });
@@ -344,7 +356,8 @@ describe('CSS extracts consolidation', function () {
           properties: [
             Object.assign({}, property1, {
               value: null,
-              newValues: 'train'
+              newValues: 'train',
+              href: 'https://drafts.csswg.org/css-otherstuff-1/#tchou-tchou'
             })
           ]
         })
@@ -357,7 +370,8 @@ describe('CSS extracts consolidation', function () {
           properties: [
             Object.assign({}, property1, {
               value: null,
-              newValues: 'train'
+              newValues: 'train',
+              href: 'https://drafts.csswg.org/css-otherstuff-2/#tchou-tchou'
             })
           ]
         })
@@ -366,7 +380,8 @@ describe('CSS extracts consolidation', function () {
     const result = await cssmerge.run({ results });
     assert.deepEqual(result.properties, [
       Object.assign({}, conv(property1), {
-        syntax: 'none | auto | train'
+        syntax: 'none | auto | train',
+        extended: ['https://drafts.csswg.org/css-otherstuff-2/#tchou-tchou']
       })
     ]);
   });
@@ -432,7 +447,7 @@ describe('CSS extracts consolidation', function () {
         css: Object.assign({}, emptyExtract, {
           atrules: [
             Object.assign({}, atrule2, {
-              descriptors: [descriptorExtended]
+              descriptors: [descriptorExtension]
             })
           ]
         })
@@ -442,7 +457,7 @@ describe('CSS extracts consolidation', function () {
     assert.deepEqual(result.atrules, [
       conv(Object.assign({}, atrule2, {
         syntax: '@media foo',
-        descriptors: [descriptorExtended]
+        descriptors: [descriptorExtension]
       }))
     ]);
   });
@@ -629,5 +644,58 @@ describe('CSS extracts consolidation', function () {
         }
       ]
     })));
+  });
+
+  it('merges extended types', async () => {
+    const results = structuredClone([
+      {
+        shortname: 'css-stuff-1',
+        series: { shortname: 'css-stuff' },
+        seriesVersion: '1',
+        crawled: 'https://drafts.csswg.org/css-stuff-1/',
+        css: Object.assign({}, emptyExtract, {
+          values: [
+            Object.assign({}, type1)
+          ]
+        })
+      },
+      {
+        shortname: 'css-otherstuff-1',
+        series: { shortname: 'css-otherstuff' },
+        seriesVersion: '1',
+        crawled: 'https://drafts.csswg.org/css-otherstuff-1/',
+        css: Object.assign({}, emptyExtract, {
+          values: [
+            Object.assign({}, type1Extension)
+          ]
+        })
+      },
+    ]);
+    const result = await cssmerge.run({ results });
+    assert.deepEqual(result, conv(Object.assign({}, emptyMerged, {
+      types: [
+        Object.assign({}, conv(type1), {
+          syntax: type1Extension.value,
+          extended: ['https://drafts.csswg.org/css-otherstuff-1/']
+        })
+      ]
+    })));
+  });
+
+  it('discards type extensions without a base definition', async () => {
+    const results = structuredClone([
+      {
+        shortname: 'css-stuff-1',
+        series: { shortname: 'css-stuff' },
+        seriesVersion: '1',
+        css: Object.assign({}, emptyExtract, {
+          values: [
+            Object.assign({}, type1Extension)
+          ]
+        })
+      }
+    ]);
+    const result = await cssmerge.run({ results });
+    assert.deepEqual(result, conv(emptyMerged));
   });
 });
