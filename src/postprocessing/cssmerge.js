@@ -111,8 +111,9 @@ export default {
 
     // The job is "almost" done but we now need to de-duplicate entries.
     // Duplicated entries exist when:
-    // - A property is defined in one spec and extended in other specs. We'll
-    // consolidate the entries (and syntaxes) to get back to a single entry.
+    // - A property, function or type is defined in one spec and extended in
+    // other specs. We'll consolidate the entries (and syntaxes) to get back to
+    // a single entry.
     // - An at-rule is defined in one spec. Additional descriptors are defined
     // in other specs. We'll consolidate the entries similarly.
     // - A descriptor is defined in one level of a spec series, and re-defined
@@ -179,13 +180,22 @@ export default {
       // Identify the base definition for each feature, using the definition
       // (that has some known syntax) in the most recent level. Move that base
       // definition to the beginning of the array and get rid of other base
-      // definitions.
-      // (Note: the code chooses one definition if duplicates of base
-      // definitions in unrelated specs still exist)
+      // definitions. Notes:
+      // - For properties, an extension is an entry with a `newValues` key.
+      // - For functions and types, an extension is an entry without an `href`
+      // key (the spec that extends the base type does not contain any `<dfn>`)
+      // - The code chooses one definition if duplicates of base definitions in
+      // unrelated specs still exist.
       for (const [name, dfns] of Object.entries(featureDfns)) {
-        let actualDfns = dfns.filter(dfn => dfn.syntax);
+        let actualDfns = dfns.filter(dfn => dfn.href && dfn.syntax);
         if (actualDfns.length === 0) {
-          actualDfns = dfns.filter(dfn => !dfn.newValues);
+          actualDfns = dfns.filter(dfn => dfn.href && !dfn.newValues);
+        }
+        if (actualDfns.length === 0) {
+          // No base definition, not a real type, let's discard it
+          // (problem should be captured through tests on individual extracts)
+          delete featureDfns[name];
+          continue;
         }
         const best = actualDfns.reduce((dfn1, dfn2) => {
           if (dfn1.spec.series.shortname !== dfn2.spec.series.shortname) {
@@ -199,6 +209,7 @@ export default {
             return dfn1;
           }
         });
+        best.extended = [];
         featureDfns[name] = [best].concat(
           dfns.filter(dfn => !actualDfns.includes(dfn))
         );
@@ -239,6 +250,18 @@ export default {
               continue;
             }
             baseDfn.syntax += ' | ' + dfn.newValues;
+            baseDfn.extended.push(dfn.href);
+          }
+          else if (dfn.syntax) {
+            // Extensions of functions and types are *re-definitions* in
+            // practice, new syntax overrides the base one. There should be
+            // only one such extension in unrelated specs, the code assumes
+            // that some sort of curation already took place, and picks up
+            // a winner randomly.
+            // Note: we don't have any `href` info for functions/types
+            // extensions, so we'll just use the URL of the crawled spec.
+            baseDfn.syntax = dfn.syntax;
+            baseDfn.extended = [dfn.spec.crawled ?? dfn.spec.url];
           }
           if (baseDfn.descriptors && dfn.descriptors?.length > 0) {
             baseDfn.descriptors.push(...dfn.descriptors.filter(desc =>
