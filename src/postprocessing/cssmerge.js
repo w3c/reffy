@@ -263,14 +263,6 @@ export default {
             baseDfn.syntax = dfn.syntax;
             baseDfn.extended = [dfn.spec.crawled ?? dfn.spec.url];
           }
-          else if (dfn.syntax) {
-            // Extensions of functions and types are *re-definitions* in
-            // practice, new syntax overrides the base one. There should be
-            // only one such extension in unrelated specs, the code assumes
-            // that some sort of curation already took place, and picks up
-            // a winner randomly.
-            baseDfn.syntax = dfn.syntax;
-          }
           if (baseDfn.descriptors && dfn.descriptors?.length > 0) {
             baseDfn.descriptors.push(...dfn.descriptors.filter(desc =>
               !hasNewerDescriptorDfn(desc, dfn, dfns)));
