@@ -209,6 +209,7 @@ export default {
             return dfn1;
           }
         });
+        best.extended = [];
         featureDfns[name] = [best].concat(
           dfns.filter(dfn => !actualDfns.includes(dfn))
         );
@@ -249,6 +250,18 @@ export default {
               continue;
             }
             baseDfn.syntax += ' | ' + dfn.newValues;
+            baseDfn.extended.push(dfn.href);
+          }
+          else if (dfn.syntax) {
+            // Extensions of functions and types are *re-definitions* in
+            // practice, new syntax overrides the base one. There should be
+            // only one such extension in unrelated specs, the code assumes
+            // that some sort of curation already took place, and picks up
+            // a winner randomly.
+            // Note: we don't have any `href` info for functions/types
+            // extensions, so we'll just use the URL of the crawled spec.
+            baseDfn.syntax = dfn.syntax;
+            baseDfn.extended = [dfn.spec.crawled ?? dfn.spec.url];
           }
           else if (dfn.syntax) {
             // Extensions of functions and types are *re-definitions* in
