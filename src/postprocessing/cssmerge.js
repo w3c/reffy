@@ -250,7 +250,7 @@ export default {
               continue;
             }
             baseDfn.syntax += ' | ' + dfn.newValues;
-            baseDfn.extended.push(dfn.href);
+            baseDfn.extended.push(dfn.href ?? dfn.spec.crawled ?? dfn.spec.url);
           }
           else if (dfn.syntax) {
             // Extensions of functions and types are *re-definitions* in
