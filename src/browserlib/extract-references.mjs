@@ -165,6 +165,38 @@ function extractReferencesWithoutRules() {
   const anchors = [...document.querySelectorAll("h1, h2, h3")];
   console.log('[reffy]', 'extract refs without rules');
 
+  // Custom logic for Source map format specification (ECMA-426)
+  // Looks for <emu-clause id="sec-references"> and its child clauses
+  for (const refType of ['normative', 'informative']) {
+    const clause = document.querySelector([
+      `emu-clause#sec-references-${refType}`,
+      `emu-clause#sec-${refType}-references`
+    ].join(','));
+    if (clause) {
+      const refs = [];
+      clause.querySelectorAll('p').forEach(p => {
+        const ref = {};
+        const match = p.innerText.match(/(.+?), /m);
+        if (match) {
+          ref.name = match[1].trim();
+        }
+        if (!match) {
+          ref.name = p.querySelector('i')?.innerText.trim();
+        }
+        if (!ref.name) {
+          return;
+        }
+
+        const anchor = p.querySelector('a[href]');
+        if (anchor) {
+          ref.url = anchor.getAttribute('href');
+        }
+        refs.push(ref);
+      });
+      references[refType] = refs;
+    }
+  }
+
   // Look for a "Normative references" heading
   const normative = anchors.findLast(
     textMatch(/^\s*((\w|\d+)(\.\d+)*\.?)?\s*normative\s+references\s*$/i));

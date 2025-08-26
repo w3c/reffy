@@ -233,6 +233,66 @@ const testRefs = [
       normative: [],
       informative: [{ name: "CSS-MULTICOL-1", url: "https://drafts.csswg.org/css-multicol/" }]
     }
+  },
+
+  {
+    title: "extracts normative and informative references from ECMA specs",
+    html: `
+<emu-clause id="sec-references">
+  <h1><span class="secnum">3</span> References</h1>
+  <emu-clause id="sec-normative-references">
+    <h1><span class="secnum">3.1</span> Normative References</h1>
+    <p>
+      <a href="https://tc39.es/ecma262/">ECMA-262</a>, <i>ECMAScript® Language Specification</i>.
+    </p>
+    <p>
+      ECMA-404, <i>The JSON Data Interchange Format</i>.<br>
+      <a href="https://www.ecma-international.org/publications-and-standards/standards/ecma-404/">https://www.ecma-international.org/publications-and-standards/standards/ecma-404/</a>
+    </p>
+  </emu-clause>
+  <emu-clause id="sec-references-informative">
+    <h1><span class="secnum">3.2</span> Informative References</h1>
+    <p>
+      IETF RFC 4648, <i>The Base16, Base32, and Base64 Data Encodings</i>.<br>
+      <a href="https://datatracker.ietf.org/doc/html/rfc4648">https://datatracker.ietf.org/doc/html/rfc4648</a>
+    </p>
+    <p>
+      <i>WebAssembly Core Specification</i>.<br>
+      <a href="https://www.w3.org/TR/wasm-core-2/">https://www.w3.org/TR/wasm-core-2/</a>
+    </p>
+    <p>
+      WHATWG <i>Encoding</i>.<br>
+      <a href="https://encoding.spec.whatwg.org/">https://encoding.spec.whatwg.org/</a>
+    </p>
+    <p>
+      WHATWG <emu-not-ref><i>Fetch</i></emu-not-ref>.<br>
+      <a href="https://fetch.spec.whatwg.org/">https://fetch.spec.whatwg.org/</a>
+    </p>
+    <p>
+      WHATWG <i>Infra</i>.<br>
+      <a href="https://infra.spec.whatwg.org/">https://infra.spec.whatwg.org/</a>
+    </p>
+    <p>
+      WHATWG <emu-not-ref><i>URL</i></emu-not-ref>.<br>
+      <a href="https://url.spec.whatwg.org/">https://url.spec.whatwg.org/</a>
+    </p>
+  </emu-clause>
+</emu-clause>
+`,
+    res: {
+      normative: [
+        { name: "ECMA-262", url: "https://tc39.es/ecma262/" },
+        { name: "ECMA-404", url: "https://www.ecma-international.org/publications-and-standards/standards/ecma-404/" }
+      ],
+      informative: [
+        { name: "IETF RFC 4648", url: "https://datatracker.ietf.org/doc/html/rfc4648" },
+        { name: "WebAssembly Core Specification", url: "https://www.w3.org/TR/wasm-core-2/" },
+        { name: "Encoding", url: "https://encoding.spec.whatwg.org/" },
+        { name: "Fetch", url: "https://fetch.spec.whatwg.org/" },
+        { name: "Infra", url: "https://infra.spec.whatwg.org/" },
+        { name: "URL", url: "https://url.spec.whatwg.org/" }
+      ]
+    }
   }
 
 ];
