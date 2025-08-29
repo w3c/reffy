@@ -307,7 +307,7 @@
           "type": "string"
         },
         "rhs": {
-          "description": "The right-hand side of the extended attribute.",
+          "description": "The right-hand side of the extended attribute, if applicable.",
           "type": [
             "object",
             "null"
