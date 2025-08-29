@@ -249,7 +249,7 @@
           }
         },
         "generic": {
-          "description": "The generic type, if any.",
+          "description": "The type of a parameterized type, if any.",
           "type": "string"
         },
         "nullable": {
