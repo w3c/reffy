@@ -522,7 +522,14 @@
         },
         "special": {
           "description": "The special property of the operation (e.g., 'static').",
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "",
+            "deleter",
+            "getter",
+            "setter",
+            "static"
+          ]
         },
         "readonly": {
           "description": "Whether the operation is read-only.",
