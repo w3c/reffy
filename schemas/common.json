@@ -250,7 +250,15 @@
         },
         "generic": {
           "description": "The type of a parameterized type, if any.",
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "",
+            "FrozenArray",
+            "ObservableArray",
+            "Promise",
+            "record",
+            "sequence"
+          ]
         },
         "nullable": {
           "description": "Whether the type is nullable.",
