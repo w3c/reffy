@@ -800,9 +800,9 @@
               "const": "number"
             },
             "value": {
-              "anyOf": [
-                {"type": "number"},
-                {"type": "string"}
+              "type": [
+                "number",
+                "string"
               ]
             }
           },
