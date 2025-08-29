@@ -9,12 +9,14 @@
     "spec": { "$ref": "../common.json#/$defs/specInExtract" },
 
     "idlparsed": {
+      "description": "Structured information about Web IDL definitions in the spec including, for each definition, an abstract syntax tree (AST) created by parsing the raw definition.",
       "type": "object",
       "additionalProperties": false,
       "required": ["jsNames", "idlNames", "idlExtendedNames", "globals",
         "exposed", "dependencies", "externalDependencies", "hasObsoleteIdl"],
       "properties": {
         "jsNames": {
+          "description": "List of names available to global interfaces, either as objects that can be constructed or as objects that can be returned from functions",
           "type": "object",
           "additionalProperties": false,
           "required": ["constructors", "functions"],
@@ -24,45 +26,41 @@
           }
         },
         "idlNames": {
+          "description": "List of base IDL definitions, indexed by name",
           "type": "object",
           "propertyNames": { "$ref": "../common.json#/$defs/interface" },
-          "additionalProperties": {
-            "type": "object",
-            "additionalProperties": true,
-            "required": ["fragment", "type"],
-            "properties": {
-              "fragment": { "type": "string" },
-              "type": { "$ref": "../common.json#/$defs/interfacetype" },
-              "href": { "$ref": "../common.json#/$defs/url" }
-            }
-          }
+          "additionalProperties": { "$ref": "../common.json#/$defs/idlFragment" }
         },
         "idlExtendedNames": {
+          "description": "List of partial IDL definitions, indexed by name",
           "type": "object",
           "propertyNames": { "$ref": "../common.json#/$defs/interface" },
           "additionalProperties": {
             "type": "array",
-            "items": {
-              "type": "object",
-              "additionalProperties": true,
-              "required": ["fragment", "type"],
-              "properties": {
-                "fragment": { "type": "string" },
-                "type": { "$ref": "../common.json#/$defs/extensiontype" },
-                "href": { "$ref": "../common.json#/$defs/url" }
-              }
-            }
+            "items": { "$ref": "../common.json#/$defs/idlFragment" }
           }
         },
-        "globals": { "$ref": "../common.json#/$defs/interfacesByGlobal" },
-        "exposed": { "$ref": "../common.json#/$defs/interfacesByGlobal" },
+        "globals": {
+          "description": "List of globals defined by the IDL content indexed by global name, along with the list of underlying interface names",
+          "$ref": "../common.json#/$defs/interfacesByGlobal" },
+        "exposed": {
+          "description": "List of globals on which interfaces are defined indexed by global name, along with the names of the interfaces exposed on it. If present, the specific \"*\" entry lists interfaces exposed on all globals.",
+          "$ref": "../common.json#/$defs/interfacesByGlobal"
+        },
         "dependencies": {
+          "description": "List of dependencies (both internal to the specification and defined in other specifications) for each interface, indexed by interface name",
           "type": "object",
           "propertyNames": { "$ref": "../common.json#/$defs/interface" },
           "additionalProperties": { "$ref": "../common.json#/$defs/interfaces" }
         },
-        "externalDependencies": { "$ref": "../common.json#/$defs/interfaces" },
-        "hasObsoleteIdl": { "type": "boolean" }
+        "externalDependencies": {
+          "description": "List of IDL names used by the specification but defined in other specifications",
+          "$ref": "../common.json#/$defs/interfaces"
+        },
+        "hasObsoleteIdl": {
+          "description": "Whether the definitions contain obsolete Web IDL constructs",
+          "type": "boolean"
+        }
       }
     }
   }

@@ -105,6 +105,80 @@
       "additionalProperties": { "$ref": "#/$defs/interfaces" }
     },
 
+    "idlFragment": {
+      "description": "Represents a Web IDL fragment definition.",
+      "type": "object",
+      "properties": {
+        "fragment": {
+          "description": "The raw IDL fragment.",
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "description": "The type of the IDL definition.",
+          "$ref": "#/$defs/extensiontype"
+        },
+        "name": {
+          "description": "The name of the IDL definition.",
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "description": "The target of an includes statement.",
+          "type": "string",
+          "minLength": 1
+        },
+        "includes": {
+          "description": "The module that is included.",
+          "type": "string",
+          "minLength": 1
+        },
+        "inheritance": {
+          "description": "The name of the inherited interface, if any.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "members": {
+          "description": "A list of members of the IDL definition.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/idlMember"
+          }
+        },
+        "idlType": {
+          "$ref": "#/$defs/idlType"
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/argument"
+          }
+        },
+        "extAttrs": {
+          "description": "A list of extended attributes.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/extendedAttribute"
+          }
+        },
+        "partial": {
+          "description": "Whether the definition is partial.",
+          "type": "boolean"
+        },
+        "href": {
+          "description": "The URL to the definition.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "fragment",
+        "type",
+        "extAttrs"
+      ]
+    },
+
     "idlFragmentInSpec": {
       "type": "object",
       "additionalProperties": false,
@@ -144,6 +218,660 @@
           "specShortname": { "$ref": "#/$defs/shortname" }
         }
       }
+    },
+
+    "idlType": {
+      "description": "Represents a WebIDL type.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "The type of the IDL type.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "argument-type",
+            "attribute-type",
+            "return-type",
+            "const-type",
+            "dictionary-type",
+            "field-type",
+            "typedef-type",
+            null
+          ]
+        },
+        "extAttrs": {
+          "description": "A list of extended attributes.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/extendedAttribute"
+          }
+        },
+        "generic": {
+          "description": "The type of a parameterized type, if any.",
+          "type": "string",
+          "enum": [
+            "",
+            "FrozenArray",
+            "ObservableArray",
+            "Promise",
+            "record",
+            "sequence",
+            "async_sequence"
+          ]
+        },
+        "nullable": {
+          "description": "Whether the type is nullable.",
+          "type": "boolean"
+        },
+        "union": {
+          "description": "Whether the type is a union type.",
+          "type": "boolean"
+        },
+        "idlType": {
+          "description": "The inner IDL type. Can be a string or an array of idlType objects for union or parameterized types.",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/idlType"
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "extAttrs",
+        "generic",
+        "nullable",
+        "union",
+        "idlType"
+      ]
+    },
+    "extendedAttribute": {
+      "description": "Represents a WebIDL extended attribute.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "extended-attribute"
+          ]
+        },
+        "name": {
+          "description": "The name of the extended attribute.",
+          "type": "string"
+        },
+        "rhs": {
+          "description": "The right-hand side of the extended attribute, if applicable.",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "arguments": {
+          "description": "A list of arguments for the extended attribute.",
+          "type": "array"
+        }
+      },
+      "required": [
+        "type",
+        "name",
+        "rhs",
+        "arguments"
+      ]
+    },
+    "argument": {
+      "description": "Represents an argument to a WebIDL operation or constructor.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "argument"
+        },
+        "name": {
+          "description": "The name of the argument.",
+          "type": "string"
+        },
+        "extAttrs": {
+          "description": "A list of extended attributes.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/extendedAttribute"
+          }
+        },
+        "idlType": {
+          "$ref": "#/$defs/idlType"
+        },
+        "default": {
+          "$ref": "#/$defs/defaultValue"
+        },
+        "optional": {
+          "description": "Whether the argument is optional.",
+          "type": "boolean"
+        },
+        "variadic": {
+          "description": "Whether the argument is variadic.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "name",
+        "extAttrs",
+        "idlType",
+        "default",
+        "optional",
+        "variadic"
+      ]
+    },
+    "idlMember": {
+      "description": "Represents a member of a WebIDL interface, dictionary, etc.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/constructorMember"
+        },
+        {
+          "$ref": "#/$defs/attributeMember"
+        },
+        {
+          "$ref": "#/$defs/operationMember"
+        },
+        {
+          "$ref": "#/$defs/constMember"
+        },
+        {
+          "$ref": "#/$defs/fieldMember"
+        },
+        {
+          "$ref": "#/$defs/iterableMember"
+        },
+        {
+          "$ref": "#/$defs/setlikeMember"
+        },
+        {
+          "$ref": "#/$defs/maplikeMember"
+        },
+        {
+          "$ref": "#/$defs/asyncIterableMember"
+        }
+      ]
+    },
+    "constructorMember": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "constructor"
+        },
+        "arguments": {
+          "description": "A list of arguments for the constructor.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/argument"
+          }
+        },
+        "extAttrs": {
+          "description": "A list of extended attributes.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/extendedAttribute"
+          }
+        },
+        "href": {
+          "description": "The URL to the definition of the constructor.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "arguments",
+        "extAttrs"
+      ]
+    },
+    "attributeMember": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "attribute"
+        },
+        "name": {
+          "description": "The name of the attribute.",
+          "type": "string"
+        },
+        "idlType": {
+          "$ref": "#/$defs/idlType"
+        },
+        "extAttrs": {
+          "description": "A list of extended attributes.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/extendedAttribute"
+          }
+        },
+        "special": {
+          "description": "The special property of the attribute (e.g., 'static').",
+          "type": "string",
+          "enum": [
+            "",
+            "inherit",
+            "static",
+            "stringifier"
+          ]
+        },
+        "readonly": {
+          "description": "Whether the attribute is read-only.",
+          "type": "boolean"
+        },
+        "href": {
+          "description": "The URL to the definition of the attribute.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "name",
+        "idlType",
+        "extAttrs",
+        "special"
+      ]
+    },
+    "operationMember": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "operation"
+        },
+        "name": {
+          "description": "The name of the operation.",
+          "type": "string"
+        },
+        "idlType": {
+          "$ref": "#/$defs/idlType"
+        },
+        "arguments": {
+          "description": "A list of arguments for the operation.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/argument"
+          }
+        },
+        "extAttrs": {
+          "description": "A list of extended attributes.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/extendedAttribute"
+          }
+        },
+        "special": {
+          "description": "The special property of the operation (e.g., 'static').",
+          "type": "string",
+          "enum": [
+            "",
+            "deleter",
+            "getter",
+            "setter",
+            "static",
+            "stringifier"
+          ]
+        },
+        "readonly": {
+          "description": "Whether the operation is read-only.",
+          "type": "boolean"
+        },
+        "href": {
+          "description": "The URL to the definition of the operation.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "name",
+        "arguments",
+        "extAttrs",
+        "special"
+      ]
+    },
+    "constMember": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "const"
+        },
+        "name": {
+          "description": "The name of the constant.",
+          "type": "string"
+        },
+        "idlType": {
+          "$ref": "#/$defs/idlType"
+        },
+        "extAttrs": {
+          "description": "A list of extended attributes.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/extendedAttribute"
+          }
+        },
+        "value": {
+          "description": "The value of the constant.",
+          "type": "object"
+        },
+        "href": {
+          "description": "The URL to the definition of the constant.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "name",
+        "idlType",
+        "extAttrs",
+        "value"
+      ]
+    },
+    "fieldMember": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "field"
+        },
+        "name": {
+          "description": "The name of the field.",
+          "type": "string"
+        },
+        "extAttrs": {
+          "description": "A list of extended attributes.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/extendedAttribute"
+          }
+        },
+        "idlType": {
+          "$ref": "#/$defs/idlType"
+        },
+        "default": {
+          "$ref": "#/$defs/defaultValue"
+        },
+        "required": {
+          "description": "Whether the field is required.",
+          "type": "boolean"
+        },
+        "href": {
+          "description": "The URL to the definition of the field.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "name",
+        "extAttrs",
+        "idlType",
+        "default",
+        "required"
+      ]
+    },
+    "iterableMember": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "iterable"
+        },
+        "idlType": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/idlType"
+          }
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/argument"
+          }
+        },
+        "extAttrs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/extendedAttribute"
+          }
+        },
+        "readonly": {
+          "type": "boolean"
+        },
+        "async": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "idlType",
+        "arguments",
+        "extAttrs",
+        "readonly",
+        "async"
+      ]
+    },
+    "setlikeMember": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "setlike"
+        },
+        "idlType": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/idlType"
+          }
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/argument"
+          }
+        },
+        "extAttrs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/extendedAttribute"
+          }
+        },
+        "readonly": {
+          "type": "boolean"
+        },
+        "async": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "idlType",
+        "arguments",
+        "extAttrs",
+        "readonly",
+        "async"
+      ]
+    },
+    "maplikeMember": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "maplike"
+        },
+        "idlType": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/idlType"
+          }
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/argument"
+          }
+        },
+        "extAttrs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/extendedAttribute"
+          }
+        },
+        "readonly": {
+          "type": "boolean"
+        },
+        "async": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "idlType",
+        "arguments",
+        "extAttrs",
+        "readonly",
+        "async"
+      ]
+    },
+    "asyncIterableMember": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "async_iterable"
+        },
+        "idlType": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/idlType"
+          }
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/argument"
+          }
+        },
+        "extAttrs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/extendedAttribute"
+          }
+        },
+        "readonly": {
+          "type": "boolean"
+        },
+        "async": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "idlType",
+        "arguments",
+        "extAttrs",
+        "readonly",
+        "async"
+      ]
+    },
+    "defaultValue": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "number"
+            },
+            "value": {
+              "type": [
+                "number",
+                "string"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "boolean"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "dictionary"
+            },
+            "value": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "sequence"
+            },
+            "value": {
+              "type": "array"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "null"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        }
+      ]
     }
   }
 }
