@@ -330,10 +330,7 @@
       "type": "object",
       "properties": {
         "type": {
-          "type": "string",
-          "enum": [
-            "argument"
-          ]
+          "const": "argument"
         },
         "name": {
           "description": "The name of the argument.",
