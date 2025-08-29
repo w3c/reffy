@@ -371,27 +371,6 @@
     },
     "idlMember": {
       "description": "Represents a member of a WebIDL interface, dictionary, etc.",
-      "type": "object",
-      "properties": {
-        "type": {
-          "description": "The type of the member.",
-          "type": "string",
-          "enum": [
-            "constructor",
-            "attribute",
-            "operation",
-            "const",
-            "field",
-            "iterable",
-            "setlike",
-            "maplike",
-            "async_iterable"
-          ]
-        }
-      },
-      "required": [
-        "type"
-      ],
       "oneOf": [
         {
           "$ref": "#/$defs/constructorMember"
@@ -821,10 +800,10 @@
               "const": "number"
             },
             "value": {
-        "anyOf": [
-    {"type": "number"},
-    {"type": "string"}
-        ]
+              "anyOf": [
+                {"type": "number"},
+                {"type": "string"}
+              ]
             }
           },
           "required": [
