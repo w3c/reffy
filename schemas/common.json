@@ -474,7 +474,13 @@
         },
         "special": {
           "description": "The special property of the attribute (e.g., 'static').",
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "",
+            "inherit",
+            "static",
+            "stringifier"
+          ]
         },
         "readonly": {
           "description": "Whether the attribute is read-only.",
