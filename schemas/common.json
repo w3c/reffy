@@ -269,7 +269,7 @@
           "type": "boolean"
         },
         "idlType": {
-          "description": "The inner IDL type. Can be a string or an array of idlType objects for union or generic types.",
+          "description": "The inner IDL type. Can be a string or an array of idlType objects for union or parameterized types.",
           "oneOf": [
             {
               "type": "string"
