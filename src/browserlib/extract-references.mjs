@@ -176,22 +176,22 @@ function extractReferencesWithoutRules() {
       const refs = [];
       clause.querySelectorAll('p').forEach(p => {
         const ref = {};
-        const match = p.innerText.match(/(.+?), /m);
-        if (match) {
-          ref.name = match[1].trim();
-        }
-        if (!match) {
-          ref.name = p.querySelector('i')?.innerText.trim();
-        }
-        if (!ref.name) {
-          return;
-        }
-
+        const nameMatch = p.innerText.match(/(.+?)(,|\.)/m);
+        const name = nameMatch ? nameMatch[1].trim() : null;
+        const hasFullTitle = !!p.querySelector('i');
         const anchor = p.querySelector('a[href]');
-        if (anchor) {
-          ref.url = anchor.getAttribute('href');
+        if (name && (anchor || hasFullTitle)) {
+          ref.name = name;
         }
-        refs.push(ref);
+        if (ref.name) {
+          if (anchor) {
+            const url = anchor.getAttribute('href');
+            if (url.match(/^https?:\/\//)) {
+              ref.url = url;
+            }
+          }
+          refs.push(ref);
+        }
       });
       references[refType] = refs;
     }
