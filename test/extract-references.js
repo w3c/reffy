@@ -287,14 +287,45 @@ const testRefs = [
       informative: [
         { name: "IETF RFC 4648", url: "https://datatracker.ietf.org/doc/html/rfc4648" },
         { name: "WebAssembly Core Specification", url: "https://www.w3.org/TR/wasm-core-2/" },
-        { name: "Encoding", url: "https://encoding.spec.whatwg.org/" },
-        { name: "Fetch", url: "https://fetch.spec.whatwg.org/" },
-        { name: "Infra", url: "https://infra.spec.whatwg.org/" },
-        { name: "URL", url: "https://url.spec.whatwg.org/" }
+        { name: "WHATWG Encoding", url: "https://encoding.spec.whatwg.org/" },
+        { name: "WHATWG Fetch", url: "https://fetch.spec.whatwg.org/" },
+        { name: "WHATWG Infra", url: "https://infra.spec.whatwg.org/" },
+        { name: "WHATWG URL", url: "https://url.spec.whatwg.org/" }
       ]
     }
-  }
+  },
 
+  {
+    title: "extracts normative references from the ECMAScript spec",
+    html: `<emu-clause id="sec-normative-references">
+  <h1><span class="secnum">3</span> Normative References</h1>
+  <p>The following referenced documents are indispensable for the application of this document. For dated references, only the edition cited applies. For undated references, the latest edition of the referenced document (including any amendments) applies.</p>
+  <p><emu-xref href="#sec-bibliography" id="_ref_1023"><a href="bibliography.html#sec-bibliography">IEEE 754-2019</a></emu-xref>, <i>IEEE Standard for Floating-Point Arithmetic</i>.</p>
+  <p>
+    The Unicode Standard.<br>
+    <a href="https://unicode.org/versions/latest">https://unicode.org/versions/latest</a>
+  </p>
+  <p>ISO/IEC 10646, <i>Information Technology — Universal Multiple-Octet Coded Character Set (UCS)</i> plus Amendment 1:2005, Amendment 2:2006, Amendment 3:2008, Amendment 4:2008, and additional amendments and corrigenda, or successor.</p>
+  <p>
+    ECMA-402, <i>ECMAScript Internationalization API Specification</i>, specifically the annual edition corresponding to this edition of this specification.<br>
+    <a href="https://www.ecma-international.org/publications-and-standards/standards/ecma-402/">https://www.ecma-international.org/publications-and-standards/standards/ecma-402/</a>
+  </p>
+  <p>
+    ECMA-404, <i>The JSON Data Interchange Format</i>.<br>
+    <a href="https://www.ecma-international.org/publications-and-standards/standards/ecma-404/">https://www.ecma-international.org/publications-and-standards/standards/ecma-404/</a>
+  </p>
+</emu-clause>`,
+    res: {
+        normative: [
+          { name: "IEEE 754-2019" },
+          { name: "The Unicode Standard", url: "https://unicode.org/versions/latest" },
+          { name: "ISO/IEC 10646" },
+          { name: "ECMA-402", url: "https://www.ecma-international.org/publications-and-standards/standards/ecma-402/" },
+          { name: "ECMA-404", url: "https://www.ecma-international.org/publications-and-standards/standards/ecma-404/" }
+        ],
+        informative: []
+      }
+    }
 ];
 
 describe("References extraction", function () {
