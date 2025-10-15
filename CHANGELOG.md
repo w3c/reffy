@@ -6,6 +6,20 @@ Minor and patch release notes are currently only documented in
 
 Reffy adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v20.0.0 - 2025-10-15
+
+### Breaking changes
+
+Version 20.0.0 updates the `cssmerge` post-processing step to move nested at-rules to the root `atrules` level. The nested at-rules are scoped to the parent at-rule(s) through the ` for` property. This change is breaking in the sense that there were no at-rule at the root level scoped to another at-rule in previous versions. Only known scoped at-rules for now in web specifications are those defined for `@font-feature-values`.
+
+You may consider version 20 to be a minor version bump if you do not use the `cssmerge` post-processing step, or if you do not process at-rules in any way.
+
+### Dependency bumps
+
+- Bump respec from 35.5.1 to 35.6.0 (#1957)
+- Bump puppeteer from 24.23.0 to 24.25.0 (#1961)
+- Bump web-specs from 3.67.0 to 3.68.0 (#1960)
+
 ## v19.0.0 - 2025-06-13
 
 ### Breaking changes
