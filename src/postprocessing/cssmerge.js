@@ -105,6 +105,13 @@ export default {
             categorized.types.push(
               ...values.filter(v => v.type === 'type'));
           }
+          if (feature.descriptors) {
+            // Note: at-rule descriptors already have a "for" attribute
+            categorized.atrules.push(
+              ...feature.descriptors.filter(v => v.type === 'at-rule'));
+            feature.descriptors = feature.descriptors
+              .filter(d => d.type !== 'at-rule');
+          }
         }
       }
     }
