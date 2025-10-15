@@ -32,6 +32,7 @@
         "properties": {
           "name": { "type": "string", "pattern": "^@" },
           "href": { "$ref": "../common.json#/$defs/url" },
+          "for": { "$ref": "#/$defs/scopes" },
           "extended": { "$ref": "#/$defs/extended" },
           "syntax": { "$ref": "../common.json#/$defs/cssValue" },
           "prose": { "type": "string" },
