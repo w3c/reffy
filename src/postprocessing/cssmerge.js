@@ -106,9 +106,13 @@ export default {
               ...values.filter(v => v.type === 'type'));
           }
           if (feature.descriptors) {
-            // Note: at-rule descriptors already have a "for" attribute
-            categorized.atrules.push(
-              ...feature.descriptors.filter(v => v.type === 'at-rule'));
+            // Note: at-rule descriptors already have a "for" attribute but
+            // nested at-rules typically don't have "descriptors" themselves
+            // while schema requires the property for consistency
+            const atrules = feature.descriptors
+              .filter(v => v.type === 'at-rule')
+              .map(v => Object.assign({ descriptors: [] }, v));
+            categorized.atrules.push(...atrules);
             feature.descriptors = feature.descriptors
               .filter(d => d.type !== 'at-rule');
           }

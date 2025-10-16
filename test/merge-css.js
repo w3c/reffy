@@ -700,10 +700,12 @@ describe('CSS extracts consolidation', function () {
   });
 
   it('flattens at-rules when they are nested', async () => {
-    const nestedAtrule = Object.assign({
+    const nestedAtrule = {
+      name: '@nested',
       for: atrule2.name,
-      type: 'at-rule'
-    }, atrule1);
+      type: 'at-rule',
+      href: 'https://example.org/nestedatrule'
+    };
     const results = structuredClone([
       {
         shortname: 'css-stuff-1',
@@ -724,8 +726,13 @@ describe('CSS extracts consolidation', function () {
     const result = await cssmerge.run({ results });
     assert.deepEqual(result, conv(Object.assign({}, emptyMerged, {
       atrules: [
-        Object.assign({}, { for: [atrule2.name] }, atrule1),
-        Object.assign({}, atrule2, { descriptors: [descriptor1] })
+        Object.assign({}, atrule2, { descriptors: [descriptor1] }),
+        {
+          name: nestedAtrule.name,
+          for: [atrule2.name],
+          href: nestedAtrule.href,
+          descriptors: []
+        }
       ]
     })));
   });
