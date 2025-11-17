@@ -95,27 +95,39 @@ export default {
 
       // Copy scoped functions and types to the root level with a `for` key
       // to link back to the scoping feature
+      function copyScopedValuesToRootLevel(feature) {
+        if (feature.values) {
+          const values = feature.values
+            .filter(v => ['function', 'type'].includes(v.type))
+            .map(v => Object.assign({ for: feature.name }, v));
+          categorized.functions.push(
+            ...values.filter(v => v.type === 'function'));
+          categorized.types.push(
+            ...values.filter(v => v.type === 'type'));
+          // A scoped function may have scoped values, let's recurse
+          for (const value of values) {
+            copyScopedValuesToRootLevel(value);
+          }
+        }
+        if (feature.descriptors) {
+          // Note: at-rule descriptors already have a "for" attribute but
+          // nested at-rules typically don't have "descriptors" themselves
+          // while schema requires the property for consistency
+          const atrules = feature.descriptors
+            .filter(v => v.type === 'at-rule')
+            .map(v => Object.assign({ descriptors: [] }, v));
+          categorized.atrules.push(...atrules);
+          feature.descriptors = feature.descriptors
+            .filter(d => d.type !== 'at-rule');
+          for (const descriptor of feature.descriptors) {
+            copyScopedValuesToRootLevel(descriptor);
+          }
+        }
+      }
+
       for (const category of extractCategories) {
         for (const feature of data[category]) {
-          if (feature.values) {
-            const values = feature.values
-              .map(v => Object.assign({ for: feature.name }, v));
-            categorized.functions.push(
-              ...values.filter(v => v.type === 'function'));
-            categorized.types.push(
-              ...values.filter(v => v.type === 'type'));
-          }
-          if (feature.descriptors) {
-            // Note: at-rule descriptors already have a "for" attribute but
-            // nested at-rules typically don't have "descriptors" themselves
-            // while schema requires the property for consistency
-            const atrules = feature.descriptors
-              .filter(v => v.type === 'at-rule')
-              .map(v => Object.assign({ descriptors: [] }, v));
-            categorized.atrules.push(...atrules);
-            feature.descriptors = feature.descriptors
-              .filter(d => d.type !== 'at-rule');
-          }
+          copyScopedValuesToRootLevel(feature);
         }
       }
     }
