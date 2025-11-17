@@ -224,6 +224,23 @@ describe('CSS extracts consolidation', function () {
 
 
   it('includes nested functions and types', async () => {
+    const basicShapeType = {
+      name: '<basic-shape>',
+      href: 'https://drafts.csswg.org/css-shapes-1/#typedef-basic-shape',
+      type: 'type'
+    };
+    const moveType = {
+      name: '<move-command>',
+      value: 'move <command-end-point>',
+      href: 'https://drafts.csswg.org/css-shapes-1/#typedef-shape-move-command',
+      type: 'type'
+    };
+    const shapeFunction = {
+      name: 'shape()',
+      href: 'https://drafts.csswg.org/css-shapes-1/#funcdef-basic-shape-shape',
+      type: 'function',
+      value: 'shape( <shape-command># )'
+    };
     const results = structuredClone([
       {
         shortname: 'css-stuff-1',
@@ -239,7 +256,14 @@ describe('CSS extracts consolidation', function () {
                 functionEnv,
                 type1
               ]
-            }
+            },
+            Object.assign({}, basicShapeType, {
+              values: [
+                Object.assign({}, shapeFunction, {
+                  values: [moveType]
+                })
+              ]
+            })
           ]
         })
       }
@@ -249,9 +273,16 @@ describe('CSS extracts consolidation', function () {
       functions: [
         Object.assign({}, functionEnv, {
           for: ['<track-repeat>']
+        }),
+        Object.assign({}, shapeFunction, {
+          for: [basicShapeType.name]
         })
       ],
       types: [
+        basicShapeType,
+        Object.assign({}, moveType, {
+          for: [shapeFunction.name]
+        }),
         Object.assign({}, type1, {
           for: ['<track-repeat>']
         }),
