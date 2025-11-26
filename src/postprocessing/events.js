@@ -102,15 +102,12 @@ function expandMixinTargets(event, mixins) {
 
 
 function setBubblingPerTarget(event, parsedInterfaces) {
-  // if an event targets an interface in a tree
-  // but the root of the tree wasn't detected as a target
-  // we can assume bubbles is false
-  // (ideally, we should check the existence of the event handler on the
-  // root interface, but there is no easy way to get a consolidated IDL view
-  // of the root at the moment)
+  // If an event targets a non root interface in a tree, we can assume that
+  // bubbles is false (ideally, we should check the existence of the event
+  // handler on the root interface, but there is no easy way to get a
+  // consolidated IDL view of the root at the moment)
   if (!event.targets) return;
   const updatedTargets = [];
-  const detected = {};
   const treeInterfaces = [];
   for (let iface of event.targets) {
     const treeInfo = getInterfaceTreeInfo(iface, parsedInterfaces);
@@ -119,32 +116,21 @@ function setBubblingPerTarget(event, parsedInterfaces) {
       continue;
     }
     const { tree, depth, bubblingPath } = treeInfo;
-    if (!detected[tree]) {
-      detected[tree] = {root: false, nonroot: false};
-    }
     if (depth === 0) {
       // bubbling doesn't matter on the root interface
       updatedTargets.push({target: iface});
-      detected[tree].root = true;
     } else {
       treeInterfaces.push({ iface, bubblingPath });
-      detected[tree].nonroot = true;
     }
   }
-  // if the event is sent at targets in a tree, but isn't detected
-  // on the root target, and no bubbling info is available,
-  // assume it doesn't bubble
-  if (Object.values(detected).length) {
-    if (!event.hasOwnProperty('bubbles') && Object.values(detected).every(x => !x.root && x.nonroot )) {
-      event.bubbles = false;
-    }
+  if (!event.hasOwnProperty('bubbles') && treeInterfaces.length > 0) {
+    event.bubbles = false;
   }
   for (let { iface, bubblingPath } of treeInterfaces) {
-    if (event.hasOwnProperty('bubbles')) {
-      updatedTargets.push(Object.assign(
-        { target: iface, bubbles: event.bubbles },
-        event.bubbles ? { bubblingPath } : {}));
-    }
+    updatedTargets.push(Object.assign(
+      { target: iface, bubbles: event.bubbles },
+      event.bubbles ? { bubblingPath } : {}
+    ));
   }
   event.targets = updatedTargets;
   delete event.bubbles;
