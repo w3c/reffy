@@ -1765,6 +1765,19 @@ that spans multiple lines */
       }
     ]
   },
+
+  {
+    title: 'does not extract the whole document <main> tag as prose',
+    html: `<main>
+      This <dfn class="css" data-dfn-type="type">&lt;definition&gt;</dfn> is a direct
+      child of the main tag and contains an = sign.
+      </main>`,
+    propertyName: 'values',
+    css: [{
+      name: '<definition>',
+      type: 'type'
+    }]
+  },
 ];
 
 describe("Test CSS properties extraction", function() {

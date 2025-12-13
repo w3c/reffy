@@ -718,8 +718,11 @@ const extractTypedDfns = dfn => {
   const dfnType = dfn.getAttribute('data-dfn-type');
   const dfnFor = dfn.getAttribute('data-dfn-for');
   // Note there's no point going beyond a heading, especially since parent is
-  // likely going to be an entire section or even the whole document body.
-  const parent = (dfn.tagName.startsWith('H') ? dfn : dfn.parentNode)
+  // likely going to be an entire section or even the whole document body
+  // (and avoid looking at the entire body in any case).
+  const parent = (dfn.tagName.startsWith('H') ||
+      ['BODY', 'MAIN'].includes(dfn.parentNode.tagName) ?
+        dfn : dfn.parentNode)
     .cloneNode(true);
   const fnRegExp = /^([:a-zA-Z_][:a-zA-Z0-9_\-]+)\([^\)]*\)$/;
 
