@@ -726,6 +726,15 @@ const extractTypedDfns = dfn => {
     .cloneNode(true);
   const fnRegExp = /^([:a-zA-Z_][:a-zA-Z0-9_\-]+)\([^\)]*\)$/;
 
+  // Skip scoped definitions of types/functions that link back to another
+  // definition. They would create an artificial scoped type/function
+  // otherwise. Ideally, these scoped definitions would rather be defined with
+  // a "value" type (or not be defined at all).
+  if (dfnFor && ['function', 'type'].includes(dfnType) &&
+      dfn.querySelector('a[data-link-type]')) {
+    return dfns;
+  }
+
   // Remove note references as in:
   // https://drafts.csswg.org/css-syntax-3/#the-anb-type
   // and remove MDN annotations as well
