@@ -1778,6 +1778,30 @@ that spans multiple lines */
       type: 'type'
     }]
   },
+
+  {
+    title: 'skips scoped types definitions that wrap a link to a dfn',
+    html: `<table class="propdef">
+    <tbody>
+     <tr>
+      <th>Name:
+      </th><td><dfn class="dfn-paneled css" data-dfn-type="property" data-export="" id="propdef-font-palette">font-palette</dfn>
+     </td></tr><tr>
+      <th><a href="#values">Value</a>:
+      </th><td>&lt;color&gt;</td>
+     </tr></tbody></table>
+    <p>
+      <dfn class="css" data-dfn-for="font-palette" data-dfn-type="type" data-export="" id="typedef-font-palette-palette-mix">
+        <a class="css" data-link-type="function" href="#funcdef-palette-mix" id="ref-for-funcdef-palette-mix⑤">&lt;palette-mix()&gt;</a>
+      </dfn> is a great type.
+    </p>`,
+    propertyName: 'properties',
+    css: [{
+      href: 'about:blank#propdef-font-palette',
+      name: 'font-palette',
+      value: '<color>'
+    }]
+  },
 ];
 
 describe("Test CSS properties extraction", function() {
