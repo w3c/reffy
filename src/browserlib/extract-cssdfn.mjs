@@ -732,7 +732,12 @@ const extractTypedDfns = dfn => {
   // a "value" type (or not be defined at all).
   if (dfnFor && ['function', 'type'].includes(dfnType) &&
       dfn.querySelector('a[data-link-type]')) {
-    return dfns;
+    // Bikeshed sometimes produces links to self. We should only skip
+    // definitions that target *another* construct.
+    const url = new URL(`#${dfn.id}`, window.location);
+    if (dfn.querySelector('a[data-link-type]').href !== url.toString()) {
+      return dfns;
+    }
   }
 
   // Remove note references as in:
