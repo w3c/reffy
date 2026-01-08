@@ -1802,6 +1802,36 @@ that spans multiple lines */
       value: '<color>'
     }]
   },
+
+  {
+    title: 'considers scoped types definitions that wrap a link to themselves',
+    html: `<table class="propdef">
+    <tbody>
+     <tr>
+      <th>Name:
+      </th><td><dfn class="dfn-paneled css" data-dfn-type="property" data-export="" id="propdef-font-palette">font-palette</dfn>
+     </td></tr><tr>
+      <th><a href="#values">Value</a>:
+      </th><td>&lt;color&gt;</td>
+     </tr></tbody></table>
+    <p>
+      <dfn class="css" data-dfn-for="font-palette" data-dfn-type="type" data-export="" id="typedef-font-palette-palette-identifier">
+        <a class="css production" data-link-type="type" href="#typedef-font-palette-palette-identifier" id="ref-for-typedef-font-palette-palette-identifier②">&lt;palette-identifier&gt;</a>
+        </dfn> is a great type.
+    </p>`,
+    propertyName: 'properties',
+    css: [{
+      href: 'about:blank#propdef-font-palette',
+      name: 'font-palette',
+      value: '<color>',
+      values: [{
+        href: 'about:blank#typedef-font-palette-palette-identifier',
+        name: '<palette-identifier>',
+        prose: '<palette-identifier> is a great type.',
+        type: 'type'
+      }]
+    }]
+  },
 ];
 
 describe("Test CSS properties extraction", function() {
