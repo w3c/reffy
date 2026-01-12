@@ -1832,6 +1832,38 @@ that spans multiple lines */
       }]
     }]
   },
+
+  {
+    title: 'considers scoped types definitions that contain links for a sub-component',
+    html: `<table class="propdef">
+    <tbody>
+     <tr>
+      <th>Name:
+      </th><td><dfn class="dfn-paneled css" data-dfn-type="property" data-export="" id="propdef-font-palette">font-palette</dfn>
+     </td></tr><tr>
+      <th><a href="#values">Value</a>:
+      </th><td>&lt;color&gt;</td>
+     </tr></tbody></table>
+    <p>
+      <dfn class="css" data-dfn-for="font-palette" data-dfn-type="function" data-export="" data-lt="func()" id="funcdef-font-palette-func">
+        func(
+          <a data-link-type="type" href="https://www.w3.org/TR/css-values-4/#typedef-length-percentage">&lt;length-percentage&gt;</a>
+        )
+      </dfn> is a great function.
+    </p>`,
+    propertyName: 'properties',
+    css: [{
+      href: 'about:blank#propdef-font-palette',
+      name: 'font-palette',
+      value: '<color>',
+      values: [{
+        href: 'about:blank#funcdef-font-palette-func',
+        name: 'func()',
+        type: 'function',
+        value: 'func( <length-percentage> )'
+      }]
+    }]
+  },
 ];
 
 describe("Test CSS properties extraction", function() {

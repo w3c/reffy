@@ -730,12 +730,14 @@ const extractTypedDfns = dfn => {
   // definition. They would create an artificial scoped type/function
   // otherwise. Ideally, these scoped definitions would rather be defined with
   // a "value" type (or not be defined at all).
+  const wrappedLink = dfn.querySelector('a[data-link-type]');
   if (dfnFor && ['function', 'type'].includes(dfnType) &&
-      dfn.querySelector('a[data-link-type]')) {
+      wrappedLink &&
+      dfn.textContent.trim() === wrappedLink.textContent.trim()) {
     // Bikeshed sometimes produces links to self. We should only skip
     // definitions that target *another* construct.
     const url = new URL(`#${dfn.id}`, window.location);
-    if (dfn.querySelector('a[data-link-type]').href !== url.toString()) {
+    if (wrappedLink.href !== url.toString()) {
       return dfns;
     }
   }
