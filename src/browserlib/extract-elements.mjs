@@ -36,7 +36,9 @@ export default function (spec) {
       const dfns = [...heading.querySelectorAll('dfn')];
       if (dfns.length === 0) {
         // Ignore the definition of "Custom elements" in HTML
-        if (getText(heading).match(/Core concepts/)) {
+        // and the definition of "Common behaviours" in permission-elements
+        if (getText(heading).match(/Core concepts/i) ||
+            getText(heading).match(/Common behaviours/i)) {
           return null;
         }
         throw new Error('No dfn found in heading element: ' + heading.textContent);
@@ -101,14 +103,19 @@ export default function (spec) {
               dd = dd.nextElementSibling;
             }
             if (dd) {
-              let match = dd.textContent.match(/^interface (.*?) /m);
-              if (match) {
-                res[prop] = match[1];
+              const interfaceEl = dd.querySelector(`
+                dfn[data-dfn-type=interface],
+                a[data-link-type=idl]
+              `);
+              if (interfaceEl) {
+                res[prop] = interfaceEl.textContent.trim();
               }
               else {
+                // The HTML spec does not flag links to interfaces with a
+                // data-link-type attribute.
                 // NB: The sub/sup table uses a plural form for "Use", hence
                 // the "?" for the final "s" in "Uses".
-                match = dd.textContent.match(/^Uses? (.*?)[,\.\s]/);
+                const match = dd.textContent.match(/^Uses? (.*?)[,\.\s]/);
                 if (match) {
                   res[prop] = match[1];
                 }
