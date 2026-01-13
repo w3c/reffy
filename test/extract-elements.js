@@ -16,7 +16,7 @@ const tests = [
 <dt><a href="dom.html#concept-element-dom" id="the-p-element:concept-element-dom">DOM interface</a>:</dt>
 <dd>
     <pre><code class="idl">[<c- g="">Exposed</c->=<c- n="">Window</c->]
-<c- b="">interface</c-> <dfn id="htmlparagraphelement"><c- g="">HTMLParagraphElement</c-></dfn> : <a id="the-p-element:htmlelement" href="dom.html#htmlelement"><c- n="">HTMLElement</c-></a> {
+<c- b="">interface</c-> <dfn id="htmlparagraphelement" data-dfn-type="interface"><c- g="">HTMLParagraphElement</c-></dfn> : <a id="the-p-element:htmlelement" href="dom.html#htmlelement"><c- n="">HTMLElement</c-></a> {
   [<a id="the-p-element:htmlconstructor" href="dom.html#htmlconstructor"><c- g="">HTMLConstructor</c-></a>] <c- g="">constructor</c->();
 
   // <a href="obsolete.html#HTMLParagraphElement-partial">also has obsolete members</a>
@@ -203,6 +203,44 @@ const tests = [
         href: "about:blank#portal"
       }
     ]
+  },
+
+  {
+    title: "does not attempt to extract a 'Common behaviours' table",
+    spec: "permission-elements",
+    html: `<main>
+      <h2 class="heading settled" data-level="2" id="permission-mixin">2. Common Behaviours Of The HTML Permission Elements: <code class="idl">InPagePermissionMixin</code></h2>
+      <dl class="element">
+        <dt><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/dom.html#concept-element-dom" id="ref-for-concept-element-dom">DOM interface</a>:
+        </dt><dd>
+          <pre class="def highlight idl">
+            <c- b="">interface</c-> <c- b="">mixin</c-> <dfn class="dfn-paneled idl-code has-dfn-panel" data-dfn-type="interface" data-export="" id="inpagepermissionmixin" role="button" aria-expanded="false" tabindex="0"><code><c- g="">InPagePermissionMixin</c-></code></dfn> {
+            };
+          </pre>
+       </dd>
+      </dl>
+    </main>`,
+    res: null
+  },
+
+  {
+    title: "links an element with its interface when a qualified link is used",
+    spec: "permission-elements",
+    html: `<main>
+      <h2 class="heading settled" data-level="5" id="geolocation-element">5. The <dfn class="dfn-paneled has-dfn-panel" data-dfn-type="element" data-export="" id="elementdef-geolocation"><code>geolocation</code></dfn> Element</h2>
+      <dl class="element">
+        <dt><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/dom.html#concept-element-dom" id="ref-for-concept-element-dom②">DOM interface</a>: </dt>
+        </dt>
+        <dd><code class="idl"><a data-link-type="idl" href="#htmlgeolocationelement" id="ref-for-htmlgeolocationelement">HTMLGeolocationElement</a></code></dd>
+      </dl>
+    </main>`,
+    res: [
+      {
+        name: "geolocation",
+        interface: "HTMLGeolocationElement",
+        href: "about:blank#elementdef-geolocation"
+      }
+    ]
   }
 ];
 
@@ -240,8 +278,10 @@ describe("Markup element extraction", function () {
       await page.close();
       assert.deepEqual(extractedElements, t.res);
 
-      const errors = validateSchema(extractedElements);
-      assert.strictEqual(errors, null, JSON.stringify(errors, null, 2));
+      if (extractedElements) {
+        const errors = validateSchema(extractedElements);
+        assert.strictEqual(errors, null, JSON.stringify(errors, null, 2));
+      }
     });
   });
 
