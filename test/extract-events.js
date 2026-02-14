@@ -199,6 +199,101 @@ ${defaultIdl}`,
       given <var>name</var>.
     </p>`,
     res: []
+  },
+  {
+    title: "extracts an event from an event-definition table",
+    html: `<section id="events">
+    <table class="event-definition">
+     <tbody>
+      <tr>
+       <th>Type</th>
+       <td><strong><code>auxclick</code></strong></td>
+      </tr>
+      <tr>
+       <th>Interface</th>
+       <td><code>PointerEvent</code></td>
+      </tr>
+      <tr>
+       <th>Bubbles</th>
+       <td>Yes</td>
+      </tr>
+      <tr>
+       <th>Trusted Targets</th>
+       <td><code>Element</code>       </td>
+      </tr>
+      <tr>
+       <th>Cancelable</th>
+       <td>Yes</td>
+      </tr>
+     </tbody>
+    </table>
+    </section>`,
+    res: [
+      {
+        interface: "PointerEvent",
+        src: {
+          format: "event table",
+          href: "about:blank#events"
+        },
+        type: "auxclick",
+        targets: [
+          "Element"
+        ],
+        bubbles: true,
+        cancelable: true
+      }
+    ]
+  },
+  {
+    title: "extracts an event from an event-definition table and links it to dfn",
+    html: `<section id="events">
+    <div class="header-wrapper">
+      <h4 id="x4-4-1-auxclick">
+        <bdi class="secno">4.4.1<!---0.614927%--> </bdi>
+        <dfn class="export" data-dfn-type="event" data-export="" id="dfn-auxclick">auxclick</dfn>
+      </h4>
+    </div>
+    <table class="event-definition">
+     <tbody>
+      <tr>
+       <th>Type</th>
+       <td><strong><code>auxclick</code></strong></td>
+      </tr>
+      <tr>
+       <th>Interface</th>
+       <td><code>PointerEvent</code></td>
+      </tr>
+      <tr>
+       <th>Bubbles</th>
+       <td>Yes</td>
+      </tr>
+      <tr>
+       <th>Trusted Targets</th>
+       <td><code>Element</code>       </td>
+      </tr>
+      <tr>
+       <th>Cancelable</th>
+       <td>Yes</td>
+      </tr>
+     </tbody>
+    </table>
+    </section>`,
+    res: [
+      {
+        href: "about:blank#dfn-auxclick",
+        interface: "PointerEvent",
+        src: {
+          format: "event table",
+          href: "about:blank#events"
+        },
+        type: "auxclick",
+        targets: [
+          "Element"
+        ],
+        bubbles: true,
+        cancelable: true
+      }
+    ]
   }
 ];
 
