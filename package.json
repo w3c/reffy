@@ -33,7 +33,7 @@
   "main": "index.js",
   "bin": "./reffy.js",
   "dependencies": {
-    "ajv": "8.17.1",
+    "ajv": "8.18.0",
     "ajv-formats": "3.0.1",
     "commander": "14.0.2",
     "fetch-filecache-for-crawling": "5.1.1",
