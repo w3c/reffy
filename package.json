@@ -35,7 +35,7 @@
   "dependencies": {
     "ajv": "8.18.0",
     "ajv-formats": "3.0.1",
-    "commander": "14.0.2",
+    "commander": "14.0.3",
     "fetch-filecache-for-crawling": "5.1.1",
     "puppeteer": "24.37.3",
     "semver": "^7.3.5",
