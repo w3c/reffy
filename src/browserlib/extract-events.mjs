@@ -33,10 +33,14 @@ export default function (spec) {
       return acc;
     }, {});
 
+  // Return true if the second event object describes the same event as the
+  // first one. Note event types defined in event tables typically complete
+  // event definitions for which we don't have any target information.
   function isSameEvent(e1, e2) {
     const res = e1.type === e2.type &&
       ((e1.href && e1.href === e2.href ) ||
-        (e1.targets?.sort()?.join("|") === e2.targets?.sort()?.join("|")));
+        (e1.targets?.sort()?.join("|") === e2.targets?.sort()?.join("|")) ||
+        (e2.src.format === 'event table'));
     if (res && e1.cancelable !== undefined && e2.cancelable !== undefined && e1.cancelable !== e2.cancelable) {
       console.error(`[reffy] Found two occurrences of same event with different "cancelable" properties in ${spec.title}: type=${e1.type} targets=${e1.targets.join(', ')} href=${e1.href}`);
     }
@@ -67,6 +71,46 @@ export default function (spec) {
 
 
   let events = [];
+
+  // Look for definitions in event-definition tables
+  // (used in Pointer Events and UI Events)
+  [...document.querySelectorAll('table.event-definition')].forEach(table => {
+    const properties = [...table.querySelectorAll('tr')]
+      .map(line => {
+        const nameEl = line.querySelector('th');
+        const valueEl = line.querySelector('td');
+        if (!nameEl || !valueEl) {
+          return null;
+        }
+        let name = nameEl.textContent.trim().toLowerCase();
+        let value = valueEl.textContent.trim();
+        if (name === 'trusted targets') {
+          name = 'targets';
+          value = value.split(',').map(v => v.trim());
+        }
+        if (['type', 'interface', 'targets'].includes(name)) {
+          return { name, value };
+        }
+        else if (['bubbles', 'cancelable'].includes(name)) {
+          return { name, value: value.toLowerCase() === 'yes' ? true : false };
+        }
+        else {
+          return null;
+        }
+      })
+      .filter(prop => !!prop);
+    const event = {};
+    for (const prop of properties) {
+      event[prop.name] = prop.value;
+    }
+    event.src = {
+      format: 'event table',
+      href: href(table.closest('*[id]'))
+    },
+    events.push(event);
+  });
+
+
   // Look for event summary tables
   // ignore DOM spec which uses a matching table format
   // to map to legacy event types
@@ -419,6 +463,7 @@ export default function (spec) {
       }
     }
   });
+
   return events
     .map(e => {
       // Drop null properties (mandated by the schema for event extracts)
