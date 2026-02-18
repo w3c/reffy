@@ -72,45 +72,6 @@ export default function (spec) {
 
   let events = [];
 
-  // Look for definitions in event-definition tables
-  // (used in Pointer Events and UI Events)
-  [...document.querySelectorAll('table.event-definition')].forEach(table => {
-    const properties = [...table.querySelectorAll('tr')]
-      .map(line => {
-        const nameEl = line.querySelector('th');
-        const valueEl = line.querySelector('td');
-        if (!nameEl || !valueEl) {
-          return null;
-        }
-        let name = nameEl.textContent.trim().toLowerCase();
-        let value = valueEl.textContent.trim();
-        if (name === 'trusted targets') {
-          name = 'targets';
-          value = value.split(',').map(v => v.trim());
-        }
-        if (['type', 'interface', 'targets'].includes(name)) {
-          return { name, value };
-        }
-        else if (['bubbles', 'cancelable'].includes(name)) {
-          return { name, value: value.toLowerCase() === 'yes' ? true : false };
-        }
-        else {
-          return null;
-        }
-      })
-      .filter(prop => !!prop);
-    const event = {};
-    for (const prop of properties) {
-      event[prop.name] = prop.value;
-    }
-    event.src = {
-      format: 'event table',
-      href: href(table.closest('*[id]'))
-    },
-    events.push(event);
-  });
-
-
   // Look for event summary tables
   // ignore DOM spec which uses a matching table format
   // to map to legacy event types
@@ -205,6 +166,50 @@ export default function (spec) {
       }
     });
   }
+
+  // Look for definitions in event-definition tables
+  // (used in Pointer Events and UI Events)
+  [...document.querySelectorAll('table.event-definition')].forEach(table => {
+    const properties = [...table.querySelectorAll('tr')]
+      .map(line => {
+        const nameEl = line.querySelector('th');
+        const valueEl = line.querySelector('td');
+        if (!nameEl || !valueEl) {
+          return null;
+        }
+        let name = nameEl.textContent.trim().toLowerCase();
+        let value = valueEl.textContent.trim();
+        if (name === 'trusted targets') {
+          name = 'targets';
+          value = value.split(',').map(v => v.trim());
+        }
+        if (['type', 'interface', 'targets'].includes(name)) {
+          return { name, value };
+        }
+        else if (['bubbles', 'cancelable'].includes(name)) {
+          return { name, value: value.toLowerCase() === 'yes' ? true : false };
+        }
+        else {
+          return null;
+        }
+      })
+      .filter(prop => !!prop);
+    const event = {};
+    for (const prop of properties) {
+      event[prop.name] = prop.value;
+    }
+    event.src = {
+      format: 'event table',
+      href: href(table.closest('*[id]'))
+    };
+    // Prefer summary table to definition in an event table if both exist
+    // because the latter may include prose around the interface and target
+    // names that make it harder to extract meaningful values.
+    if (!events.find(e => isSameEvent(e, event))) {
+      events.push(event);
+    }
+  });
+
   // Look for the DOM-suggested sentence "Fire an event named X"
   // or the Service Worker extension of "fire (a) functional event named"
   const isFiringLink = a => a.href === "https://dom.spec.whatwg.org/#concept-event-fire" ||

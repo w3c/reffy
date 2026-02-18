@@ -294,6 +294,38 @@ ${defaultIdl}`,
         cancelable: true
       }
     ]
+  },
+  {
+    title: "prefers info in summary table to that an event-definition table",
+    html: `<table>
+<thead>
+  <tr><th>Event type</th><th>Interface</th><th>Bubbles</th><th>Cancelable</th></tr>
+</thead>
+<tbody>
+  <tr><th><dfn id=success>success</dfn></th><td><a href=''>SuccessEvent</a></td><td>Yes</td><td>✓</td></tr>
+  <tr><th><dfn id=error>error</dfn></th><td><a href=''>ErrorEvent</a></td><td>No</td><td>No</td></tr>
+</tbody></table>${defaultIdl}
+    <section id="events">
+    <div class="header-wrapper">
+      <h4>
+        <bdi class="secno">4.4.1<!---0.614927%--> </bdi>
+        <dfn class="export" data-dfn-type="event" data-export="" id="dfn-success">success</dfn>
+      </h4>
+    </div>
+    <table class="event-definition">
+     <tbody>
+      <tr>
+       <th>Type</th>
+       <td><strong><code>success</code></strong></td>
+      </tr>
+      <tr>
+       <th>Interface</th>
+       <td><code>SuccessEvent</code></td>
+      </tr>
+     </tbody>
+    </table>
+    </section>`,
+    res: defaultResults("summary table")
   }
 ];
 
