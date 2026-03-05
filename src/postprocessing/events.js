@@ -91,9 +91,17 @@ export default {
 
 
 function expandMixinTargets(event, mixins) {
-  const expandedTargets = event.targets?.map(i => mixins[i] || i)?.flat();
-  // This assumes a mixin matches more than one interface
-  if (expandedTargets && expandedTargets.length !== event.targets?.length) {
+  let hasMixin = false;
+  const expandedTargets = [];
+  for (const i of event.targets || []) {
+    if (mixins[i]) {
+      hasMixin = true;
+      expandedTargets.push(...mixins[i]);
+    } else {
+      expandedTargets.push(i);
+    }
+  }
+  if (expandedTargets.length && hasMixin) {
     event.targets = expandedTargets;
     return true;
   }
