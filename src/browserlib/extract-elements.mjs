@@ -62,7 +62,7 @@ export default function (spec) {
             // 'Contexts in which this element can be used': 'contexts',
             // 'Content model': 'contents',
             // 'Tag omission in text/html': 'omission',
-            // 'Content attributes': 'attributes',
+            'Content attributes': 'attributes',
             // 'Accessibility considerations': 'accessibility',
             'DOM interface': 'interface'
           })[getText(dt).replace(/:$/, '')];
@@ -126,6 +126,25 @@ export default function (spec) {
             }
             else {
               throw new Error('Could not link element to interface, missing dd for ' + res.name);
+            }
+          } else if (prop === "attributes") {
+            res[prop] = [];
+            let dd = dt.nextElementSibling;
+            while (dd && dd.nodeName !== "DT") {
+              if (dd.nodeName === "DD") {
+                // To count as an attribute, we look for:
+                // - the first child is a CODE element,
+                // - and its first child is an A element
+                // - and its href contains a fragment starting with "attr"
+                if (
+                  dd.firstChild?.nodeName === "CODE" &&
+                  dd.firstChild?.firstChild?.nodeName === "A" &&
+                  new URL(dd.firstChild?.firstChild).hash.startsWith("#attr")
+                ) {
+                  res[prop].push(getText(dd.firstChild?.firstChild));
+                }
+              }
+              dd = dd.nextElementSibling;
             }
           }
           else if (prop) {
