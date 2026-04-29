@@ -374,7 +374,7 @@ const normalize = value => value.trim().replace(/\s+/g, ' ').replace(/−/g, '-'
  */
 const dfnLabel2Property = label => label.trim()
   .replace(/:/, '')
-  .split(' ')
+  .split(/\s/)
   .map((str, idx) => (idx === 0) ?
     str.toLowerCase() :
     str.charAt(0).toUpperCase() + str.slice(1))

@@ -1864,6 +1864,31 @@ that spans multiple lines */
       }]
     }]
   },
+
+  {
+    title: "handles non-breaking spaces in key names",
+    html: `<table class="propdef">
+    <tbody>
+     <tr>
+      <th>Name:</th>
+      <td><dfn class="dfn-paneled css" data-dfn-type="property" data-export="" id="propdef-background-color">background-color</dfn></td>
+     </tr>
+     <tr>
+      <th><a href="#values">Value</a>:</th>
+      <td>&lt;color&gt;</td>
+     </tr>
+     <tr>
+      <th>Computed\u00A0value:</th>
+      <td>computed color</td>
+     </tr>
+    </tbody></table>`,
+   css: [{
+      "name": "background-color",
+      "href": "about:blank#propdef-background-color",
+      "value": "<color>",
+      "computedValue": "computed color"
+   }]
+  },
 ];
 
 describe("Test CSS properties extraction", function() {
