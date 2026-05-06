@@ -27,7 +27,7 @@
   ],
   "license": "MIT",
   "engines": {
-    "node": ">=20.18.1"
+    "node": ">=22.19.0"
   },
   "type": "module",
   "main": "index.js",

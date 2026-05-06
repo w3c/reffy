@@ -5,7 +5,7 @@
  * @module mock-server
  */
 
-import { MockAgent, setGlobalDispatcher } from 'undici';
+import { MockAgent, setGlobalDispatcher, install } from 'undici';
 import path from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -71,6 +71,7 @@ const respecW3C = readFileSync(
   'utf8'
 );
 
+install();
 const mockAgent = new MockAgent();
 setGlobalDispatcher(mockAgent);
 mockAgent.disableNetConnect();
@@ -122,7 +123,7 @@ mockAgent
 
 mockAgent
   .get("https://www.w3.org")
-  .intercept({ method: "GET", path: "/Tools/respec/respec-highlight" })
+  .intercept({ method: "GET", path: "/Tools/respec/respec-highlight.js" })
   .reply(200, respecHiglight, {
     headers: { "Content-Type": "application/js" }
   })
@@ -145,24 +146,7 @@ mockAgent
   .get("https://www.w3.org")
   .intercept({ method: "GET", path: "/TR/ididnotchange/" })
   .reply(({ headers }) => {
-    // NB: Before Node.js v18.17.0, the headers parameters is not an instance
-    // of Headers as suggested in examples, but rather an array that alternates
-    // header names and header values. Bug detailed at:
-    // https://github.com/nodejs/undici/issues/2078
-    // Bug fix was integrated in Node.js v18.17.0.
-    // Code below can be simplified when support for Node.js v18 gets dropped.
-    let value;
-    if (Array.isArray(headers)) {
-      const pos = headers.findIndex(h => h === 'If-Modified-Since');
-      if (pos === -1) {
-        return { statusCode: 200, data: 'Unexpected If-Modified-Since header' };
-      }
-      value = headers[pos+1];
-    }
-    else {
-      value = headers['If-Modified-Since'];
-    }
-    if (value === "Fri, 11 Feb 2022 00:00:42 GMT") {
+    if (headers['If-Modified-Since'] === "Fri, 11 Feb 2022 00:00:42 GMT") {
       return { statusCode: 304 };
     } else {
       return { statusCode: 200, data: 'Unexpected If-Modified-Since header' };
