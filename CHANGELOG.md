@@ -6,6 +6,20 @@ Minor and patch release notes are currently only documented in
 
 Reffy adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v21.0.0 - 2026-05-07
+
+### Breaking changes
+
+Minimal version of Node.js needed to run Reffy is now v22.19.0 (was v20.18.1). This change is triggered by the latest dependency bump of the Undici library ([#2077](https://github.com/w3c/reffy/pull/2077)). Note this dependency is only needed to run tests in practice (Undici is listed in `devDependencies` in `package.json`).
+
+### Dependency bumps
+
+- Bump rollup from 4.60.2 to 4.60.3 ([#2078](https://github.com/w3c/reffy/pull/2078))
+- Bump ip-address from 10.1.0 to 10.2.0 ([#2081](https://github.com/w3c/reffy/pull/2081))
+- Bump web-specs from 3.84.0 to 3.85.0 ([#2080](https://github.com/w3c/reffy/pull/2080))
+- Bump puppeteer from 24.42.0 to 24.43.0 ([#2079](https://github.com/w3c/reffy/pull/2079))
+- Bump undici from 7.24.4 to 8.2.0 ([#2077](https://github.com/w3c/reffy/pull/2077))
+
 ## v20.0.0 - 2025-10-15
 
 ### Breaking changes
