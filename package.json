@@ -27,7 +27,7 @@
   ],
   "license": "MIT",
   "engines": {
-    "node": ">=20.18.1"
+    "node": ">=22.19.0"
   },
   "type": "module",
   "main": "index.js",
@@ -46,7 +46,7 @@
     "respec": "37.0.0",
     "respec-hljs": "2.1.1",
     "rollup": "4.60.2",
-    "undici": "^7.0.0"
+    "undici": "^8.2.0"
   },
   "overrides": {
     "puppeteer": "$puppeteer"
