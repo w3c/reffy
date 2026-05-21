@@ -977,18 +977,21 @@ function preProcessSVG2() {
  */
 function preProcessRFC8610() {
   // The RFC is defined as a set of pages (yuck!)
-  // The standard prelude is an appendix, let's look for it
+  // The standard prelude is an appendix, let's look for it.
+  // Note: we match on text because RFC editor gets innovative once in a while
+  // and adds HTML comments that are hard to capture with a regexp approach.
+  // We also look for anchors with IDs to avoid matching the table of contents.
   const prePages = [...document.querySelectorAll('pre.newpage')];
-  const preludeStart = /<a [^>]*id=[^>]*>Appendix .<\/a>\.\s+Standard Prelude/;
+  const preludeStart = /Appendix .\.\s+Standard Prelude/;
   const preludeEnd = /Figure \d+: CDDL Prelude/;
   const preStart = prePages
-    .findIndex(pre => pre.innerHTML.match(preludeStart));
+    .findIndex(pre => pre.textContent.match(preludeStart) && pre.querySelector('a[id]'));
   if (preStart === -1) {
     // Can't find the expected prelude start text, not a good start!
     return;
   }
   const preEnd = prePages
-    .findIndex((pre, idx) => idx >= preStart && pre.innerHTML.match(preludeEnd));
+    .findIndex((pre, idx) => idx >= preStart && pre.textContent.match(preludeEnd));
   if (preEnd === -1) {
     // Can't find the expected prelude ending text, not a good start!
     return;
