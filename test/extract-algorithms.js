@@ -111,6 +111,37 @@ const tests = [
   },
 
   {
+    title: 'does not choke on a badly written switch',
+    html: `
+      <p>To <dfn id="be">be or not to be</dfn>, given <var>will</var>:</p>
+      <dl class="switch">
+        <dt>to be</dt>
+        <dt>not to be</dt>
+      </dl>`,
+    algorithms: [
+      {
+        name: 'be or not to be',
+        href: 'about:blank#be',
+        html: 'To <dfn id=\"be\">be or not to be</dfn>, given <var>will</var>:',
+        rationale: '.switch',
+        steps: [
+          {
+            operation: 'switch',
+            steps: [
+              {
+                case: 'to be'
+              },
+              {
+                case: 'not to be'
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  {
     title: 'extracts an algorithm when an operation is found (return)',
     html: `
       <ol><li>Return foo.</li></ol>`,
