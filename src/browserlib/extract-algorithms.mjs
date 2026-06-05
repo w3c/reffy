@@ -546,15 +546,12 @@ function serializeSteps(root) {
           while (dd && dd.nodeName !== 'DD') {
             dd = dd.nextElementSibling;
           }
-          if (!dd) {
-            throw new Error('Switch option without <dd> found: ' + option.textContent);
-          }
           return Object.assign(
             { 'case': getTextContent(option) },
-            serializeStep(dd));
+            dd ? serializeStep(dd) : {});
         })
       }
-    ]
+    ];
   }
   else if (root.nodeName === 'OL') {
     return [...root.querySelectorAll('& > li')].map(li => serializeStep(li));
