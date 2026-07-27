@@ -51,6 +51,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createFolderIfNeeded, shouldSaveToFile } from './util.js';
+import backrefs from '../postprocessing/backrefs.js';
 import csscomplete from '../postprocessing/csscomplete.js';
 import cssmerge from '../postprocessing/cssmerge.js';
 import events from '../postprocessing/events.js';
@@ -64,6 +65,7 @@ import patchdfns from '../postprocessing/patch-dfns.js';
  * Core post-processing modules
  */
 const modules = {
+  backrefs,
   csscomplete,
   cssmerge,
   events,
