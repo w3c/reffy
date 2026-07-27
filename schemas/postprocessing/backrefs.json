@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "https://github.com/w3c/reffy/blob/main/schemas/postprocessing/backrefs.json",
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["spec", "backrefs"],
+  "properties": {
+    "spec": { "$ref": "../common.json#/$defs/specInExtract" },
+
+    "backrefs": {
+      "description": "List of definitions that the spec owns and that are referenced by other specs, along with the specs that reference them.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "href", "linkingText", "type", "for", "access", "referencedBy"],
+        "properties": {
+          "id": { "$ref": "../common.json#/$defs/id" },
+          "href": { "$ref": "../common.json#/$defs/url" },
+          "linkingText": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "property", "descriptor", "value", "type",
+              "at-rule", "function", "selector",
+              "namespace", "interface", "constructor", "method", "argument",
+              "attribute", "callback", "dictionary", "dict-member", "enum",
+              "enum-value", "exception", "const", "typedef", "stringifier",
+              "serializer", "iterator", "maplike", "setlike", "extended-attribute",
+              "event", "permission",
+              "element", "element-state", "element-attr", "attr-value",
+              "cddl-module", "cddl-type", "cddl-parameter", "cddl-key", "cddl-value",
+              "scheme", "http-header",
+              "grammar", "abstract-op", "dfn"
+            ],
+            "$comment": "Types taken from src/browserlib/extract-dfns.mjs"
+          },
+          "for": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "access": {
+            "type": "string",
+            "enum": ["private", "public"]
+          },
+          "referencedBy": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["shortname", "title", "url"],
+              "properties": {
+                "shortname": { "$ref": "../common.json#/$defs/shortname" },
+                "title": { "$ref": "../common.json#/$defs/title" },
+                "url": { "$ref": "../common.json#/$defs/url" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
