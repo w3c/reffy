@@ -21,10 +21,7 @@
           "linkingText": { "$ref": "../common.json#/$defs/strings" },
           "type": { "$ref": "../common.json#/$defs/dfnType" },
           "for": { "$ref": "../common.json#/$defs/strings" },
-          "access": {
-            "type": "string",
-            "enum": ["private", "public"]
-          },
+          "access": { "$ref": "../common.json#/$defs/access" },
           "referencedBy": {
             "type": "array",
             "minItems": 1,

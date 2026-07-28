@@ -111,6 +111,11 @@
       "$comment": "Types taken from src/browserlib/extract-dfns.mjs"
     },
 
+    "access": {
+      "type": "string",
+      "enum": ["private", "public"]
+    },
+
     "headingNumber": {
       "type": "string",
       "pattern": "^(\\d+|[A-Z])(\\.\\d+)*$",
