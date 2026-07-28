@@ -88,6 +88,11 @@
       "minLength": 1
     },
 
+    "strings": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+
     "headingNumber": {
       "type": "string",
       "pattern": "^(\\d+|[A-Z])(\\.\\d+)*$",
