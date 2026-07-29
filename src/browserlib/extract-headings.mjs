@@ -11,13 +11,19 @@ export default function (spec, idToHeading) {
   const esHeadings = [...document.querySelectorAll('emu-clause[id] > h1')].map(n => {
     const headingNumber = n.querySelector(".secnum")?.textContent;
     const headingLevel = headingNumber ? headingNumber.split(".").length : undefined;
-    return {
-      id: n.parentNode.id,
-      href: getAbsoluteUrl(n.parentNode, { singlePage }),
+    const clause = n.parentNode;
+    const res = {
+      id: clause.id,
+      href: getAbsoluteUrl(clause, { singlePage }),
       title: n.textContent.replace(headingNumber, '').trim(),
       level: headingLevel,
       number: headingNumber
     };
+    const alternateIds = idToHeading[res.href]?.alternateIds;
+    if (alternateIds?.length) {
+      res.alternateIds = alternateIds;
+    }
+    return res;
   });
 
   // Headings using spans in www.rfc-editor.org RFCs

@@ -25,7 +25,6 @@ function getCleanTextContent(node) {
   return cleanedNode.textContent.trim().replace(/\s+/g, ' ');
 }
 
-
 /**
  * Collect alternate IDs carried by empty <span id> elements that appear at the
  * start of a section, before its heading. Specs such as WebAssembly (Bikeshed)
@@ -196,6 +195,12 @@ function esMapIdToHeadings() {
       }
       mapping.href = href;
       mapping.title = trimmedText.replace(reNumber, '');
+
+      const alternateIds = collectEcmascriptAlternateIds(section, heading)
+        .filter(id => id && id !== mapping.id);
+      if (alternateIds.length) {
+        mapping.alternateIds = alternateIds;
+      }
       mappingTable[nodeid] = mapping;
 
       if (number) {
@@ -205,4 +210,21 @@ function esMapIdToHeadings() {
 
     });
   return mappingTable;
+}
+
+/**
+ * Collect alternate IDs for an Ecmarkup clause from its `oldids` attribute and
+ * from empty <span id> aliases placed before the clause heading.
+ */
+function collectEcmascriptAlternateIds(section, heading) {
+  const ids = [];
+  if (section.hasAttribute('oldids')) {
+    ids.push(...section.getAttribute('oldids').split(/\s+/).filter(Boolean));
+  }
+  for (const id of collectEmptySpanAlternateIds(section, heading)) {
+    if (!ids.includes(id)) {
+      ids.push(id);
+    }
+  }
+  return ids;
 }
