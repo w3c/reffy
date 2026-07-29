@@ -928,17 +928,28 @@ function preProcessSVG2() {
   document.querySelectorAll('b[id^="__svg__"]').forEach(el => {
     const [,, containername, membername] = el.id.split('__');
     if (containername && membername) {
-      let container = idlTree.find(i => i.name === containername);
-      if (container) {
-        let member = findSvgMember(container, membername);
-        if (member) {
-          const dfn = document.createElement("dfn");
-          dfn.id = el.id;
-          dfn.textContent = el.textContent;
-          dfn.dataset.dfnFor = containername;
-          dfn.dataset.dfnType = member.type === "operation" ? "method" : member.type;
-          el.replaceWith(dfn);
-        }
+      // Most SVG member anchors name the IDL interface directly
+      // (__svg__SVGElement__className). Shared list-interface members are
+      // instead defined once under the SVGNameList template ID, while the
+      // concrete interfaces (SVGLengthList, SVGNumberList, ...) are the ones
+      // that actually exist in IDL. A mixin would be a poor fit here because
+      // the member signatures differ per concrete interface.
+      // See https://github.com/w3c/reffy/issues/2102
+      let containers = idlTree.filter(i => i.name === containername);
+      if (containers.length === 0 && containername === 'SVGNameList') {
+        containers = idlTree.filter(i =>
+          i.type === 'interface' &&
+          /^SVG\w+List$/.test(i.name) &&
+          findSvgMember(i, membername));
+      }
+      const member = containers.map(c => findSvgMember(c, membername)).find(Boolean);
+      if (member && containers.length) {
+        const dfn = document.createElement("dfn");
+        dfn.id = el.id;
+        dfn.textContent = el.textContent;
+        dfn.dataset.dfnFor = containers.map(c => c.name).join(',');
+        dfn.dataset.dfnType = member.type === "operation" ? "method" : member.type;
+        el.replaceWith(dfn);
       }
     }
   });
@@ -962,7 +973,6 @@ function preProcessSVG2() {
   });
 
 }
-
 
 /**
  * Find an IDL member matching an SVG `__svg__*` anchor member name.
