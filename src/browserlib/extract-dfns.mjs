@@ -930,7 +930,7 @@ function preProcessSVG2() {
     if (containername && membername) {
       let container = idlTree.find(i => i.name === containername);
       if (container) {
-        let member = container.members.find(m => m.name === membername);
+        let member = findSvgMember(container, membername);
         if (member) {
           const dfn = document.createElement("dfn");
           dfn.id = el.id;
@@ -961,6 +961,22 @@ function preProcessSVG2() {
     }
   });
 
+}
+
+
+/**
+ * Find an IDL member matching an SVG `__svg__*` anchor member name.
+ * Indexed property setters are encoded as `__svg__…__setter` and appear in
+ * the IDL AST as unnamed operations with `special: "setter"`.
+ */
+function findSvgMember(container, membername) {
+  if (!container?.members) {
+    return null;
+  }
+  if (membername === 'setter') {
+    return container.members.find(m => m.special === 'setter') || null;
+  }
+  return container.members.find(m => m.name === membername) || null;
 }
 
 /**
