@@ -1069,6 +1069,8 @@ async function getSchemaValidationFunction(schemaName) {
         switch (name) {
             case 'index.json':
                 return path.join('files', name);
+            case 'backrefs':
+                return path.join('postprocessing', 'backrefs.json');
             case 'idlnamesparsed':
                 return path.join('postprocessing', 'idlnames-parsed.json');
             case 'idlparsed':

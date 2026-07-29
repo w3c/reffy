@@ -26,39 +26,11 @@
     "properties": {
       "id": { "$ref": "../common.json#/$defs/id" },
       "href": { "$ref": "../common.json#/$defs/url" },
-      "linkingText": {
-        "type": "array",
-        "items": { "type": "string" }
-      },
-      "localLinkingText": {
-        "type": "array",
-        "items": { "type": "string" }
-      },
-      "type": {
-        "type": "string",
-        "enum": [
-          "property", "descriptor", "value", "type",
-          "at-rule", "function", "selector",
-          "namespace", "interface", "constructor", "method", "argument",
-          "attribute", "callback", "dictionary", "dict-member", "enum",
-          "enum-value", "exception", "const", "typedef", "stringifier",
-          "serializer", "iterator", "maplike", "setlike", "extended-attribute",
-          "event", "permission",
-          "element", "element-state", "element-attr", "attr-value",
-          "cddl-module", "cddl-type", "cddl-parameter", "cddl-key", "cddl-value",
-          "scheme", "http-header",
-          "grammar", "abstract-op", "dfn"
-        ],
-        "$comment": "Types taken from src/browserlib/extract-dfns.mjs"
-      },
-      "for": {
-        "type": "array",
-        "items": { "type": "string" }
-      },
-      "access": {
-        "type": "string",
-        "enum": ["private", "public"]
-      },
+      "linkingText": { "$ref": "../common.json#/$defs/strings" },
+      "localLinkingText": { "$ref": "../common.json#/$defs/strings" },
+      "type": { "$ref": "../common.json#/$defs/dfnType" },
+      "for": { "$ref": "../common.json#/$defs/strings" },
+      "access": { "$ref": "../common.json#/$defs/access" },
       "informative": {
         "type": "boolean"
       },
