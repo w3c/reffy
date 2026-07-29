@@ -102,6 +102,47 @@ const testHeadings = [
       </h2>
     `,
     res: [{id: "5.2", href: "about:blank#5.2", title: "WebGLContextAttributes", number: "5.2", level: 2, alternateIds: ["WEBGLCONTEXTATTRIBUTES"]}]
+  },
+  {
+    title: "documents empty span alternate IDs before a section heading",
+    html: `
+      <section id="globals">
+        <span id="syntax-global"></span>
+        <span id="index-4①"></span>
+        <h4 class="heading settled" id="globals①">
+          <span class="secno">2.5.4. </span>
+          <span class="content">Globals</span>
+        </h4>
+      </section>
+    `,
+    res: [{
+      id: "globals",
+      href: "about:blank#globals",
+      title: "Globals",
+      number: "2.5.4",
+      level: 4,
+      alternateIds: ["globals①", "syntax-global", "index-4①"]
+    }]
+  },
+  {
+    title: "documents oldids and empty span alternate IDs in ECMAScript clauses",
+    html: `
+      <emu-clause id="sec-%iterator.prototype%-object" oldids="sec-%iteratorprototype%-object">
+        <span id="sec-%iteratorprototype%-object"></span>
+        <h1>
+          <span class="secnum">27.1.3.3</span>
+          Properties of the Iterator Prototype Object
+        </h1>
+      </emu-clause>
+    `,
+    res: [{
+      id: "sec-%iterator.prototype%-object",
+      href: "about:blank#sec-%25iterator.prototype%25-object",
+      title: "Properties of the Iterator Prototype Object",
+      number: "27.1.3.3",
+      level: 4,
+      alternateIds: ["sec-%iteratorprototype%-object"]
+    }]
   }
 ];
 
