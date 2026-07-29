@@ -26,6 +26,35 @@ function getCleanTextContent(node) {
 }
 
 /**
+ * Collect alternate IDs carried by empty <span id> elements that appear at the
+ * start of a section, before its heading. Specs such as WebAssembly (Bikeshed)
+ * and ECMAScript (Ecmarkup) use these spans to preserve historical fragment
+ * identifiers. See https://github.com/w3c/reffy/issues/2088
+ */
+function collectEmptySpanAlternateIds(root, heading) {
+  const ids = [];
+  if (!root) {
+    return ids;
+  }
+  for (const child of root.children) {
+    if (child === heading) {
+      break;
+    }
+    const tag = child.nodeName;
+    if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HGROUP'].includes(tag)) {
+      break;
+    }
+    if (['ARTICLE', 'ASIDE', 'NAV', 'SECTION', 'EMU-INTRO', 'EMU-CLAUSE', 'EMU-ANNEX'].includes(tag)) {
+      break;
+    }
+    if (tag === 'SPAN' && child.id && !getCleanTextContent(child)) {
+      ids.push(child.id);
+    }
+  }
+  return ids;
+}
+
+/**
  * Generate a mapping between elements that have an ID (or a "name") and the
  * closest heading (that also has an ID) under which these elements appear in
  * the DOM tree.
@@ -114,8 +143,13 @@ export default function () {
       }
       mapping.href = href;
       mapping.title = trimmedText.replace(reNumber, '');
-      if (ids.length) {
-        mapping.alternateIds = ids;
+
+      // Empty <span id> aliases before the heading are never the primary ID.
+      const spanIds = collectEmptySpanAlternateIds(parentSection.root, heading)
+        .filter(id => id && id !== mapping.id && !ids.includes(id));
+      const alternateIds = ids.concat(spanIds);
+      if (alternateIds.length) {
+        mapping.alternateIds = alternateIds;
       }
       mappingTable[nodeid] = mapping;
 
@@ -161,6 +195,12 @@ function esMapIdToHeadings() {
       }
       mapping.href = href;
       mapping.title = trimmedText.replace(reNumber, '');
+
+      const alternateIds = collectEcmascriptAlternateIds(section, heading)
+        .filter(id => id && id !== mapping.id);
+      if (alternateIds.length) {
+        mapping.alternateIds = alternateIds;
+      }
       mappingTable[nodeid] = mapping;
 
       if (number) {
@@ -170,4 +210,21 @@ function esMapIdToHeadings() {
 
     });
   return mappingTable;
+}
+
+/**
+ * Collect alternate IDs for an Ecmarkup clause from its `oldids` attribute and
+ * from empty <span id> aliases placed before the clause heading.
+ */
+function collectEcmascriptAlternateIds(section, heading) {
+  const ids = [];
+  if (section.hasAttribute('oldids')) {
+    ids.push(...section.getAttribute('oldids').split(/\s+/).filter(Boolean));
+  }
+  for (const id of collectEmptySpanAlternateIds(section, heading)) {
+    if (!ids.includes(id)) {
+      ids.push(id);
+    }
+  }
+  return ids;
 }

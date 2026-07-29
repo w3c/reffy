@@ -269,7 +269,7 @@ const tests = [
   {
     title: 'extracts abstract operations from ecmascript spec',
     html: '<emu-clause id="sec-toprimitive" oldids="table-9" aoid="ToPrimitive"><span id="table-9"></span><h1><span class="secnum">7.1.1</span> ToPrimitive ( <var>input</var> [ , <var>preferredType</var> ] )</h1>',
-    changesToBaseDfn: [{linkingText: [ "ToPrimitive", "ToPrimitive(input, preferredType)"], type: "abstract-op", access: "public", definedIn: "heading", id: "sec-toprimitive", heading: { number: "7.1.1", id: "sec-toprimitive", href: "about:blank#sec-toprimitive", title: "ToPrimitive ( input [ , preferredType ] )"}}],
+    changesToBaseDfn: [{linkingText: [ "ToPrimitive", "ToPrimitive(input, preferredType)"], type: "abstract-op", access: "public", definedIn: "heading", id: "sec-toprimitive", heading: { number: "7.1.1", id: "sec-toprimitive", href: "about:blank#sec-toprimitive", title: "ToPrimitive ( input [ , preferredType ] )", alternateIds: ["table-9"]}}],
     spec: "ecmascript"
   },
   {
