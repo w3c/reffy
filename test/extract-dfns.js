@@ -48,14 +48,36 @@ enum CanPlayTypeResult { ""};
 const baseSVG2 = `
 <!-- we use the IDL declarations to find the type of attribute vs methods -->
 <pre class=idl>
-interface SVGNameList {
-
+[Exposed=Window]
+interface SVGNumberList {
   readonly attribute unsigned long length;
   readonly attribute unsigned long numberOfItems;
 
-  void clear();
-  Type initialize(Type newItem);
+  undefined clear();
+  SVGNumber initialize(SVGNumber newItem);
+  getter SVGNumber getItem(unsigned long index);
+  SVGNumber insertItemBefore(SVGNumber newItem, unsigned long index);
+  SVGNumber replaceItem(SVGNumber newItem, unsigned long index);
+  SVGNumber removeItem(unsigned long index);
+  SVGNumber appendItem(SVGNumber newItem);
+  setter undefined (unsigned long index, SVGNumber newItem);
 };
+
+[Exposed=Window]
+interface SVGLengthList {
+  readonly attribute unsigned long length;
+  readonly attribute unsigned long numberOfItems;
+
+  undefined clear();
+  SVGLength initialize(SVGLength newItem);
+  getter SVGLength getItem(unsigned long index);
+  SVGLength insertItemBefore(SVGLength newItem, unsigned long index);
+  SVGLength replaceItem(SVGLength newItem, unsigned long index);
+  SVGLength removeItem(unsigned long index);
+  SVGLength appendItem(SVGLength newItem);
+  setter undefined (unsigned long index, SVGLength newItem);
+};
+
 [Exposed=Window]
 interface SVGAnimatedLengthList {
 };
@@ -479,25 +501,49 @@ const tests = [
     spec: "SVG2"
   },
   {
-    title: "identifies IDL attributes and methods defined in SVG2 spec",
+    title: "identifies shared SVG list-interface members under SVGNameList IDs",
     html: `<p>The <b id="__svg__SVGNameList__length">length</b> IDL attribute
 represents the length of the list, and on getting simply return
 the length of the list.</p>
 <p>The <b id="__svg__SVGNameList__initialize">initialize</b> method
 is used to clear the list and add a single, specified value to it.
-When initialize(<var>newItem</var>) is called, the following steps are run:</p>`,
+When initialize(<var>newItem</var>) is called, the following steps are run:</p>
+<p>The behavior of the <b id="__svg__SVGNameList__setter">indexed property setter</b>
+is the same as that for the <a href="#__svg__SVGNameList__replaceItem">replaceItem</a>
+method.</p>`,
     changesToBaseDfn: [{
       id: "__svg__SVGNameList__length",
       linkingText: ["length"],
       type: "attribute",
-      for: ["SVGNameList"],
+      for: ["SVGNumberList", "SVGLengthList"],
       access: "public"
     },
                        {
       id: "__svg__SVGNameList__initialize",
       linkingText: ["initialize"],
       type: "method",
-      for: ["SVGNameList"],
+      for: ["SVGNumberList", "SVGLengthList"],
+      access: "public"
+    },
+                       {
+      id: "__svg__SVGNameList__setter",
+      linkingText: ["indexed property setter"],
+      type: "method",
+      for: ["SVGNumberList", "SVGLengthList"],
+      access: "public"
+    }],
+    spec: "SVG2"
+  },
+  {
+    title: "identifies regular SVG IDL members scoped to a single interface",
+    html: `<p>The <b id="__svg__SVGLengthList__length">length</b> IDL attribute
+should remain scoped to SVGLengthList when the interface is named
+directly in the anchor.</p>`,
+    changesToBaseDfn: [{
+      id: "__svg__SVGLengthList__length",
+      linkingText: ["length"],
+      type: "attribute",
+      for: ["SVGLengthList"],
       access: "public"
     }],
     spec: "SVG2"
