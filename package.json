@@ -55,6 +55,6 @@
     "test": "node --test"
   },
   "allowScripts": {
-    "puppeteer@25.3.0": true
+    "puppeteer": true
   }
 }
