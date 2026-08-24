@@ -5,4 +5,27 @@ updates:
   schedule:
     interval: daily
     time: '10:00'
-  open-pull-requests-limit: 10
+  cooldown:
+    default-days: 7
+    exclude:
+      # W3C-maintained packages are excluded from cooldowns, since we usually
+      # want them as soon as possible
+      - "fetch-filecache-for-crawling"
+      - "web-specs"
+      - "webidl2"
+  groups:
+    npm-dependencies:
+      exclude-patterns:
+        # Don't group W3C-maintained packages
+        - "fetch-filecache-for-crawling"
+        - "web-specs"
+        - "webidl2"
+- package-ecosystem: github-actions
+  directory: "/"
+  schedule:
+    interval: daily
+    time: '10:00'
+  groups:
+    actions-dependencies:
+      patterns:
+        - "*"
