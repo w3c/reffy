@@ -37,15 +37,15 @@
     "ajv-formats": "3.0.1",
     "commander": "15.0.0",
     "fetch-filecache-for-crawling": "5.1.1",
-    "puppeteer": "25.8.0",
+    "puppeteer": "25.9.0",
     "semver": "^7.3.5",
     "web-specs": "4.10.0",
     "webidl2": "24.5.0"
   },
   "devDependencies": {
-    "respec": "37.3.2",
+    "respec": "37.3.5",
     "respec-hljs": "2.1.1",
-    "rollup": "4.62.5",
+    "rollup": "4.63.0",
     "undici": "^8.2.0"
   },
   "overrides": {
