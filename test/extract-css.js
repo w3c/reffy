@@ -1011,15 +1011,28 @@ that spans multiple lines */
   },
 
   {
+    title: 'creates a definition when one is missing for a type',
+    html: `
+    <pre class="prod">&lt;my-type> = none | auto</pre>
+    `,
+    propertyName: 'values',
+    css: [{
+      name: '<my-type>',
+      type: 'type',
+      value: 'none | auto'
+    }]
+  },
+
+  {
     title: 'issues a warning when a definition is missing',
     html: `
-    <pre class="prod">&lt;my-type&gt; = none | auto
+    <pre class="prod">foo = bar</pre>
     `,
     propertyName: 'warnings',
     css: [{
       msg: 'Missing definition',
-      name: '<my-type>',
-      value: 'none | auto'
+      name: 'foo',
+      value: 'bar'
     }]
   },
 
