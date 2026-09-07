@@ -24,9 +24,17 @@ export default function (spec) {
   // Extract HTML elements
   const htmlElements = [...document.querySelectorAll('dl.element')]
     .map(el => {
-      // Get back to heading that defines the element(s)
+      // Get back to the heading that defines the element(s)
+      // Note: heading is at the same level as the <dl> in most specs, except
+      // in the "Install Element" spec where the heading is nested under a
+      // <div>, see: https://wicg.github.io/install-element/#install-element
       let heading = el.previousElementSibling;
       while (heading && !heading.nodeName.match(/^H\d$/)) {
+        if (heading.nodeName === 'DIV' &&
+            heading.querySelector('h1,h2,h3,h4,h5,h6')) {
+          heading = heading.querySelector('h1,h2,h3,h4,h5,h6');
+          break;
+        }
         heading = heading.previousElementSibling;
       }
       if (!heading) {

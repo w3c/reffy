@@ -241,6 +241,29 @@ const tests = [
         href: "about:blank#elementdef-geolocation"
       }
     ]
+  },
+
+  {
+    title: "detects a nested heading next to an element definition",
+    spec: "install-element",
+    html: `<main>
+      <div class="header-wrapper">
+        <h2 id="x13-the-install-element"><bdi class="secno">13.<!---0.197291%--> </bdi>
+        The <code>&lt;<dfn data-dfn-type="element" data-export="" id="dfn-install" tabindex="0" aria-haspopup="dialog">install</dfn>&gt;</code> element
+        </h2>
+      </div>
+      <dl class="element">
+        <dt>DOM interface:</dt>
+        <dd><a data-xref-type="_IDL_" data-link-type="idl" data-lt="HTMLInstallElement" href="#dom-htmlinstallelement" class="internalDFN" id="ref-for-dom-htmlinstallelement-2"><code>HTMLInstallElement<!---0.197291%--></code></a><!---0.197291%-->.</dd>
+      </dl>
+    </main>`,
+    res: [
+      {
+        name: "install",
+        interface: "HTMLInstallElement",
+        href: "about:blank#dfn-install"
+      }
+    ]
   }
 ];
 
