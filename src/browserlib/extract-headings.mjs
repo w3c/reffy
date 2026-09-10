@@ -8,13 +8,15 @@ export default function (spec, idToHeading) {
   const singlePage = !document.querySelector('[data-reffy-page]');
 
   // Headings using the markup convention of the EcmaScript spec
-  const esHeadings = [...document.querySelectorAll('emu-clause[id] > h1')].map(n => {
-    const headingNumber = n.querySelector(".secnum")?.textContent;
+  const esHeadings = [...document.querySelectorAll(':is(emu-clause, emu-annex)[id] > h1')].map(n => {
+    const fullHeadingNumber = n.querySelector(".secnum")?.textContent;
+    const match = fullHeadingNumber?.match(/^Annex (\w)/);
+    const headingNumber = match ? match[1] : fullHeadingNumber;
     const headingLevel = headingNumber ? headingNumber.split(".").length : undefined;
     return {
       id: n.parentNode.id,
       href: getAbsoluteUrl(n.parentNode, { singlePage }),
-      title: n.textContent.replace(headingNumber, '').trim(),
+      title: n.textContent.replace(fullHeadingNumber, '').trim(),
       level: headingLevel,
       number: headingNumber
     };

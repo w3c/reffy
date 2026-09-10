@@ -102,6 +102,30 @@ const testHeadings = [
       </h2>
     `,
     res: [{id: "5.2", href: "about:blank#5.2", title: "WebGLContextAttributes", number: "5.2", level: 2, alternateIds: ["WEBGLCONTEXTATTRIBUTES"]}]
+  },
+  {
+    title: "extracts headings from TC39 specs",
+    html: `
+      <emu-clause id="sec-memory-model">
+        <h1><span class="secnum">29</span> Memory Model</h1>
+        <p>The memory consistency model, blah.</p>
+      </emu-clause>`,
+    res: [{id: "sec-memory-model", href: "about:blank#sec-memory-model", title: "Memory Model", number: "29", level: 1}]
+  },
+  {
+    title: "extracts annex headings from TC39 specs",
+    html: `
+      <emu-annex id="sec-grammar-summary">
+        <h1><span class="secnum">Annex A <span class="annex-kind">(informative)</span></span> Grammar Summary</h1>
+        <emu-annex id="sec-lexical-grammar">
+          <h1><span class="secnum">A.1</span> Lexical Grammar</h1>
+          <p>Foo</p>
+        </emu-annex>
+      </emu-annex>`,
+    res: [
+      {id: "sec-grammar-summary", href: "about:blank#sec-grammar-summary", title: "Grammar Summary", number: "A", level: 1},
+      {id: "sec-lexical-grammar", href: "about:blank#sec-lexical-grammar", title: "Lexical Grammar", number: "A.1", level: 2},
+    ]
   }
 ];
 
