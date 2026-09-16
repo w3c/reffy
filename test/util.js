@@ -107,6 +107,11 @@ describe('isLatestLevelThatPasses', () => {
     const delta = specs.find(spec => spec.shortname === 'css-cascade-6');
     assert.strictEqual(isLatestLevelThatPasses(delta, specs, s => s === delta || s === old), true);
   });
+
+  it('returns true when the current spec is not in the list', () => {
+    const old = specs.find(spec => spec.shortname === 'css-cascade-3');
+    assert.strictEqual(isLatestLevelThatPasses(old, [old]), true);
+  });
 });
 
 
