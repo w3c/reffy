@@ -126,6 +126,18 @@ const testHeadings = [
       {id: "sec-grammar-summary", href: "about:blank#sec-grammar-summary", title: "Grammar Summary", number: "A", level: 1},
       {id: "sec-lexical-grammar", href: "about:blank#sec-lexical-grammar", title: "Lexical Grammar", number: "A.1", level: 2},
     ]
+  },
+  {
+    title: "does not extract the copyright annex heading from TC39 specs",
+    html: `
+      <emu-annex id="sec-copyright-and-software-license" back-matter="">
+        <h1>Copyright &amp; Software License</h1>
+        <p>Mine, mine, mine!</p>
+      </emu-annex>`,
+    res: [{
+      id: "sec-copyright-and-software-license", href: "about:blank#sec-copyright-and-software-license",
+      title: "Copyright & Software License", level: 1
+    }]
   }
 ];
 

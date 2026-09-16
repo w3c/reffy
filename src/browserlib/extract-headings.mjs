@@ -8,11 +8,14 @@ export default function (spec, idToHeading) {
   const singlePage = !document.querySelector('[data-reffy-page]');
 
   // Headings using the markup convention of the EcmaScript spec
+  // Note: if there's no heading level, we'll consider that the heading is at
+  // the first level. In practice, this only happens for the Copyright annex
+  // at the end of the specs (and this heading is at the first level).
   const esHeadings = [...document.querySelectorAll(':is(emu-clause, emu-annex)[id] > h1')].map(n => {
     const fullHeadingNumber = n.querySelector(".secnum")?.textContent;
     const match = fullHeadingNumber?.match(/^Annex (\w)/);
     const headingNumber = match ? match[1] : fullHeadingNumber;
-    const headingLevel = headingNumber ? headingNumber.split(".").length : undefined;
+    const headingLevel = headingNumber ? headingNumber.split(".").length : 1;
     return {
       id: n.parentNode.id,
       href: getAbsoluteUrl(n.parentNode, { singlePage }),
