@@ -759,7 +759,11 @@ function isLatestLevelThatPasses(spec, list, predicate) {
     }
 
     // Make sure that spec is the current one or is more recent than the
-    // current one.
+    // current one. If the list of crawled specs does not contain the current
+    // specification, we'll just assume that the spec is recent enough.
+    if (!list.find(s => s.shortname === spec.series.currentSpecification)) {
+        return true;
+    }
     while (spec) {
         if (spec.shortname === spec.series.currentSpecification) {
             return true;
