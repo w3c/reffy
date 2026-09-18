@@ -18,6 +18,7 @@ export default [
   '.non-normative',
   'aside',
   '.idlHeader',
+  '.cddlHeader',
   '[id^=dfn-panel-]',
   '.mdn-anno',
   '.wpt-tests-block',
