@@ -32,10 +32,11 @@ export default function () {
     // `<pre class="cddl">` convention, or they don't flag CDDL blocks in any
     // way, making it impossible to extract them.
     const cddlSelectors = ['pre.cddl:not(.exclude):not(.extract)'];
-    const excludeSelectors = ['#cddl-index'];
 
-    // Retrieve all elements that contains CDDL content
-    const cddlEls = getCodeElements(cddlSelectors, { excludeSelectors });
+    // Bikeshed generates a CDDL index that repeats all CDDL blocks, as
+    // siblings that follow the index heading rather than descendants of it.
+    const isInCddlIndex = createSectionTest(document.getElementById('cddl-index'));
+    const cddlEls = getCodeElements(cddlSelectors, { excludeFilter: isInCddlIndex });
 
     // Start by assembling the list of modules
     const modules = {};
@@ -94,6 +95,37 @@ export default function () {
             .trim();
     }
     return res;
+}
+
+
+/**
+ * Return a function that tells whether an element belongs to the section
+ * introduced by the given element. When that element is a heading, the
+ * section runs from the heading to the next heading of the same or a higher
+ * level. Otherwise, the section is the element's subtree.
+ */
+function createSectionTest(sectionEl) {
+    if (!sectionEl) {
+        return () => false;
+    }
+    const level = getHeadingLevel(sectionEl);
+    if (!level) {
+        return el => sectionEl.contains(el);
+    }
+    const sectionEnd = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')]
+        .find(heading => getHeadingLevel(heading) <= level && follows(sectionEl, heading));
+    return el => follows(sectionEl, el) && (!sectionEnd || follows(el, sectionEnd));
+}
+
+
+function getHeadingLevel(el) {
+    const match = el.tagName.match(/^H([1-6])$/i);
+    return match ? parseInt(match[1], 10) : 0;
+}
+
+
+function follows(el, other) {
+    return !!(el.compareDocumentPosition(other) & Node.DOCUMENT_POSITION_FOLLOWING);
 }
 
 

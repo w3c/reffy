@@ -54,6 +54,60 @@ typedef = tstr
   },
 
   {
+    title: 'excludes CDDL generated in the Bikeshed CDDL index section',
+    html: `<pre class="cddl">real = tstr</pre>
+
+           <h2 id="cddl-index">CDDL Index</h2>
+           <h3>Remote end definition</h3>
+           <pre class="cddl">real = tstr</pre>
+           <h3>Local end definition</h3>
+           <pre class="cddl">real = tstr</pre>
+
+           <h2 id="something-else">Next section</h2>
+           <pre class="cddl">other = tstr</pre>`,
+    res: `real = tstr
+
+other = tstr`
+  },
+
+  {
+    title: 'excludes CDDL in a container with the CDDL index ID',
+    html: `<pre class="cddl">real = tstr</pre>
+           <div id="cddl-index">
+             <h2>CDDL Index</h2>
+             <pre class="cddl">real = tstr</pre>
+           </div>
+           <pre class="cddl">other = tstr</pre>`,
+    res: `real = tstr
+
+other = tstr`
+  },
+
+  {
+    title: 'excludes CDDL in index subsections wrapped in section elements',
+    html: `<section><pre class="cddl">real = tstr</pre></section>
+           <section>
+             <h2 id="cddl-index">CDDL Index</h2>
+             <section><h3>Remote end definition</h3><pre class="cddl">real = tstr</pre></section>
+           </section>
+           <section><h2>Next</h2><pre class="cddl">other = tstr</pre></section>`,
+    res: `real = tstr
+
+other = tstr`
+  },
+
+  {
+    title: 'does not exclude CDDL modules from an index without modules',
+    html: `<pre class="cddl" data-cddl-module="mod">cddl = tstr</pre>
+           <h2 id="cddl-index">CDDL Index</h2>
+           <pre class="cddl">cddl = tstr</pre>`,
+    res: [
+      { name: 'all', cddl: 'cddl = tstr' },
+      { name: 'mod', cddl: 'cddl = tstr' }
+    ]
+  },
+
+  {
     title: 'extracts CDDL module names from data-cddl-module',
     html: `<pre class="cddl" data-cddl-module="mod">cddl = tstr</pre>`,
     res: [
