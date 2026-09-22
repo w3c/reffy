@@ -112,6 +112,15 @@ describe('isLatestLevelThatPasses', () => {
     const old = specs.find(spec => spec.shortname === 'css-cascade-3');
     assert.strictEqual(isLatestLevelThatPasses(old, [old]), true);
   });
+
+  it('returns true for levels on both sides of a hole in the series', () => {
+    const series = { shortname: 'spec', currentSpecification: 'spec-1' };
+    const spec1 = { shortname: 'spec-1', series, seriesComposition: 'full', seriesNext: 'spec-2' };
+    const spec3 = { shortname: 'spec-3', series, seriesComposition: 'full', seriesPrevious: 'spec-2' };
+    const list = [spec1, spec3];
+    assert.strictEqual(isLatestLevelThatPasses(spec1, list), true);
+    assert.strictEqual(isLatestLevelThatPasses(spec3, list), true);
+  });
 });
 
 
