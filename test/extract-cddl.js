@@ -173,6 +173,12 @@ typedef = tstr
 groupdef = tstr`
       }
     ]
+  },
+
+  {
+    title: 'strips the header that ReSpec adds to CDDL blocks',
+    html: `<pre class="cddl def highlight" id="cddl-block-1"><span class="cddlHeader"><a class="self-link" href="#cddl-block-1">CDDL</a></span><code><dfn data-dfn-type="cddl-type" id="cddl-type-foo-bar" data-export="">foo.Bar</dfn> <span class="cddl-op">=</span> <span>tstr</span></code></pre>`,
+    res: 'foo.Bar = tstr'
   }
 ];
 
