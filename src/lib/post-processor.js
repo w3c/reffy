@@ -53,6 +53,7 @@ import { pathToFileURL } from 'node:url';
 import { createFolderIfNeeded, shouldSaveToFile } from './util.js';
 import backrefs from '../postprocessing/backrefs.js';
 import csscomplete from '../postprocessing/csscomplete.js';
+import cssdangling from '../postprocessing/cssdangling.js';
 import cssmerge from '../postprocessing/cssmerge.js';
 import events from '../postprocessing/events.js';
 import idlnames from '../postprocessing/idlnames.js';
@@ -67,6 +68,7 @@ import patchdfns from '../postprocessing/patch-dfns.js';
 const modules = {
   backrefs,
   csscomplete,
+  cssdangling,
   cssmerge,
   events,
   idlnames,
