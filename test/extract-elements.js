@@ -90,6 +90,24 @@ const tests = [
   },
 
   {
+    title: "extracts an HTML element defined in a dl.def table",
+    spec: "html-ruby-extensions",
+    html: `<h3 id="the-ruby-element">The <dfn data-dfn-type="element" id="elementdef-ruby"><code>ruby</code></dfn> element</h3>
+<dl class="def">
+  <dt><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/dom.html#concept-element-dom">DOM interface</a>:</dt>
+  <dd>Uses <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/dom.html#htmlelement">HTMLElement</a></code>.</dd>
+</dl>
+<dl class="def"><dt>Not an element</dt><dd>Ignored</dd></dl>`,
+    res: [
+      {
+        name: "ruby",
+        interface: "HTMLElement",
+        href: "about:blank#elementdef-ruby"
+      }
+    ]
+  },
+
+  {
     title: "extracts an SVG element that follows the element-summary pattern",
     spec: "SVG2",
     html: `<div class="element-summary">
