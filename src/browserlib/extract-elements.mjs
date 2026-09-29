@@ -22,7 +22,11 @@ export default function (spec) {
   }
 
   // Extract HTML elements
-  const htmlElements = [...document.querySelectorAll('dl.element')]
+  // Note: Some specs (e.g., HTML Ruby Extensions) use a generic "def" class
+  // instead of "element". Only consider these if they define a DOM interface.
+  const htmlElements = [...document.querySelectorAll('dl.element, dl.def')]
+    .filter(el => el.classList.contains('element') ||
+      [...el.querySelectorAll('dt')].some(dt => getText(dt).match(/^DOM interface:?$/)))
     .map(el => {
       // Get back to the heading that defines the element(s)
       // Note: heading is at the same level as the <dl> in most specs, except
