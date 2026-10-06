@@ -527,6 +527,18 @@ async function adjustExtractsPerSeries(data, property, settings) {
     const deltaLevels = data.filter(spec =>
         (spec.seriesComposition === 'delta') && spec[property]);
 
+    // More than one full level in a series means that the list of crawled
+    // specs has a hole in that series, and that we cannot tell which level is
+    // the latest one. Keep the extracts of these levels as-is.
+    const seriesShortnames = fullLevels
+        .filter(spec => spec.seriesComposition !== 'fork')
+        .map(spec => spec.series.shortname);
+    const seriesWithHoles = new Set(seriesShortnames.filter(
+        (shortname, idx) => seriesShortnames.indexOf(shortname) !== idx));
+    for (const shortname of seriesWithHoles) {
+        settings.quiet ?? console.warn(`cannot merge ${property} extracts for series ${shortname}, list of crawled specs has a hole in the series`);
+    }
+
     data.forEach(spec => {
         if (fullLevels.includes(spec)) {
             // Full level, rename the extract after the series' shortname,
@@ -536,6 +548,9 @@ async function adjustExtractsPerSeries(data, property, settings) {
                 const pathname = path.resolve(settings.output, spec[property]);
                 fs.unlinkSync(pathname);
                 delete spec[property];
+            }
+            else if (seriesWithHoles.has(spec.series.shortname)) {
+                // Series with a hole, need to keep the extract as-is
             }
             else {
                 const pathname = path.resolve(settings.output, spec[property]);

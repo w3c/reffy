@@ -769,13 +769,16 @@ function isLatestLevelThatPasses(spec, list, predicate) {
             return true;
         }
         if (!spec.seriesPrevious) {
+            // Spec passes predicate but is too old to be considered
             return false;
         }
         spec = list.find(s => s.shortname === spec.seriesPrevious);
     }
 
-    // Spec passes predicate but is too old to be considered
-    return false;
+    // The list of specs has a hole between the spec and the current
+    // specification. We cannot tell whether the spec is recent enough,
+    // let's assume that it is.
+    return true;
 }
 
 
