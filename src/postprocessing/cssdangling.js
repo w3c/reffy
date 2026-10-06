@@ -22,9 +22,13 @@ import { shouldSaveToFile } from '../lib/util.js';
 
 /**
  * Return the names of the constructs that the given value syntax references,
- * using the same naming conventions as in CSS extracts: "<'width'>" references
+ * looking for non-terminals in the syntax, noting that "<'width'>" references
  * the property "width", "<length [0,∞]>" references the type "<length>", and
- * "fit-content(" references the function "fit-content()".
+ * "<fit-content(" references the function "fit-content()".
+ *
+ * Note: regular expressions are used to parse the syntax both to keep things
+ * simple and avoid introducing a dependency to a CSS syntax parser, and
+ * because there is no guarantee that syntaxes extracted from a spec are valid.
  */
 function getReferencedNames(syntax) {
   const names = [];
