@@ -38,7 +38,7 @@ function getReferencedNames(syntax) {
   for (const match of syntax.matchAll(/<([a-zA-Z0-9-]+)(?:\s[^>]*)?>/g)) {
     names.push(`<${match[1]}>`);
   }
-  for (const match of syntax.matchAll(/([a-zA-Z0-9-]+)\(/g)) {
+  for (const match of syntax.matchAll(/<([a-zA-Z0-9-]+)\(/g)) {
     names.push(`${match[1]}()`);
   }
   return names;
