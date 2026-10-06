@@ -50,8 +50,7 @@ export default {
   input: 'crawl',
 
   run: async function (crawl, options) {
-    const extracts = crawl.results.filter(spec =>
-      spec.css && (typeof spec.css !== 'string'));
+    const extracts = crawl.results.filter(spec => spec.css);
 
     // Index constructs that each construct references in its value syntax,
     // across all CSS extracts. Note: this is purely name-based, scoped types
