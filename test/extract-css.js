@@ -1642,6 +1642,29 @@ that spans multiple lines */
   },
 
   {
+    title: 'extracts property definition from custom tables in SVG2',
+    html: `<table class="def svg-propdef">
+      <tbody>
+       <tr>
+        <th>Name:
+        </th><td><dfn class="css dfn-paneled has-dfn-panel" data-dfn-type="property" data-export="" id="RxProperty" role="button" aria-expanded="false" tabindex="0"><span class="bs-old-id" id="geometry-RxProperty"></span>rx</dfn>
+       </td></tr><tr>
+        <th>Value:
+        </th><td><a href="https://www.w3.org/TR/css-values/#typedef-length-percentage">&lt;length-percentage&gt;</a> | auto
+       </td></tr><tr>
+        <th>Initial:
+        </th><td>auto
+       </td></tr>
+      </tbody></table>`,
+    css: [{
+      "name": "rx",
+      "href": "about:blank#RxProperty",
+      "value": "<length-percentage> | auto",
+      "initial": "auto"
+    }]
+  },
+
+  {
     title: 'extracts a legacy name alias',
     html: `<p>
       The <dfn data-dfn-type="property" id="old">good-old</dfn>
