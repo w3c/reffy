@@ -27,12 +27,15 @@ export default {
       console.error("No spec list passed as input, cannot annotate links in post-processing");
       return spec;
     }
-    for (let link in (spec.links || {})) {
-      // Annotate with the spec to which the page belong if we can find one
-      const specUrl = canonicalizeUrl(link);
-      let matchingSpec = speclist.find(s => s?.release?.url === specUrl || s?.nightly?.url === specUrl || (s?.series?.currentSpecification === s?.shortname && (s?.series?.nightlyUrl === specUrl || s?.series?.releaseUrl === specUrl)) || s?.nightly?.pages?.includes(specUrl) || s?.release?.pages?.includes(specUrl));
-      if (matchingSpec) {
-        spec.links[link].specShortname = matchingSpec.shortname;
+    for (const group of ['rawlinks', 'autolinks']) {
+      const links = spec.links?.[group] ?? {};
+      for (let link in links) {
+        // Annotate with the spec to which the page belong if we can find one
+        const specUrl = canonicalizeUrl(link);
+        let matchingSpec = speclist.find(s => s?.release?.url === specUrl || s?.nightly?.url === specUrl || (s?.series?.currentSpecification === s?.shortname && (s?.series?.nightlyUrl === specUrl || s?.series?.releaseUrl === specUrl)) || s?.nightly?.pages?.includes(specUrl) || s?.release?.pages?.includes(specUrl));
+        if (matchingSpec) {
+          links[link].specShortname = matchingSpec.shortname;
+        }
       }
     }
     return spec;
