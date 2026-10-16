@@ -25,7 +25,7 @@ export default function () {
     // reference to "legacy name alias"
     properties: []
       .concat(extractDfns({
-        selector: 'table.propdef:not(.attrdef)',
+        selector: 'table:is(.propdef,.svg-propdef):not(.attrdef)',
         extractor: extractTableDfns,
         duplicates: 'merge',
         warnings

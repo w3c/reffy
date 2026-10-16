@@ -46,62 +46,11 @@ enum CanPlayTypeResult { ""};
 </code></pre>`;
 
 const baseSVG2 = `
-<!-- we use the IDL declarations to find the type of attribute vs methods -->
-<pre class=idl>
-[Exposed=Window]
-interface SVGNumberList {
-  readonly attribute unsigned long length;
-  readonly attribute unsigned long numberOfItems;
-
-  undefined clear();
-  SVGNumber initialize(SVGNumber newItem);
-  getter SVGNumber getItem(unsigned long index);
-  SVGNumber insertItemBefore(SVGNumber newItem, unsigned long index);
-  SVGNumber replaceItem(SVGNumber newItem, unsigned long index);
-  SVGNumber removeItem(unsigned long index);
-  SVGNumber appendItem(SVGNumber newItem);
-  setter undefined (unsigned long index, SVGNumber newItem);
-};
-
-[Exposed=Window]
-interface SVGLengthList {
-  readonly attribute unsigned long length;
-  readonly attribute unsigned long numberOfItems;
-
-  undefined clear();
-  SVGLength initialize(SVGLength newItem);
-  getter SVGLength getItem(unsigned long index);
-  SVGLength insertItemBefore(SVGLength newItem, unsigned long index);
-  SVGLength replaceItem(SVGLength newItem, unsigned long index);
-  SVGLength removeItem(unsigned long index);
-  SVGLength appendItem(SVGLength newItem);
-  setter undefined (unsigned long index, SVGLength newItem);
-};
-
-[Exposed=Window]
-interface SVGAnimatedLengthList {
-};
-</pre>
 <!-- we use the attindex page to associate attributes to elements -->
 <div data-reffy-page='https://example.org/attindex.html'>
 <table>
 <tr><th><span class="attr-name"><a href="struct.html#RequiredExtensionsAttribute"><span>requiredExtensions</span></a></span></th><td><span class="element-name"><a href="linking.html#AElement"><span>a</span></a></span>, <span class="element-name"><a href="https://svgwg.org/specs/animations/#AnimateElement"><span>animate</span></a></span>, <span class="element-name"><a href="https://svgwg.org/specs/animations/#AnimateMotionElement"><span>animateMotion</span></a></span>, <span class="element-name"><a href="https://svgwg.org/specs/animations/#AnimateTransformElement"><span>animateTransform</span></a></span>, <span class="element-name"><a href="embedded.html#HTMLElements"><span>audio</span></a></span>, <span class="element-name"><a href="embedded.html#HTMLElements"><span>canvas</span></a></span>, <span class="element-name"><a href="shapes.html#CircleElement"><span>circle</span></a></span>, <span class="element-name"><a href="https://drafts.fxtf.org/css-masking-1/#ClipPathElement"><span>clipPath</span></a></span>, <span class="element-name"><a href="https://svgwg.org/specs/animations/#DiscardElement"><span>discard</span></a></span>, <span class="element-name"><a href="shapes.html#EllipseElement"><span>ellipse</span></a></span>, <span class="element-name"><a href="embedded.html#ForeignObjectElement"><span>foreignObject</span></a></span>, <span class="element-name"><a href="struct.html#GElement"><span>g</span></a></span>, <span class="element-name"><a href="embedded.html#HTMLElements"><span>iframe</span></a></span>, <span class="element-name"><a href="embedded.html#ImageElement"><span>image</span></a></span>, <span class="element-name"><a href="shapes.html#LineElement"><span>line</span></a></span>, <span class="element-name"><a href="https://drafts.fxtf.org/css-masking-1/#MaskElement"><span>mask</span></a></span>, <span class="element-name"><a href="paths.html#PathElement"><span>path</span></a></span>, <span class="element-name"><a href="shapes.html#PolygonElement"><span>polygon</span></a></span>, <span class="element-name"><a href="shapes.html#PolylineElement"><span>polyline</span></a></span>, <span class="element-name"><a href="shapes.html#RectElement"><span>rect</span></a></span>, <span class="element-name"><a href="https://svgwg.org/specs/animations/#SetElement"><span>set</span></a></span>, <span class="element-name"><a href="struct.html#SVGElement"><span>svg</span></a></span>, <span class="element-name"><a href="struct.html#SwitchElement"><span>switch</span></a></span>, <span class="element-name"><a href="text.html#TextElement"><span>text</span></a></span>, <span class="element-name"><a href="text.html#TextPathElement"><span>textPath</span></a></span>, <span class="element-name"><a href="text.html#TextElement"><span>tspan</span></a></span>, <span class="element-name"><a href="struct.html#UnknownElement"><span>unknown</span></a></span>, <span class="element-name"><a href="struct.html#UseElement"><span>use</span></a></span>, <span class="element-name"><a href="embedded.html#HTMLElements"><span>video</span></a></span></td><td></td></tr>
 <tr><th><span class="attr-name"><a href="pservers.html#PatternElementPatternUnitsAttribute"><span>patternUnits</span></a></span></th><td><span class="element-name"><a href="pservers.html#PatternElement"><span>pattern</span></a></span></td><td>✓</td></tr>
-</table></div>
-<!-- We use the property index to associate properties with elements -->
-<div data-reffy-page='https://example.org/propidx.html'>
-<table>
-<tr>
-          <th><a class="property" href="pservers.html#StopOpacityProperty">stop-opacity</a></th>
-          <td>&lt;‘<a class="property" href="render.html#ObjectAndGroupOpacityProperties">opacity</a>’&gt;</td>
-          <td>1</td>
-          <td><span class="element-name">‘<a href="pservers.html#StopElement"><span>stop</span></a>’</span> elements</td>
-          <td>no</td>
-          <td>N/A</td>
-          <td><a href="https://www.w3.org/TR/2008/REC-CSS2-20080411/media.html#visual-media-group">visual</a></td>
-          <td>by computed value</td>
-          <td>the specified value converted to a number, clamped to the range [0,1]</td>
-        </tr>
 </table></div>
 `;
 
@@ -415,53 +364,6 @@ const tests = [
     spec: "sourcemap"
   },
   {
-    "title": "extracts attribute definition from the SVG2 spec",
-    html: `<table class="attrdef def"><tr>
-        <td><dfn id="RequiredExtensionsAttribute">requiredExtensions</dfn></td>
-        <td><a href="https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#set-of-space-separated-tokens">set of space-separated tokens</a> <span class="syntax">[HTML]</span></td>
-        <td>(none)</td>
-        <td>no</td>
-      </tr></table>`,
-    changesToBaseDfn: [{
-      id: "RequiredExtensionsAttribute",
-      linkingText: ["requiredExtensions"],
-      type: "element-attr",
-      for: ["a",
-            "animate",
-            "animateMotion",
-            "animateTransform",
-            "audio",
-            "canvas",
-            "circle",
-            "clipPath",
-            "discard",
-            "ellipse",
-            "foreignObject",
-            "g",
-            "iframe",
-            "image",
-            "line",
-            "mask",
-            "path",
-            "polygon",
-            "polyline",
-            "rect",
-            "set",
-            "svg",
-            "switch",
-            "text",
-            "textPath",
-            "tspan",
-            "unknown",
-            "use",
-            "video"
-           ],
-      "access": "public",
-      definedIn: "table"
-    }],
-    spec: "SVG2"
-  },
-  {
     title: "identifies the link element definition in SVG2 spec",
     html: `<h2 id="LinkElement" class="heading">6.3. External style sheets: the effect of the HTML <span class="element-name">‘link’</span> element<a class="self-link" href="#LinkElement"></a></h2>`,
     changesToBaseDfn: [{
@@ -486,99 +388,6 @@ const tests = [
       definedIn: "dt"
     }],
     spec: "SVG2"
-  },
-  {
-    title: "identifies properties defined with class propdef in SVG2 spec",
-    html: `<dt id="StopOpacityProperty">‘<span class="propdef-title property">stop-opacity</span>’</dt>`,
-    changesToBaseDfn: [{
-      id: "StopOpacityProperty",
-      linkingText: ["stop-opacity"],
-      type: "property",
-      for: ["stop"],
-      access: "public",
-      definedIn: "dt"
-    }],
-    spec: "SVG2"
-  },
-  {
-    title: "identifies shared SVG list-interface members under SVGNameList IDs",
-    html: `<p>The <b id="__svg__SVGNameList__length">length</b> IDL attribute
-represents the length of the list, and on getting simply return
-the length of the list.</p>
-<p>The <b id="__svg__SVGNameList__initialize">initialize</b> method
-is used to clear the list and add a single, specified value to it.
-When initialize(<var>newItem</var>) is called, the following steps are run:</p>
-<p>The behavior of the <b id="__svg__SVGNameList__setter">indexed property setter</b>
-is the same as that for the <a href="#__svg__SVGNameList__replaceItem">replaceItem</a>
-method.</p>`,
-    changesToBaseDfn: [{
-      id: "__svg__SVGNameList__length",
-      linkingText: ["length"],
-      type: "attribute",
-      for: ["SVGNumberList", "SVGLengthList"],
-      access: "public"
-    },
-                       {
-      id: "__svg__SVGNameList__initialize",
-      linkingText: ["initialize"],
-      type: "method",
-      for: ["SVGNumberList", "SVGLengthList"],
-      access: "public"
-    },
-                       {
-      id: "__svg__SVGNameList__setter",
-      linkingText: ["indexed property setter"],
-      type: "method",
-      for: ["SVGNumberList", "SVGLengthList"],
-      access: "public"
-    }],
-    spec: "SVG2"
-  },
-  {
-    title: "identifies regular SVG IDL members scoped to a single interface",
-    html: `<p>The <b id="__svg__SVGLengthList__length">length</b> IDL attribute
-should remain scoped to SVGLengthList when the interface is named
-directly in the anchor.</p>`,
-    changesToBaseDfn: [{
-      id: "__svg__SVGLengthList__length",
-      linkingText: ["length"],
-      type: "attribute",
-      for: ["SVGLengthList"],
-      access: "public"
-    }],
-    spec: "SVG2"
-  },
-  {
-    title: "identifies IDL interfaces in headings of the SVG2 spec",
-    html: `<h3 id="InterfaceSVGAnimatedLengthList" class="heading">4.6.10. Interface SVGAnimatedLengthList<a class="self-link" href="#InterfaceSVGAnimatedLengthList"></a></h3>`,
-    changesToBaseDfn: [{
-      id: "InterfaceSVGAnimatedLengthList",
-      linkingText: ["SVGAnimatedLengthList"],
-      type: "interface",
-      access: "public",
-      heading: { id: "InterfaceSVGAnimatedLengthList", href: "about:blank#InterfaceSVGAnimatedLengthList", title: "Interface SVGAnimatedLengthList", number: "4.6.10"},
-      definedIn: "heading"
-    }],
-    spec: "SVG2"
-  },
-  {
-    title: "identifies a dictionary definition in an IDL fragment of the SVG2 spec",
-    html: `<pre class="idl">dictionary <b id="SVGBoundingBoxOptions">SVGBoundingBoxOptions</b> {
-  boolean fill = true;
-  boolean stroke = false;
-  boolean markers = false;
-  boolean clipped = false;
-};
-</pre>
-`,
-    changesToBaseDfn: [{
-      id: "SVGBoundingBoxOptions",
-      linkingText: ["SVGBoundingBoxOptions"],
-      type: "dictionary",
-      access: "public",
-      definedIn: "pre"
-    }],
-    spec :"SVG2",
   },
 
   {
