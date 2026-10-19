@@ -6,6 +6,7 @@ import { isLatestLevelThatPasses } from "./src/lib/util.js";
 import { getInterfaceTreeInfo } from "./src/lib/util.js";
 import { getSchemaValidationFunction } from "./src/lib/util.js";
 import postProcessor from "./src/lib/post-processor.js";
+import ThrottledQueue from "./src/lib/throttled-queue.js";
 
 export {
   parseIdl,
@@ -15,7 +16,8 @@ export {
   isLatestLevelThatPasses,
   getInterfaceTreeInfo,
   getSchemaValidationFunction,
-  postProcessor
+  postProcessor,
+  ThrottledQueue
 };
 
 export default {
@@ -26,5 +28,6 @@ export default {
   isLatestLevelThatPasses,
   getInterfaceTreeInfo,
   getSchemaValidationFunction,
-  postProcessor
+  postProcessor,
+  ThrottledQueue
 };
