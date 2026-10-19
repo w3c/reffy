@@ -95,31 +95,39 @@ export default function () {
   }
 
   // Subsidiary at-rules are at-rules that can be used within a parent at-rule,
-  // we'll consider that they are "descriptors".
+  // they get listed in an "atrules" property of the parent at-rule.
   const subsidiary = extractDfns({
     selector: dfnElSelector + '[data-dfn-type=at-rule][data-dfn-for]',
     extractor: extractTypedDfns,
     duplicates: 'reject',
-    keepDfnType: true,
     warnings
   });
-  descriptors = descriptors.concat([subsidiary]);
+
+  function getAtrule(name) {
+    let rule = res.atrules.find(r => r.name === name);
+    if (!rule) {
+      rule = { name, descriptors: [] };
+      res.atrules.push(rule);
+    }
+    return rule;
+  }
 
   // Move descriptors, and subsidiary at-rules, to at-rules structure
   for (const desclist of descriptors) {
     for (const desc of desclist) {
-      let rule = res.atrules.find(r => r.name === desc.for);
-      if (rule) {
-        if (!rule.descriptors) {
-          rule.descriptors = [];
-        }
-      }
-      else {
-        rule = { name: desc.for, descriptors: [] };
-        res.atrules.push(rule);
+      const rule = getAtrule(desc.for);
+      if (!rule.descriptors) {
+        rule.descriptors = [];
       }
       rule.descriptors.push(desc);
     }
+  }
+  for (const nested of subsidiary) {
+    const rule = getAtrule(nested.for);
+    if (!rule.atrules) {
+      rule.atrules = [];
+    }
+    rule.atrules.push(nested);
   }
   for (const rule of res.atrules) {
     if (!rule.descriptors) {
@@ -134,6 +142,7 @@ export default function () {
       rootDfns.push(desc);
     }
   }
+  rootDfns.push(...subsidiary);
 
   // Extract value dfns.
   // Note some of the values can be namespaced "function" or "type" dfns, such
