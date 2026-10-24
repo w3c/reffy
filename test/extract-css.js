@@ -470,12 +470,12 @@ const tests = [
       href: "about:blank#at-ruledef-font-feature-values",
       prose: "@font-feature-values",
       value: "<family-name># { <declaration-rule-list> }",
-      descriptors: [
+      descriptors: [],
+      atrules: [
         {
           for: "@font-feature-values",
           name: "@stylistic",
           href: "about:blank#at-ruledef-font-feature-values-stylistic",
-          type: "at-rule",
           value: "@stylistic { <declaration-list> }"
         }
       ]
