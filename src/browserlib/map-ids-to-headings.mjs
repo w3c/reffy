@@ -1,3 +1,4 @@
+import cloneAndClean from './clone-and-clean.mjs';
 import createOutline from './create-outline.mjs';
 import getAbsoluteUrl from './get-absolute-url.mjs';
 
@@ -18,10 +19,7 @@ const reNumber = /^([A-Z\d]\.|[A-Z](\.\d+)+\.?|\d+(\.\d+)+\.?|\d|Appendix [A-Z][
  * within headings.
  */
 function getCleanTextContent(node) {
-  const asideSelector = 'aside, .mdn-anno, .wpt-tests-block, .annotation';
-  const cleanedNode = node.cloneNode(true);
-  const annotations = cleanedNode.querySelectorAll(asideSelector);
-  annotations.forEach(n => n.remove());
+  const cleanedNode = cloneAndClean(node);
   return cleanedNode.textContent.trim().replace(/\s+/g, ' ');
 }
 

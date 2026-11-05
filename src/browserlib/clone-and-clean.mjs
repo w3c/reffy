@@ -14,6 +14,11 @@ export default function (element) {
     el.remove();
   }
 
+  // Replace "buttons" (typically used for dfn panels) by their inner contents
+  while (el = copy.querySelector('button')) {
+    el.replaceWith(...el.childNodes);
+  }
+
   // Remove HTML comments
   const commentsIterator = document.createNodeIterator(copy, NodeFilter.SHOW_COMMENT);
   let comment;

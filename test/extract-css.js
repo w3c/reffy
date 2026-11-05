@@ -1912,6 +1912,25 @@ that spans multiple lines */
       "computedValue": "computed color"
    }]
   },
+
+  {
+    title: "ignores dfn panels in Bikeshed specs",
+    html: `<pre class="highlight prod">
+      <dfn class="dfn-paneled" data-dfn-type="type" data-export="" id="font-weight-absolute-values">
+        <button class="dfn-panelbutton" popovertarget="infopanel-for-font-weight-absolute-values">&lt;font-weight-absolute&gt;</button>
+      </dfn>
+      <dialog class="dfn-panel" id="infopanel-for-font-weight-absolute-values" popover="hint" data-for="font-weight-absolute-values" aria-labelledby="infopaneltitle-for-font-weight-absolute-values">
+        dfn panel
+      </dialog> = [normal | bold | &lt;number [1,1000]&gt;]
+    </pre>`,
+   propertyName: 'values',
+   css: [{
+      "name": "<font-weight-absolute>",
+      "href": "about:blank#font-weight-absolute-values",
+      "type": "type",
+      "value": "[normal | bold | <number [1,1000]>]"
+   }]
+  },
 ];
 
 describe("Test CSS properties extraction", function() {
