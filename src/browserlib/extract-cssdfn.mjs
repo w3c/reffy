@@ -410,7 +410,7 @@ const extractTableDfns = table => {
   const tableCopy = cloneAndClean(table);
 
   let res = [];
-  const properties = [...table.querySelectorAll('tr')]
+  const properties = [...tableCopy.querySelectorAll('tr')]
     .map(line => {
       const nameEl = line.querySelector(':first-child');
       const valueEl = line.querySelector('td:last-child');
