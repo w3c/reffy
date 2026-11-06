@@ -54,6 +54,11 @@ const testHeadings = [
     res: [{id: "title", "href": "about:blank#title", title: "Title", number: "2.3", level: 2}]
   },
   {
+    title: "ignores dfn panels in the heading",
+    html: '<h4 id=title>13.6.1. <dfn data-dfn-type="dfn" data-export="" id="shorter"><button class="dfn-panelbutton" popovertarget="infopanel-for-shorter">shorter</button></dfn><dialog class="dfn-panel" id="infopanel-for-shorter" popover="hint" data-for="shorter" aria-labelledby="infopaneltitle-for-shorter">dfn panel</dialog></span><a class="self-link" href="#hue-shorter"></a></h4>',
+    res: [{id: "title", "href": "about:blank#title", title: "shorter", number: "13.6.1", level: 4}]
+  },
+  {
     title: "ignores an empty id if there's a better one",
     html: "<section id><h1 id=title>Heading in a section with empty id</h1>",
     res: [{id: "title", "href": "about:blank#title", title: "Heading in a section with empty id", level: 1}]

@@ -48,7 +48,7 @@ const tests = [
       "animationType": "by computed value"
    }]
   },
-  {title: "parses a propdef table with embedded MDN annotations",
+  {title: "parses a propdef table with embedded MDN annotations next to the dfn",
    html: `<table class="def propdef" data-link-for-hint="align-content">
     <tbody>
      <tr>
@@ -120,6 +120,29 @@ const tests = [
        "computedValue": "specified keyword(s)",
        "canonicalOrder": "per grammar",
        "animationType": "discrete"
+   }]
+  },
+
+  {title: "parses a propdef table with annotations somewhere in the table",
+   html: `<table class="def propdef" data-link-for-hint="align-content">
+    <tbody>
+     <tr>
+      <th>Name:
+      </th><td>
+       <dfn class="dfn-paneled css" data-dfn-type="property" data-export="" id="propdef-align-content">align-content</dfn>
+     </td></tr><tr class="value">
+      <th><a href="https://www.w3.org/TR/css-values/#value-defs">Value:</a>
+      </th><td class="prod">normal <a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#comb-one" id="ref-for-comb-one①⑤">|</a> <a class="production css" data-link-type="type" href="#typedef-baseline-position" id="ref-for-typedef-baseline-position①" title="Expands to: baseline | first | last">&lt;baseline-position&gt;</a> <span id="ref-for-comb-one①⑥">|</span> <a class="production css" data-link-type="type" href="#typedef-content-distribution" id="ref-for-typedef-content-distribution①" title="Expands to: space-around | space-between | space-evenly | stretch">&lt;content-distribution&gt;</a> <span id="ref-for-comb-one①⑦">|</span> <a class="production css" data-link-type="type" href="#typedef-overflow-position" id="ref-for-typedef-overflow-position②" title="Expands to: safe | unsafe">&lt;overflow-position&gt;</a><a data-link-type="grammar" href="https://drafts.csswg.org/css-values-4/#mult-opt" id="ref-for-mult-opt①">?</a> <a class="production css" data-link-type="type" href="#typedef-content-position" id="ref-for-typedef-content-position②" title="Expands to: center | end | flex-end | flex-start | start">&lt;content-position&gt;</a>
+     </td></tr><tr>
+      <th>Applies to:
+      </th><td>block containers, multicol containers, flex containers, and grid containers
+      <dialog class="dfn-panel">A dfn panel</dialog>
+     </td></tr></tbody></table>`,
+   css: [{
+       "name": "align-content",
+       "href": "about:blank#propdef-align-content",
+       "value": "normal | <baseline-position> | <content-distribution> | <overflow-position>? <content-position>",
+       "appliesTo": "block containers, multicol containers, flex containers, and grid containers"
    }]
   },
 
@@ -1910,6 +1933,25 @@ that spans multiple lines */
       "href": "about:blank#propdef-background-color",
       "value": "<color>",
       "computedValue": "computed color"
+   }]
+  },
+
+  {
+    title: "ignores dfn panels in Bikeshed specs",
+    html: `<pre class="highlight prod">
+      <dfn class="dfn-paneled" data-dfn-type="type" data-export="" id="font-weight-absolute-values">
+        <button class="dfn-panelbutton" popovertarget="infopanel-for-font-weight-absolute-values">&lt;font-weight-absolute&gt;</button>
+      </dfn>
+      <dialog class="dfn-panel" id="infopanel-for-font-weight-absolute-values" popover="hint" data-for="font-weight-absolute-values" aria-labelledby="infopaneltitle-for-font-weight-absolute-values">
+        dfn panel
+      </dialog> = [normal | bold | &lt;number [1,1000]&gt;]
+    </pre>`,
+   propertyName: 'values',
+   css: [{
+      "name": "<font-weight-absolute>",
+      "href": "about:blank#font-weight-absolute-values",
+      "type": "type",
+      "value": "[normal | bold | <number [1,1000]>]"
    }]
   },
 ];

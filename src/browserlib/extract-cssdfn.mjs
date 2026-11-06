@@ -1,3 +1,4 @@
+import cloneAndClean from './clone-and-clean.mjs';
 import informativeSelector from './informative-selector.mjs';
 import getAbsoluteUrl from './get-absolute-url.mjs';
 
@@ -389,7 +390,7 @@ const dfnLabel2Property = label => label.trim()
  * link to implementation statuses, which would provide too much detailed info
  * in prose content.
  */
-const asideSelector = 'aside, .mdn-anno, .wpt-tests-block';
+const asideSelector = 'aside, .mdn-anno, .wpt-tests-block, .dfn-panel';
 
 
 /**
@@ -406,12 +407,10 @@ const asideSelector = 'aside, .mdn-anno, .wpt-tests-block';
  */
 const extractTableDfns = table => {
   // Remove annotations that we do not want to extract
-  const tableCopy = table.cloneNode(true);
-  const annotations = tableCopy.querySelectorAll(asideSelector);
-  annotations.forEach(n => n.remove());
+  const tableCopy = cloneAndClean(table);
 
   let res = [];
-  const properties = [...table.querySelectorAll('tr')]
+  const properties = [...tableCopy.querySelectorAll('tr')]
     .map(line => {
       const nameEl = line.querySelector(':first-child');
       const valueEl = line.querySelector('td:last-child');
@@ -746,9 +745,9 @@ const extractTypedDfns = dfn => {
   // https://drafts.csswg.org/css-syntax-3/#the-anb-type
   // and remove MDN annotations as well
   [...parent.querySelectorAll('sup')]
-    .map(sup => sup.parentNode.removeChild(sup));
+    .map(sup => sup.remove());
   [...parent.querySelectorAll(asideSelector)]
-    .map(annotation => annotation.parentNode.removeChild(annotation));
+    .map(annotation => annotation.remove());
 
   // A single dfn can define multiple terms through `data-lt` attributes, e.g.,
   // https://drafts.csswg.org/css-values-5/#typedef-calc-interpolate-input-position
@@ -833,9 +832,9 @@ const extractTypedDfns = dfn => {
           }
         });
         [...dd.querySelectorAll('sup')]
-          .map(sup => sup.parentNode.removeChild(sup));
+          .map(sup => sup.remove());
         [...dd.querySelectorAll(asideSelector)]
-          .map(annotation => annotation.parentNode.removeChild(annotation));
+          .map(annotation => annotation.remove());
 
         res = {
           name: dfnName,
@@ -888,12 +887,12 @@ const extractProductionRules = root => {
     .map(el => el.cloneNode(true))
     .map(el => {
       [...el.querySelectorAll(asideSelector)]
-        .map(aside => aside.parentNode.removeChild(aside));
+        .map(aside => aside.remove());
       return el;
     })
     .map(el => {
       [...el.querySelectorAll('sup')]
-        .map(sup => sup.parentNode.removeChild(sup));
+        .map(sup => sup.remove());
       return el;
     })
     .map(el => el.textContent)

@@ -534,6 +534,19 @@ const tests = [
     ]
   },
 
+  {
+    title: 'skips dfn panels',
+    html: `<div>
+      <p>To <dfn data-dfn-type="dfn" data-export=""><button>generate baselines</button></dfn><span class="dfn-panel">dfn panel</span> for a box from a single baseline, use the baseline table from the font settings and blah.
+      </p></div>`,
+    algorithms: [
+      {
+        name: 'generate baselines',
+        rationale: 'To <dfn>',
+        html: 'To <dfn data-dfn-type="dfn" data-export="">generate baselines</dfn> for a box from a single baseline, use the baseline table from the font settings and blah.'
+      }
+    ]
+  },
 ];
 
 describe('The algorithms extraction module', function () {
