@@ -16,6 +16,7 @@
       },
       "bubbles": { "type": "boolean" },
       "cancelable": { "type": "boolean" },
+      "composed": { "type": "boolean" },
       "isExtension": { "type": "boolean" },
       "href": { "$ref": "../common.json#/$defs/url" },
       "src": {

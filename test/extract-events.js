@@ -53,6 +53,18 @@ const tests = [
     res: defaultResults("summary table")
   },
   {
+    title: "extracts composed from a summary table",
+    html: `<table>
+<thead>
+  <tr><th>Event type</th><th>Interface</th><th>Bubbles</th><th>Cancelable</th><th>Composed</th></tr>
+</thead>
+<tbody>
+  <tr><th><dfn id=success>success</dfn></th><td><a href=''>SuccessEvent</a></td><td>Yes</td><td>✓</td><td>Yes</td></tr>
+  <tr><th><dfn id=error>error</dfn></th><td><a href=''>ErrorEvent</a></td><td>No</td><td>No</td><td>No</td></tr>
+</tbody></table>${defaultIdl}`,
+    res: defaultResults("summary table").map((e, i) => ({ ...e, composed: i === 0 }))
+  },
+  {
     title: "extracts events from an event described by a CSS def table with data spread across rows, completed by an IDL fragment",
     html: `<h3><code>success</code> Event</h3>
 <table class="def" id='success'>
@@ -294,6 +306,26 @@ ${defaultIdl}`,
         cancelable: true
       }
     ]
+  },
+  {
+    title: "completes a summary table with composed from an event-definition table",
+    html: `<table>
+<thead>
+  <tr><th>Event type</th><th>Interface</th><th>Bubbles</th><th>Cancelable</th></tr>
+</thead>
+<tbody>
+  <tr><th><dfn id=success>success</dfn></th><td><a href=''>SuccessEvent</a></td><td>Yes</td><td>✓</td></tr>
+  <tr><th><dfn id=error>error</dfn></th><td><a href=''>ErrorEvent</a></td><td>No</td><td>No</td></tr>
+</tbody></table>
+<table class="event-definition"><tbody>
+  <tr><th>Type</th><td><code>success</code></td></tr>
+  <tr><th>Composed</th><td>Yes</td></tr>
+</tbody></table>
+<table class="event-definition"><tbody>
+  <tr><th>Type</th><td><code>error</code></td></tr>
+  <tr><th>Composed</th><td>No</td></tr>
+</tbody></table>${defaultIdl}`,
+    res: defaultResults("summary table").map((e, i) => ({ ...e, composed: i === 0 }))
   },
   {
     title: "prefers info in summary table to that an event-definition table",

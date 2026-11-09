@@ -86,6 +86,8 @@ export default function (spec) {
           .findIndex(n => n.textContent.trim().match(/^bubbl/i));
         const cancelableInfoColumn = [...table.querySelectorAll("thead th")]
           .findIndex(n => n.textContent.trim().match(/^cancel/i));
+        const composedInfoColumn = [...table.querySelectorAll("thead th")]
+          .findIndex(n => n.textContent.trim().match(/^composed/i));
         const interfaceColumn = [...table.querySelectorAll("thead th")]
           .findIndex(n => n.textContent.trim().match(/^(dom )?interface/i));
         const targetsColumn = [...table.querySelectorAll("thead th")]
@@ -130,6 +132,9 @@ export default function (spec) {
           if (cancelableInfoColumn >= 0) {
             event.cancelable = !!tr.querySelector(`td:nth-child(${cancelableInfoColumn + 1})`)?.textContent?.trim().match(/(yes)|✓|(varies)/i);
           }
+          if (composedInfoColumn >= 0) {
+            event.composed = !!tr.querySelector(`td:nth-child(${composedInfoColumn + 1})`)?.textContent?.trim().match(/(yes)|✓/i);
+          }
           if (interfaceColumn >= 0) {
             event.interface =
               tr.querySelector(`td:nth-child(${interfaceColumn + 1}) a`)?.textContent ??
@@ -150,16 +155,19 @@ export default function (spec) {
         const eventTypeRow = [...table.querySelectorAll("tbody th")].findIndex(n => n.textContent.trim().match(/^type/i));
         const bubblingInfoRow = [...table.querySelectorAll("tbody th")].findIndex(n => n.textContent.trim() === "Bubbles");
         const cancelableInfoRow = [...table.querySelectorAll("tbody th")].findIndex(n => n.textContent.trim() === "Cancelable");
+        const composedInfoRow = [...table.querySelectorAll("tbody th")].findIndex(n => n.textContent.trim() === "Composed");
         const interfaceRow = [...table.querySelectorAll("tbody th")].findIndex(n => n.textContent.trim().match(/^interface/i));
         const eventName = table.querySelector(`tr:nth-child(${eventTypeRow + 1}) td:nth-child(2)`)?.textContent?.trim();
         const bubblesCell = table.querySelector(`tr:nth-child(${bubblingInfoRow + 1}) td:nth-child(2)`);
         const bubbles = bubblesCell ? bubblesCell.textContent.trim() === "Yes" : null;
         const cancelableCell = table.querySelector(`tr:nth-child(${cancelableInfoRow + 1}) td:nth-child(2)`);
         const cancelable = cancelableCell ? cancelableCell.textContent.trim() === "Yes" : null;
+        const composedCell = composedInfoRow >= 0 ? table.querySelector(`tr:nth-child(${composedInfoRow + 1}) td:nth-child(2)`) : null;
         const iface = table.querySelector(`tr:nth-child(${interfaceRow + 1}) td:nth-child(2)`)?.textContent?.trim();
         if (eventName) {
           events.push({
             type: eventName, interface: iface, bubbles, cancelable,
+            ...(composedCell ? { composed: composedCell.textContent.trim() === "Yes" } : {}),
             src: { format: "css definition table", href: href(table.closest('*[id]')) },
             href: href(table.closest('*[id]')) });
         }
@@ -186,7 +194,7 @@ export default function (spec) {
         if (['type', 'interface', 'targets'].includes(name)) {
           return { name, value };
         }
-        else if (['bubbles', 'cancelable'].includes(name)) {
+        else if (['bubbles', 'cancelable', 'composed'].includes(name)) {
           return { name, value: value.toLowerCase() === 'yes' ? true : false };
         }
         else {
@@ -205,8 +213,13 @@ export default function (spec) {
     // Prefer summary table to definition in an event table if both exist
     // because the latter may include prose around the interface and target
     // names that make it harder to extract meaningful values.
-    if (!events.find(e => isSameEvent(e, event))) {
+    const existing = events.find(e => isSameEvent(e, event));
+    if (!existing) {
       events.push(event);
+    }
+    else if (existing.composed === undefined && event.composed !== undefined) {
+      // Summary tables may lack the Composed column
+      existing.composed = event.composed;
     }
   });
 
