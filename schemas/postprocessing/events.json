@@ -33,6 +33,7 @@
         }
       },
       "cancelable": { "type": "boolean" },
+      "composed": { "type": "boolean" },
       "extendedIn": {
         "type": "array",
         "items": {
