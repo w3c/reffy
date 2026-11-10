@@ -22,5 +22,6 @@ export default [
   '[id^=dfn-panel-]',
   '.mdn-anno',
   '.wpt-tests-block',
+  '.dfn-panel',
   'details.respec-tests-details'
 ].join(',');
