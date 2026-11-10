@@ -1970,7 +1970,7 @@ that spans multiple lines */
          </tr>
         </tbody>
       </table>
-    </div>`,
+    </section>`,
    css: [{
       "name": "background-color",
       "href": "https://example.com/page1#propdef-background-color",
