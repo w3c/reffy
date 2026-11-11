@@ -188,6 +188,14 @@ ${defaultIdl}`,
     res: defaultResults("fire an event phrasing")
   },
   {
+    title: "does not get confused by dfn panels",
+    html: `<p id=success><a href='https://dom.spec.whatwg.org/#concept-event-fire'>Fire an event</a>
+      named <code>success</code><span class="dfn-panel">dfn panel</span> using <a href=''>SuccessEvent</a> with the <code>bubbles</code> and <code>cancelable</code> attributes initialized to <code>true</code>.</p>
+      <p id=error><a href='https://dom.spec.whatwg.org/#concept-event-fire'>Fire an event</a> named <code>error</code> using <a href=''>ErrorEvent</a> with the <code>bubbles</code> attribute initialized to <code>false</code> and must not be cancelable</p>
+      ${defaultIdl}`,
+    res: defaultResults("fire an event phrasing")
+  },
+  {
     title: "supports 'given' on top of 'named' to specify the event type and interface",
     html: `<p id=success><a href="https://w3c.github.io/ServiceWorker/#fire-functional-event">Fire Functional Event</a>
       given <code>success</code>, <code>NotificationEvent</code>.
