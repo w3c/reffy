@@ -237,9 +237,10 @@ export default function (spec) {
       // Clone and drop possible annotations to avoid extracting asides.
       // (note the need to temporarily add the cloned node to the document
       // so that ranges can be used)
-      const apos = [...a.parentNode.children].findIndex(c => c === a);
+      a.setAttribute('data-reffy-anchor', 'event');
       const container = cloneAndClean(a.parentNode);
-      const aclone = container.children[apos];
+      const aclone = container.querySelector('[data-reffy-anchor=event]');
+      a.removeAttribute('data-reffy-anchor');
       document.body.appendChild(container);
 
 
