@@ -2,6 +2,7 @@ import informativeSelector from './informative-selector.mjs';
 import extractWebIdl from './extract-webidl.mjs';
 import {parse} from "../../node_modules/webidl2/index.js";
 import getAbsoluteUrl from './get-absolute-url.mjs';
+import cloneAndClean from './clone-and-clean.mjs';
 
 const singlePage = !document.querySelector('[data-reffy-page]');
 const href = el => el?.getAttribute("id") ? getAbsoluteUrl(el, {singlePage}) : null;
@@ -100,10 +101,8 @@ export default function (spec) {
           // to leave the DOM intact for other processing scripts
           // (we need the clean up node in-tree to compute the proper href)
           const origEventEl = tr.querySelector("*:first-child");
-          const eventEl = origEventEl.cloneNode(true);
+          const eventEl = cloneAndClean(origEventEl);
           origEventEl.replaceWith(eventEl);
-          const annotations = eventEl.querySelectorAll("aside, .mdn-anno");
-          annotations.forEach(n => n.remove());
 
           let el = eventEl.querySelector("dfn,a");
           if (!el) {
@@ -239,11 +238,8 @@ export default function (spec) {
       // (note the need to temporarily add the cloned node to the document
       // so that ranges can be used)
       const apos = [...a.parentNode.children].findIndex(c => c === a);
-      const container = a.parentNode.cloneNode(true);
+      const container = cloneAndClean(a.parentNode);
       const aclone = container.children[apos];
-
-      const annotations = container.querySelectorAll("aside, .mdn-anno");
-      annotations.forEach(n => n.remove());
       document.body.appendChild(container);
 
 
