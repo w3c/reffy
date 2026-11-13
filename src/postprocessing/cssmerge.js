@@ -79,16 +79,16 @@ function copyScopedValuesToRootLevel(feature, categorized) {
       copyScopedValuesToRootLevel(value, categorized);
     }
   }
-  if (feature.descriptors) {
-    // Note: at-rule descriptors already have a "for" attribute but
-    // nested at-rules typically don't have "descriptors" themselves
-    // while schema requires the property for consistency
-    const atrules = feature.descriptors
-      .filter(v => v.type === 'at-rule')
+  if (feature.atrules) {
+    // Note: subsidiary at-rules already have a "for" attribute but
+    // typically don't have "descriptors" themselves while schema requires
+    // the property for consistency
+    const atrules = feature.atrules
       .map(v => Object.assign({ descriptors: [] }, v));
     categorized.atrules.push(...atrules);
-    feature.descriptors = feature.descriptors
-      .filter(d => d.type !== 'at-rule');
+    delete feature.atrules;
+  }
+  if (feature.descriptors) {
     for (const descriptor of feature.descriptors) {
       copyScopedValuesToRootLevel(descriptor, categorized);
     }
