@@ -111,7 +111,7 @@ const tests = [
     title: "extracts an SVG element that follows the element-summary pattern",
     spec: "SVG2",
     html: `<div class="element-summary">
-<div class="element-summary-name"><span class="element-name">‘<dfn data-dfn-type="element" data-export="" id="elementdef-animate">animate</dfn>’</span></div>
+<div class="element-summary-name"><span class="element-name">‘<dfn data-dfn-type="element" data-export="" id="elementdef-animate"><code>animate</code></dfn><span class="dfn-panel">dfn panel</span>’</span></div>
 <dl>
   <dt>Categories:</dt>
   <dd><a href="#TermAnimationElement">Animation element</a></dd>
