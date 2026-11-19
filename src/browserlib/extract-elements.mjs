@@ -1,4 +1,5 @@
 import getAbsoluteUrl from './get-absolute-url.mjs';
+import cloneAndClean from './clone-and-clean.mjs';
 
 /**
  * Extract the list of markup elements that the spec defines
@@ -60,7 +61,7 @@ export default function (spec) {
       // defined together, typically h1-h6 or sub and sup
       return dfns.map(dfn => {
         const res = {
-          name: getText(dfn),
+          name: getText(cloneAndClean(dfn)),
           href: getAbsoluteUrl(dfn)
         };
         const dts = [...el.querySelectorAll('dt')];
@@ -185,7 +186,7 @@ export default function (spec) {
       }
 
       const res = {
-        name: getText(name).replace(/‘|’/g, ''),
+        name: getText(cloneAndClean(name)).replace(/‘|’/g, ''),
         href: getAbsoluteUrl(dfn)
       };
       const dts = [...el.querySelectorAll('dt')];
