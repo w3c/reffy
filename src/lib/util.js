@@ -454,10 +454,14 @@ async function processSpecification(spec, processFunction, args, options) {
     }
 
     try {
-        // Fetch the spec URL if using https
-        // This allow to skip launching a browser
-        // if we have a fallback data source
-        // with a defined cache target for the spec
+        // Fetch the spec URL if using https.
+        // This allow to skip launching a browser if we have a fallback data
+        // source with a defined cache target for the spec.
+        // Note: Many servers are behind a CDN. Cloudflare adds a "Cf-Ray"
+        // header with a hashed value that encodes information about the data
+        // center and the visitor's request. We'll log that value along with
+        // the date in case of error as this is useful info to exchange with
+        // server maintainers when the crawler gets blocked for some reason.
         if (!spec.url.startsWith('file://')) {
           let response;
           // We set a conditional request header
@@ -483,7 +487,9 @@ async function processSpecification(spec, processFunction, args, options) {
             throw new Error(`Loading ${spec.url} triggered network error`, { cause: err });
           }
           if (response.status !== 200) {
-            throw new Error(`Loading ${spec.url} triggered HTTP status ${response.status}`);
+            const resInfo = response.headers.get('date') +
+                (response.headers.get('cf-ray') ? `, Cf-Ray: ${response.headers.get('cf-ray')}` : '')
+            throw new Error(`Loading ${spec.url} triggered HTTP status ${response.status} (${resInfo})`);
           }
         }
         const page = await browser.newPage();
@@ -538,13 +544,15 @@ async function processSpecification(spec, processFunction, args, options) {
             } catch (err) {
               throw new Error(`Loading ${spec.url} triggered network error`, { cause: err });
             }
-            if ((result.status() !== 200) && (!spec.url.startsWith('file://') || (result.status() !== 0))) {
-              throw new Error(`Loading ${spec.url} triggered HTTP status ${result.status()}`);
-            }
             const responseHeaders = result.headers();
+            if ((result.status() !== 200) && (!spec.url.startsWith('file://') || (result.status() !== 0))) {
+              const resInfo = responseHeaders['date'] +
+                (responseHeaders['cf-ray'] ? `, Cf-Ray: ${responseHeaders['cf-ray']}` : '');
+              throw new Error(`Loading ${spec.url} triggered HTTP status ${result.status()} (${resInfo})`);
+            }
             // Use Last-Modified in preference as it is in practice
             // more reliable for conditional requests
-            if (responseHeaders['last-modified']) {
+            if (responseHeaders['last-modified']) {
               cacheInfo = {lastModified: responseHeaders['last-modified']};
             } else if (responseHeaders.etag) {
               cacheInfo = {etag: responseHeaders.etag};
@@ -568,7 +576,9 @@ async function processSpecification(spec, processFunction, args, options) {
                     // (Note HTTP status is 0 when `file://` URLs are loaded)
                     const subresult = await subPage.goto(url, loadOptions);
                     if ((subresult.status() !== 200) && (!url.startsWith('file://') || (subresult.status() !== 0))) {
-                        throw new Error(`Loading ${spec.url} triggered HTTP status ${subresult.status()} when loading ${url}`);
+                        const resInfo = subresult.headers()['date'] +
+                            (subresult.headers()['cf-ray'] ? `, Cf-Ray: ${subresult.headers()['cf-ray']}` : '');
+                        throw new Error(`Loading ${spec.url} triggered HTTP status ${subresult.status()} (${resInfo}) when loading ${url}`);
                     }
                     const html = await subPage.evaluate(() => {
                         return document.body.outerHTML
