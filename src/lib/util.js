@@ -488,7 +488,7 @@ async function processSpecification(spec, processFunction, args, options) {
           }
           if (response.status !== 200) {
             const resInfo = response.headers.get('date') +
-                (response.headers.get('cf-ray') ? `, Cf-Ray: ${response.headers.get('cf-ray')}` : '')
+                (response.headers.get('cf-ray') ? `, Cf-Ray: ${response.headers.get('cf-ray')}` : '');
             throw new Error(`Loading ${spec.url} triggered HTTP status ${response.status} (${resInfo})`);
           }
         }
