@@ -45,7 +45,7 @@
   "devDependencies": {
     "respec": "37.6.0",
     "respec-hljs": "2.1.1",
-    "rollup": "4.68.6",
+    "rollup": "4.68.7",
     "undici": "^8.2.0"
   },
   "overrides": {
