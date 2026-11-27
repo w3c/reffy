@@ -734,7 +734,6 @@ describe('CSS extracts consolidation', function () {
     const nestedAtrule = {
       name: '@nested',
       for: atrule2.name,
-      type: 'at-rule',
       href: 'https://example.org/nestedatrule'
     };
     const results = structuredClone([
@@ -745,10 +744,8 @@ describe('CSS extracts consolidation', function () {
         css: Object.assign({}, emptyExtract, {
           atrules: [
             Object.assign({}, atrule2, {
-              descriptors: [
-                descriptor1,
-                nestedAtrule
-              ]
+              descriptors: [descriptor1],
+              atrules: [nestedAtrule]
             })
           ],
         })

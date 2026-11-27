@@ -71,7 +71,7 @@ export default {
       for (const value of construct.values ?? []) {
         indexConstruct(value);
       }
-      for (const descriptor of construct.descriptors ?? []) {
+      for (const descriptor of [...(construct.descriptors ?? []), ...(construct.atrules ?? [])]) {
         indexConstruct(descriptor);
       }
     }
@@ -122,7 +122,7 @@ export default {
           addValueFor(value.href, construct.name);
           indexValues(value);
         }
-        for (const descriptor of construct.descriptors ?? []) {
+        for (const descriptor of [...(construct.descriptors ?? []), ...(construct.atrules ?? [])]) {
           indexValues(descriptor);
         }
       }

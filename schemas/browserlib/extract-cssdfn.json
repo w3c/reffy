@@ -54,6 +54,22 @@
               }
             }
           },
+          "atrules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "for"],
+              "additionalProperties": false,
+              "properties": {
+                "name": { "type": "string", "pattern": "^@" },
+                "for": { "type": "string" },
+                "href": { "$ref": "../common.json#/$defs/url" },
+                "value": { "$ref": "../common.json#/$defs/cssValue" },
+                "prose": { "type": "string" },
+                "values": { "$ref": "../common.json#/$defs/cssValues" }
+              }
+            }
+          },
           "values": { "$ref": "../common.json#/$defs/cssValues" }
         }
       }
